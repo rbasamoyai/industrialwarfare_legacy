@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "industrialwarfare:block/task_scroll_shelf"
+    },
+    "facing=south": {
+      "model": "industrialwarfare:block/task_scroll_shelf",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "industrialwarfare:block/task_scroll_shelf",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "industrialwarfare:block/task_scroll_shelf",
+      "y": 90
+    }
+  }
+}

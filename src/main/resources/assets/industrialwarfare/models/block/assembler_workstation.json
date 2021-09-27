@@ -1,0 +1,12 @@
+{
+	"parent": "minecraft:block/cube",
+	"textures": {
+		"particle": "industrialwarfare:block/assembler_workstation_top",
+		"north": "industrialwarfare:block/assembler_workstation_side",
+		"east": "industrialwarfare:block/assembler_workstation_side",
+		"south": "industrialwarfare:block/assembler_workstation_side",
+		"west": "industrialwarfare:block/assembler_workstation_side",
+		"up": "industrialwarfare:block/assembler_workstation_top",
+		"down": "minecraft:block/oak_planks"
+	}
+}

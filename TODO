@@ -1,0 +1,29 @@
+General TODO:
+
+p Add Recipe Systems
+
+p Add worker npcs
+
+- Add warrior npcs
+
+- Add Weapons
+
+- Add all the normal workstation
+  npcs, blocks, etc.
+
+- D O C U M E N T A T I O N
+
+Current TODO:
+	- Add NPCs
+		- Add Worker NPCS
+			- Add worker AI
+				- Add work tasks
+					- Add wait task
+					- Add switch order task
+					- Add jump to task
+		- Add interfacing with entity
+			p Work on container
+			p Work on GUI
+			
+		- Add task scroll shelfs
+			- Add rendering fancie
