@@ -1,0 +1,16 @@
+{
+  "type": "industrialwarfare:normal_workstation_recipe",
+  "input": [
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "industrialwarfare:part_iron_wire"
+    }
+  ],
+  "output": {
+    "item": "industrialwarfare:part_screw",
+    "count": 4
+  },
+  "block": "industrialwarfare:assembler_workstation"
+}

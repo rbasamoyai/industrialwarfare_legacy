@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="All rights reserved"
+#issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
+
+[[mods]]
+modId="industrialwarfare"
+version="0.0.1"
+displayName="Industrial Warfare"
+#updateJSONURL="https://change.me.example.invalid/updates.json"
+#displayURL="https://change.me.to.your.mods.homepage.example.invalid/"
+logoFile="logo.png"
+credits="Made by rbasamoyai"
+authors="rbasamoyai"
+description='''
+Industrial Warfare, a warfare mod made by rbasamoyai
+'''
+
+[[dependencies.industrialwarfare]]
+    # the modid of the dependency
+    modId="forge"
+    mandatory=true
+    versionRange="[36,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.industrialwarfare]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"

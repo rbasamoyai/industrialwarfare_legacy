@@ -1,0 +1,28 @@
+package rbasamoyai.industrialwarfare.core.datagen.loottables;
+
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import net.minecraft.block.Block;
+import net.minecraft.data.loot.BlockLootTables;
+import net.minecraftforge.registries.ForgeRegistries;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.core.init.BlockInit;
+
+public class IWBlockLootTables extends BlockLootTables {
+
+	@Override
+	protected void addTables() {
+		this.dropSelf(BlockInit.ASSEMBLER_WORKSTATION);
+		this.dropSelf(BlockInit.TASK_SCROLL_SHELF);
+	}
+	
+	@Override
+	protected Iterable<Block> getKnownBlocks() {
+		return StreamSupport
+				.stream(ForgeRegistries.BLOCKS.spliterator(), false)
+				.filter(entry -> entry.getRegistryName().getNamespace().equals(IndustrialWarfare.MOD_ID))
+				.collect(Collectors.toSet());
+	}
+	
+}
