@@ -9,6 +9,7 @@ import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -20,7 +21,7 @@ public class TaskScrollShelfTileEntity extends TileEntity {
 	
 	private static final String TAG_INVENTORY = "inventory";
 
-	private final TaskScrollShelfItemHandler itemHandler = new TaskScrollShelfItemHandler(TaskScrollShelfContainer.SHELF_SLOT_COUNT);
+	private final TaskScrollShelfItemHandler itemHandler = new TaskScrollShelfItemHandler(this, TaskScrollShelfContainer.SHELF_SLOT_COUNT);
 	private final LazyOptional<IItemHandler> itemOptional = LazyOptional.of(() -> this.itemHandler);
 	
 	public TaskScrollShelfTileEntity() {
@@ -47,13 +48,19 @@ public class TaskScrollShelfTileEntity extends TileEntity {
 	}
 	
 	@Override
+	public void setChanged() {
+		this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), Constants.BlockFlags.BLOCK_UPDATE);
+		super.setChanged();
+	}
+	
+	@Override
 	public CompoundNBT getUpdateTag() {
 		return this.save(new CompoundNBT());
 	}
 	
 	@Override
 	public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-		super.handleUpdateTag(state, tag);
+		this.load(state, tag);
 	}
 	
 	@Override

@@ -10,6 +10,7 @@ import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig.Type;
@@ -22,6 +23,7 @@ import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
+import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.CapabilityHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
@@ -83,12 +85,15 @@ public class IndustrialWarfare {
 		
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.WORKER_NPC, NPCRenderer::new);
 		
+		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF, TaskScrollShelfTileEntityRenderer::new);
 	}
 	
 	@SubscribeEvent
 	public void addTexturesToStitcher(TextureStitchEvent.Pre event) {
 		event.addSprite(new ResourceLocation(MOD_ID, "item/task_icon"));
 		event.addSprite(new ResourceLocation(MOD_ID, "item/label_icon"));
+		
+		event.addSprite(new ResourceLocation(MOD_ID, "entity/task_scroll"));
 	}
 
 	@SubscribeEvent

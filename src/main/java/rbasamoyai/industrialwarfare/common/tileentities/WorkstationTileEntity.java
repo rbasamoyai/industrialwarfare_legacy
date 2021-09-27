@@ -16,6 +16,7 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -100,6 +101,12 @@ public class WorkstationTileEntity extends TileEntity implements ITickableTileEn
 	public void setChangedAndForceUpdate() {
 		this.setChanged();
 		this.forceUpdate = true;
+	}
+	
+	@Override
+	public void setChanged() {
+		this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), Constants.BlockFlags.BLOCK_UPDATE);
+		super.setChanged();
 	}
 	
 	@Override

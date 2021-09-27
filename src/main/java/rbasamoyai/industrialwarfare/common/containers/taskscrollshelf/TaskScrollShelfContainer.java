@@ -20,8 +20,8 @@ public class TaskScrollShelfContainer extends Container {
 
 	private static final int SLOT_SPACING = 18;
 	
-	private static final int SHELF_ROWS = 4;
-	private static final int SHELF_COLUMNS = 4;
+	public static final int SHELF_ROWS = 4;
+	public static final int SHELF_COLUMNS = 4;
 	public static final int SHELF_SLOT_COUNT = SHELF_ROWS * SHELF_COLUMNS;
 	private static final int SHELF_SLOTS_START_X = 53;
 	private static final int SHELF_SLOTS_START_Y = 18;
@@ -41,7 +41,7 @@ public class TaskScrollShelfContainer extends Container {
 	private final Block block;
 	
 	public static TaskScrollShelfContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		return new TaskScrollShelfContainer(windowId, playerInv, BlockPos.ZERO, new TaskScrollShelfItemHandler(SHELF_SLOT_COUNT));
+		return new TaskScrollShelfContainer(windowId, playerInv, BlockPos.ZERO, new DummyTaskScrollShelfItemHandler(SHELF_SLOT_COUNT));
 	}
 	
 	public static IContainerProvider getServerContainerProvider(TaskScrollShelfTileEntity te, BlockPos activationPos) {

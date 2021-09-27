@@ -15,8 +15,8 @@ import rbasamoyai.industrialwarfare.common.tileentities.TaskScrollShelfTileEntit
 @ObjectHolder(IndustrialWarfare.MOD_ID)
 public class TileEntityTypeInit {
 
-	public static final TileEntityType<?> ASSEMBLER_WORKSTATION = null;
-	public static final TileEntityType<?> TASK_SCROLL_SHELF = null;
+	public static final TileEntityType<NormalWorkstationTileEntity> ASSEMBLER_WORKSTATION = null;
+	public static final TileEntityType<TaskScrollShelfTileEntity> TASK_SCROLL_SHELF = null;
 	
 	@SubscribeEvent
 	public static void registerTileEntities(RegistryEvent.Register<TileEntityType<?>> event) {

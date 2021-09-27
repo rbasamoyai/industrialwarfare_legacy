@@ -3,16 +3,11 @@ package rbasamoyai.industrialwarfare.common.containers.taskscrollshelf;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
-import rbasamoyai.industrialwarfare.common.tileentities.TaskScrollShelfTileEntity;
 
-public class TaskScrollShelfItemHandler extends ItemStackHandler {
+public class DummyTaskScrollShelfItemHandler extends ItemStackHandler {
 
-	public final TaskScrollShelfTileEntity te;
-	
-	public TaskScrollShelfItemHandler(TaskScrollShelfTileEntity te, int count) {
+	public DummyTaskScrollShelfItemHandler(int count) {
 		super(count);
-		
-		this.te = te;
 	}
 	
 	@Override
@@ -20,11 +15,6 @@ public class TaskScrollShelfItemHandler extends ItemStackHandler {
 		ItemStack result = stack;
 		if (stack.getItem() instanceof TaskScrollItem) result = super.insertItem(slot, stack, simulate);
 		return result;
-	}
-	
-	@Override
-	protected void onContentsChanged(int slot) {
-		this.te.setChanged();
 	}
 	
 	@Override
