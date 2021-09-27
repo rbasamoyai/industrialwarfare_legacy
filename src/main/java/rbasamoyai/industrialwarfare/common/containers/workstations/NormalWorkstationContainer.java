@@ -16,7 +16,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import rbasamoyai.industrialwarfare.common.itemhandlers.UninsertableItemHandler;
 import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
-import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
@@ -102,9 +101,7 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 					}
 				}
 				
-				if (this.moveItemStackTo(slotStack, INPUT_SLOT_INDEX_START, RECIPE_SLOT_INDEX, false)) {
-					this.workstationOptional.ifPresent(WorkstationTileEntity::setChanged);
-				} else {
+				if (!this.moveItemStackTo(slotStack, INPUT_SLOT_INDEX_START, RECIPE_SLOT_INDEX, false)) {
 					return ItemStack.EMPTY;
 				}
 			}

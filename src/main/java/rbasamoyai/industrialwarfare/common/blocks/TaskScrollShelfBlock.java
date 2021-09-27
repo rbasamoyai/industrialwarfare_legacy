@@ -59,7 +59,7 @@ public class TaskScrollShelfBlock extends Block {
 	}
 	
 	public TaskScrollShelfBlock() {
-		super(AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD));
+		super(AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).noOcclusion().harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD));
 		
 		this.setRegistryName(IndustrialWarfare.MOD_ID, "task_scroll_shelf");
 		
@@ -121,6 +121,11 @@ public class TaskScrollShelfBlock extends Block {
 	@Override
 	public BlockState getStateForPlacement(BlockItemUseContext context) {
 		return this.stateDefinition.any().setValue(HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite());
+	}
+	
+	@Override
+	public boolean skipRendering(BlockState state1, BlockState state2, Direction direction) {
+		return false;
 	}
 	
 	@Override
