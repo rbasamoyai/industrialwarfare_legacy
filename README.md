@@ -2,6 +2,10 @@
 
 A mod by rbasamoyai that's far from done I suppose.
 
+The mod focuses on NPC workers that make munitions, weapons, and
+other stuff. You can then give these products to combat NPCs who
+can fight stuff.
+
 ---
 
 ### Features currently implemented:
