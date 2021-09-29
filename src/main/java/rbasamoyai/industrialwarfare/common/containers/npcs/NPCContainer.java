@@ -84,7 +84,7 @@ public class NPCContainer extends Container {
 	protected final IIntArray data;
 	
 	public static NPCContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		int npcSlots = buf.readInt();
+		int npcSlots = buf.readVarInt();
 		boolean armorSlotsEnabled = buf.readBoolean();
 		return new NPCContainer(ContainerInit.NPC_BASE, windowId, playerInv, new DummyEquipmentItemHandler(armorSlotsEnabled), new ItemStackHandler(npcSlots), new IntArray(3), Optional.empty());
 	}
@@ -116,10 +116,12 @@ public class NPCContainer extends Container {
 		
 		// NPC slots
 		for (int i = 0; i < NPC_EQUIPMENT_ARMOR_SLOTS_COUNT; i++) {
-			int y = NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
+			boolean isOffhandSlot = i == EquipmentItemHandler.OFFHAND_INDEX;
+			int x = isOffhandSlot ? NPC_EQUIPMENT_SLOTS_LEFT_X : NPC_EQUIPMENT_SLOTS_CENTER_X;
+			int y = isOffhandSlot ? NPC_EQUIPMENT_SLOTS_SIDE_Y : NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
 			
 			this.npcEquipmentSlots.add(
-					(ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, i, NPC_EQUIPMENT_SLOTS_CENTER_X, y, true) {
+					(ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, i, x, y, true) {
 						@Override
 						public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
 							return Pair.of(PlayerContainer.BLOCK_ATLAS, EQUIPMENT_SLOT_ICONS[this.getSlotIndex()]);
@@ -127,7 +129,7 @@ public class NPCContainer extends Container {
 					}));
 		}
 		
-		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.getTypeSlot(EquipmentSlotType.MAINHAND), NPC_EQUIPMENT_SLOTS_RIGHT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y, true)));
+		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.MAINHAND_INDEX, NPC_EQUIPMENT_SLOTS_RIGHT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y, true)));
 		
 		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.TASK_ITEM_INDEX, NPC_EQUIPMENT_SLOTS_LEFT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y + SLOT_SPACING, true) {
 			@Override
