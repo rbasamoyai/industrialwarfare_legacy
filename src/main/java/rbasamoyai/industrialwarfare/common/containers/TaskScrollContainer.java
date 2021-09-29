@@ -203,8 +203,8 @@ public class TaskScrollContainer extends Container {
 		return this.hand;
 	}
 	
-	public PlayerEntity getPlayer() {
-		return this.player;
+	public ItemStack getCarriedItem() {
+		return this.player.inventory.getCarried();
 	}
 	
 	public ItemStack getLabelItem() {

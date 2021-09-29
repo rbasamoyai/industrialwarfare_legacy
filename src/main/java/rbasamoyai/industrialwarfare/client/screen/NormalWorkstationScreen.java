@@ -7,7 +7,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Slot;
@@ -26,8 +25,8 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 
 	private static final ResourceLocation NORMAL_WORKSTATION_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/workstations/normal_workstation.png");
 	
-	private static final TranslationTextComponent CRAFT_TEXT = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".container.workstation.craft");
-	private static final String CANNOT_CRAFT_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".container.workstation.tooltip.cannot_craft";
+	private static final TranslationTextComponent CRAFT_TEXT = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".workstation.craft");
+	private static final String CANNOT_CRAFT_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".workstation.tooltip.cannot_craft";
 	private static final List<ITextComponent> CANNOT_CRAFT_TEXT = Arrays.asList(
 			new TranslationTextComponent(CANNOT_CRAFT_KEY_ROOT + "1"),
 			new TranslationTextComponent(CANNOT_CRAFT_KEY_ROOT + "2")
@@ -49,6 +48,8 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 	
 	private static final int SHADE_COLOR = 1090453504;
 	
+	private Button craftButton;
+	
 	public NormalWorkstationScreen(NormalWorkstationContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
 		super(container, playerInv, localTitle);
 
@@ -69,7 +70,7 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 				this.renderComponentTooltip(stack, CANNOT_CRAFT_TEXT, mouseX, mouseY);
 		};
 		
-		Button craftButton = new Button(
+		this.craftButton = this.addButton(new Button(
 				this.leftPos + CRAFT_BUTTON_CENTER_X - this.font.width(CRAFT_TEXT) / 2 - 4,
 				this.topPos + CRAFT_BUTTON_Y,
 				this.font.width(CRAFT_TEXT) + 8,
@@ -77,9 +78,8 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 				CRAFT_TEXT,
 				craftButton$pressable,
 				craftButton$tooltip
-				);
-		craftButton.active = !this.menu.hasWorker();
-		this.addButton(craftButton);
+				));
+		this.craftButton.active = !this.menu.hasWorker();
 	}
 	
 	@Override
@@ -113,8 +113,7 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 	@Override
 	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
-		Widget widget = this.buttons.get(0);
-		if (widget.isHovered()) widget.renderToolTip(stack, mouseX, mouseY);
+		if (this.craftButton.isHovered()) this.craftButton.renderToolTip(stack, mouseX, mouseY);
 	}
 	
 	@Override
@@ -125,9 +124,8 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 	
 	@Override
 	public void tick() {
-		Button craftButton = (Button) this.buttons.get(0);
-		craftButton.x = (this.width - this.imageWidth) / 2 + CRAFT_BUTTON_CENTER_X - craftButton.getWidth() / 2;
-		craftButton.active = !this.menu.hasWorker();
+		this.craftButton.x = (this.width - this.imageWidth) / 2 + CRAFT_BUTTON_CENTER_X - craftButton.getWidth() / 2;
+		this.craftButton.active = !this.menu.hasWorker();
 		
 		// Set insert status of client recipe slot
 		Slot clientRecipeSlot = this.menu.slots.get(5);
