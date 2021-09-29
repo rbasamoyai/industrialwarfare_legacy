@@ -28,12 +28,12 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	private static final int SLOT_TEX_Y = 0;
 	private static final int NPC_EQUIPMENT_SLOTS_GUI_COLUMNS = 3;
 	
-	private static final int PAGE_TITLE_Y = 17;
+	private static final int PAGE_TITLE_Y = 20;
 	private static final int MIN_WIDTH = 60;
 	private static final int TITLE_PADDING = 4;
 	
 	private static final int PAGE_BUTTON_TEX_X = 176;
-	private static final int PAGE_BUTTON_GUI_Y = 16;
+	private static final int PAGE_BUTTON_GUI_Y = 19;
 	private static final int PAGE_BUTTON_WIDTH = 7;
 	private static final int PAGE_BUTTON_HEIGHT = 11;
 	private static final int PAGE_NEXT_TEX_Y = 162;
@@ -101,6 +101,8 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 				NPC_SCREEN_GUI,
 				this::nextPage
 				));
+		
+		this.updatePage();
 	}
 	
 	@Override
@@ -122,8 +124,8 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		if (this.page == 0) {
 			for (int i = 0; i < 12; i++) {
 				if (i != 0 && i != 2 && i != 9 && i != 11) { // Ugly, I know but at least I only have to write AbstractGui#blit only once
-					int x = this.leftPos + NPCContainer.NPC_EQUIPMENT_SLOTS_LEFT_X + i % NPC_EQUIPMENT_SLOTS_GUI_COLUMNS;
-					int y = this.topPos + NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i / NPC_EQUIPMENT_SLOTS_GUI_COLUMNS;
+					int x = this.leftPos + NPCContainer.NPC_EQUIPMENT_SLOTS_LEFT_X + i % NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
+					int y = this.topPos + NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i / NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
 					this.blit(stack, x, y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_SPACING, SLOT_SPACING);
 				}
 			}
@@ -131,8 +133,8 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 			this.blit(stack, this.leftPos + NPC_ENTITY_WINDOW_GUI_X, this.topPos + NPC_ENTITY_WINDOW_GUI_Y, NPC_ENTITY_WINDOW_TEX_X, NPC_ENTITY_WINDOW_TEX_Y, NPC_ENTITY_WINDOW_WIDTH, NPC_ENTITY_WINDOW_HEIGHT);	
 		} else if (this.page == 1) {
 			for (int i = 0; i < this.menu.getInvSlotCount(); i++) {
-				int x = this.leftPos + NPCContainer.NPC_INVENTORY_START_X + i % NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING;
-				int y = this.topPos + NPCContainer.NPC_INVENTORY_START_Y + i / NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING;
+				int x = this.leftPos + NPCContainer.NPC_INVENTORY_START_X + i % NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
+				int y = this.topPos + NPCContainer.NPC_INVENTORY_START_Y + i / NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
 				this.blit(stack, x, y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_SPACING, SLOT_SPACING);
 			}
 		}
@@ -141,7 +143,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	@Override
 	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
 		super.renderLabels(stack, mouseX, mouseY);
-		drawCenteredString(stack, this.font, NPC_INVENTORY_TEXT, this.imageWidth / 2, PAGE_TITLE_Y, TEXT_COLOR);
+		drawCenteredString(stack, this.font, this.pageTitle, this.imageWidth / 2, PAGE_TITLE_Y, TEXT_COLOR);
 		
 		if (!this.menu.areArmorSlotsEnabled()) {
 			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT; i++) {
@@ -174,10 +176,10 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		if (this.page == MAIN_PAGE) this.pageTitle = NPC_MAIN_PAGE_TEXT;
 		else if (this.page == INVENTORY_PAGE) this.pageTitle = NPC_INVENTORY_TEXT;
 		
-		int labelWidth = Math.min(this.font.width(this.pageTitle), MIN_WIDTH);
+		int labelWidth = Math.max(this.font.width(this.pageTitle), MIN_WIDTH);
 		int labelX = (this.imageWidth - labelWidth) / 2;
-		this.prevPageButton.x = labelX - TITLE_PADDING - PAGE_BUTTON_WIDTH;
-		this.nextPageButton.x = labelX + labelWidth + TITLE_PADDING;
+		this.prevPageButton.x = this.leftPos + labelX - TITLE_PADDING - PAGE_BUTTON_WIDTH;
+		this.nextPageButton.x = this.leftPos + labelX + labelWidth + TITLE_PADDING;
 
 		WidgetUtils.setActiveAndVisible(this.prevPageButton, this.page > 0);
 		WidgetUtils.setActiveAndVisible(this.nextPageButton, this.page < LAST_PAGE);
