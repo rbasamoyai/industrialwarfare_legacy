@@ -118,10 +118,12 @@
 	"death.attack.industrialwarfare.bullet.long_distance": "%1$s was shot by %2$s \u00A7a\u00A7l(%3$s \u00A7a\u00A7lblocks!)",
 	"death.attack.industrialwarfare.bullet.long_distance.item": "%1$s was shot by %2$s using %3$s \u00A7a\u00A7l(%4$s \u00A7a\u00A7lblocks!)",
 	
-	"gui.industrialwarfare.container.workstation.craft":	"Craft",
-	"gui.industrialwarfare.container.workstation.tooltip.cannot_craft1": "Cannot craft right now -",
-	"gui.industrialwarfare.container.workstatoin.tooltip.cannot_craft2": "there is another worker using this table!",
-	"gui.industrialwarfare.container.npc.inventory":		"NPC Inventory",
+	"gui.industrialwarfare.workstation.craft":	"Craft",
+	"gui.industrialwarfare.workstation.tooltip.cannot_craft1": "Cannot craft right now -",
+	"gui.industrialwarfare.workstation.tooltip.cannot_craft2": "there is another worker using this table!",
+	
+	"gui.industrialwarfare.npc.main_page":	"NPC Info and Equipment",
+	"gui.industrialwarfare.npc.inventory":	"NPC Inventory",
 	
 	"tooltip.industrialwarfare.task_scroll.label":	"Label",
 	"tooltip.industrialwarfare.task_scroll.blank_label": "Blank label",
