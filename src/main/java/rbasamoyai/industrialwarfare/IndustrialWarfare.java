@@ -21,7 +21,7 @@ import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
-import rbasamoyai.industrialwarfare.client.screen.npc.NPCScreen;
+import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.CapabilityHandler;
@@ -32,6 +32,7 @@ import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.RecipeInit;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
@@ -59,6 +60,7 @@ public class IndustrialWarfare {
 		modEventBus.register(ContainerInit.class);
 		modEventBus.register(RecipeInit.class);
 		modEventBus.register(EntityTypeInit.class);
+		modEventBus.register(MemoryModuleTypeInit.class);
 		
 		modEventBus.register(TaskScrollCommandInit.class);
 		
@@ -78,7 +80,7 @@ public class IndustrialWarfare {
 	@SubscribeEvent
 	public void clientSetup(FMLClientSetupEvent event) {
 		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION, NormalWorkstationScreen::new);
-		ScreenManager.register(ContainerInit.NPC_BASE, NPCScreen::new);
+		ScreenManager.register(ContainerInit.NPC_BASE, NPCBaseScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL, TaskScrollScreen::new);
 		ScreenManager.register(ContainerInit.EDIT_LABEL, EditLabelScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF, TaskScrollShelfScreen::new);

@@ -21,6 +21,7 @@ Current TODO:
 					- Add wait task
 					- Add switch order task
 					- Add jump to task
+			- Add memory module types
 		- Add interfacing with entity
 			p Work on container
 			p Work on GUI

@@ -8,7 +8,7 @@ public class DummyEquipmentItemHandler extends ItemStackHandler {
 	public boolean armorSlotsEnabled;
 	
 	public DummyEquipmentItemHandler(boolean armorSlotsEnabled) {
-		super(6);
+		super(8);
 		this.armorSlotsEnabled = armorSlotsEnabled;
 	}
 	

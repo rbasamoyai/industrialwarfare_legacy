@@ -24,6 +24,10 @@ import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.ai.goal.LookRandomlyGoal;
 import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.IContainerProvider;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResultType;
@@ -34,11 +38,13 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
+import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
@@ -51,7 +57,7 @@ public class NPCEntity extends CreatureEntity {
 	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.MEETING_POINT, MemoryModuleType.PATH, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
 	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_PLAYERS);
 	
-	private static final String TAG_TASK_ITEM = "taskItem";
+	public static final String TAG_WORKSTUFFS = "workstuffs";
 	private static final String TAG_INVENTORY = "items";
 	
 	public static final String DEFAULT_NAME = "Incognito";
@@ -60,9 +66,8 @@ public class NPCEntity extends CreatureEntity {
 	
 	public static final UUID GAIA_UUID = new UUID(0L, 0L); // A null player generally means that the NPC belongs to "Gaia" (thanks, Age of Empires!).
 	
-	protected final ItemStackHandler taskItemHandler = new ItemStackHandler(1);
-	protected final ItemStackHandler inventoryItemHandler = new ItemStackHandler(1);
-	protected final EquipmentItemHandler equipmentItemHandler = new EquipmentItemHandler(this, false);
+	protected final ItemStackHandler inventoryItemHandler;
+	protected final EquipmentItemHandler equipmentItemHandler;
 
 	protected NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, String occupation, String name, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
 		super(type, worldIn);
@@ -70,8 +75,8 @@ public class NPCEntity extends CreatureEntity {
 		// TODO: Add code to default to "jobless" if not in pool of occupations
 		this.setCustomName(new StringTextComponent(name));
 		
-		this.inventoryItemHandler.setSize(initialInventoryCount);		
-		this.equipmentItemHandler.setArmorSlotsEnabled(canWearEquipment);
+		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
+		this.equipmentItemHandler = new EquipmentItemHandler(this, canWearEquipment);
 		
 		this.getDataHandler().ifPresent(h -> {
 			h.setCanWearEquipment(canWearEquipment);
@@ -87,10 +92,6 @@ public class NPCEntity extends CreatureEntity {
 				.add(Attributes.MOVEMENT_SPEED, 0.1d)
 				.add(Attributes.ATTACK_DAMAGE, 2.0d)
 				.add(Attributes.ATTACK_SPEED, 4.0d);
-	}
-	
-	public ItemStackHandler getTaskItemHandler() {
-		return this.taskItemHandler;
 	}
 	
 	public ItemStackHandler getInventoryItemHandler() {
@@ -170,7 +171,22 @@ public class NPCEntity extends CreatureEntity {
 	
 	@Override
 	protected ActionResultType mobInteract(PlayerEntity player, Hand handIn) {
-		return ActionResultType.PASS;
+		ActionResultType actionResultType = this.checkAndHandleImportantInteractions(player, handIn);
+		if (actionResultType.consumesAction()) {
+			return actionResultType;
+		} else {
+			if (!this.level.isClientSide && player instanceof ServerPlayerEntity) {
+				IContainerProvider containerProvider = NPCContainer.getServerContainerProvider(this);
+				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(containerProvider, this.getCustomName());
+				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
+					buf.writeVarInt(this.inventoryItemHandler.getSlots());
+					buf.writeBoolean(this.getDataHandler().map(INPCDataHandler::getCanWearEquipment).orElse(false));
+					// TODO: implement professions and write job id
+				});
+				return ActionResultType.CONSUME;
+			}
+			return super.mobInteract(player, handIn);
+		}
 	}
 	
 	protected ActionResultType checkAndHandleImportantInteractions(PlayerEntity player, Hand handIn) {
@@ -191,7 +207,7 @@ public class NPCEntity extends CreatureEntity {
 	public void addAdditionalSaveData(CompoundNBT tag) {
 		super.addAdditionalSaveData(tag);
 		
-		tag.put(TAG_TASK_ITEM, this.taskItemHandler.serializeNBT());
+		tag.put(TAG_WORKSTUFFS, this.equipmentItemHandler.serializeNBT());
 		tag.put(TAG_INVENTORY, this.inventoryItemHandler.serializeNBT());
 	}
 	
@@ -199,11 +215,8 @@ public class NPCEntity extends CreatureEntity {
 	public void readAdditionalSaveData(CompoundNBT tag) {
 		super.readAdditionalSaveData(tag);
 		
-		this.taskItemHandler.deserializeNBT(tag);
+		this.equipmentItemHandler.deserializeNBT(tag);
 		this.inventoryItemHandler.deserializeNBT(tag);
-		
-		// Must be called after the superclass method as the ArmorItems and HandItems methods load there
-		this.equipmentItemHandler.syncEquipmentSlotsToHandler();
 	}
 	
 	@Override
