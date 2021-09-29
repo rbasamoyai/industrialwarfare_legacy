@@ -70,7 +70,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private static final int SLOT_TEX_WIDTH = 18;
 	private static final int SLOT_ITEM_X = SLOT_GUI_X + 1;
 	private static final int SLOT_ITEM_START_Y = LIST_WIDGET_START_Y + 1;
-	private static final int SHADE_COLOR = 1056964608;
+	private static final int SHADE_COLOR = 0x3f000000;
 	
 	private static final int LIST_INDEX_RIGHT_X = 22;
 	private static final int LIST_INDEX_START_Y = 25;
@@ -172,7 +172,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				TASK_SCROLL_SCREEN_GUI,
 				this::prevPage
 				));
-		WidgetUtils.setActiveAndVisible(this.prevPageButton, false);
 		
 		this.nextPageButton = this.addButton(new ImageButton(
 				this.leftPos + PAGE_NEXT_BUTTON_GUI_X,
@@ -185,7 +184,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				TASK_SCROLL_SCREEN_GUI,
 				this::nextPage
 				));
-		WidgetUtils.setActiveAndVisible(this.nextPageButton, this.lastPage > 0);
 		
 		this.addOrderButton = this.addButton(new Button(
 				this.leftPos + ADD_ORDER_BUTTON_X,
@@ -195,7 +193,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				ADD_ORDER_BUTTON_TEXT,
 				this::addOrder
 				));
-		WidgetUtils.setActiveAndVisible(this.addOrderButton, !this.menu.isOrderListFull());
 		
 		Button.ITooltip removeOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_REMOVE_ORDER, mouseX, mouseY);
 		
@@ -213,7 +210,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				removeOrderButton$tooltip,
 				TOOLTIP_REMOVE_ORDER
 				));
-		WidgetUtils.setActiveAndVisible(this.removeOrderButton, false);
 		
 		Button.ITooltip insertOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_INSERT_ORDER, mouseX, mouseY);
 		
@@ -231,7 +227,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				insertOrderButton$tooltip,
 				TOOLTIP_INSERT_ORDER
 				));
-		WidgetUtils.setActiveAndVisible(this.insertOrderButton, false);
 		
 		int topIndex = this.menu.getTopIndex();
 		
@@ -254,8 +249,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 					argSelWidget.setSelector(Optional.of(new BlockPosArgSelector(this.getPlayer(), optional.map(TaskScrollOrder::getPos).orElse(this.getPlayer().blockPosition()))));
 					break;
 				}
-				int jCopy = j; // please shut up functional interface
-				WidgetUtils.setActiveAndVisible(argSelWidget, optional.map(o -> jCopy != 1 || o.usesBlockPos()).orElse(false));
 				this.asWidgetArray[i][j] = this.addWidget(argSelWidget);
 			}
 		}
@@ -264,15 +257,12 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		for (int i = 0; i < this.riWidgetArray.length; i++) {
 			int y = this.topPos + LIST_WIDGET_START_Y + ROW_SPACING * i;
 			this.riWidgetArray[i] = this.addWidget(new RowIndexWidget(this.leftPos + ROW_INDEX_WIDGET_X, y, LIST_WIDGET_HEIGHT, LIST_WIDGET_HEIGHT, i));
-			WidgetUtils.setActiveAndVisible(this.riWidgetArray[i], this.menu.isValidSlotOffs(topIndex + i));
 		}
 		
 		for (int i = 0; i < this.fiWidgetArray.length; i++) {
 			int y = this.topPos + SLOT_ITEM_START_Y + ROW_SPACING * i;
 			int index = topIndex + i;
 			this.fiWidgetArray[i] = this.addWidget(new FilterItemWidget(this.leftPos + SLOT_ITEM_X, y, index, this.menu.getOrderList(), this.itemRenderer));
-			boolean activate = this.menu.getOrder(index).map(TaskScrollOrder::canUseFilter).orElse(false);
-			WidgetUtils.setActiveAndVisible(this.fiWidgetArray[i], activate);
 		}
 		
 		this.updateScreen();
@@ -378,7 +368,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			for (int i = 0; i < this.fiWidgetArray.length; i++) {
 				FilterItemWidget fiWidget = this.fiWidgetArray[i];
 				if (fiWidget.isHovered()) {
-					fiWidget.setItem(this.menu.getPlayer().inventory.getCarried());
+					fiWidget.setItem(this.menu.getCarriedItem());
 				}
 			}
 		}
@@ -466,7 +456,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	
 	private boolean pageIsValid() {
 		if (this.page < 0 || this.page > this.lastPage) {
-			IndustrialWarfare.LOGGER.warn("A TaskScrollScreen opened by " + this.getPlayer().getDisplayName().getString() + " was on page " + this.page + ". The page is not valid and will be switched to page 0 (displayed as 1). Look into it, will ya?");
+			IndustrialWarfare.LOGGER.warn("A TaskScrollScreen opened by the client was on page " + this.page + ". The page is not valid and will be switched to page 0 (displayed as 1). Look into it, will ya?");
 			this.page = 0;
 			return false;
 		}
@@ -595,7 +585,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 									case 1: type = "BlockPos"; break;
 									}
 									// good god this is a long warning message
-									IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened by player " + this.getPlayer().getDisplayName().getString() + " has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be " + type + ")");
+									IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be " + type + ")");
 								}
 							} else {
 								TaskScrollCommand orderCmd = order.getCmd();
@@ -603,12 +593,12 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 									if (selectedArg instanceof Byte) {
 										order.setArgFromSelectorAndIndex((ArgSelector<Byte>) optional.get(), widgetArgIndex);
 									} else {// An etude in long warning messages, part 2
-										IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened by player " + this.getPlayer().getDisplayName().getString() + " has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be Byte)");
+										IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be Byte)");
 									}
 								}
 							}
 						} else {
-							IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened by player " + this.getPlayer().getDisplayName().getString() + " does not have an ArgSelector present");
+							IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client does not have an ArgSelector present");
 						}
 					}
 				}
