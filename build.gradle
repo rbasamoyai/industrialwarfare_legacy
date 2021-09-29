@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '0.0.1'
+version = '0.0.3'
 group = 'rbasamoyai.industrialwarfare' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'industrialwarfare'
 
@@ -120,7 +120,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.2.5'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.6'
     
     //runtimeOnly fg.deobf("curse.maven:texturedump-319039:3312307") // Texture Dump
 
@@ -132,7 +132,7 @@ jar {
         attributes([
             "Specification-Title": "industrialwarfare",
             "Specification-Vendor": "rbasamoyai",
-            "Specification-Version": "0.0.1", // We are version 1 of ourselves
+            "Specification-Version": "0.0.3",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"rbasamoyai",
