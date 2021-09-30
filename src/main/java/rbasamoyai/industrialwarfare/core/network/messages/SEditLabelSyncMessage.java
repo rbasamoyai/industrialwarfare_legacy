@@ -4,6 +4,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
@@ -50,13 +51,18 @@ public class SEditLabelSyncMessage {
 			ServerPlayerEntity player = context.getSender();
 			ItemStack handItem = player.getItemInHand(msg.hand);
 			
-			ItemStack label = handItem.getCount() > 1 ? handItem.split(1) : handItem;
+			boolean split = handItem.getCount() > 1;
+			ItemStack label = split ? handItem.split(1) : handItem;
 			
 			LabelItem.getDataHandler(label).ifPresent(h -> {
 				h.setNumber(msg.num);
 				h.setUUID(msg.uuid);
 				h.cacheName(msg.name);
 			});
+			
+			if (split) {
+				if (!player.inventory.add(label)) InventoryHelper.dropItemStack(player.level, player.getX(), player.getY(), player.getZ(), label);
+			}
 		});
 		context.setPacketHandled(true);
 	}
