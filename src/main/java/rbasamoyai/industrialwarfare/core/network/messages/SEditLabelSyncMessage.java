@@ -50,7 +50,9 @@ public class SEditLabelSyncMessage {
 			ServerPlayerEntity player = context.getSender();
 			ItemStack handItem = player.getItemInHand(msg.hand);
 			
-			LabelItem.getDataHandler(handItem).ifPresent(h -> {
+			ItemStack label = handItem.getCount() > 1 ? handItem.split(1) : handItem;
+			
+			LabelItem.getDataHandler(label).ifPresent(h -> {
 				h.setNumber(msg.num);
 				h.setUUID(msg.uuid);
 				h.cacheName(msg.name);

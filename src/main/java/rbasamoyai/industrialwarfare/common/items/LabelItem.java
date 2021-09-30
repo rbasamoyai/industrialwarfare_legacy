@@ -85,7 +85,9 @@ public class LabelItem extends Item {
 	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
 		if (entity instanceof NPCEntity) {
 			if (!player.level.isClientSide && entity.isAlive()) {
-				getDataHandler(stack).ifPresent(h -> {
+				ItemStack label = stack.getCount() > 1 ? stack.split(1) : stack;
+				
+				getDataHandler(label).ifPresent(h -> {
 					h.setUUID(entity.getUUID());
 					h.cacheName(entity.getCustomName());
 				});
