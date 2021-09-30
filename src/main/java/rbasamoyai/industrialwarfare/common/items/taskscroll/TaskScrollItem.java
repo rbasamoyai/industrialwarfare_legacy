@@ -47,7 +47,7 @@ public class TaskScrollItem extends Item {
 	};
 	
 	public TaskScrollItem() {
-		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL));
+		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).stacksTo(1));
 	}
 	
 	@Override
