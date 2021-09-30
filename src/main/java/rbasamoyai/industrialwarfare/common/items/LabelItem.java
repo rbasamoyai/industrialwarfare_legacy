@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
@@ -85,12 +86,17 @@ public class LabelItem extends Item {
 	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
 		if (entity instanceof NPCEntity) {
 			if (!player.level.isClientSide && entity.isAlive()) {
-				ItemStack label = stack.getCount() > 1 ? stack.split(1) : stack;
+				boolean split = stack.getCount() > 1;
+				ItemStack label = split ? stack.split(1) : stack;
 				
 				getDataHandler(label).ifPresent(h -> {
 					h.setUUID(entity.getUUID());
 					h.cacheName(entity.getCustomName());
 				});
+				
+				if (split) {
+					if (!player.inventory.add(label)) InventoryHelper.dropItemStack(player.level, player.getX(), player.getY(), player.getZ(), label);
+				}
 			}
 			return ActionResultType.sidedSuccess(player.level.isClientSide);
 		}
