@@ -4,7 +4,7 @@ hey, if you notice that I used discord's image hosting for this, zip it, as I ca
 will probably put it on somewhere like imgur later on but for now deal with it :trol:
 --->
 
-A mod by rbasamoyai that's far from done I suppose.
+A *Minecraft* Forge mod by rbasamoyai that's far from done I suppose.
 
 The mod focuses on NPC workers that make munitions, weapons, and
 other stuff. You can then give these products to combat NPCs who
