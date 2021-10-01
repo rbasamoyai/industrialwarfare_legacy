@@ -12,6 +12,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
+import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
@@ -114,7 +115,8 @@ public class ItemInit {
 				new PartItem("screw"),
 				new RecipeItem(),
 				new TaskScrollItem().setRegistryName(IndustrialWarfare.MOD_ID, "task_scroll"),
-				new LabelItem()
+				new LabelItem(),
+				new ScheduleItem()
 		});
 	}
 	
