@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mojang.datafixers.util.Pair;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.util.ResourceLocation;
@@ -16,7 +18,7 @@ public class TextureUtils {
 	 * Based on <a href="https://forums.minecraftforge.net/topic/66634-solved-112113-get-color-from-texture/?do=findComment&comment=319893">this post</a>,
 	 * with some tweaks. 
 	 */
-	public static List<Integer> getColors(ResourceLocation loc, List<Integer[]> coords) {
+	public static List<Integer> getColors(ResourceLocation loc, List<Pair<Integer, Integer>> coords) {
 		InputStream is;
 		NativeImage image;
 		
@@ -31,7 +33,7 @@ public class TextureUtils {
 		return coords
 				.stream()
 				.map(c -> {
-					int i = image.getPixelRGBA(c[0], c[1]);
+					int i = image.getPixelRGBA(c.getFirst(), c.getSecond());
 					int alpha = i & 0xFF000000;
 					int red = (i & 0x000000FF) << 16;
 					int blue = i & 0x0000FF00;
