@@ -13,6 +13,7 @@ public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 	private static final long MINUTE_TICKS = 1200L;
 	
 	private List<Pair<Integer, Integer>> schedule = new ArrayList<>(7);
+	private int maxShifts = 6;
 	private int maxMinutes = 140;
 	
 	@Override
@@ -23,6 +24,16 @@ public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 	@Override
 	public int getMaxMinutes() {
 		return this.maxMinutes;
+	}
+	
+	@Override
+	public void setMaxShifts(int maxShifts) {
+		this.maxShifts = maxShifts;
+	}
+	
+	@Override
+	public int getMaxShifts() {
+		return this.maxShifts;
 	}
 
 	@Override
