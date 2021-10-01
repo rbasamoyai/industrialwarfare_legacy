@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -59,10 +60,10 @@ public class EditLabelScreen extends ContainerScreen<EditLabelContainer> {
 	private static final int BORDER_END_COLOR_X = 1;
 	private static final int FIELD_COLOR_X = 2;
 	private static final int COLORS_Y = 64;
-	private static final List<Integer[]> COLOR_COORDS = Arrays.asList(
-			new Integer[] {BORDER_START_COLOR_X, COLORS_Y},
-			new Integer[] {BORDER_END_COLOR_X, COLORS_Y},
-			new Integer[] {FIELD_COLOR_X, COLORS_Y}
+	private static final List<Pair<Integer, Integer>> COLOR_COORDS = Arrays.asList(
+			Pair.of(BORDER_START_COLOR_X, COLORS_Y),
+			Pair.of(BORDER_END_COLOR_X, COLORS_Y),
+			Pair.of(FIELD_COLOR_X, COLORS_Y)
 			);
 	
 	private ArgSelectorWidget numSelectWidget;
