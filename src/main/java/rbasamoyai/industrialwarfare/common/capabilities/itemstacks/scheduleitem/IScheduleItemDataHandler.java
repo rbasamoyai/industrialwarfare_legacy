@@ -9,6 +9,9 @@ public interface IScheduleItemDataHandler {
 	public void setMaxMinutes(int maxMinutes);
 	public int getMaxMinutes();
 	
+	public void setMaxShifts(int maxShifts);
+	public int getMaxShifts();
+	
 	public void setSchedule(List<Pair<Integer, Integer>> schedule);
 	public List<Pair<Integer, Integer>> getSchedule();
 	public boolean shouldWork(long gameTime);

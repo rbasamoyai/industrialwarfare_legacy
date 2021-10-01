@@ -38,6 +38,7 @@ public class ScheduleItem extends Item {
 	public static CompoundNBT defaultNBT() {
 		CompoundNBT tag = new CompoundNBT();
 		tag.putInt(ScheduleItemDataCapability.TAG_MAX_MINUTES, 140);
+		tag.putInt(ScheduleItemDataCapability.TAG_MAX_SHIFTS, 6);
 		tag.put(ScheduleItemDataCapability.TAG_SCHEDULE, new ListNBT());
 		return tag;
 	}

@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
 public class ScheduleItemDataCapability {
 
 	public static final String TAG_MAX_MINUTES = "maxMinutes";
+	public static final String TAG_MAX_SHIFTS = "maxShifts";
 	public static final String TAG_SCHEDULE = "schedule";
 	
 	@CapabilityInject(IScheduleItemDataHandler.class)
@@ -28,6 +29,7 @@ public class ScheduleItemDataCapability {
 		public INBT writeNBT(Capability<IScheduleItemDataHandler> capability, IScheduleItemDataHandler instance, Direction side) {
 			CompoundNBT tag = new CompoundNBT();
 			tag.putInt(TAG_MAX_MINUTES, instance.getMaxMinutes());
+			tag.putInt(TAG_SCHEDULE, instance.getMaxShifts());
 			tag.put(TAG_SCHEDULE, ScheduleUtils.toNBT(instance.getSchedule()));
 			return tag;
 		}
@@ -36,6 +38,7 @@ public class ScheduleItemDataCapability {
 		public void readNBT(Capability<IScheduleItemDataHandler> capability, IScheduleItemDataHandler instance, Direction side, INBT nbt) {
 			CompoundNBT tag = (CompoundNBT) nbt;
 			instance.setMaxMinutes(tag.getInt(TAG_MAX_MINUTES));
+			instance.setMaxShifts(tag.getInt(TAG_MAX_SHIFTS));
 			instance.setSchedule(ScheduleUtils.fromNBT(tag.getList(TAG_SCHEDULE, Constants.NBT.TAG_INT_ARRAY)));
 		}
 		
