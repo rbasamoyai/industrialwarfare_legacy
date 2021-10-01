@@ -29,7 +29,9 @@ can fight stuff.
 
 ### Currently working on (or not)
 * Basic NPC AI
-    * NPC ai 
+    * NPC schedules
+    * NPC task handling
+    * Base NPC tasks
 
 ---
 
