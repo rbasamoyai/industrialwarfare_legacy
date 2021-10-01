@@ -1,4 +1,6 @@
-![Industrial Warfare](https://media.discordapp.net/attachments/782230627843833899/892236145763684382/image0.png "Logo")
+![Industrial Warfare](https://media.discordapp.net/attachments/782230627843833899/892236145763684382/image0.png "Logo, not the best ok?")
+[//] # (hey, if you notice that I used discord's image hosting for this, zip it, as I can't be bothered to put this somewhere else, mmkay?)
+[//] # (will probably put it on somewhere like imgur later on but for now deal with it :trol:)
 
 A mod by rbasamoyai that's far from done I suppose.
 
@@ -20,8 +22,14 @@ can fight stuff.
     * NPC occupations
     * NPCs actually doing something
     * Combat NPCs
-* Generated structures
+* Generated structures and NPCs
 * Research trees
+* Some ores
+* Weapons
+
+### Currently working on (or not)
+* Basic NPC AI
+    * NPC ai 
 
 ---
 
