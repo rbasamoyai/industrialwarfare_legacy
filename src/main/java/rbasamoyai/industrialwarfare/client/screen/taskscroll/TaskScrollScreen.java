@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.button.Button;
@@ -110,10 +111,10 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private static final int BORDER_END_COLOR_X = 177;
 	private static final int FIELD_COLOR_X = 178;
 	private static final int COLORS_Y = 112;
-	private static final List<Integer[]> COLOR_COORDS = Arrays.asList(
-			new Integer[] {BORDER_START_COLOR_X, COLORS_Y},
-			new Integer[] {BORDER_END_COLOR_X, COLORS_Y},
-			new Integer[] {FIELD_COLOR_X, COLORS_Y}
+	private static final List<Pair<Integer, Integer>> COLOR_COORDS = Arrays.asList(
+			Pair.of(BORDER_START_COLOR_X, COLORS_Y),
+			Pair.of(BORDER_END_COLOR_X, COLORS_Y),
+			Pair.of(FIELD_COLOR_X, COLORS_Y)
 			);
 	
 	private static final int TEXT_COLOR = 4210752;
