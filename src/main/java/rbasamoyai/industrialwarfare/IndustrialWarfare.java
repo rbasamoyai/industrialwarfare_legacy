@@ -22,6 +22,7 @@ import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
+import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.CapabilityHandler;
@@ -79,10 +80,11 @@ public class IndustrialWarfare {
 	
 	@SubscribeEvent
 	public void clientSetup(FMLClientSetupEvent event) {
+		ScreenManager.register(ContainerInit.EDIT_LABEL, EditLabelScreen::new);
 		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION, NormalWorkstationScreen::new);
 		ScreenManager.register(ContainerInit.NPC_BASE, NPCBaseScreen::new);
+		ScreenManager.register(ContainerInit.SCHEDULE, EditScheduleScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL, TaskScrollScreen::new);
-		ScreenManager.register(ContainerInit.EDIT_LABEL, EditLabelScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF, TaskScrollShelfScreen::new);
 		
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.WORKER_NPC, NPCRenderer::new);

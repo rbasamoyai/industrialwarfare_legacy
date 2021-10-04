@@ -6,15 +6,13 @@ import java.util.List;
 import com.mojang.datafixers.util.Pair;
 
 import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
+import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
-
-	private static final long WEEK_TICKS = 168000L;
-	private static final long MINUTE_TICKS = 1200L;
 	
 	private List<Pair<Integer, Integer>> schedule = new ArrayList<>(7);
 	private int maxShifts = 6;
-	private int maxMinutes = 140;
+	private int maxMinutes = 70;
 	
 	@Override
 	public void setMaxMinutes(int maxMinutes) {
@@ -49,11 +47,8 @@ public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 
 	@Override
 	public boolean shouldWork(long gameTime) {
-		final int minuteOfTheWeek = (int)(gameTime % WEEK_TICKS / MINUTE_TICKS);
-		return schedule.stream()
-				.filter(shift -> shift.getFirst() <= minuteOfTheWeek && minuteOfTheWeek < shift.getSecond())
-				.findAny()
-				.isPresent();
+		final int minuteOfTheWeek = (int)(gameTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
+		return ScheduleUtils.inShift(this.schedule, minuteOfTheWeek);
 	}
 
 }

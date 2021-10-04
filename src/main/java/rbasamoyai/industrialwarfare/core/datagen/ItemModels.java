@@ -57,6 +57,7 @@ public class ItemModels extends ItemModelProvider {
 		simpleBuilder("essence_woodworker");
 		
 		simpleBuilder("task_scroll");
+		simpleBuilder("schedule");
 		simpleBuilder("label");
 		
 		// Smokeless ammo uses same texture as metal casing ammo, so simpleBuilder() is not applicable here

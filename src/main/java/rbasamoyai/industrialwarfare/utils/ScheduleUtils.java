@@ -25,6 +25,13 @@ public class ScheduleUtils {
 				.orElse(0);
 	}
 	
+	public static boolean inShift(List<Pair<Integer, Integer>> schedule, int minute) {
+		return schedule.stream()
+				.filter(shift -> shift.getFirst() <= minute && minute < shift.getSecond())
+				.findAny()
+				.isPresent();
+	}
+	
 	public static ListNBT toNBT(List<Pair<Integer, Integer>> schedule) {
 		ListNBT tag = new ListNBT();
 		schedule.forEach(shift -> tag.add(new IntArrayNBT(new int[] {shift.getFirst(), shift.getSecond()})));

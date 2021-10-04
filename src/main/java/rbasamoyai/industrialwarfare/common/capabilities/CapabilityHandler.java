@@ -15,6 +15,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.LabelIt
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.PartItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem.RecipeItemDataCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.ScheduleItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.TaskScrollDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.WorkstationDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.WorkstationDataProvider;
@@ -33,6 +34,7 @@ public class CapabilityHandler {
 		RecipeItemDataCapability.register();
 		TaskScrollDataCapability.register();
 		LabelItemDataCapability.register();
+		ScheduleItemDataCapability.register();
 	}
 	
 	public void addCapabilityListeners() {

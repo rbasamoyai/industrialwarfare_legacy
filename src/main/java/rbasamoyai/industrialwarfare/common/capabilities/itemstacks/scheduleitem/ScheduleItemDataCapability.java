@@ -29,7 +29,7 @@ public class ScheduleItemDataCapability {
 		public INBT writeNBT(Capability<IScheduleItemDataHandler> capability, IScheduleItemDataHandler instance, Direction side) {
 			CompoundNBT tag = new CompoundNBT();
 			tag.putInt(TAG_MAX_MINUTES, instance.getMaxMinutes());
-			tag.putInt(TAG_SCHEDULE, instance.getMaxShifts());
+			tag.putInt(TAG_MAX_SHIFTS, instance.getMaxShifts());
 			tag.put(TAG_SCHEDULE, ScheduleUtils.toNBT(instance.getSchedule()));
 			return tag;
 		}

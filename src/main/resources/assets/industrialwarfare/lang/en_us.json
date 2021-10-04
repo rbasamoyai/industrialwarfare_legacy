@@ -44,6 +44,7 @@
 	
 	"item.industrialwarfare.task_scroll":	"Task Scroll",
 	"item.industrialwarfare.label":			"Label",
+	"item.industrialwarfare.schedule":		"Schedule",
 	
 	"block.industrialwarfare.armorer_workstation":		"Armory Table",
 	"block.industrialwarfare.assembler_workstation":	"Assembly Table",
@@ -124,6 +125,22 @@
 	
 	"gui.industrialwarfare.npc.main_page":	"NPC Info and Equipment",
 	"gui.industrialwarfare.npc.inventory":	"NPC Inventory",
+	
+	"gui.industrialwarfare.edit_schedule.title":		"Edit Schedule",
+	"gui.industrialwarfare.edit_schedule.info":			"Info",
+	"gui.industrialwarfare.edit_schedule.shift":		"Shift",
+	"gui.industrialwarfare.edit_schedule.time":			"Time",
+	"gui.industrialwarfare.edit_schedule.start_time":	"Start time",
+	"gui.industrialwarfare.edit_schedule.end_time":		"End time",
+	"gui.industrialwarfare.edit_schedule.shift_length":	"Shift length",
+	"gui.industrialwarfare.edit_schedule.minutes_allotted":	"Allotted minutes",
+	"gui.industrialwarfare.edit_schedule.shifts_allotted":	"Allotted shifts",
+	"gui.industrialwarfare.edit_schedule.time_format1":	"Day %1$s, %2$s:00",
+	"gui.industrialwarfare.edit_schedule.time_format2":	"%1$s minutes",
+	"gui.industrialwarfare.edit_schedule.prompt":		"Hover over the schedule bar to edit the schedule.",
+	
+	"gui.industrialwarfare.edit_schedule.tooltip.add_shift":	"Add shift",
+	"gui.industrialwarfare.edit_schedule.tooltip.remove_shift":	"Remove shift",
 	
 	"tooltip.industrialwarfare.task_scroll.label":	"Label",
 	"tooltip.industrialwarfare.task_scroll.blank_label": "Blank label",
