@@ -83,7 +83,7 @@ public class EditScheduleContainer extends Container {
 		int minutes = schedule.stream()
 				.map(shift -> shift.getSecond() - shift.getFirst())
 				.reduce(0, Integer::sum);
-		return this.schedule.size() + 1 <= this.getMaxShifts() && minutes <= this.getMaxMinutes();
+		return this.schedule.size() + 1 <= this.getMaxShifts() && minutes < this.getMaxMinutes();
 	}
 	
 	public List<Pair<Integer, Integer>> getSchedule() {
