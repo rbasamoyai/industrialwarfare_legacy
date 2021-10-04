@@ -5,7 +5,7 @@ import java.util.List;
 import com.mojang.datafixers.util.Pair;
 
 public interface IScheduleItemDataHandler {
-
+	
 	public void setMaxMinutes(int maxMinutes);
 	public int getMaxMinutes();
 	

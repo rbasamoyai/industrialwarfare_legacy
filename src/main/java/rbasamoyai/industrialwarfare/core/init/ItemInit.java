@@ -69,8 +69,8 @@ public class ItemInit {
 	public static final Item RECIPE_MANUAL = null;
 	
 	public static final Item TASK_SCROLL = null;
-	
 	public static final Item LABEL = null;
+	public static final Item SCHEDULE = null;
 	
 	@SubscribeEvent
 	public static void registerItems(RegistryEvent.Register<Item> event) {
