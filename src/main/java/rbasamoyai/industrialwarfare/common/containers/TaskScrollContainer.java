@@ -215,10 +215,5 @@ public class TaskScrollContainer extends Container {
 	public boolean stillValid(PlayerEntity player) {
 		return true;
 	}
-	
-	@Override
-	public void broadcastChanges() {
-		super.broadcastChanges();
-	}
 
 }

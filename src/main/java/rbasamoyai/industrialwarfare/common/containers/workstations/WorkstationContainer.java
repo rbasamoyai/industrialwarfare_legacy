@@ -56,10 +56,5 @@ public class WorkstationContainer extends Container {
 	public boolean isViewerDifferentFromWorker() {
 		return this.data.get(6) > 0;
 	}
-	
-	@Override
-	public void broadcastChanges() {
-		super.broadcastChanges();
-	}
 
 }

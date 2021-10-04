@@ -30,7 +30,7 @@ public class NPCContainerDataSync implements IIntArray {
 						&& !npc.isDeadOrDying() ? 1 : 0;
 			case 2:
 				return this.npc.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY)
-						.map(handler -> handler.getCanWearEquipment() ? 1 : 0)
+						.map(h -> h.canWearEquipment() ? 1 : 0)
 						.orElse(0);
 			default:
 				return 0;
@@ -41,8 +41,8 @@ public class NPCContainerDataSync implements IIntArray {
 	public void set(int index, int value) {
 		switch (index) {
 		case 2:
-			this.npc.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY).ifPresent(handler -> {
-				handler.setCanWearEquipment(value > 0);
+			this.npc.getDataHandler().ifPresent(h -> {
+				h.setCanWearEquipment(value > 0);
 			});
 			break;
 		default:
