@@ -120,7 +120,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.5-36.2.6'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.8'
     
     //runtimeOnly fg.deobf("curse.maven:texturedump-319039:3312307") // Texture Dump
 

@@ -18,8 +18,6 @@ Current TODO:
 		- Add Worker NPCS
 			- Add worker AI
 				- Add worker task handler
-				- Add worker schedule
-					- Add schedule GUI
 				- Add worker schedule handler
 				- Add work tasks
 					- Add wait task

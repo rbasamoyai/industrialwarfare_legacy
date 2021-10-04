@@ -95,6 +95,7 @@ public class IndustrialWarfare {
 	@SubscribeEvent
 	public void addTexturesToStitcher(TextureStitchEvent.Pre event) {
 		event.addSprite(new ResourceLocation(MOD_ID, "item/task_icon"));
+		event.addSprite(new ResourceLocation(MOD_ID, "item/schedule_icon"));
 		event.addSprite(new ResourceLocation(MOD_ID, "item/label_icon"));
 		
 		event.addSprite(new ResourceLocation(MOD_ID, "entity/task_scroll"));
