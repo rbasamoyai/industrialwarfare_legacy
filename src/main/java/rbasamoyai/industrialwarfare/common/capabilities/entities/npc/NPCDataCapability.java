@@ -30,7 +30,7 @@ public class NPCDataCapability {
 		@Override
 		public INBT writeNBT(Capability<INPCDataHandler> capability, INPCDataHandler instance, Direction side) {
 			CompoundNBT tag = new CompoundNBT();
-			tag.putBoolean(TAG_CAN_WEAR_EQUIPMENT, instance.getCanWearEquipment());
+			tag.putBoolean(TAG_CAN_WEAR_EQUIPMENT, instance.canWearEquipment());
 			tag.putString(TAG_OCCUPATION, instance.getOccupation());
 			tag.putUUID(TAG_FIRST_OWNER, instance.getFirstOwnerUUID());
 			tag.putUUID(TAG_CURRENT_OWNER, instance.getOwnerUUID());

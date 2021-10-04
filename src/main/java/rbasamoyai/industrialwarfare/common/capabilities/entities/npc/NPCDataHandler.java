@@ -45,7 +45,7 @@ public class NPCDataHandler implements INPCDataHandler {
 	}
 
 	@Override
-	public boolean getCanWearEquipment() {
+	public boolean canWearEquipment() {
 		return this.canWearEquipment;
 	}
 

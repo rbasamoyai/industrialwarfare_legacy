@@ -14,6 +14,6 @@ public interface INPCDataHandler {
 	public String getOccupation();
 	
 	public void setCanWearEquipment(boolean canWearEquipment);
-	public boolean getCanWearEquipment();
+	public boolean canWearEquipment();
 	
 }
