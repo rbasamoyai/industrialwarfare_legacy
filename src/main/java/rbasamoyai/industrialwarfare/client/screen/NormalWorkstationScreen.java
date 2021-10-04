@@ -106,7 +106,7 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 		super.renderLabels(stack, mouseX, mouseY);
 		
 		if (this.menu.hasWorker() && this.menu.isViewerDifferentFromWorker()) {
-			fill(stack, RECIPE_SLOT_X, RECIPE_SLOT_Y, RECIPE_SLOT_X + 16, RECIPE_SLOT_Y + 16, SHADE_COLOR);
+			this.fillGradient(stack, RECIPE_SLOT_X, RECIPE_SLOT_Y, RECIPE_SLOT_X + 16, RECIPE_SLOT_Y + 16, SHADE_COLOR, SHADE_COLOR);
 		}
 	}
 	

@@ -19,7 +19,7 @@ public class WorkerNPCEntity extends NPCEntity {
 	public Block workstation;
 	
 	public WorkerNPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
-		super(type, worldIn, "jobless", "Unnamed NPC", null, INITIAL_INVENTORY_COUNT, true);
+		super(type, worldIn, "jobless", "Unnamed NPC", null, INITIAL_INVENTORY_COUNT, false);
 	}
 	
 	public WorkerNPCEntity(World worldIn, String occupation, String name, @Nullable PlayerEntity player, int initialInventoryCount, boolean armorSlotsEnabled, Block workstation) {

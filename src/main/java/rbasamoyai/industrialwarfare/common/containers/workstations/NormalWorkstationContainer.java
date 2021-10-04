@@ -118,9 +118,4 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 		return slotCopy;
 	}
 	
-	@Override
-	public void broadcastChanges() {
-		super.broadcastChanges();
-	}
-	
 }

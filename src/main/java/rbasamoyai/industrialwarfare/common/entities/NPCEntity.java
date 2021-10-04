@@ -75,15 +75,15 @@ public class NPCEntity extends CreatureEntity {
 		// TODO: Add code to default to "jobless" if not in pool of occupations
 		this.setCustomName(new StringTextComponent(name));
 		
-		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
-		this.equipmentItemHandler = new EquipmentItemHandler(this, canWearEquipment);
-		
 		this.getDataHandler().ifPresent(h -> {
 			h.setCanWearEquipment(canWearEquipment);
 			h.setOccupation(occupation);
 			h.setFirstOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
 			h.setOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
 		});
+		
+		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
+		this.equipmentItemHandler = new EquipmentItemHandler(this);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -180,10 +180,10 @@ public class NPCEntity extends CreatureEntity {
 				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(containerProvider, this.getCustomName());
 				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
 					buf.writeVarInt(this.inventoryItemHandler.getSlots());
-					buf.writeBoolean(this.getDataHandler().map(INPCDataHandler::getCanWearEquipment).orElse(false));
+					buf.writeBoolean(this.getDataHandler().map(INPCDataHandler::canWearEquipment).orElse(false));
 					// TODO: implement professions and write job id
 				});
-				return ActionResultType.CONSUME;
+				return ActionResultType.SUCCESS;
 			}
 			return super.mobInteract(player, handIn);
 		}
@@ -216,7 +216,7 @@ public class NPCEntity extends CreatureEntity {
 		super.readAdditionalSaveData(tag);
 		
 		this.equipmentItemHandler.deserializeNBT(tag);
-		this.inventoryItemHandler.deserializeNBT(tag);
+		this.inventoryItemHandler.deserializeNBT(tag.getCompound(TAG_INVENTORY));
 	}
 	
 	@Override
