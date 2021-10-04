@@ -13,6 +13,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.SNPCBaseContainerActivate;
 import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
@@ -56,8 +58,8 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	private static final int SHADE_COLOR = 0x40000000;
 	private static final int TEXT_COLOR = 0xFFFFFFFF;
 	
-	private static final int MAIN_PAGE = 0;
-	private static final int INVENTORY_PAGE = 1;
+	public static final int MAIN_PAGE = 0;
+	public static final int INVENTORY_PAGE = 1;
 	private static final int LAST_PAGE = INVENTORY_PAGE;
 	
 	private ITextComponent pageTitle = NPC_MAIN_PAGE_TEXT;
@@ -146,7 +148,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		this.font.drawShadow(stack, this.pageTitle, (this.imageWidth - this.font.width(this.pageTitle)) / 2, PAGE_TITLE_Y, TEXT_COLOR);
 		
 		if (!this.menu.areArmorSlotsEnabled()) {
-			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT; i++) {
+			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT - 1; i++) {
 				int y = NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
 				this.fillGradient(stack, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X, y, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X + 16, y + 16, SHADE_COLOR, SHADE_COLOR);
 			}
@@ -185,7 +187,8 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		WidgetUtils.setActiveAndVisible(this.nextPageButton, this.page < LAST_PAGE);
 		
 		this.menu.setNPCEquipmentSlotsActive(this.page == MAIN_PAGE);
-		this.menu.setNPCInventorySlotsActive(this.page == INVENTORY_PAGE);		
+		this.menu.setNPCInventorySlotsActive(this.page == INVENTORY_PAGE);
+		IWNetwork.CHANNEL.sendToServer(new SNPCBaseContainerActivate(this.page));
 	}
 	
 	private boolean pageIsValid() {

@@ -9,7 +9,10 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
+import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
 /**
  * Equipment Item handler. Not meant to be serialized/deserialized, as it only is meant to provide
@@ -18,7 +21,6 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 
 public class EquipmentItemHandler extends ItemStackHandler {
 	
-	private static final String TAG_ARMOR_SLOTS_ENABLED = "armorSlotsEnabled";
 	private static final String TAG_TASK_ITEM = "taskItem";
 	private static final String TAG_SCHEDULE_ITEM = "scheduleItem";
 	
@@ -59,30 +61,33 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		return map;
 	}
 	
-	private boolean armorSlotsEnabled;
 	private NPCEntity entity;
 	
-	public EquipmentItemHandler(NPCEntity entity, boolean armorSlotsEnabled) {
+	public EquipmentItemHandler(NPCEntity entity) {
 		super(8);
 		this.entity = entity;
-		this.armorSlotsEnabled = armorSlotsEnabled;
+	}
+	
+	@Override
+	public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+		return super.insertItem(slot, stack, simulate);
 	}
 	
 	@Override
 	public boolean isItemValid(int slot, ItemStack stack) {
-		return isItemValid(slot, stack, this.armorSlotsEnabled);
+		return isItemValid(slot, stack, this.entity.getDataHandler().map(INPCDataHandler::canWearEquipment).orElse(false));
 	}
 	
 	@Override
 	protected void onContentsChanged(int slot) {
-		this.entity.setItemSlot(getSlotType(slot), this.getStackInSlot(slot));
+		if (slot != TASK_ITEM_INDEX && slot != SCHEDULE_ITEM_INDEX)
+			this.entity.setItemSlot(getSlotType(slot), this.getStackInSlot(slot));
 	}
 	
 	@Override
 	public CompoundNBT serializeNBT() {
 		CompoundNBT tag = new CompoundNBT();
 		
-		tag.putBoolean(TAG_ARMOR_SLOTS_ENABLED, this.armorSlotsEnabled);
 		tag.put(TAG_TASK_ITEM, this.getStackInSlot(TASK_ITEM_INDEX).serializeNBT());
 		tag.put(TAG_SCHEDULE_ITEM, this.getStackInSlot(SCHEDULE_ITEM_INDEX).serializeNBT());
 		
@@ -91,10 +96,13 @@ public class EquipmentItemHandler extends ItemStackHandler {
 	
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
-		this.armorSlotsEnabled = nbt.contains(TAG_ARMOR_SLOTS_ENABLED) ? nbt.getBoolean(TAG_ARMOR_SLOTS_ENABLED) : false;
+		CompoundNBT workstuffsTag = nbt.contains(NPCEntity.TAG_WORKSTUFFS) ? nbt.getCompound(NPCEntity.TAG_WORKSTUFFS) : new CompoundNBT();
 		
-		this.setStackInSlot(TASK_ITEM_INDEX, nbt.contains(TAG_TASK_ITEM) ? ItemStack.of(nbt.getCompound(TAG_TASK_ITEM)) : ItemStack.EMPTY);
-		this.setStackInSlot(SCHEDULE_ITEM_INDEX, nbt.contains(TAG_SCHEDULE_ITEM) ? ItemStack.of(nbt.getCompound(TAG_SCHEDULE_ITEM)) : ItemStack.EMPTY);
+		ItemStack taskItem = ItemStack.of(workstuffsTag.getCompound(TAG_TASK_ITEM));
+		ItemStack scheduleItem = ItemStack.of(workstuffsTag.getCompound(TAG_SCHEDULE_ITEM));
+		
+		this.setStackInSlot(TASK_ITEM_INDEX, taskItem);
+		this.setStackInSlot(SCHEDULE_ITEM_INDEX, scheduleItem);
 		
 		ListNBT armorItems = nbt.getList("ArmorItems", Constants.NBT.TAG_COMPOUND);
 		for (int i = 0; i < armorItems.size(); i++) {
@@ -107,10 +115,6 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		}
 	}
 	
-	public void setArmorSlotsEnabled(boolean armorSlotsEnabled) {
-		this.armorSlotsEnabled = armorSlotsEnabled;
-	}
-	
 	public static EquipmentSlotType getSlotType(int slot) {
 		EquipmentSlotType result = EQUIPMENT_TYPE_SLOT_MAP.get(slot);
 		return result == null ? EquipmentSlotType.MAINHAND : result;
@@ -121,8 +125,12 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		return result == null ? MAINHAND_INDEX : result.intValue();
 	}
 	
-	public static boolean isItemValid(int slot, ItemStack stack, boolean enabled) {
-		return getSlotType(slot).getType() != EquipmentSlotType.Group.ARMOR || (enabled && NPCEntity.getEquipmentSlotForItem(stack) == getSlotType(slot));
+	public static boolean isItemValid(int slot, ItemStack stack, boolean armorSlotsEnabled) {
+		switch (slot) {
+		case TASK_ITEM_INDEX: return stack.getItem() instanceof TaskScrollItem;
+		case SCHEDULE_ITEM_INDEX: return stack.getItem() == ItemInit.SCHEDULE;
+		default: return getSlotType(slot).getType() != EquipmentSlotType.Group.ARMOR || armorSlotsEnabled && NPCEntity.getEquipmentSlotForItem(stack) == getSlotType(slot);
+		}
 	}
 	
 }

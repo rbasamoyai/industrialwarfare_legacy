@@ -26,6 +26,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.itemhandlers.ToggleableSlotItemHandler;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
+import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
 /*
  * Base NPC container class. Interfaces with the task slot and the inventory.
@@ -39,7 +40,7 @@ public class NPCContainer extends Container {
 	private static final int SLOT_SPACING = 18;
 	
 	private static final int PLAYER_INVENTORY_START_X = 8;
-	private static final int PLAYER_INVENTORY_START_Y = 153;
+	private static final int PLAYER_INVENTORY_START_Y = 154;
 	private static final int PLAYER_INVENTORY_ROWS = 3;
 	private static final int PLAYER_INVENTORY_COLUMNS = 9;
 	private static final int PLAYER_HOTBAR_SLOT_Y = 212;
@@ -87,7 +88,12 @@ public class NPCContainer extends Container {
 	public static NPCContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
 		int npcSlots = buf.readVarInt();
 		boolean armorSlotsEnabled = buf.readBoolean();
-		return new NPCContainer(ContainerInit.NPC_BASE, windowId, playerInv, new DummyEquipmentItemHandler(armorSlotsEnabled), new ItemStackHandler(npcSlots), new IntArray(3), Optional.empty());
+		
+		IIntArray data = new IntArray(3);
+		data.set(0, npcSlots);
+		data.set(2, armorSlotsEnabled ? 1 : 0);
+		
+		return new NPCContainer(ContainerInit.NPC_BASE, windowId, playerInv, new DummyEquipmentItemHandler(data), new ItemStackHandler(npcSlots), data, Optional.empty());
 	}
 	
 	public static IContainerProvider getServerContainerProvider(NPCEntity entity) {
@@ -189,7 +195,13 @@ public class NPCContainer extends Container {
 					}
 				}
 				
-				// TODO: Quick move to schedule slot
+				if (slotCopy.getItem() == ItemInit.SCHEDULE) {
+					if (this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 2, false)) {
+						// TODO: Update entity if this happens
+					} else {
+						return ItemStack.EMPTY;
+					}
+				}
 				
 				if (this.moveItemStackTo(slotStack, NPC_INVENTORY_START_INDEX, this.npcInventoryEndIndex, false)) {
 					
@@ -199,6 +211,8 @@ public class NPCContainer extends Container {
 			} else { // Move stack from NPC to player
 				if (slotCopy.getItem() instanceof TaskScrollItem) {
 					// TODO: Update entity tasks if this happens
+				} else if (slotCopy.getItem() == ItemInit.SCHEDULE) {
+					// TODO: Update entity schedule if this happens
 				}
 				
 				if (!this.moveItemStackTo(slotStack, PLAYER_INVENTORY_SLOTS_START_INDEX, NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX, true)) {
@@ -231,7 +245,9 @@ public class NPCContainer extends Container {
 	}
 	
 	public void setNPCEquipmentSlotsActive(boolean active) {
-		this.npcEquipmentSlots.forEach(s -> s.setActive(active));
+		this.npcEquipmentSlots.forEach(s -> {
+			s.setActive(active);
+		});
 	}
 	
 	public void setNPCInventorySlotsActive(boolean active) {
