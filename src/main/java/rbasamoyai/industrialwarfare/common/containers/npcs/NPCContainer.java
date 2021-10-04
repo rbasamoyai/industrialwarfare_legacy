@@ -34,6 +34,7 @@ import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 public class NPCContainer extends Container {
 	
 	private static final Pair<ResourceLocation, ResourceLocation> TASK_ICON = Pair.of(PlayerContainer.BLOCK_ATLAS, new ResourceLocation(IndustrialWarfare.MOD_ID, "item/task_icon"));
+	private static final Pair<ResourceLocation, ResourceLocation> SCHEDULE_ICON = Pair.of(PlayerContainer.BLOCK_ATLAS, new ResourceLocation(IndustrialWarfare.MOD_ID, "item/schedule_icon"));
 	
 	private static final int SLOT_SPACING = 18;
 	
@@ -141,7 +142,7 @@ public class NPCContainer extends Container {
 		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.SCHEDULE_ITEM_INDEX, NPC_EQUIPMENT_SLOTS_RIGHT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y + SLOT_SPACING, true) {
 			@Override
 			public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
-				return super.getNoItemIcon();
+				return SCHEDULE_ICON;
 			}
 		}));
 		

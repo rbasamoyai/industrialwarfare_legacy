@@ -94,43 +94,40 @@ public class TaskScrollItem extends Item {
 	@Override
 	public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
 		ItemStack handItem = player.getItemInHand(hand);
-		if (!world.isClientSide) {
-			if (player instanceof ServerPlayerEntity && handItem.getItem() instanceof TaskScrollItem) {
-				LazyOptional<ITaskScrollDataHandler> optional = getDataHandler(handItem);
+		if (!world.isClientSide && player instanceof ServerPlayerEntity) {
+			LazyOptional<ITaskScrollDataHandler> optional = getDataHandler(handItem);
+			
+			int stackIndex = player.inventory.selected;
+			int maxOrderCount = optional.map(ITaskScrollDataHandler::getMaxListSize).orElse(0);
+			
+			List<TaskScrollOrder> orderList = optional.map(ITaskScrollDataHandler::getList).orElse(new LinkedList<>());
+			
+			ItemStack labelItem = optional.map(ITaskScrollDataHandler::getLabel).orElse(ItemStack.EMPTY);
+			
+			IContainerProvider provider = TaskScrollContainer.getServerContainerProvider(handItem, this.getValidCommands(), stackIndex, hand);
+			INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, TITLE);
+			
+			NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
+				buf
+						.writeVarInt(stackIndex)
+						.writeVarInt(maxOrderCount)
+						.writeVarInt(this.getValidCommands().size());
 				
-				int stackIndex = player.inventory.selected;
-				int maxOrderCount = optional.map(ITaskScrollDataHandler::getMaxListSize).orElse(0);
+				this.getValidCommands().forEach(cmd -> buf.writeResourceLocation(cmd.getRegistryName()));
+				buf.writeBoolean(hand == Hand.MAIN_HAND);
 				
-				List<TaskScrollOrder> orderList = optional.map(ITaskScrollDataHandler::getList).orElse(new LinkedList<>());
-				
-				ItemStack labelItem = optional.map(ITaskScrollDataHandler::getLabel).orElse(ItemStack.EMPTY);
-				
-				IContainerProvider provider = TaskScrollContainer.getServerContainerProvider(handItem, this.getValidCommands(), stackIndex, hand);
-				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, TITLE);
-				
-				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
-					buf
-							.writeVarInt(stackIndex)
-							.writeVarInt(maxOrderCount)
-							.writeVarInt(this.getValidCommands().size());
-					
-					this.getValidCommands().forEach(cmd -> buf.writeResourceLocation(cmd.getRegistryName()));
-					buf.writeBoolean(hand == Hand.MAIN_HAND);
-					
-					buf.writeVarInt(orderList.size());
-					orderList.forEach(o -> {
-						buf.writeResourceLocation(o.getCmd().getRegistryName());
-						buf.writeBlockPos(o.getPos());
-						buf.writeItem(o.getFilter());
-						buf.writeByteArray(ArgUtils.unbox(o.getArgs()));
-					});
-					
-					buf.writeItem(labelItem);
+				buf.writeVarInt(orderList.size());
+				orderList.forEach(o -> {
+					buf.writeResourceLocation(o.getCmd().getRegistryName());
+					buf.writeBlockPos(o.getPos());
+					buf.writeItem(o.getFilter());
+					buf.writeByteArray(ArgUtils.unbox(o.getArgs()));
 				});
-				return ActionResult.success(handItem);
-			}
+				
+				buf.writeItem(labelItem);
+			});
 		}
-		return ActionResult.pass(handItem);
+		return ActionResult.sidedSuccess(handItem, world.isClientSide);
 	}
 	
 	@Override

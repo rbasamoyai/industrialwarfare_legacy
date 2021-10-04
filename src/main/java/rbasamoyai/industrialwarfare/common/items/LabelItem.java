@@ -106,7 +106,7 @@ public class LabelItem extends Item {
 	@Override
 	public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
 		ItemStack handItem = player.getItemInHand(hand);
-		if (!player.level.isClientSide && player instanceof ServerPlayerEntity) {
+		if (!world.isClientSide && player instanceof ServerPlayerEntity) {
 			LazyOptional<ILabelItemDataHandler> optional = getDataHandler(handItem);
 			
 			UUID labelUUID = optional.map(ILabelItemDataHandler::getUUID).orElseGet(() -> new UUID(0L, 0L));
@@ -123,10 +123,8 @@ public class LabelItem extends Item {
 						.writeUtf(ITextComponent.Serializer.toJson(labelCachedName))
 						.writeByte(labelNum);
 			});
-			
-			return ActionResult.success(handItem);
 		}
-		return ActionResult.pass(handItem);
+		return ActionResult.sidedSuccess(handItem, world.isClientSide);
 	}
 	
 	@Override

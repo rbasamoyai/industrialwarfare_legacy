@@ -143,7 +143,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	@Override
 	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
 		super.renderLabels(stack, mouseX, mouseY);
-		drawCenteredString(stack, this.font, this.pageTitle, this.imageWidth / 2, PAGE_TITLE_Y, TEXT_COLOR);
+		this.font.drawShadow(stack, this.pageTitle, (this.imageWidth - this.font.width(this.pageTitle)) / 2, PAGE_TITLE_Y, TEXT_COLOR);
 		
 		if (!this.menu.areArmorSlotsEnabled()) {
 			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT; i++) {
