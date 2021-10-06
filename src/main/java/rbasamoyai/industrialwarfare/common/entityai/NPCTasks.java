@@ -14,11 +14,19 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 public class NPCTasks {
 
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getCorePackage() {
-		return ImmutableList.of(Pair.of(1, new WalkTowardsPosTask(MemoryModuleType.MEETING_POINT, 2.5f, 1, 100)), Pair.of(1, new WalkToTargetTask()));
+		return ImmutableList.of(Pair.of(0, new WalkToTargetTask()));
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getIdlePackage() {
-		return ImmutableList.of(Pair.of(1, new WalkTowardsPosTask(MemoryModuleType.MEETING_POINT, 2.5f, 1, 100)), Pair.of(2, new LookTask(45, 90)), Pair.of(2, new WalkTowardsLookTargetTask(2.5f, 2)));
+		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.MEETING_POINT, 2.5f, 1, 100)), Pair.of(2, new LookTask(45, 90)), Pair.of(2, new WalkTowardsLookTargetTask(2.5f, 2)));
+	}
+	
+	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
+		return ImmutableList.of(Pair.of(0, new GetTaskScrollTask(MemoryModuleType.JOB_SITE, 3f, 1, 100)));
+	}
+	
+	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {
+		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.HOME, 2.5f, 1, 100)));
 	}
 	
 }

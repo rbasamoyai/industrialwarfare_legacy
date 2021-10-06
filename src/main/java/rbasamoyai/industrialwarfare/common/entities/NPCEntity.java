@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -34,6 +35,8 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -43,10 +46,16 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
+import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 /*
  * Base NPC entity class for rbasamoyai's Industrial Warfare.
@@ -54,8 +63,17 @@ import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
 public class NPCEntity extends CreatureEntity {
 	
-	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(MemoryModuleType.MEETING_POINT, MemoryModuleType.PATH, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
-	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_PLAYERS);
+	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+			MemoryModuleType.HOME,
+			MemoryModuleType.JOB_SITE,
+			MemoryModuleType.MEETING_POINT,
+			MemoryModuleType.PATH,
+			MemoryModuleType.WALK_TARGET,
+			MemoryModuleTypeInit.CANT_INTERFACE,
+			MemoryModuleTypeInit.WORKING
+			);
+	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_PLAYERS, SensorType.NEAREST_BED);
 	
 	public static final String TAG_WORKSTUFFS = "workstuffs";
 	private static final String TAG_INVENTORY = "items";
@@ -154,14 +172,41 @@ public class NPCEntity extends CreatureEntity {
 	private void registerBrainGoals(Brain<NPCEntity> brain) {
 		brain.addActivity(Activity.CORE, NPCTasks.getCorePackage());
 		brain.addActivity(Activity.IDLE, NPCTasks.getIdlePackage());
+		brain.addActivity(Activity.WORK, NPCTasks.getWorkPackage());
+		brain.addActivity(Activity.REST, NPCTasks.getRestPackage());
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
 		brain.setActiveActivityIfPossible(Activity.IDLE);
+		
+		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
+		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
 	
 	@Override
 	protected void customServerAiStep() {
-		this.getBrain().tick((ServerWorld) this.level, this);
+		Brain<NPCEntity> brain = this.getBrain();
+		brain.tick((ServerWorld) this.level, this);
+		
+		ItemStack taskScrollItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
+		ItemStack scheduleItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
+		
+		LazyOptional<ITaskScrollDataHandler> taskOptional = TaskScrollItem.getDataHandler(taskScrollItem);
+		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
+		
+		long dayTime = this.level.getDayTime() + TimeUtils.TIME_OFFSET;
+		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
+		
+		Optional<Activity> currentActivityOptional = brain.getActiveNonCoreActivity();
+		
+		boolean isWorking = currentActivityOptional.map(a -> a.equals(Activity.WORK)).orElse(false);
+		// 2 added if not working as the NPCs will go to their workplace before actually working
+		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
+		
+		if (shouldWork && !isWorking) {
+			brain.setActiveActivityIfPossible(Activity.WORK);
+		} else if (!shouldWork && isWorking) { // TODO: Add energy and track it
+			brain.setActiveActivityIfPossible(Activity.REST);
+		}
 		super.customServerAiStep();
 	}
 	

@@ -14,6 +14,6 @@ public interface IScheduleItemDataHandler {
 	
 	public void setSchedule(List<Pair<Integer, Integer>> schedule);
 	public List<Pair<Integer, Integer>> getSchedule();
-	public boolean shouldWork(long gameTime);
+	public boolean shouldWork(int minuteOfTheWeek);
 	
 }

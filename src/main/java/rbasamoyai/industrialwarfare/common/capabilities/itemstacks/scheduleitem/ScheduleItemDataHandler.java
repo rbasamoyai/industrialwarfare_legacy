@@ -6,7 +6,6 @@ import java.util.List;
 import com.mojang.datafixers.util.Pair;
 
 import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
-import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 	
@@ -46,8 +45,7 @@ public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 	}
 
 	@Override
-	public boolean shouldWork(long gameTime) {
-		final int minuteOfTheWeek = (int)(gameTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
+	public boolean shouldWork(int minuteOfTheWeek) {
 		return ScheduleUtils.inShift(this.schedule, minuteOfTheWeek);
 	}
 
