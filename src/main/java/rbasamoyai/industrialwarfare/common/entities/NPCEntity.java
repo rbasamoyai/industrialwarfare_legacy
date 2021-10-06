@@ -80,7 +80,7 @@ public class NPCEntity extends CreatureEntity {
 	
 	public static final String DEFAULT_NAME = "Incognito";
 	
-	public static final int MAX_SLOTS_BEFORE_WARN = 15; // May not apply to Transporter NPCs.
+	public static final int MAX_SLOTS_BEFORE_WARN = 54;
 	
 	public static final UUID GAIA_UUID = new UUID(0L, 0L); // A null player generally means that the NPC belongs to "Gaia" (thanks, Age of Empires!).
 	
@@ -178,6 +178,7 @@ public class NPCEntity extends CreatureEntity {
 		brain.setDefaultActivity(Activity.IDLE);
 		brain.setActiveActivityIfPossible(Activity.IDLE);
 		
+		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
 		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
@@ -196,15 +197,13 @@ public class NPCEntity extends CreatureEntity {
 		long dayTime = this.level.getDayTime() + TimeUtils.TIME_OFFSET;
 		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
 		
-		Optional<Activity> currentActivityOptional = brain.getActiveNonCoreActivity();
-		
-		boolean isWorking = currentActivityOptional.map(a -> a.equals(Activity.WORK)).orElse(false);
+		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
 		// 2 added if not working as the NPCs will go to their workplace before actually working
 		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
 		
 		if (shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
-		} else if (!shouldWork && isWorking) { // TODO: Add energy and track it
+		} else if (!shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.REST);
 		}
 		super.customServerAiStep();
