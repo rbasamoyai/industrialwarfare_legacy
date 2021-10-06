@@ -10,6 +10,8 @@ import net.minecraft.entity.ai.brain.task.WalkToTargetTask;
 import net.minecraft.entity.ai.brain.task.WalkTowardsLookTargetTask;
 import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.DepositTaskScrollTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.GetTaskScrollTask;
 
 public class NPCTasks {
 
@@ -22,7 +24,7 @@ public class NPCTasks {
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
-		return ImmutableList.of(Pair.of(0, new GetTaskScrollTask(MemoryModuleType.JOB_SITE, 3f, 1, 100)));
+		return ImmutableList.of(Pair.of(0, new GetTaskScrollTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)), Pair.of(0, new DepositTaskScrollTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)));
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {
