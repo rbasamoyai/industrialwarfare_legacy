@@ -19,6 +19,7 @@ Current TODO:
 			- Add worker AI
 				- Add worker task handler
 				- Add worker schedule handler
+				- Add memory module types
 				- Add work tasks
 					- Add wait task
 					- Add switch order task
