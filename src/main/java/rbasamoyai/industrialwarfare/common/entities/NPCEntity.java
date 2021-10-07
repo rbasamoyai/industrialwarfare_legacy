@@ -51,7 +51,6 @@ import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
-import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
@@ -186,8 +185,8 @@ public class NPCEntity extends CreatureEntity {
 		brain.setDefaultActivity(Activity.IDLE);
 		brain.setActiveActivityIfPossible(Activity.IDLE);
 		
-		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
 		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
+		brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 10)));
 		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
@@ -206,12 +205,11 @@ public class NPCEntity extends CreatureEntity {
 		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
 		// 2 added if not working as the NPCs will go to their workplace before actually working
 		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
-		boolean hasTaskScroll = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX).getItem() instanceof TaskScrollItem;
 		
 		if (shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
-		} else if (!shouldWork && !isWorking && !hasTaskScroll) {
-			brain.setActiveActivityIfPossible(Activity.REST);
+		} else if (!shouldWork && !isWorking) {
+			brain.setActiveActivityIfPossible(Activity.IDLE);
 		}
 		super.customServerAiStep();
 	}

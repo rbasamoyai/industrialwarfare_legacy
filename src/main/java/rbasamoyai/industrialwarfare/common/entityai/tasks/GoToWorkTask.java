@@ -58,15 +58,16 @@ public class GoToWorkTask extends Task<NPCEntity> {
 
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld serverWorld, NPCEntity npc) {
-		Brain<?> brain = npc.getBrain();
-		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		// TODO: Add wanted scroll details
-		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
+		Brain<?> brain = npc.getBrain();
+		if (brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) return false;
+		
+		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		boolean result = gpOptional.map(gp -> npc.level.dimension() == gp.dimension() && gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)).orElse(false);
 		if (!result) {
 			// TODO: do some complaining if result is false
 		}
-		return result && !isWorking;
+		return result;
 	}
 	
 	@Override

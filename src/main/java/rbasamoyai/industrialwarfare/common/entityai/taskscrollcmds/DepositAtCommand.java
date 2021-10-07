@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.taskscrollcmds;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,27 +24,24 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
-public class TakeFromCommand extends TaskScrollCommand {
+public class DepositAtCommand extends TaskScrollCommand {
 
 	private static final int ACCESS_SIDE_ARG_INDEX = 0;
 	private static final int ITEM_COUNT_ARG_INDEX = 1;
 	
-	public TakeFromCommand() {
+	public DepositAtCommand() {
 		super(true, true, TaskScrollCommand.ITEM_TRANSFER_ARGS);
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "take_from");
+		this.setRegistryName(IndustrialWarfare.MOD_ID, "deposit_at");
 	}
 	
 	@Override
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		// TODO: Add wanted scroll details
-		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
 		boolean result = order.getPos().closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
 		if (!result) {
-			// TODO: do some complaining if result is false
+			// TODO: do some complaining that target is too far
 			
 		}
-		return result && !isWorking;
+		return result;
 	}
 
 	@Override
@@ -80,16 +77,16 @@ public class TakeFromCommand extends TaskScrollCommand {
 					ItemStackHandler npcInv = npc.getInventoryItemHandler();
 					int count = order.getArg(ITEM_COUNT_ARG_INDEX);
 					boolean flag = count == 0;
-					for (int i = 0; i < blockInv.getSlots(); i++) {
-						if (order.filterMatches(blockInv.getStackInSlot(i))) {
-							ItemStack takeItem = blockInv.extractItem(i, flag ? blockInv.getSlotLimit(i) : count, false);
-							for (int j = 0; j < npcInv.getSlots(); j++) {
-								int stackCount = takeItem.getCount();
-								takeItem = npcInv.insertItem(j, takeItem, false);
-								count -= stackCount - takeItem.getCount();
-								if (takeItem.isEmpty() || count < 1 && !flag) break;
+					for (int i = 0; i < npcInv.getSlots(); i++) {
+						if (order.filterMatches(npcInv.getStackInSlot(i))) {
+							ItemStack depositItem = npcInv.extractItem(i, flag ? npcInv.getSlotLimit(i) : count, false);
+							for (int j = 0; j < blockInv.getSlots(); j++) {
+								int stackCount = depositItem.getCount();
+								depositItem = blockInv.insertItem(j, depositItem, false);
+								count -= stackCount - depositItem.getCount();
+								if (depositItem.isEmpty() || count < 1 && !flag) break;
 							}
-							blockInv.insertItem(i, takeItem, false);
+							npcInv.insertItem(i, depositItem, true);
 							if (count < 1 && !flag) break;
 						}
 					}

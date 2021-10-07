@@ -17,14 +17,8 @@ Current TODO:
 	- Add NPCs
 		- Add Worker NPCS
 			- Add worker AI
-				- Add worker task handler
-				- Add worker schedule handler
-				- Add memory module types
+				- Fix handler or something
 				- Add work tasks
 					- Add wait task
 					- Add switch order task
 					- Add jump to task
-			- Add memory module types
-		- Add interfacing with entity
-			p Work on container
-			p Work on GUI

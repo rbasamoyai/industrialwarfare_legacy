@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.RegistryBuilder;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 
 /**
  * Time to take notes from {@link net.minecraftforge.registries.ForgeRegistries} and {@link net.minecraftforge.registries.GameData}

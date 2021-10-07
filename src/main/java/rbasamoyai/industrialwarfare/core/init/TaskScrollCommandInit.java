@@ -6,10 +6,10 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.registries.ObjectHolder;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.DepositAtCommand;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.MoveToCommand;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TakeFromCommand;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.DepositAtCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.MoveToCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TakeFromCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 
 @EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 @ObjectHolder(IndustrialWarfare.MOD_ID)

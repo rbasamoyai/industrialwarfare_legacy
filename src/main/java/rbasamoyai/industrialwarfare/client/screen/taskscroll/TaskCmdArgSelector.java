@@ -9,8 +9,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class TaskCmdArgSelector extends ArgSelector<TaskScrollCommand> {

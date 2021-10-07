@@ -10,8 +10,8 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.BlockPosArgSelector;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskCmdArgSelector;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class TaskScrollArgSelectorWidget extends ArgSelectorWidget {
