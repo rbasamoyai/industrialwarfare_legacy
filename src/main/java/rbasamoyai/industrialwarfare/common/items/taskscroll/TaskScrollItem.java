@@ -29,8 +29,8 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.IT
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.TaskScrollDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.TaskScrollDataProvider;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
-import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;

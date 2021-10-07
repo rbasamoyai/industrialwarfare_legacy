@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.taskscrollcmds;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;

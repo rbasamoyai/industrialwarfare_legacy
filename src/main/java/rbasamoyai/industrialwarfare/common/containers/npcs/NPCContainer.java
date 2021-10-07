@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -27,6 +29,7 @@ import rbasamoyai.industrialwarfare.common.itemhandlers.ToggleableSlotItemHandle
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 /*
  * Base NPC container class. Interfaces with the task slot and the inventory.
@@ -210,9 +213,15 @@ public class NPCContainer extends Container {
 				}
 			} else { // Move stack from NPC to player
 				if (slotCopy.getItem() instanceof TaskScrollItem) {
-					// TODO: Update entity tasks if this happens
+					this.entityOptional.ifPresent(npc -> {
+						Brain<?> brain = npc.getBrain();
+						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+					});
 				} else if (slotCopy.getItem() == ItemInit.SCHEDULE) {
-					// TODO: Update entity schedule if this happens
+					this.entityOptional.ifPresent(npc -> {
+						Brain<?> brain = npc.getBrain();
+						brain.setActiveActivityIfPossible(Activity.IDLE);
+					});
 				}
 				
 				if (!this.moveItemStackTo(slotStack, PLAYER_INVENTORY_SLOTS_START_INDEX, NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX, true)) {

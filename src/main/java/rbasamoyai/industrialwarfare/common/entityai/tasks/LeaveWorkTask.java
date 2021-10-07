@@ -67,15 +67,13 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 			return false;
 		}
 		
-		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
-		
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
 		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
 		long dayTime = world.getDayTime() + TimeUtils.TIME_OFFSET;
 		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
-		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
+		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek)).orElse(false);
 		
-		return isWorking && !shouldWork;
+		return !shouldWork;
 	}
 	
 	@Override
@@ -124,6 +122,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 								ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
 								blockInv.insertItem(i, taskScroll, false);
 								inserted = true;
+								brain.setMemory(MemoryModuleTypeInit.WORKING, false);
 								break;
 							}
 						}
@@ -156,7 +155,6 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		brain.eraseMemory(MemoryModuleTypeInit.CANT_INTERFACE);
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
-		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
 	}
 	
 }

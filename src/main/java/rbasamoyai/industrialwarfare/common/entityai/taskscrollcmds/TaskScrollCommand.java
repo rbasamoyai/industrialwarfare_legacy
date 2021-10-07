@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.taskscrollcmds;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import java.util.List;
 import java.util.function.Function;
