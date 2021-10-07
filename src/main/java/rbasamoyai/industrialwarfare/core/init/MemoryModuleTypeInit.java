@@ -2,8 +2,9 @@ package rbasamoyai.industrialwarfare.core.init;
 
 import java.util.Optional;
 
+import com.mojang.serialization.Codec;
+
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.util.math.GlobalPos;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -16,15 +17,19 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 public class MemoryModuleTypeInit {
 
 	public static final MemoryModuleType<Boolean> CANT_INTERFACE = null;
-	public static final MemoryModuleType<GlobalPos> INTERFACE_TARGET = null;
+	public static final MemoryModuleType<Integer> CURRENT_INSTRUCTION_INDEX = null;
+	public static final MemoryModuleType<Boolean> EXECUTING_INSTRUCTION = null;
+	public static final MemoryModuleType<Boolean> STOP_EXECUTION = null;
 	public static final MemoryModuleType<Boolean> WORKING = null;
 	
 	@SubscribeEvent
 	public static void registerMemoryModuleTypes(RegistryEvent.Register<MemoryModuleType<?>> event) {
 		event.getRegistry().registerAll(new MemoryModuleType<?>[] {
 			new MemoryModuleType<>(Optional.empty()).setRegistryName(IndustrialWarfare.MOD_ID, "cant_interface"),
-			new MemoryModuleType<>(Optional.of(GlobalPos.CODEC)).setRegistryName(IndustrialWarfare.MOD_ID, "interface_target"),
-			new MemoryModuleType<>(Optional.empty()).setRegistryName(IndustrialWarfare.MOD_ID, "working")
+			new MemoryModuleType<>(Optional.of(Codec.INT)).setRegistryName(IndustrialWarfare.MOD_ID, "current_instruction_index"),
+			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "executing_instruction"),
+			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "stop_execution"),
+			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "working")
 		});
 	}
 	

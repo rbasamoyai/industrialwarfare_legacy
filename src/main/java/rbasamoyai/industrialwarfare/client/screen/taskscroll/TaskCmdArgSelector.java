@@ -18,7 +18,7 @@ public class TaskCmdArgSelector extends ArgSelector<TaskScrollCommand> {
 	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".task_scroll.tooltip.selector.command").withStyle(ArgSelector.HEADER_STYLE);
 	
 	public TaskCmdArgSelector(List<TaskScrollCommand> possibleArgs, TaskScrollOrder order) {
-		super(possibleArgs, possibleArgs.indexOf(order.getCmd()));
+		super(possibleArgs, possibleArgs.indexOf(order.getCommand()));
 	}
 
 	@Override

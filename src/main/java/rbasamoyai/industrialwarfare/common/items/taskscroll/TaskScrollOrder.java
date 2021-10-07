@@ -11,7 +11,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.INBTSerializable;
 import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
-import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;
@@ -81,7 +80,7 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 		this.args.set(pos, selector.getSelectedArg());
 	}
 	
-	public TaskScrollCommand getCmd() {
+	public TaskScrollCommand getCommand() {
 		return this.cmd;
 	}
 	
@@ -105,8 +104,13 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 		return this.args;
 	}
 	
-	public void accept(NPCEntity npc) {
-		this.cmd.apply(npc, this);
+	public int getArg(int index) {
+		return this.args.get(index).intValue();
+	}
+	
+	public boolean filterMatches(ItemStack stack) {
+		// TODO: implement filters
+		return this.filter.isEmpty() || this.filter.getItem().equals(stack.getItem());
 	}
 
 	@Override

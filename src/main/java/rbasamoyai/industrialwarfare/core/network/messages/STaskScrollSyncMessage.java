@@ -44,7 +44,7 @@ public class STaskScrollSyncMessage {
 		
 		msg.orders.forEach(order -> {
 			buf
-					.writeResourceLocation(order.getCmd().getRegistryName())
+					.writeResourceLocation(order.getCommand().getRegistryName())
 					.writeBlockPos(order.getPos())
 					.writeItemStack(order.getFilter(), false)
 					.writeByteArray(ArgUtils.unbox(order.getArgs()));

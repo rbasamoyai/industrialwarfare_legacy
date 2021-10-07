@@ -489,7 +489,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 						}
 						WidgetUtils.setActiveAndVisible(asWidget, j != 1 || order.usesBlockPos());
 					} else {
-						TaskScrollCommand orderCmd = order.getCmd();
+						TaskScrollCommand orderCmd = order.getCommand();
 						if (widgetArgIndex < orderCmd.getArgCount()) {
 							WidgetUtils.setActiveAndVisible(asWidget, true);
 							int arg = widgetArgIndex < order.getArgs().size() ? order.getArgs().get(widgetArgIndex) : 0;
@@ -537,7 +537,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.lastPage = 0;
 		List<TaskScrollOrder> orderList = this.menu.getOrderList();
 		for (TaskScrollOrder order : orderList) {
-			int possibleLength = MathHelper.ceil((float)order.getCmd().getArgCount() * 0.5f);
+			int possibleLength = MathHelper.ceil((float)order.getCommand().getArgCount() * 0.5f);
 			if (possibleLength > this.lastPage) this.lastPage = possibleLength;
 		}
 		if (this.page > this.lastPage) this.page = this.lastPage;
@@ -589,7 +589,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 									IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be " + type + ")");
 								}
 							} else {
-								TaskScrollCommand orderCmd = order.getCmd();
+								TaskScrollCommand orderCmd = order.getCommand();
 								if (widgetArgIndex < orderCmd.getArgCount()) {
 									if (selectedArg instanceof Byte) {
 										order.setArgFromSelectorAndIndex((ArgSelector<Byte>) optional.get(), widgetArgIndex);

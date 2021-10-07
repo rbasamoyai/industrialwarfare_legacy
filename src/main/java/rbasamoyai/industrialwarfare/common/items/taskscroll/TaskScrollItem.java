@@ -118,7 +118,7 @@ public class TaskScrollItem extends Item {
 				
 				buf.writeVarInt(orderList.size());
 				orderList.forEach(o -> {
-					buf.writeResourceLocation(o.getCmd().getRegistryName());
+					buf.writeResourceLocation(o.getCommand().getRegistryName());
 					buf.writeBlockPos(o.getPos());
 					buf.writeItem(o.getFilter());
 					buf.writeByteArray(ArgUtils.unbox(o.getArgs()));

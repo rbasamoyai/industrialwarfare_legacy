@@ -14,7 +14,7 @@ public class TaskScrollDataHandler implements ITaskScrollDataHandler {
 	private ItemStack label = ItemStack.EMPTY;
 
 	@Override
-	public TaskScrollOrder getOrder(byte index) {
+	public TaskScrollOrder getOrder(int index) {
 		return this.orderList.get(index);
 	}
 	
