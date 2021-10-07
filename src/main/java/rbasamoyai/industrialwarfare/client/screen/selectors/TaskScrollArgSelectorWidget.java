@@ -41,7 +41,7 @@ public class TaskScrollArgSelectorWidget extends ArgSelectorWidget {
 	
 	public void setOrder(Optional<TaskScrollOrder> order) {
 		this.order = order;
-		WidgetUtils.setActiveAndVisible(this, this.order.map(o -> this.argPos > o.getCmd().getArgCount()).orElse(false));
+		WidgetUtils.setActiveAndVisible(this, this.order.map(o -> this.argPos > o.getCommand().getArgCount()).orElse(false));
 	}
 	
 	public void setSelector(Optional<ArgSelector<?>> selector) {
@@ -52,14 +52,14 @@ public class TaskScrollArgSelectorWidget extends ArgSelectorWidget {
 	}
 	
 	private static Optional<ArgSelector<?>> getSelectorFromArgPos(TaskScrollScreen screen, int argPos, Optional<TaskScrollOrder> optional) {
-		if (optional.isPresent() && argPos >= -2 && argPos < optional.map(o -> o.getCmd().getArgCount()).orElse(0)) {
+		if (optional.isPresent() && argPos >= -2 && argPos < optional.map(o -> o.getCommand().getArgCount()).orElse(0)) {
 			if (argPos == -2) {
 				List<TaskScrollCommand> validCmds = screen.getMenu().getCommands().stream().collect(Collectors.toList());
 				return Optional.of(new TaskCmdArgSelector(validCmds, optional.orElse(new TaskScrollOrder(validCmds.get(0)))));
 			} else if (argPos == -1) {
 				return Optional.of(new BlockPosArgSelector(screen.getPlayer(), optional.map(TaskScrollOrder::getPos).orElse(screen.getPlayer().blockPosition())));
 			} else {
-				ArgSelector<Byte> selector = optional.map(o -> o.getCmd().getSelectorAt(argPos).apply((int)(o.getArgs().get(argPos)))).orElse(null);
+				ArgSelector<Byte> selector = optional.map(o -> o.getCommand().getSelectorAt(argPos).apply((int)(o.getArgs().get(argPos)))).orElse(null);
 				return Optional.ofNullable(selector);
 			}
 		} else return Optional.empty();

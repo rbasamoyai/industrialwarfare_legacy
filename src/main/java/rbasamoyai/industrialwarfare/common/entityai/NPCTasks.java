@@ -4,19 +4,21 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.task.InteractWithDoorTask;
 import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.WalkToTargetTask;
 import net.minecraft.entity.ai.brain.task.WalkTowardsLookTargetTask;
 import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.DepositTaskScrollTask;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.GetTaskScrollTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
 
 public class NPCTasks {
 
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getCorePackage() {
-		return ImmutableList.of(Pair.of(0, new WalkToTargetTask()));
+		return ImmutableList.of(Pair.of(0, new WalkToTargetTask()), Pair.of(0, new InteractWithDoorTask()));
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getIdlePackage() {
@@ -24,7 +26,7 @@ public class NPCTasks {
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
-		return ImmutableList.of(Pair.of(0, new GetTaskScrollTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)), Pair.of(0, new DepositTaskScrollTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)));
+		return ImmutableList.of(Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)), Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)), Pair.of(1, new RunCommandFromTaskScrollTask()));
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {

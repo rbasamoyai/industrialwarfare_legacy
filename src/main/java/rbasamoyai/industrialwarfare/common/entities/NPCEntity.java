@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -31,6 +30,7 @@ import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvent;
@@ -47,7 +47,6 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
@@ -65,15 +64,22 @@ public class NPCEntity extends CreatureEntity {
 	
 	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+			MemoryModuleType.DOORS_TO_CLOSE,
 			MemoryModuleType.HOME,
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.CANT_INTERFACE,
+			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX,
+			MemoryModuleTypeInit.EXECUTING_INSTRUCTION,
+			MemoryModuleTypeInit.STOP_EXECUTION,
 			MemoryModuleTypeInit.WORKING
 			);
-	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_PLAYERS, SensorType.NEAREST_BED);
+	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(
+			SensorType.NEAREST_PLAYERS, 
+			SensorType.NEAREST_BED
+			);
 	
 	public static final String TAG_WORKSTUFFS = "workstuffs";
 	private static final String TAG_INVENTORY = "items";
@@ -102,6 +108,8 @@ public class NPCEntity extends CreatureEntity {
 		
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
 		this.equipmentItemHandler = new EquipmentItemHandler(this);
+		
+		((GroundPathNavigator) this.getNavigation()).setCanOpenDoors(true);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -178,6 +186,7 @@ public class NPCEntity extends CreatureEntity {
 		brain.setDefaultActivity(Activity.IDLE);
 		brain.setActiveActivityIfPossible(Activity.IDLE);
 		
+		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
 		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
 		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
@@ -188,10 +197,7 @@ public class NPCEntity extends CreatureEntity {
 		Brain<NPCEntity> brain = this.getBrain();
 		brain.tick((ServerWorld) this.level, this);
 		
-		ItemStack taskScrollItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
 		ItemStack scheduleItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
-		
-		LazyOptional<ITaskScrollDataHandler> taskOptional = TaskScrollItem.getDataHandler(taskScrollItem);
 		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
 		
 		long dayTime = this.level.getDayTime() + TimeUtils.TIME_OFFSET;
@@ -200,10 +206,11 @@ public class NPCEntity extends CreatureEntity {
 		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
 		// 2 added if not working as the NPCs will go to their workplace before actually working
 		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
+		boolean hasTaskScroll = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX).getItem() instanceof TaskScrollItem;
 		
 		if (shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
-		} else if (!shouldWork && !isWorking) {
+		} else if (!shouldWork && !isWorking && !hasTaskScroll) {
 			brain.setActiveActivityIfPossible(Activity.REST);
 		}
 		super.customServerAiStep();

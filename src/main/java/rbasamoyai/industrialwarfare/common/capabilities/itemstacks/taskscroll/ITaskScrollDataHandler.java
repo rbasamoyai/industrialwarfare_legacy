@@ -7,7 +7,7 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
 public interface ITaskScrollDataHandler {
 
-	public TaskScrollOrder getOrder(byte index);
+	public TaskScrollOrder getOrder(int index);
 	
 	public void setLabel(ItemStack label);
 	public ItemStack getLabel();

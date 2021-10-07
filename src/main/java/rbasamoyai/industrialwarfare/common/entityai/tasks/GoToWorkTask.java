@@ -34,16 +34,15 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
  * @author rbasamoyai (not really i guess lol)
  */
 
-public class GetTaskScrollTask extends Task<NPCEntity> {
+public class GoToWorkTask extends Task<NPCEntity> {
 
 	private final MemoryModuleType<GlobalPos> posMemoryType;
 	private final float speedModifier;
 	private final int closeEnoughDist;
 	private final int maxDistanceFromPoi;
 	private long nextOkStartTime;
-	private long nextTickTime;
 	
-	public GetTaskScrollTask(MemoryModuleType<GlobalPos> posMemoryType, float speedModifier, int closeEnoughDist, int maxDistanceFromPoi) {
+	public GoToWorkTask(MemoryModuleType<GlobalPos> posMemoryType, float speedModifier, int closeEnoughDist, int maxDistanceFromPoi) {
 		super(ImmutableMap.of(
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.CANT_INTERFACE, MemoryModuleStatus.REGISTERED,
@@ -74,8 +73,8 @@ public class GetTaskScrollTask extends Task<NPCEntity> {
 	protected void start(ServerWorld world, NPCEntity npc, long gameTime) {
 		if (gameTime > this.nextOkStartTime) {
 			Brain<?> brain = npc.getBrain();
-			Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
-			gpOptional.ifPresent(gp -> {
+			Optional<GlobalPos> optional = brain.getMemory(this.posMemoryType);
+			optional.ifPresent(gp -> {
 				BlockPos targetPos = gp.pos();
 				List<BlockPos> list = BlockPos.betweenClosedStream(targetPos.offset(-1, -2, -1), targetPos.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
 				Collections.shuffle(list);
@@ -97,49 +96,47 @@ public class GetTaskScrollTask extends Task<NPCEntity> {
 	
 	@Override
 	protected void tick(ServerWorld world, NPCEntity npc, long gameTime) {
-		if (gameTime > this.nextTickTime) {
-			Brain<?> brain = npc.getBrain();
-			PathNavigator nav = npc.getNavigation();
-			if (nav.isDone()) {
-				brain.getMemory(this.posMemoryType).ifPresent(gp -> {
-					BlockPos pos = gp.pos();
-					TileEntity te = world.getBlockEntity(pos);
-					AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
-					if (world.isLoaded(pos) && te != null && box.contains(npc.position())) {
-						LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-						// Me omw to have a minor pyramid of doom, not too deep but i think we can do better
-						blockInvOptional.ifPresent(blockInv -> {
-							boolean matches = false;
-							for (int i = 0; i < blockInv.getSlots(); i++) {
-								ItemStack taskScrollItemGet = blockInv.getStackInSlot(i);
-								matches = TaskScrollItem.getDataHandler(taskScrollItemGet)
-										.map(ts -> LabelItem.getDataHandler(ts.getLabel())
-												.map(l -> l.getUUID().equals(npc.getUUID()))
-												.orElse(false))
-										.orElse(false);
-								if (matches) {
-									EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
-									ItemStack npcSlotItem = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
-									ItemStack taskScrollItem = blockInv.extractItem(i, 1, false);
-									equipmentHandler.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, taskScrollItem, false);
-									blockInv.insertItem(i, npcSlotItem, false);
-									brain.setMemory(MemoryModuleTypeInit.WORKING, true);
-									break;
-								}
+		Brain<?> brain = npc.getBrain();
+		PathNavigator nav = npc.getNavigation();
+		if (nav.isDone()) {
+			brain.getMemory(this.posMemoryType).ifPresent(gp -> {
+				BlockPos pos = gp.pos();
+				TileEntity te = world.getBlockEntity(pos);
+				AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
+				if (world.isLoaded(pos) && te != null && box.contains(npc.position())) {
+					LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+					// Me omw to have a minor pyramid of doom, not too deep but i think we can do better
+					blockInvOptional.ifPresent(blockInv -> {
+						boolean matches = false;
+						for (int i = 0; i < blockInv.getSlots(); i++) {
+							ItemStack taskScrollItemGet = blockInv.getStackInSlot(i);
+							matches = TaskScrollItem.getDataHandler(taskScrollItemGet)
+									.map(ts -> LabelItem.getDataHandler(ts.getLabel())
+											.map(l -> l.getUUID().equals(npc.getUUID()))
+											.orElse(false))
+									.orElse(false);
+							if (matches) {
+								EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
+								ItemStack npcSlotItem = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
+								ItemStack taskScrollItem = blockInv.extractItem(i, 1, false);
+								equipmentHandler.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, taskScrollItem, false);
+								blockInv.insertItem(i, npcSlotItem, false);
+								brain.setMemory(MemoryModuleTypeInit.WORKING, true);
+								brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
+								break;
 							}
-							if (!matches) {
-								// TODO: Complain that can't find scroll
-								brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
-							}
-						});
-						if (!blockInvOptional.isPresent()) {
-							// TODO: Complain that there's nothing to access here
+						}
+						if (!matches) {
+							// TODO: Complain that can't find scroll
 							brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
 						}
+					});
+					if (!blockInvOptional.isPresent()) {
+						// TODO: Complain that there's nothing to access here
+						brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
 					}
-				});
-			}
-			this.nextTickTime = gameTime + 80L;
+				}
+			});
 		}
 	}
 	
