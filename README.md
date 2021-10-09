@@ -14,7 +14,7 @@ can fight stuff.
 
 ### Features currently implemented:
 * The mod actually starting up
-* An NPC with barely any brain
+* An NPC with some brain, can follow instructions
 * some cool GUIs
 * A simple "workstation" block
 * A microcrafting system
@@ -31,9 +31,9 @@ can fight stuff.
 
 ### Currently working on (or not)
 * Basic NPC AI
-    * NPC schedules
     * NPC task handling
     * Base NPC tasks
+    * Rewriting NPC commands to be more versatile
 
 ---
 
