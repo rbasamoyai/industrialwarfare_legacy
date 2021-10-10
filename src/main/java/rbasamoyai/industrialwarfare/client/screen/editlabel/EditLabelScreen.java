@@ -19,9 +19,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelectorWidget;
-import rbasamoyai.industrialwarfare.client.screen.selectors.TaskScrollArgSelectorWidget;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelectorWidget;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
@@ -147,7 +146,7 @@ public class EditLabelScreen extends ContainerScreen<EditLabelContainer> {
 			this.font.draw(stack, tc, NAME_UUID_FIELD_TEXT_X, NAME_UUID_FIELD_TEXT_Y, TEXT_COLOR);
 		} else {
 			ITextComponent cachedName = this.menu.getCachedName();
-			if (cachedName.getContents().length() == 0) cachedName = TooltipUtils.TOOLTIP_NOT_AVAILABLE;
+			if (cachedName.getContents().length() == 0) cachedName = TooltipUtils.NOT_AVAILABLE;
 			this.font.draw(stack, NAME_FIELD.copy().append(cachedName), NAME_UUID_FIELD_TEXT_X, NAME_UUID_FIELD_TEXT_Y, TEXT_COLOR);
 		}
 		RenderSystem.enableDepthTest();
@@ -156,17 +155,17 @@ public class EditLabelScreen extends ContainerScreen<EditLabelContainer> {
 	@Override
 	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
 		if (this.numSelectWidget.isHovered()) {
-			Optional<ArgSelector<?>> optional = this.numSelectWidget.getSelectorOptional();
+			Optional<ArgSelector<?>> optional = this.numSelectWidget.getSelector();
 			List<ITextComponent> tooltip = optional
 					.map(ArgSelector::getComponentTooltip)
-					.orElseGet(() -> Arrays.asList(TaskScrollArgSelectorWidget.NOT_AVAILABLE));
+					.orElseGet(() -> Arrays.asList(TooltipUtils.NOT_AVAILABLE));
 			this.renderComponentTooltip(stack, tooltip, mouseX, mouseY);
 		}
 	}
 	
 	@Override
 	public void onClose() {
-		byte newNum = this.numSelectWidget.getSelectorOptional().map(as -> (Byte) as.getSelectedArg()).orElse((byte) 0);
+		byte newNum = this.numSelectWidget.getSelector().map(as -> (byte) as.getSelectedArg().getArgNum()).orElse((byte) 0);
 		IWNetwork.CHANNEL.sendToServer(new SEditLabelSyncMessage(this.menu.getHand(), newNum, this.menu.getUUID(), this.menu.getCachedName()));
 		super.onClose();
 	}

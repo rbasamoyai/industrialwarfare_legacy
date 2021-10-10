@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -191,24 +190,18 @@ public class NPCContainer extends Container {
 				}
 				
 				if (slotCopy.getItem() instanceof TaskScrollItem) {
-					if (this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, false)) {
-						// TODO: Update entity if this happens
-					} else {
+					if (!this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, false)) {
 						return ItemStack.EMPTY;
 					}
 				}
 				
 				if (slotCopy.getItem() == ItemInit.SCHEDULE) {
-					if (this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 2, false)) {
-						// TODO: Update entity if this happens
-					} else {
+					if (!this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 2, false)) {
 						return ItemStack.EMPTY;
 					}
 				}
 				
-				if (this.moveItemStackTo(slotStack, NPC_INVENTORY_START_INDEX, this.npcInventoryEndIndex, false)) {
-					
-				} else {
+				if (!this.moveItemStackTo(slotStack, NPC_INVENTORY_START_INDEX, this.npcInventoryEndIndex, false)) {
 					return ItemStack.EMPTY;
 				}
 			} else { // Move stack from NPC to player
@@ -219,8 +212,7 @@ public class NPCContainer extends Container {
 					});
 				} else if (slotCopy.getItem() == ItemInit.SCHEDULE) {
 					this.entityOptional.ifPresent(npc -> {
-						Brain<?> brain = npc.getBrain();
-						brain.setActiveActivityIfPossible(Activity.IDLE);
+						
 					});
 				}
 				

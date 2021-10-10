@@ -12,7 +12,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActi
 
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.2.0";
+	public static final String NETWORK_VERSION = "0.2.1";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,

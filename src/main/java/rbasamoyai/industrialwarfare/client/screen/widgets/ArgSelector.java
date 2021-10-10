@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.client.screen.selectors;
+package rbasamoyai.industrialwarfare.client.screen.widgets;
 
 import java.util.List;
 
@@ -9,6 +9,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 /**
@@ -47,13 +48,9 @@ public abstract class ArgSelector<T> {
 		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg - scrollDist, 0.0d, (double)(this.possibleArgs.size() - 1)));
 	}
 	
-	public T getSelectedArg() {
-		return this.getPossibleArg(this.selectedArg);
-	}
+	public abstract ArgWrapper getSelectedArg();
 	
-	public T getPossibleArg(int argIndex) {
-		return this.possibleArgs.get(argIndex);
-	}
+	public abstract ArgWrapper getPossibleArg(int i);
 	
 	public abstract List<ITextComponent> getComponentTooltip();
 	

@@ -12,7 +12,8 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 
 public class LabelNumArgSelector extends ArgSelector<Byte> {
 
@@ -33,8 +34,13 @@ public class LabelNumArgSelector extends ArgSelector<Byte> {
 	}
 	
 	@Override
-	public Byte getSelectedArg() {
-		return (byte) this.selectedArg;
+	public ArgWrapper getSelectedArg() {
+		return this.getPossibleArg(0);
+	}
+	
+	@Override
+	public ArgWrapper getPossibleArg(int i) {
+		return new ArgWrapper(this.selectedArg);
 	}
 	
 	@Override

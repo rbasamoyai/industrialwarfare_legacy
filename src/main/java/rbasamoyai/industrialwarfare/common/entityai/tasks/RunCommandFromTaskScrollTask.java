@@ -36,7 +36,11 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false) || brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)) return false;
+		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)
+				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)
+				|| brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE)) {
+			return false;
+		}
 		
 		Optional<Integer> indexOptional = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
 		int currentIndex;

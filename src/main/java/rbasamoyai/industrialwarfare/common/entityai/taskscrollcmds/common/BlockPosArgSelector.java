@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.client.screen.taskscroll;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class BlockPosArgSelector extends ArgSelector<BlockPos> {
@@ -55,22 +56,32 @@ public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 		
 		return args;
 	}
+	
+	@Override
+	public ArgWrapper getSelectedArg() {
+		return this.getPossibleArg(this.selectedArg);
+	}
+	
+	@Override
+	public ArgWrapper getPossibleArg(int i) {
+		return new ArgWrapper(this.possibleArgs.get(i));
+	}
 
 	@Override
 	public List<ITextComponent> getComponentTooltip() {
 		List<ITextComponent> tooltip = new ArrayList<>();
 		tooltip.add(TOOLTIP_HEADER);
 		
-		BlockPos lookingAt = this.possibleArgs.size() >= 3 ? this.getPossibleArg(2) : null;
+		BlockPos lookingAt = this.possibleArgs.size() >= 3 ? this.possibleArgs.get(2) : null;
 		
 		IFormattableTextComponent choice0 = TooltipUtils.formatAsStyle(
-				formatBlockPos(this.getPossibleArg(0))
+				formatBlockPos(this.possibleArgs.get(0))
 						.append(ArgSelector.SPACER.copy())
 						.append(TOOLTIP_OLD_POS.copy()),
 				ArgSelector.NOT_SELECTED_STYLE
 				);
 		IFormattableTextComponent choice1 = TooltipUtils.formatAsStyle( 
-				formatBlockPos(this.getPossibleArg(1))
+				formatBlockPos(this.possibleArgs.get(1))
 						.append(ArgSelector.SPACER.copy())
 						.append(TOOLTIP_CURRENT_POS.copy()),
 				ArgSelector.NOT_SELECTED_STYLE
@@ -105,7 +116,7 @@ public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 	
 	@Override
 	public ITextComponent getTitle() {
-		return formatBlockPos(this.getSelectedArg());
+		return this.selectedArg != 2 || this.possibleArgs.size() >= 3 ? formatBlockPos(this.possibleArgs.get(this.selectedArg)) : TooltipUtils.NOT_AVAILABLE.copy();
 	}
 	
 	private static StringTextComponent formatBlockPos(BlockPos pos) {

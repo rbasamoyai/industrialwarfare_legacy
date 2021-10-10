@@ -147,7 +147,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		super.renderLabels(stack, mouseX, mouseY);
 		this.font.drawShadow(stack, this.pageTitle, (this.imageWidth - this.font.width(this.pageTitle)) / 2, PAGE_TITLE_Y, TEXT_COLOR);
 		
-		if (!this.menu.areArmorSlotsEnabled()) {
+		if (this.page == MAIN_PAGE && !this.menu.areArmorSlotsEnabled()) {
 			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT - 1; i++) {
 				int y = NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
 				this.fillGradient(stack, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X, y, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X + 16, y + 16, SHADE_COLOR, SHADE_COLOR);

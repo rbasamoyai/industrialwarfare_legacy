@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.core.network.messages;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -9,13 +8,9 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.core.IWModRegistries;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
 /*
  * Sync client task scroll data to the server. Called during onClose.
@@ -41,31 +36,17 @@ public class STaskScrollSyncMessage {
 		buf
 				.writeItem(msg.labelItem)
 				.writeVarInt(msg.orders.size());
-		
-		msg.orders.forEach(order -> {
-			buf
-					.writeResourceLocation(order.getCommand().getRegistryName())
-					.writeBlockPos(order.getPos())
-					.writeItemStack(order.getFilter(), false)
-					.writeByteArray(ArgUtils.unbox(order.getArgs()));
-		});
+		msg.orders.forEach(o -> o.toNetwork(buf));
 	}
 	
 	public static STaskScrollSyncMessage decode(PacketBuffer buf) {
 		Hand hand = buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
 		ItemStack labelItem = buf.readItem();
 		
-		List<TaskScrollOrder> orders = new LinkedList<>();
+		List<TaskScrollOrder> orders = new ArrayList<>();
 		int size = buf.readVarInt();
-		
 		for (int i = 0; i < size; i++) {
-			ResourceLocation loc = buf.readResourceLocation();
-			BlockPos pos = buf.readBlockPos();
-			ItemStack stack = buf.readItem();
-			byte[] unboxedArgs = buf.readByteArray();
-			List<Byte> boxedArgs = unboxedArgs.length == 0 ? new ArrayList<>() : ArgUtils.box(unboxedArgs);
-			
-			orders.add(new TaskScrollOrder(IWModRegistries.TASK_SCROLL_COMMANDS.getValue(loc), pos, stack, boxedArgs));
+			orders.add(TaskScrollOrder.fromNetwork(buf));
 		}
 		
 		return new STaskScrollSyncMessage(hand, orders, labelItem);

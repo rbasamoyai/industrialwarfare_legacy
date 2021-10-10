@@ -1,5 +1,6 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import net.minecraft.item.ItemStack;
@@ -46,16 +47,14 @@ public class TaskScrollDataCapability {
 		public void readNBT(Capability<ITaskScrollDataHandler> capability, ITaskScrollDataHandler instance, Direction side, INBT nbt) {
 			CompoundNBT tag = (CompoundNBT) nbt;
 			
-			instance.setList(
-					tag.getList(TAG_ORDER_LIST, Constants.NBT.TAG_COMPOUND)
-							.stream()
-							.map(t -> {
-								TaskScrollOrder order = new TaskScrollOrder(TaskScrollCommandInit.MOVE_TO);
-								order.deserializeNBT((CompoundNBT) t);
-								return order;
-							})
-							.collect(Collectors.toList())
-					);
+			ListNBT orderTags = tag.getList(TAG_ORDER_LIST, Constants.NBT.TAG_COMPOUND);
+			List<TaskScrollOrder> orderList = orderTags.stream()
+					.map(ot -> {
+						TaskScrollOrder order = TaskScrollOrder.empty(TaskScrollCommandInit.MOVE_TO);
+						order.deserializeNBT((CompoundNBT) ot);
+						return order;
+					}).collect(Collectors.toList());
+			instance.setList(orderList);
 			instance.setLabel(ItemStack.of(tag.getCompound(TAG_LABEL_ITEM)));
 		}
 		

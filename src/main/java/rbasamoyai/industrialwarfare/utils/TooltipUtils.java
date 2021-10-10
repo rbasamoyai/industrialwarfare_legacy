@@ -1,10 +1,15 @@
 package rbasamoyai.industrialwarfare.utils;
 
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.mutable.MutableInt;
 
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.LanguageMap;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
@@ -16,7 +21,8 @@ public class TooltipUtils {
 
 	private static final float PERFECT_EPSILION = 0.0001f;
 	
-	public static final IFormattableTextComponent TOOLTIP_NOT_AVAILABLE = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".not_available");
+	public static final IFormattableTextComponent NOT_AVAILABLE = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".not_available");
+	public static final IFormattableTextComponent SHORTENED_TITLE_TERMINATOR = new StringTextComponent("...").withStyle(Style.EMPTY);
 	
 	// Item tooltip styles
 	public static final Style FIELD_STYLE = Style.EMPTY.applyFormats(TextFormatting.GOLD);
@@ -58,6 +64,43 @@ public class TooltipUtils {
 	
 	public static String formatFloat(float f) {
 		return String.format("%.2f", f * 100.0f);
+	}
+	
+	public static IFormattableTextComponent getShortenedTitle(IFormattableTextComponent title, FontRenderer font, int width) {
+		ArrayList<IFormattableTextComponent> componentList = new ArrayList<>();
+		componentList.add(title);
+		// Relies on the fact that all of the base text components implement IFormattableTextComponent, possibly unsafe
+		componentList.addAll(title.getSiblings().stream().map(t -> (IFormattableTextComponent) t).collect(Collectors.toList()));
+		
+		LanguageMap languageMap = LanguageMap.getInstance();
+		
+		MutableInt w1 = new MutableInt(0);
+		IFormattableTextComponent tcFinal = new StringTextComponent("");
+		
+		for (IFormattableTextComponent tc : componentList) {
+			String str = tc instanceof TranslationTextComponent
+					? languageMap.getOrDefault(((TranslationTextComponent) tc).getKey())
+					: tc.getContents(); // Most should just return "", whereas StringTextComponent returns its plain text.
+			
+			int w2 = w1.getValue() + font.width(str);
+			if (w2 <= width - 1) {
+				tcFinal.append(tc);
+				w1.setValue(w2);
+			} else {
+				StringBuilder sBuilder = new StringBuilder();
+				str.chars().forEach(c -> {
+					StringBuilder newBuilder = new StringBuilder(sBuilder.toString()).appendCodePoint(c);
+					if (w1.getValue() + font.width(newBuilder.toString()) <= width - font.width(SHORTENED_TITLE_TERMINATOR))
+						sBuilder.appendCodePoint(c);
+				});
+				tcFinal
+						.append(new StringTextComponent(sBuilder.toString()).withStyle(tc.getStyle()))
+						.append(SHORTENED_TITLE_TERMINATOR);
+				break;
+			}
+		}
+		
+		return tcFinal;
 	}
 	
 }

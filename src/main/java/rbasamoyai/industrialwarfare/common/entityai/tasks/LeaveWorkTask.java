@@ -47,6 +47,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		super(ImmutableMap.of(
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.CANT_INTERFACE, MemoryModuleStatus.REGISTERED,
+				MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT,
 				posMemoryType, MemoryModuleStatus.VALUE_PRESENT
 				),
@@ -72,8 +73,9 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		long dayTime = world.getDayTime() + TimeUtils.TIME_OFFSET;
 		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
 		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek)).orElse(false);
+		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
 		
-		return !shouldWork;
+		return !shouldWork && isWorking;
 	}
 	
 	@Override
@@ -122,7 +124,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 								ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
 								blockInv.insertItem(i, taskScroll, false);
 								inserted = true;
-								brain.setMemory(MemoryModuleTypeInit.WORKING, false);
+								brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
 								break;
 							}
 						}
@@ -144,17 +146,20 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		boolean cantInterface = brain.getMemory(MemoryModuleTypeInit.CANT_INTERFACE).orElse(false);
-		boolean working = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
-		return !cantInterface && working;
+		boolean stopExecution = brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION);
+		return !cantInterface && !stopExecution;
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
+		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
+		
 		brain.eraseMemory(MemoryModuleTypeInit.CANT_INTERFACE);
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
+		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);
 	}
 	
 }
