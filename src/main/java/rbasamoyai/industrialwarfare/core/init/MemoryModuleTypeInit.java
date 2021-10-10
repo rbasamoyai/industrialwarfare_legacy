@@ -20,15 +20,17 @@ public class MemoryModuleTypeInit {
 	public static final MemoryModuleType<Integer> CURRENT_INSTRUCTION_INDEX = null;
 	public static final MemoryModuleType<Boolean> EXECUTING_INSTRUCTION = null;
 	public static final MemoryModuleType<Boolean> STOP_EXECUTION = null;
+	public static final MemoryModuleType<Long> WAIT_FOR = null;
 	public static final MemoryModuleType<Boolean> WORKING = null;
 	
 	@SubscribeEvent
 	public static void registerMemoryModuleTypes(RegistryEvent.Register<MemoryModuleType<?>> event) {
 		event.getRegistry().registerAll(new MemoryModuleType<?>[] {
-			new MemoryModuleType<>(Optional.empty()).setRegistryName(IndustrialWarfare.MOD_ID, "cant_interface"),
+			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "cant_interface"),
 			new MemoryModuleType<>(Optional.of(Codec.INT)).setRegistryName(IndustrialWarfare.MOD_ID, "current_instruction_index"),
 			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "executing_instruction"),
 			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "stop_execution"),
+			new MemoryModuleType<>(Optional.of(Codec.LONG)).setRegistryName(IndustrialWarfare.MOD_ID, "wait_for"),
 			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "working")
 		});
 	}

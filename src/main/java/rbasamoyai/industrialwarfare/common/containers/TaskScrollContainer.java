@@ -19,7 +19,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
@@ -34,7 +33,6 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
 public class TaskScrollContainer extends Container {
 
@@ -90,15 +88,10 @@ public class TaskScrollContainer extends Container {
 		
 		Hand hand = buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
 		
-		int orderListCount = buf.readVarInt();
-		List<TaskScrollOrder> orderList = new LinkedList<>();
-		for (int i = 0; i < orderListCount; i++) {
-			TaskScrollCommand cmd = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(buf.readResourceLocation());
-			BlockPos pos = buf.readBlockPos();
-			ItemStack item = buf.readItem();
-			List<Byte> args = ArgUtils.box(buf.readByteArray());
-			
-			orderList.add(new TaskScrollOrder(cmd, pos, item, args));
+		int sz = buf.readVarInt();
+		List<TaskScrollOrder> orderList = new ArrayList<>(sz);
+		for (int i = 0; i < sz; i++) {
+			orderList.add(TaskScrollOrder.fromNetwork(buf));
 		}
 		
 		ItemStackHandler labelItemHandler = ANONYMOUS_HANDLER_SUPPLIER.get();
@@ -209,6 +202,10 @@ public class TaskScrollContainer extends Container {
 	
 	public ItemStack getLabelItem() {
 		return this.labelItemSlot.getItem();
+	}
+	
+	public PlayerEntity getPlayer() {
+		return this.player;
 	}
 
 	@Override

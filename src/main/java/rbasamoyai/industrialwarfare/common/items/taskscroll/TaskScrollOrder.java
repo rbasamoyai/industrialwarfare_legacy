@@ -2,18 +2,18 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.ListIterator;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.EmptyArgHolder;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
 /**
  * A class for the TaskScrollItem. It can be expanded for multiple task scroll types.
@@ -25,131 +25,122 @@ import rbasamoyai.industrialwarfare.utils.ArgUtils;
 public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 	
 	private static final String TAG_COMMAND = "command";
-	private static final String TAG_POS_X = "x";
-	private static final String TAG_POS_Y = "y";
-	private static final String TAG_POS_Z = "z";
 	private static final String TAG_ARGS = "args";
-	private static final String TAG_FILTER = "filter";
 	
-	private TaskScrollCommand cmd;
-	private BlockPos pos;
-	private ItemStack filter;
-	private List<Byte> args;
+	private TaskScrollCommand command;
+	private List<IArgHolder> args;
 	
-	public TaskScrollOrder(final TaskScrollCommand cmd, final BlockPos pos, final ItemStack filter, final List<Byte> args) {
-		this.cmd = cmd;
-		this.pos = pos;
-		this.filter = filter.copy();
+	public TaskScrollOrder(TaskScrollCommand command, List<IArgHolder> args) {
+		this.command = command;
 		this.args = args;
 	}
 	
-	public TaskScrollOrder(TaskScrollCommand cmd, BlockPos pos, ItemStack filter) {
-		this(cmd, pos, filter, new ArrayList<Byte>(cmd.getArgCount()));
+	public static TaskScrollOrder filledWith(TaskScrollCommand command, ArgWrapper wrapper) {
+		List<IArgHolder> args = new ArrayList<>(command.getArgCount());
+		for (int i = 0; i < command.getArgCount(); i++) {
+			IArgHolder holder = command.getArgHolderSupplier(i).get();
+			holder.accept(wrapper);
+			args.add(holder);
+		}
+		return new TaskScrollOrder(command, args);
 	}
 	
-	public TaskScrollOrder(TaskScrollCommand cmd, BlockPos pos) {
-		this(cmd, pos, ItemStack.EMPTY);
+	public static TaskScrollOrder empty(TaskScrollCommand command) {
+		return filledWith(command, ArgWrapper.EMPTY);
 	}
 	
-	public TaskScrollOrder(TaskScrollCommand cmd) {
-		this(cmd, BlockPos.ZERO);
+	public static TaskScrollOrder withPos(TaskScrollCommand command, BlockPos pos) {
+		return filledWith(command, new ArgWrapper(pos));
 	}
 	
-	public void setCmdFromSelector(ArgSelector<TaskScrollCommand> selector) {
-		TaskScrollCommand oldCmd = this.cmd;
-		this.cmd = selector.getSelectedArg();
-		if (oldCmd != this.cmd) {
-			this.args = new ArrayList<Byte>();
-			for (int i = 0; i < this.cmd.getArgCount(); i++) {
-				this.args.add(Byte.valueOf((byte) 0));
+	public final void setCommand(TaskScrollCommand command) {
+		TaskScrollCommand oldCommand = this.command;
+		this.command = command;
+		if (oldCommand != this.command) {
+			this.args.clear();
+			for (int i = 0; i < this.command.getArgCount(); i++) {
+				IArgHolder holder = this.command.getArgHolderSupplier(i).get();
+				holder.accept(ArgWrapper.EMPTY);
+				this.args.add(holder);
 			}
-			if (!this.cmd.canUseFilter()) this.setFilter(ItemStack.EMPTY);
 		}
 	}
 	
-	public void setPosFromSelector(ArgSelector<BlockPos> selector) {
-		this.pos = selector.getSelectedArg();
+	public final TaskScrollCommand getCommand() {
+		return this.command;
 	}
 	
-	public void setFilter(ItemStack stack) {
-		this.filter = stack.copy();
-		this.filter.setCount(1);
+	public final void setArg(int i, ArgWrapper wrapper) {
+		if (this.isValidIndex(i)) {
+			this.args.get(i).accept(wrapper);
+		}
 	}
 	
-	public void setArgFromSelectorAndIndex(ArgSelector<Byte> selector, int pos) {
-		this.args.set(pos, selector.getSelectedArg());
+	public final ArgWrapper getWrappedArg(int i) {
+		return this.isValidIndex(i) ? this.args.get(i).getWrapper() : new ArgWrapper(0);
 	}
 	
-	public TaskScrollCommand getCommand() {
-		return this.cmd;
+	public final IArgHolder getArgHolder(int i) {
+		return this.isValidIndex(i) ? this.args.get(i) : new EmptyArgHolder();
 	}
 	
-	public boolean usesBlockPos() {
-		return this.cmd.usesBlockPos();
-	}
-	
-	public boolean canUseFilter() {
-		return this.cmd.canUseFilter();
-	}
-	
-	public BlockPos getPos() {
-		return this.pos;
-	}
-	
-	public ItemStack getFilter() {
-		return this.filter;
-	}
-	
-	public List<Byte> getArgs() {
-		return this.args;
-	}
-	
-	public int getArg(int index) {
-		return this.args.get(index).intValue();
-	}
-	
-	public boolean filterMatches(ItemStack stack) {
-		// TODO: implement filters
-		return this.filter.isEmpty() || this.filter.getItem().equals(stack.getItem());
+	private boolean isValidIndex(int i) {
+		return 0 <= i && i < this.args.size();
 	}
 
 	@Override
 	public CompoundNBT serializeNBT() {
 		CompoundNBT tag = new CompoundNBT();
-		tag.putString(TAG_COMMAND, this.cmd.getRegistryName().toString());
-		tag.putInt(TAG_POS_X, this.pos.getX());
-		tag.putInt(TAG_POS_Y, this.pos.getY());
-		tag.putInt(TAG_POS_Z, this.pos.getZ());
-		tag.putByteArray(TAG_ARGS, ArgUtils.unbox(this.args));
-		tag.put(TAG_FILTER, this.filter.serializeNBT());
+		tag.putString(TAG_COMMAND, this.command.getRegistryName().toString());
+		
+		ListNBT argTag = new ListNBT();
+		this.args.forEach(arg -> argTag.add(arg.serializeNBT()));
+		tag.put(TAG_ARGS, argTag);
+		
 		return tag;
 	}
 
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
-		this.cmd = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(new ResourceLocation(nbt.getString(TAG_COMMAND)));
-		this.pos = new BlockPos(nbt.getInt(TAG_POS_X), nbt.getInt(TAG_POS_Y), nbt.getInt(TAG_POS_Z));
-		this.args = ArgUtils.box(nbt.getByteArray(TAG_ARGS));
-		this.filter = ItemStack.of(nbt.getCompound(TAG_FILTER));
+		this.setCommand(IWModRegistries.TASK_SCROLL_COMMANDS.getValue(new ResourceLocation(nbt.getString(TAG_COMMAND))));
+		ListNBT argTags = nbt.getList(TAG_ARGS, Constants.NBT.TAG_COMPOUND);
+		for (int i = 0; i < this.command.getArgCount(); i++) {
+			IArgHolder holder = this.args.get(i);
+			holder.deserializeNBT((CompoundNBT) argTags.get(i));
+		}
+	}
+	
+	public void toNetwork(PacketBuffer buf) {
+		buf.writeResourceLocation(this.command.getRegistryName());
+		// Expecting to write appropriate amount of args, so i depends on this.command#getArgCount rather than this.args#size
+		for (int i = 0; i < this.command.getArgCount(); i++) {
+			this.args.get(i).toNetwork(buf);
+		}
+	}
+	
+	public static TaskScrollOrder fromNetwork(PacketBuffer buf) {
+		TaskScrollCommand cmd = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(buf.readResourceLocation());
+		List<IArgHolder> holders = new ArrayList<>(cmd.getArgCount());
+		for (int i = 0; i < cmd.getArgCount(); i++) {
+			IArgHolder holder = cmd.getArgHolderSupplier(i).get();
+			holder.fromNetwork(buf);
+			holders.add(holder);
+		}
+		return new TaskScrollOrder(cmd, holders);
 	}
 	
 	@Override
 	public String toString() {
-		String cmdString = this.cmd.getRegistryName().toString();
-		String posString = this.pos.getX() + " " + this.pos.getY() + " " + this.pos.getZ();
-		
-		String filterString = "";
-		
-		if (this.canUseFilter()) {
-			StringBuilder fsBuilder = new StringBuilder();
-			fsBuilder.append(" with ");
-			fsBuilder.append(this.filter.getItem() == Items.AIR ? "no filter" : "filter of " + this.filter.toString());
-			filterString = fsBuilder.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("TaskScrollOrder[cmd=" + this.command.toString() + ", args=[\n");
+		ListIterator<IArgHolder> iter = this.args.listIterator();
+		while (iter.hasNext()) {
+			sb.append("\tArgHolder[" + iter.next().getWrapper().toString() + "]");
+			if (iter.hasNext()) sb.append(", ");
+			sb.append("\n");
 		}
-		
-		String argString = this.cmd.getArgCount() == 0 ? "" : " with args " + String.join(" ", this.args.stream().map(b -> b.toString()).collect(Collectors.toList()));
-		
-		return cmdString + " at " + posString + filterString + argString;
+		sb.append("]");
+		return sb.toString();
 	}
 	
 }

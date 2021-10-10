@@ -56,12 +56,12 @@ public class PartItem extends QualityItem {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_PART_COUNT,
 				optional
 						.map(h -> (IFormattableTextComponent) new StringTextComponent(Integer.toString(h.getPartCount())))
-						.orElse(TooltipUtils.TOOLTIP_NOT_AVAILABLE))
+						.orElse(TooltipUtils.NOT_AVAILABLE))
 		);
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_WEIGHT, 
 				optional
 						.map(h -> (IFormattableTextComponent) new StringTextComponent(TooltipUtils.formatFloat(h.getWeight())))
-						.orElse(TooltipUtils.TOOLTIP_NOT_AVAILABLE))
+						.orElse(TooltipUtils.NOT_AVAILABLE))
 		);
 	}
 

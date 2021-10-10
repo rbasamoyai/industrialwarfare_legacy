@@ -1,7 +1,7 @@
 package rbasamoyai.industrialwarfare.common.items.taskscroll;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -33,7 +33,6 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCom
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class TaskScrollItem extends Item {
@@ -43,7 +42,7 @@ public class TaskScrollItem extends Item {
 	private static final IFormattableTextComponent TOOLTIP_BLANK_LABEL = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".task_scroll.blank_label");
 	
 	private static final Supplier<List<TaskScrollCommand>> VALID_COMMANDS = () -> {
-		return Arrays.asList(TaskScrollCommandInit.MOVE_TO, TaskScrollCommandInit.TAKE_FROM, TaskScrollCommandInit.DEPOSIT_AT);
+		return Arrays.asList(TaskScrollCommandInit.MOVE_TO, TaskScrollCommandInit.TAKE_FROM, TaskScrollCommandInit.DEPOSIT_AT, TaskScrollCommandInit.WAIT_FOR);
 	};
 	
 	public TaskScrollItem() {
@@ -100,7 +99,7 @@ public class TaskScrollItem extends Item {
 			int stackIndex = player.inventory.selected;
 			int maxOrderCount = optional.map(ITaskScrollDataHandler::getMaxListSize).orElse(0);
 			
-			List<TaskScrollOrder> orderList = optional.map(ITaskScrollDataHandler::getList).orElse(new LinkedList<>());
+			List<TaskScrollOrder> orderList = optional.map(ITaskScrollDataHandler::getList).orElse(new ArrayList<>());
 			
 			ItemStack labelItem = optional.map(ITaskScrollDataHandler::getLabel).orElse(ItemStack.EMPTY);
 			
@@ -117,12 +116,7 @@ public class TaskScrollItem extends Item {
 				buf.writeBoolean(hand == Hand.MAIN_HAND);
 				
 				buf.writeVarInt(orderList.size());
-				orderList.forEach(o -> {
-					buf.writeResourceLocation(o.getCommand().getRegistryName());
-					buf.writeBlockPos(o.getPos());
-					buf.writeItem(o.getFilter());
-					buf.writeByteArray(ArgUtils.unbox(o.getArgs()));
-				});
+				orderList.forEach(o -> o.toNetwork(buf));
 				
 				buf.writeItem(labelItem);
 			});
@@ -139,9 +133,9 @@ public class TaskScrollItem extends Item {
 								IFormattableTextComponent tc = (IFormattableTextComponent) h2.getCachedName();
 								return TooltipUtils.charLength(tc) > 0 ? tc : TOOLTIP_BLANK_LABEL;
 							})
-							.orElse(TooltipUtils.TOOLTIP_NOT_AVAILABLE)
+							.orElse(TooltipUtils.NOT_AVAILABLE)
 							)
-					.orElse(TooltipUtils.TOOLTIP_NOT_AVAILABLE)
+					.orElse(TooltipUtils.NOT_AVAILABLE)
 				));
 	}
 	

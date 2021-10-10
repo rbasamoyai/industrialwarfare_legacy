@@ -10,31 +10,35 @@ import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.StringTextComponent;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
-public class FilterItemWidget extends Widget {
+public class ItemArgWidget extends Widget {
 
 	private static final int SLOT_WIDTH = 16;
 	private static final int HOVER_COLOR = 0x80FFFFFF;
 	
 	private final List<TaskScrollOrder> orderList;
 	private ItemRenderer itemRenderer;
-	private int index;
+	private int orderIndex;
+	private int argIndex;
 	
-	public FilterItemWidget(int x, int y, int index, List<TaskScrollOrder> orderList, ItemRenderer itemRenderer) {
+	public ItemArgWidget(int x, int y, int orderIndex, int argIndex, List<TaskScrollOrder> orderList, ItemRenderer itemRenderer) {
 		super(x, y, SLOT_WIDTH, SLOT_WIDTH, StringTextComponent.EMPTY);
 		
 		this.orderList = orderList;
 		this.itemRenderer = itemRenderer;
-		this.index = index;
+		this.orderIndex = orderIndex;
+		this.argIndex = argIndex;
 	}
 	
 	@Override
 	public void renderButton(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
-		if (this.index >= 0 && this.index < this.orderList.size()) {
-			TaskScrollOrder order = this.orderList.get(this.index);
-			if (order.canUseFilter()) {
-				ItemStack filterStack = order.getFilter();
+		if (0 <= this.orderIndex && this.orderIndex < this.orderList.size()) {
+			IArgHolder holder = this.orderList.get(this.orderIndex).getArgHolder(this.argIndex);
+			if (holder.isItemStackArg()) {
+				ItemStack filterStack = holder.getWrapper().getItem().orElse(ItemStack.EMPTY);
 				this.itemRenderer.renderAndDecorateFakeItem(filterStack, this.x, this.y);
 				if (this.isHovered) {
 					RenderSystem.disableDepthTest();
@@ -48,11 +52,23 @@ public class FilterItemWidget extends Widget {
 	}
 	
 	public void setItem(ItemStack stack) {
-		this.orderList.get(this.index).setFilter(stack);
+		IArgHolder holder = this.orderList.get(this.orderIndex).getArgHolder(this.argIndex);
+		if (holder.isItemStackArg()) {
+			holder.accept(new ArgWrapper(stack.copy()));
+		}
 	}
 	
-	public void setIndex(int index) {
-		this.index = index;
+	public ItemStack getItem() {
+		IArgHolder holder = this.orderList.get(this.orderIndex).getArgHolder(this.argIndex);
+		return holder.isItemStackArg() ? holder.getWrapper().getItem().orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+	}
+	
+	public void setOrderIndex(int index) {
+		this.orderIndex = index;
+	}
+	
+	public void setArgIndex(int index) {
+		this.argIndex = index;
 	}
 	
 	@Override

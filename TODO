@@ -18,7 +18,10 @@ Current TODO:
 		- Add Worker NPCS
 			- Add worker AI
 				- Fix handler or something
+					- Remove canStillUse, not really used
 				- Add work tasks
 					- Add wait task
 					- Add switch order task
 					- Add jump to task
+	- Redo TaskScrollOrder for more versatility
+		- Make TaskScrollScreen do sumfin idk

@@ -53,7 +53,7 @@ public class QualityItem extends Item {
 						.map(h -> Screen.hasShiftDown()
 								? new StringTextComponent(TooltipUtils.formatFloat(h.getQuality()).concat("%"))
 								: TooltipUtils.getWordedQuality(h.getQuality()))
-						.orElseGet(() -> TooltipUtils.TOOLTIP_NOT_AVAILABLE))
+						.orElseGet(() -> TooltipUtils.NOT_AVAILABLE))
 		);
 	}
 

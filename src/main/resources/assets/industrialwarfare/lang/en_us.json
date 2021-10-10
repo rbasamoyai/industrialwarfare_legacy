@@ -176,9 +176,6 @@
 	"gui.industrialwarfare.task_scroll.attach_label":	"Attach label",
 	
 	"gui.industrialwarfare.task_scroll.tooltip.selector.command": "What command do you want to execute?",
-	"gui.industrialwarfare.task_scroll.command.move_to":	"Move to",
-	"gui.industrialwarfare.task_scroll.command.take_from":	"Take from",
-	"gui.industrialwarfare.task_scroll.command.deposit_at":	"Deposit at",
 	
 	"gui.industrialwarfare.task_scroll.tooltip.selector.block_pos": "Where do you want to execute this command?",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.block_pos.old_position":		"(Old position)",
@@ -194,5 +191,25 @@
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.north":	"North",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.south":	"South",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.west":		"West",
-	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.east":		"East"
+	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.east":		"East",
+	
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.day_time":	"Day time",
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode":			"How do you want the NPC to wait?",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.day_time":	"Day time (NPC waits until given time of day)",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.relative_time":	"Relative time (NPC waits for given time)",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.bell":	"Bell (NPC waits until it hears a bell nearby)",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_time":		"How long do you want the NPC to wait for? This is ignored if the \"wait mode\" argument is set to \"Bell\".",
+	"gui.industrialwarfare.task_scroll.selector.wait_time.time_format":	"%1$ss",
+	
+	"command.industrialwarfare.move_to":	"Move to",
+	"command.industrialwarfare.take_from":	"Take from",
+	"command.industrialwarfare.deposit_at":	"Deposit at",
+	"command.industrialwarfare.wait_for":	"Wait for",
+	"command.industrialwarfare.jump_to":	"Jump to",
+	"command.industrialwarfare.switch_order":	"Switch order",
+	
+	"command.industrialwarfare.args.filter":	"Filter"
 }

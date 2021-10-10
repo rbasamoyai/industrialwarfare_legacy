@@ -10,6 +10,7 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.DepositAtComm
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.MoveToCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TakeFromCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.wait_for.WaitForCommand;
 
 @EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 @ObjectHolder(IndustrialWarfare.MOD_ID)
@@ -18,13 +19,15 @@ public class TaskScrollCommandInit {
 	public static final TaskScrollCommand MOVE_TO = null;
 	public static final TaskScrollCommand TAKE_FROM = null;
 	public static final TaskScrollCommand DEPOSIT_AT = null;
+	public static final TaskScrollCommand WAIT_FOR = null;
 	
 	@SubscribeEvent
 	public static void registerTaskScrollCommands(RegistryEvent.Register<TaskScrollCommand> event) {
 		event.getRegistry().registerAll(new TaskScrollCommand[] {
 				new MoveToCommand(),
 				new TakeFromCommand(),
-				new DepositAtCommand()
+				new DepositAtCommand(),
+				new WaitForCommand()
 		});
 	}
 	

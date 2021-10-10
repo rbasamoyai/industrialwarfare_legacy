@@ -11,7 +11,6 @@ import com.mojang.serialization.Dynamic;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
@@ -20,9 +19,7 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.ai.goal.LookRandomlyGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
@@ -67,6 +64,7 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.HOME,
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.MEETING_POINT,
+			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.CANT_INTERFACE,
@@ -147,9 +145,7 @@ public class NPCEntity extends CreatureEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		
-		this.goalSelector.addGoal(0, new SwimGoal(this));
 		this.goalSelector.addGoal(1, new LookRandomlyGoal(this));
-		this.goalSelector.addGoal(1, new LookAtGoal(this, LivingEntity.class, 4.0f));
 		
 		this.addTargetGoals();
 	}
@@ -266,11 +262,6 @@ public class NPCEntity extends CreatureEntity {
 		
 		this.equipmentItemHandler.deserializeNBT(tag);
 		this.inventoryItemHandler.deserializeNBT(tag.getCompound(TAG_INVENTORY));
-	}
-	
-	@Override
-	public boolean canBeCollidedWith() {
-		return true;
 	}
 	
 	@Override

@@ -61,9 +61,9 @@ public class RecipeItem extends QualityItem {
 								Item item = ForgeRegistries.ITEMS.getValue(id);
 								String firstKeyPart = item instanceof BlockItem ? "block." : "item.";
 								return new TranslationTextComponent(firstKeyPart + id.getNamespace() + "." + id.getPath());
-							} else return TooltipUtils.TOOLTIP_NOT_AVAILABLE;
+							} else return TooltipUtils.NOT_AVAILABLE;
 						})
-						.orElse(TooltipUtils.TOOLTIP_NOT_AVAILABLE))
+						.orElse(TooltipUtils.NOT_AVAILABLE))
 		);
 	}
 	

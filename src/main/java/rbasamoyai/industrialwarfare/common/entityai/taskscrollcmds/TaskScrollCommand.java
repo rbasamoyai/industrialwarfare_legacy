@@ -1,16 +1,20 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableList;
 
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.registries.ForgeRegistryEntry;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
-import rbasamoyai.industrialwarfare.client.screen.taskscroll.ItemCountArgSelector;
-import rbasamoyai.industrialwarfare.client.screen.taskscroll.StorageSideAccessArgSelector;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.BlockPosArgHolder;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.EmptyArgHolder;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.FilterItemArgHolder;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.ItemCountArgHolder;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.StorageSideAccessArgHolder;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
 /**
@@ -24,18 +28,15 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	protected static final double MAX_DISTANCE_FROM_POI = 100.0d;
 	protected static final float SPEED_MODIFIER = 3.0f;
 	protected static final int CLOSE_ENOUGH_DIST = 0;
+	protected static final Vector3i TOO_FAR = new Vector3i(MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d);
 	
-	protected static final List<Function<Integer, ArgSelector<Byte>>> NO_ARGS = ImmutableList.of();
-	protected static final List<Function<Integer, ArgSelector<Byte>>> ITEM_TRANSFER_ARGS = ImmutableList.of(StorageSideAccessArgSelector::new, ItemCountArgSelector::new);
+	protected static final List<Supplier<IArgHolder>> POS_ONLY = ImmutableList.of(BlockPosArgHolder::new);
+	protected static final List<Supplier<IArgHolder>> ITEM_TRANSFER_ARGS = ImmutableList.of(BlockPosArgHolder::new, FilterItemArgHolder::new, StorageSideAccessArgHolder::new, ItemCountArgHolder::new);
 	
-	private final boolean usesBlockPos;
-	private final boolean canUseFilter;
-	private final List<Function<Integer, ArgSelector<Byte>>> selectors;
+	private final List<Supplier<IArgHolder>> providers;
 	
-	public TaskScrollCommand(boolean usesBlockPos, boolean canUseFilter, List<Function<Integer, ArgSelector<Byte>>> selectors) {
-		this.usesBlockPos = usesBlockPos;
-		this.canUseFilter = canUseFilter;
-		this.selectors = selectors;
+	public TaskScrollCommand(List<Supplier<IArgHolder>> selectorsAndArgMethods) {
+		this.providers = selectorsAndArgMethods;
 	}
 	
 	public abstract boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order);
@@ -48,20 +49,17 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	
 	public abstract boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
-	public final boolean usesBlockPos() {
-		return this.usesBlockPos;
-	}
-	
-	public final boolean canUseFilter() {
-		return this.canUseFilter;
-	}
-	
-	public final Function<Integer, ArgSelector<Byte>> getSelectorAt(int index) {
-		return index >= 0 && index < this.selectors.size() ? this.selectors.get(index) : null;
+	public final Supplier<IArgHolder> getArgHolderSupplier(int i) {
+		return 0 <= i && i < this.getArgCount() ? this.providers.get(i) : EmptyArgHolder::new;
 	}
 	
 	public final int getArgCount() {
-		return this.selectors.size();
+		return this.providers.size();
+	}
+	
+	@Override
+	public String toString() {
+		return this.getRegistryName().toString();
 	}
 	
 }

@@ -1,8 +1,10 @@
 package rbasamoyai.industrialwarfare.client.screen.taskscroll;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -11,24 +13,27 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
-import rbasamoyai.industrialwarfare.client.screen.selectors.TaskScrollArgSelectorWidget;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.TaskCommandArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
 import rbasamoyai.industrialwarfare.utils.TextureUtils;
+import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 /**
@@ -46,15 +51,21 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private static final IFormattableTextComponent TOOLTIP_INSERT_ORDER = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".insert_order");
 	private static final IFormattableTextComponent ATTACH_LABEL_TEXT = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".attach_label");
 	
-	private static final int SELECTOR_COLUMNS = 2;
-	private static final int ROW_SPACING = 20;
+	private static final int ARG_COLUMNS = 2;
 	private static final int TEXTURE_SIZE = 256;
 	
 	private static final int LIST_WIDGET_START_X = 24;
 	private static final int LIST_WIDGET_START_Y = 21;
 	private static final int LIST_WIDGET_SPACING = 2; // Only describes the spacing between adjacent widget edges, not the spacing between the top left corners.
-	private static final int LIST_WIDGET_WIDTH = 58;
-	private static final int LIST_WIDGET_HEIGHT = ROW_SPACING - LIST_WIDGET_SPACING;
+	private static final int LIST_WIDGET_WIDTH = 68;
+	private static final int LIST_WIDGET_HEIGHT = 18;
+	
+	private static final int COLUMN_SPACING = LIST_WIDGET_WIDTH + LIST_WIDGET_SPACING;
+	private static final int ROW_SPACING = LIST_WIDGET_HEIGHT + LIST_WIDGET_SPACING;
+	
+	private static final int ITEM_ARG_WIDGET_TITLE_START_X = LIST_WIDGET_START_X + 20;
+	private static final int ITEM_ARG_WIDGET_TITLE_START_Y = LIST_WIDGET_START_Y + 5;
+	private static final int ITEM_ARG_WIDGET_TITLE_WIDTH = LIST_WIDGET_WIDTH - 20;
 	
 	private static final int PAGE_NEXT_BUTTON_GUI_X = 115;
 	private static final int PAGE_PREV_BUTTON_GUI_X = 45;
@@ -65,13 +76,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private static final int PAGE_BUTTON_WIDTH = 16;
 	private static final int PAGE_BUTTON_HEIGHT = 12;
 	
-	private static final int SLOT_GUI_X = 144;
 	private static final int SLOT_TEX_X = 176;
 	private static final int SLOT_TEX_Y = 0;
 	private static final int SLOT_TEX_WIDTH = 18;
-	private static final int SLOT_ITEM_X = SLOT_GUI_X + 1;
-	private static final int SLOT_ITEM_START_Y = LIST_WIDGET_START_Y + 1;
-	private static final int SHADE_COLOR = 0x3f000000;
 	
 	private static final int LIST_INDEX_RIGHT_X = 22;
 	private static final int LIST_INDEX_START_Y = 25;
@@ -125,7 +132,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private final List<TaskScrollCommand> validCmds;
 	private float scrollOffs = 0;
 	private boolean isScrolling = false;
-	private int hoveringOverRowIndex = 0;
+	private int hoveringOverRowIndex = -1;
 	
 	private final int labelBorderStartColor;
 	private final int labelBorderEndColor;
@@ -137,9 +144,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private Button removeOrderButton;
 	private Button insertOrderButton;
 	
-	private final TaskScrollArgSelectorWidget[][] asWidgetArray = new TaskScrollArgSelectorWidget[TaskScrollContainer.ROW_COUNT][SELECTOR_COLUMNS];
+	private final TaskScrollArgSelectorWidget[][] asWidgetArray = new TaskScrollArgSelectorWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
 	private final RowIndexWidget[] riWidgetArray = new RowIndexWidget[TaskScrollContainer.ROW_COUNT];
-	private final FilterItemWidget[] fiWidgetArray = new FilterItemWidget[TaskScrollContainer.ROW_COUNT];
+	private final ItemArgWidget[][] iaWidgetArray = new ItemArgWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
 	
 	public TaskScrollScreen(TaskScrollContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
 		super(container, playerInv, localTitle);
@@ -211,6 +218,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				removeOrderButton$tooltip,
 				TOOLTIP_REMOVE_ORDER
 				));
+		WidgetUtils.setActiveAndVisible(this.removeOrderButton, false);
 		
 		Button.ITooltip insertOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_INSERT_ORDER, mouseX, mouseY);
 		
@@ -228,42 +236,46 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				insertOrderButton$tooltip,
 				TOOLTIP_INSERT_ORDER
 				));
+		WidgetUtils.setActiveAndVisible(this.insertOrderButton, false);
 		
 		int topIndex = this.menu.getTopIndex();
+		int baseArgIndex = this.page * 2 - 1;
 		
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
-			for (int j = 0; j < this.asWidgetArray[0].length; j++) {
-				int x = this.leftPos + LIST_WIDGET_START_X + (LIST_WIDGET_WIDTH + LIST_WIDGET_SPACING) * j;
-				int y = this.topPos + LIST_WIDGET_START_Y + (LIST_WIDGET_HEIGHT + LIST_WIDGET_SPACING) * i;
-				Optional<TaskScrollOrder> optional = this.menu.getOrder(topIndex + i);
-				
-				int argPos = -2 + j;
-				
-				TaskScrollArgSelectorWidget argSelWidget = new TaskScrollArgSelectorWidget(this.minecraft, this, x, y, LIST_WIDGET_WIDTH, optional, argPos);
-				argSelWidget.setOrder(optional);
-				
-				switch (j) {
-				case 0:
-					argSelWidget.setSelector(Optional.of(new TaskCmdArgSelector(this.validCmds, optional.orElseGet(() -> new TaskScrollOrder(this.validCmds.get(0))))));
-					break;
-				case 1:
-					argSelWidget.setSelector(Optional.of(new BlockPosArgSelector(this.getPlayer(), optional.map(TaskScrollOrder::getPos).orElse(this.getPlayer().blockPosition()))));
-					break;
+			for (int j = 0; j < this.asWidgetArray[i].length; j++) {
+				int x = this.leftPos + LIST_WIDGET_START_X + COLUMN_SPACING * j;
+				int y = this.topPos + LIST_WIDGET_START_Y + ROW_SPACING * i;
+				Optional<TaskScrollOrder> optional = this.menu.getOrder(topIndex + i);	
+				Optional<ArgSelector<?>> selector;
+				if (optional.isPresent()) {
+					TaskScrollOrder order = optional.get();
+					int argIndex = baseArgIndex + j;
+					if (argIndex == -1) {
+						selector = Optional.of(new TaskCommandArgSelector(this.validCmds, order));
+					} else {
+						selector = order.getArgHolder(argIndex).getSelector(this.menu);
+					}
+				} else {
+					selector = Optional.empty();
 				}
-				this.asWidgetArray[i][j] = this.addWidget(argSelWidget);
+					
+				this.asWidgetArray[i][j] = this.addWidget(new TaskScrollArgSelectorWidget(this.minecraft, this, x, y, LIST_WIDGET_WIDTH, selector));
 			}
 		}
 		
-		// Don't want to interlace row hover widgets with selector widgets
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				int x = this.leftPos + LIST_WIDGET_START_X + COLUMN_SPACING * j + 1;
+				int y = this.topPos + LIST_WIDGET_START_Y + ROW_SPACING * i + 1;
+				int orderIndex = topIndex + i;
+				int argIndex = j - 1;
+				this.iaWidgetArray[i][j] = this.addWidget(new ItemArgWidget(x, y, orderIndex, argIndex, this.menu.getOrderList(), this.itemRenderer));
+			}
+		}
+		
 		for (int i = 0; i < this.riWidgetArray.length; i++) {
 			int y = this.topPos + LIST_WIDGET_START_Y + ROW_SPACING * i;
 			this.riWidgetArray[i] = this.addWidget(new RowIndexWidget(this.leftPos + ROW_INDEX_WIDGET_X, y, LIST_WIDGET_HEIGHT, LIST_WIDGET_HEIGHT, i));
-		}
-		
-		for (int i = 0; i < this.fiWidgetArray.length; i++) {
-			int y = this.topPos + SLOT_ITEM_START_Y + ROW_SPACING * i;
-			int index = topIndex + i;
-			this.fiWidgetArray[i] = this.addWidget(new FilterItemWidget(this.leftPos + SLOT_ITEM_X, y, index, this.menu.getOrderList(), this.itemRenderer));
 		}
 		
 		this.updateScreen();
@@ -280,7 +292,8 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	@Override
 	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
 		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		this.minecraft.getTextureManager().bind(TASK_SCROLL_SCREEN_GUI);
+		TextureManager texManager = this.minecraft.getTextureManager();
+		texManager.bind(TASK_SCROLL_SCREEN_GUI);
 		
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
@@ -294,22 +307,43 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.fillGradient(stack, this.leftPos + ATTACH_LABEL_X + 1, this.topPos + ATTACH_LABEL_Y + 1, this.leftPos + ATTACH_LABEL_X + width - 1, this.topPos + ATTACH_LABEL_Y + ATTACH_LABEL_HEIGHT - 1, this.labelFieldColor, this.labelFieldColor);
 		this.blit(stack, this.leftPos + ATTACH_LABEL_SLOT_X, this.topPos + ATTACH_LABEL_SLOT_Y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_TEX_WIDTH, SLOT_TEX_WIDTH);
 		
-		if (this.page == 0) { // Rendering filter slots
-			for (int i = 0; i < this.menu.getVisibleRowCount(); i++) {
-				int y = LIST_WIDGET_START_Y + ROW_SPACING * i;
-				this.blit(stack, this.leftPos + SLOT_GUI_X, this.topPos + y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_TEX_WIDTH, SLOT_TEX_WIDTH);
-			}
-		}
-		
+		// Could combine asWidgetArray and iaWidgetArray, but not now
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
-			for (int j = 0; j < this.asWidgetArray[0].length; j++) {
+			for (int j = 0; j < this.asWidgetArray[i].length; j++) {
 				this.asWidgetArray[i][j].render(stack, mouseX, mouseY, partialTicks);
 			}
 		}
 		
+		// ArgSelectorWidget binds to the widgets texture, so need to bind back
+		texManager.bind(TASK_SCROLL_SCREEN_GUI);
+		
+		int topIndex = this.menu.getTopIndex();
+		int baseArgIndex = this.page * 2 -1;
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				Optional<TaskScrollOrder> optional = this.menu.getOrder(topIndex + i);
+				if (optional.isPresent()) {
+					IArgHolder holder = optional.get().getArgHolder(baseArgIndex + j);
+					if (holder.isItemStackArg()) {
+						int x = this.leftPos + LIST_WIDGET_START_X + COLUMN_SPACING * j;
+						int y = this.topPos + LIST_WIDGET_START_Y + ROW_SPACING * i;
+						this.blit(stack, x, y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_TEX_WIDTH, SLOT_TEX_WIDTH);
+					}
+				}
+			}
+		}
+		
+		// This has to be separate from the block above as for some reason it's messing with texManager's binds
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				this.iaWidgetArray[i][j].render(stack, mouseX, mouseY, partialTicks);
+			}
+		}
+		
+		texManager.bind(TASK_SCROLL_SCREEN_GUI);
+		
 		// The RowIndexWidgets are invisible but Widget#render has to be called for hovering to work
 		for (int i = 0; i < this.riWidgetArray.length; i++) this.riWidgetArray[i].render(stack, mouseX, mouseY, partialTicks);
-		for (int i = 0; i < this.fiWidgetArray.length; i++) this.fiWidgetArray[i].render(stack, mouseX, mouseY, partialTicks);
 	}
 	
 	@Override
@@ -326,10 +360,27 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			StringTextComponent listIndexLabel = new StringTextComponent(String.valueOf(topIndex + i + 1));
 			int y1 = LIST_INDEX_START_Y + ROW_SPACING * i;
 			if (this.hoveringOverRowIndex != i) this.font.draw(stack, listIndexLabel, LIST_INDEX_RIGHT_X - this.font.width(listIndexLabel), y1, TEXT_COLOR);
-			
-			if (!this.menu.getOrder(topIndex + i).map(TaskScrollOrder::canUseFilter).orElse(true) && this.page == 0) {
-				int y2 = SLOT_ITEM_START_Y + ROW_SPACING * i;
-				this.fillGradient(stack, SLOT_ITEM_X, y2, SLOT_ITEM_X + 16, y2 + 16, SHADE_COLOR, SHADE_COLOR);
+		}
+		
+		int baseArgIndex = this.page * 2 - 1;
+		
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				int argIndex = baseArgIndex + j;
+				Optional<TaskScrollOrder> optional = this.menu.getOrder(topIndex + i);
+				if (optional.isPresent()) {
+					IArgHolder holder = optional.get().getArgHolder(argIndex);
+					if (holder.isItemStackArg()) {
+						ITextComponent title = holder.getSelector(this.menu)
+								.map(ArgSelector::getTitle)
+								.orElse(StringTextComponent.EMPTY);
+						
+						int x = ITEM_ARG_WIDGET_TITLE_START_X + COLUMN_SPACING * j;
+						int y = ITEM_ARG_WIDGET_TITLE_START_Y + ROW_SPACING * i;
+						IFormattableTextComponent shortened = TooltipUtils.getShortenedTitle((IFormattableTextComponent) title, this.font, ITEM_ARG_WIDGET_TITLE_WIDTH);
+						this.font.draw(stack, shortened, x, y, TEXT_COLOR);
+					}
+				}
 			}
 		}
 	}
@@ -337,16 +388,25 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	@Override
 	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
-		
+
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
 			for (int j = 0; j < this.asWidgetArray[0].length; j++) {
 				TaskScrollArgSelectorWidget asWidget = this.asWidgetArray[i][j];
 				if (asWidget.isHovered()) {
-					Optional<ArgSelector<?>> optional = asWidget.getSelectorOptional();
+					Optional<ArgSelector<?>> optional = asWidget.getSelector();
 					List<ITextComponent> tooltip = optional
 							.map(ArgSelector::getComponentTooltip)
-							.orElseGet(() -> Arrays.asList(TaskScrollArgSelectorWidget.NOT_AVAILABLE));
+							.orElseGet(() -> Arrays.asList(TooltipUtils.NOT_AVAILABLE));
 					this.renderComponentTooltip(stack, tooltip, mouseX, mouseY);
+				}
+			}
+		}
+		
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
+				if (iaWidget.isHovered() && !iaWidget.getItem().isEmpty()) {
+					this.renderTooltip(stack, iaWidget.getItem(), mouseX, mouseY);
 				}
 			}
 		}
@@ -366,10 +426,12 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				return true;
 			}
 			
-			for (int i = 0; i < this.fiWidgetArray.length; i++) {
-				FilterItemWidget fiWidget = this.fiWidgetArray[i];
-				if (fiWidget.isHovered()) {
-					fiWidget.setItem(this.menu.getCarriedItem());
+			for (int i = 0; i < this.iaWidgetArray.length; i++) {
+				for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+					ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
+					if (iaWidget.isHovered()) {
+						iaWidget.setItem(this.menu.getCarriedItem());
+					}
 				}
 			}
 		}
@@ -434,14 +496,14 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	
 	@Override
 	public void onClose() {
-		this.saveSelectorsToOrders();
+		this.saveWidgetsToOrders();
 		IWNetwork.CHANNEL.sendToServer(new STaskScrollSyncMessage(this.menu.getHand(), this.menu.getOrderList(), this.menu.getLabelItem()));
 		super.onClose();
 	}
 	
 	private void prevPage(Button button) {
 		if (this.page > 0) {
-			this.updateSelectorRelatedFeatures();
+			this.saveWidgetsToOrders();
 			if (this.pageIsValid()) --this.page;
 			this.updatePage();
 		}
@@ -449,7 +511,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	
 	private void nextPage(Button button) {
 		if (this.page < this.lastPage) {
-			this.updateSelectorRelatedFeatures();
+			this.saveWidgetsToOrders();
 			if (this.pageIsValid()) ++this.page;
 			this.updatePage();
 		}
@@ -462,66 +524,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			return false;
 		}
 		return true;
-	}
-	
-	private void updateWidgets() {
-		int widgetArgIndexBase = this.page * 2 - 2;
-		int topIndex = this.menu.getTopIndex();
-		
-		for (int i = 0; i < this.asWidgetArray.length; i++) {
-			int orderIndex = topIndex + i;
-			Optional<TaskScrollOrder> orderOptional = this.menu.getOrder(orderIndex);
-			
-			if (orderOptional.isPresent()) {
-				
-				TaskScrollOrder order = orderOptional.get();
-				for (int j = 0; j < this.asWidgetArray[0].length; j++) {
-					TaskScrollArgSelectorWidget asWidget = this.asWidgetArray[i][j];
-					int widgetArgIndex = widgetArgIndexBase + j;
-					if (this.page == 0) {
-						switch (j) {
-						case 0:
-							asWidget.setSelector(Optional.of(new TaskCmdArgSelector(this.validCmds, order)));
-							break;
-						case 1:
-							asWidget.setSelector(Optional.of(new BlockPosArgSelector(this.inventory.player, order.getPos())));
-							break;
-						}
-						WidgetUtils.setActiveAndVisible(asWidget, j != 1 || order.usesBlockPos());
-					} else {
-						TaskScrollCommand orderCmd = order.getCommand();
-						if (widgetArgIndex < orderCmd.getArgCount()) {
-							WidgetUtils.setActiveAndVisible(asWidget, true);
-							int arg = widgetArgIndex < order.getArgs().size() ? order.getArgs().get(widgetArgIndex) : 0;
-							ArgSelector<Byte> selector = orderCmd.getSelectorAt(widgetArgIndex).apply(arg);
-							asWidget.setSelector(Optional.ofNullable(selector));
-						} else WidgetUtils.setActiveAndVisible(asWidget, false);
-					}
-				}
-				
-			} else {
-				for (int j = 0; j < this.asWidgetArray[0].length; j++)
-					WidgetUtils.setActiveAndVisible(this.asWidgetArray[i][j], false);
-			}
-		}
-		
-		boolean isVisible = this.menu.getVisibleRowCount() < TaskScrollContainer.ROW_COUNT;
-		WidgetUtils.setActiveAndVisible(this.addOrderButton, isVisible && !this.menu.isOrderListFull());
-		this.addOrderButton.y = this.topPos + ADD_ORDER_BUTTON_START_Y + this.menu.getVisibleRowCount() % 5 * ROW_SPACING;
-		
-		for (int i = 0; i < this.riWidgetArray.length; i++)
-			WidgetUtils.setActiveAndVisible(this.riWidgetArray[i], this.menu.isValidSlotOffs(topIndex + i));
-		
-		for (int i = 0; i < this.fiWidgetArray.length; i++) {
-			int index = topIndex + i;
-			boolean activate = this.menu.getOrder(index).map(TaskScrollOrder::canUseFilter).orElse(false) && this.page == 0;
-			WidgetUtils.setActiveAndVisible(this.fiWidgetArray[i], activate);
-		}
-	}
-	
-	private void updatePage() {
-		this.updateWidgets();
-		this.updatePageButtons();
 	}
 	
 	public int getPage() {
@@ -537,133 +539,157 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.lastPage = 0;
 		List<TaskScrollOrder> orderList = this.menu.getOrderList();
 		for (TaskScrollOrder order : orderList) {
-			int possibleLength = MathHelper.ceil((float)order.getCommand().getArgCount() * 0.5f);
+			int possibleLength = MathHelper.ceil((float)(order.getCommand().getArgCount() + 1) * 0.5f) - 1;
 			if (possibleLength > this.lastPage) this.lastPage = possibleLength;
 		}
 		if (this.page > this.lastPage) this.page = this.lastPage;
 		this.updatePageButtons();
 	}
 	
+	private void updatePage() {
+		this.updateWidgets();
+		this.updatePageButtons();
+	}
+	
 	private void updateScreen() {
+		this.updateWidgets();
 		this.updateMaxPages();
-		this.updatePage();
 	}
 	
 	public void updateSelectorRelatedFeatures() {
-		this.saveSelectorsToOrders();
+		this.saveWidgetsToOrders();
+		this.updateWidgets();
 		this.updateMaxPages();
 	}
 	
-	@SuppressWarnings("unchecked")
-	private void saveSelectorsToOrders() {
-		int widgetArgIndexBase = this.page * 2 - 2;
+	private void updateWidgets() {
+		int argIndexBase = this.page * 2 - 1;
+		int topIndex = this.menu.getTopIndex();
 		
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
-			int orderIndex = this.menu.getTopIndex() + i;
+			int orderIndex = topIndex + i;
+			Optional<TaskScrollOrder> optional = this.menu.getOrder(orderIndex);
+			if (optional.isPresent()) {
+				TaskScrollOrder order = optional.get();
+				for (int j = 0; j < this.asWidgetArray[i].length; j++) {
+					TaskScrollArgSelectorWidget asWidget = this.asWidgetArray[i][j];
+					int argIndex = argIndexBase + j;
+					IArgHolder holder = order.getArgHolder(argIndex);
+					if (argIndex == -1) {
+						asWidget.setSelector(Optional.of(new TaskCommandArgSelector(this.validCmds, order)));
+					} else if (!holder.isItemStackArg()) {
+						asWidget.setSelector(holder.getSelector(this.menu));
+					}
+					boolean inRange = -1 <= argIndex && argIndex < order.getCommand().getArgCount();
+					WidgetUtils.setActiveAndVisible(asWidget, inRange && !holder.isItemStackArg());
+				}
+			} else {
+				for (int j = 0; j < this.asWidgetArray[0].length; j++)
+					WidgetUtils.setActiveAndVisible(this.asWidgetArray[i][j], false);
+			}
+		}
+		
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			int orderIndex = topIndex + i;
+			Optional<TaskScrollOrder> optional = this.menu.getOrder(orderIndex);
+			if (optional.isPresent()) {
+				TaskScrollOrder order = optional.get();
+				for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+					ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
+					int argIndex = argIndexBase + j;
+					iaWidget.setOrderIndex(orderIndex);
+					iaWidget.setArgIndex(argIndex);
+					boolean inRange = 0 <= argIndex && argIndex < order.getCommand().getArgCount();
+					WidgetUtils.setActiveAndVisible(iaWidget, inRange && order.getArgHolder(argIndex).isItemStackArg());
+				}
+			} else {
+				for (int j = 0; j < this.iaWidgetArray[i].length; j++)
+					WidgetUtils.setActiveAndVisible(this.iaWidgetArray[i][j], false);
+			}
+		}
+		
+		boolean isVisible = this.menu.getVisibleRowCount() < TaskScrollContainer.ROW_COUNT;
+		WidgetUtils.setActiveAndVisible(this.addOrderButton, isVisible && !this.menu.isOrderListFull());
+		this.addOrderButton.y = this.topPos + ADD_ORDER_BUTTON_START_Y + this.menu.getVisibleRowCount() % 5 * ROW_SPACING;
+		
+		for (int i = 0; i < this.riWidgetArray.length; i++)
+			WidgetUtils.setActiveAndVisible(this.riWidgetArray[i], this.menu.isValidSlotOffs(topIndex + i));
+	}
+	
+	private void saveWidgetsToOrders() {
+		int topIndex = this.menu.getTopIndex();
+		int argIndexBase = this.page * 2 - 1;
+		
+		Set<Integer> changedCommands = new HashSet<>();
+		
+		for (int i = 0; i < this.asWidgetArray.length; i++) {
+			int orderIndex = topIndex + i;
 			Optional<TaskScrollOrder> orderOptional = this.menu.getOrder(orderIndex);
 			
-			if (orderOptional.isPresent()) {
-				TaskScrollOrder order = this.menu.getOrder(orderIndex).get();
+			if (orderOptional.isPresent() && !changedCommands.contains(orderIndex)) {
+				TaskScrollOrder order = orderOptional.get();
 				
-				for (int j = 0; j < this.asWidgetArray[0].length; j++) {
-					int widgetArgIndex = widgetArgIndexBase + j;
+				for (int j = 0; j < this.asWidgetArray[i].length; j++) {
 					TaskScrollArgSelectorWidget asWidget = this.asWidgetArray[i][j];
-					if (this.menu.isValidSlotOffs(orderIndex)) {
-						// If the selector's not present, don't save the data
-						Optional<ArgSelector<?>> optional = asWidget.getSelectorOptional();
-						if (optional.isPresent()) {
-							Object selectedArg = optional.get().getSelectedArg();
-							if (this.page == 0) {
-								if (j == 0 && selectedArg instanceof TaskScrollCommand) {
-									order.setCmdFromSelector((ArgSelector<TaskScrollCommand>) optional.get());
-									WidgetUtils.setActiveAndVisible(this.asWidgetArray[i][1], order.usesBlockPos());
-								} else if (j == 1 && selectedArg instanceof BlockPos) {
-									if (order.usesBlockPos()) order.setPosFromSelector((ArgSelector<BlockPos>) optional.get());
-								} else {
-									String type = "";
-									switch (j) {
-									case 0: type = "TaskScrollCommand"; break;
-									case 1: type = "BlockPos"; break;
-									}
-									// good god this is a long warning message
-									IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be " + type + ")");
-								}
-							} else {
-								TaskScrollCommand orderCmd = order.getCommand();
-								if (widgetArgIndex < orderCmd.getArgCount()) {
-									if (selectedArg instanceof Byte) {
-										order.setArgFromSelectorAndIndex((ArgSelector<Byte>) optional.get(), widgetArgIndex);
-									} else {// An etude in long warning messages, part 2
-										IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client has an ArgSelector whose generic type does not match up with the required type of the order position (generic type should be Byte)");
-									}
-								}
-							}
-						} else {
-							IndustrialWarfare.LOGGER.warn("ArgSelectorWidget at row " + (i + 1) + " column " + (j + 1) + " in TaskScrollScreen opened in the client does not have an ArgSelector present");
+					int argIndex = argIndexBase + j;
+					IArgHolder holder = order.getArgHolder(argIndex);
+					if (argIndex == -1) {
+						Optional<ArgSelector<?>> selector = asWidget.getSelector();
+						if (selector.isPresent()) {
+							TaskScrollCommand oldCommand = order.getCommand();
+							order.setCommand(selector.get().getSelectedArg().getLoc()
+									.map(IWModRegistries.TASK_SCROLL_COMMANDS::getValue)
+									.orElse(this.validCmds.get(0)));
+							if (order.getCommand() != oldCommand) changedCommands.add(orderIndex);
 						}
+					} else if (!holder.isItemStackArg()) {
+						asWidget.getSelector().ifPresent(as -> {
+							holder.accept(as.getSelectedArg());
+						});
 					}
 				}
+			}
+		}
+		
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			int orderIndex = topIndex + i;
+			Optional<TaskScrollOrder> orderOptional = this.menu.getOrder(orderIndex);
+			
+			if (orderOptional.isPresent() && !changedCommands.contains(orderIndex)) {
+				TaskScrollOrder order = orderOptional.get();
+				
+				for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+					ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
+					int argIndex = argIndexBase + j;
+					IArgHolder holder = order.getArgHolder(argIndex);
+					if (holder.isItemStackArg()) {
+						holder.accept(new ArgWrapper(iaWidget.getItem()));
+					}
+				}
+				
 			}
 		}
 	}
 	
 	private void scrollTo(float f) {
 		int o = this.menu.isOrderListFull() ? 0 : 1;
-		this.saveSelectorsToOrders();
+		this.saveWidgetsToOrders();
 		
 		this.menu.setTopIndex(MathHelper.floor(f * (float)(this.menu.getOrderListSize() - TaskScrollContainer.ROW_COUNT + o)));
 		int newTopIndex = this.menu.getTopIndex();
 		
-		for (int i = 0; i < this.fiWidgetArray.length; i++) {
-			FilterItemWidget fiWidget = this.fiWidgetArray[i];
-			fiWidget.setIndex(newTopIndex + i);
+		for (int i = 0; i < this.iaWidgetArray.length; i++) {
+			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
+				ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
+				iaWidget.setOrderIndex(newTopIndex + i);
+			}
 		}
 
-		this.updatePage();
+		this.updateWidgets();
 	}
 	
 	private void updateScrollOffs(float oldSize) {
 		this.scrollOffs = MathHelper.clamp(this.scrollOffs * oldSize / (float) this.getScrollLength(), 0.0f, 1.0f);
-	}
-	
-	private void addOrder(Button button) {
-		if (!this.menu.isOrderListFull()) {
-			float oldSize = (float) this.getScrollLength();
-			this.saveSelectorsToOrders();
-			this.menu.getOrderList().add(new TaskScrollOrder(this.validCmds.get(0), this.inventory.player.blockPosition()));
-			this.updateScreen();
-			this.updateScrollOffs(oldSize);
-		}
-	}
-	
-	private void removeOrder(Button button) {
-		if (this.hoveringOverRowIndex == -1) return;
-		
-		int index = this.menu.getTopIndex() + this.hoveringOverRowIndex;
-		if (this.menu.isValidSlotOffs(index)) {
-			float oldSize = (float) this.getScrollLength();
-			this.saveSelectorsToOrders();
-			this.menu.getOrderList().remove(index);
-			this.updateScreen();
-			this.updateScrollOffs(oldSize);
-		}
-	}
-	
-	private void insertOrder(Button button) {
-		if (this.hoveringOverRowIndex == -1) return;
-		
-		int index = this.menu.getTopIndex() + this.hoveringOverRowIndex;
-		if (this.menu.isValidSlotOffs(index) && !this.menu.isOrderListFull()) {
-			float oldSize = (float) this.getScrollLength();
-			this.saveSelectorsToOrders();
-			this.menu.getOrderList().add(index, new TaskScrollOrder(this.validCmds.get(0), this.inventory.player.blockPosition()));
-			this.updateScreen();
-			this.updateScrollOffs(oldSize);
-		}
-	}
-	
-	public PlayerEntity getPlayer() {
-		return this.inventory.player;
 	}
 	
 	private boolean canScroll() {
@@ -676,6 +702,42 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	
 	private int getScrollLength() {
 		return this.menu.getOrderListSize() + (this.menu.isOrderListFull() ? 0 : 1);
+	}
+	
+	private void addOrder(Button button) {
+		if (!this.menu.isOrderListFull()) {
+			float oldSize = (float) this.getScrollLength();
+			this.saveWidgetsToOrders();
+			this.menu.getOrderList().add(TaskScrollOrder.withPos(this.validCmds.get(0), this.menu.getPlayer().blockPosition()));
+			this.updateScreen();
+			this.updateScrollOffs(oldSize);
+		}
+	}
+	
+	private void removeOrder(Button button) {
+		if (this.hoveringOverRowIndex == -1) return;
+		
+		int index = this.menu.getTopIndex() + this.hoveringOverRowIndex;
+		if (this.menu.isValidSlotOffs(index)) {
+			float oldSize = (float) this.getScrollLength();
+			this.saveWidgetsToOrders();
+			this.menu.getOrderList().remove(index);
+			this.updateScreen();
+			this.updateScrollOffs(oldSize);
+		}
+	}
+	
+	private void insertOrder(Button button) {
+		if (this.hoveringOverRowIndex == -1) return;
+		
+		int index = this.menu.getTopIndex() + this.hoveringOverRowIndex;
+		if (this.menu.isValidSlotOffs(index) && !this.menu.isOrderListFull()) {
+			float oldSize = (float) this.getScrollLength();
+			this.saveWidgetsToOrders();
+			this.menu.getOrderList().add(index, TaskScrollOrder.withPos(this.validCmds.get(0), this.menu.getPlayer().blockPosition()));
+			this.updateScreen();
+			this.updateScrollOffs(oldSize);
+		}
 	}
 	
 }

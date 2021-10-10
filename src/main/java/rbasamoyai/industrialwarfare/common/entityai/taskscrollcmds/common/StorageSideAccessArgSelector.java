@@ -1,24 +1,35 @@
-package rbasamoyai.industrialwarfare.client.screen.taskscroll;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import net.minecraft.util.Direction;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.selectors.ArgSelector;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
+import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
-public class StorageSideAccessArgSelector extends ArgSelector<Byte> {
+public class StorageSideAccessArgSelector extends ArgSelector<Direction> {
 
 	private static final String TOOLTIP_TRANSLATION_KEY = "gui." + IndustrialWarfare.MOD_ID + ".task_scroll.tooltip.selector.storage_side";
 	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
 	
 	public StorageSideAccessArgSelector(int index) {
-		super(Arrays.asList((byte) 0, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5), index);
+		super(Arrays.asList(Direction.values()), index);
+	}
+	
+	@Override
+	public ArgWrapper getSelectedArg() {
+		return this.getPossibleArg(this.selectedArg);
+	}
+	
+	@Override
+	public ArgWrapper getPossibleArg(int argIndex) {
+		return new ArgWrapper(this.selectedArg);
 	}
 
 	@Override
@@ -28,23 +39,23 @@ public class StorageSideAccessArgSelector extends ArgSelector<Byte> {
 		
 		if (this.selectedArg < 0 || this.selectedArg >= this.possibleArgs.size()) this.warnInvalidSelection();
 		
-		for (byte b : this.possibleArgs) {
-			IFormattableTextComponent tc = (IFormattableTextComponent) getTextComponentFromValue(b);
-			if (b == this.selectedArg) tc = ArgSelector.formatAsSelected(tc);
+		this.possibleArgs.forEach(dir -> {
+			IFormattableTextComponent tc = getTooltip(dir);
+			if (dir == Direction.from3DDataValue(this.selectedArg)) tc = ArgSelector.formatAsSelected(tc);
 			else tc = TooltipUtils.formatAsStyle(tc, ArgSelector.NOT_SELECTED_STYLE);
 			tooltip.add(tc);
-		}
+		});
 		
 		return tooltip;
 	}
 
 	@Override
 	public ITextComponent getTitle() {
-		return getTextComponentFromValue(this.selectedArg);
+		return getTooltip(Direction.from3DDataValue(this.selectedArg));
 	}
 	
-	private static ITextComponent getTextComponentFromValue(int i) {
-		return new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + "." + ArgUtils.getDirection(i).getName());
+	private static IFormattableTextComponent getTooltip(Direction dir) {
+		return new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + "." + dir.getName());
 	}
 
 }
