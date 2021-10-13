@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.client.screen.widgets;
+package rbasamoyai.industrialwarfare.common.items.taskscroll;
 
 import java.util.List;
 
@@ -9,7 +9,6 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 /**

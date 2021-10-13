@@ -28,6 +28,7 @@ public class ItemArgWidget extends Widget {
 		super(x, y, SLOT_WIDTH, SLOT_WIDTH, StringTextComponent.EMPTY);
 		
 		this.orderList = orderList;
+		
 		this.itemRenderer = itemRenderer;
 		this.orderIndex = orderIndex;
 		this.argIndex = argIndex;
@@ -42,9 +43,7 @@ public class ItemArgWidget extends Widget {
 				this.itemRenderer.renderAndDecorateFakeItem(filterStack, this.x, this.y);
 				if (this.isHovered) {
 					RenderSystem.disableDepthTest();
-					RenderSystem.colorMask(true, true, true, false);
 					this.fillGradient(stack, this.x, this.y, this.x + SLOT_WIDTH, this.y + SLOT_WIDTH, HOVER_COLOR, HOVER_COLOR);
-					RenderSystem.colorMask(true, true, true, true);
 					RenderSystem.enableDepthTest();
 				}
 			}
@@ -54,7 +53,9 @@ public class ItemArgWidget extends Widget {
 	public void setItem(ItemStack stack) {
 		IArgHolder holder = this.orderList.get(this.orderIndex).getArgHolder(this.argIndex);
 		if (holder.isItemStackArg()) {
-			holder.accept(new ArgWrapper(stack.copy()));
+			ItemStack copy = stack.copy();
+			copy.setCount(1);
+			holder.accept(new ArgWrapper(copy));
 		}
 	}
 	

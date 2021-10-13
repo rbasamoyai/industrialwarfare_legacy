@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.util.text.ITextComponent;
-import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 

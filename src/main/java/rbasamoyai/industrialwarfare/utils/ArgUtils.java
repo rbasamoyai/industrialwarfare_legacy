@@ -5,7 +5,7 @@ import net.minecraft.item.ItemStack;
 public class ArgUtils {
 
 	public static boolean filterMatches(ItemStack filter, ItemStack stack) {
-		if (filter.isEmpty()) {
+		if (filter.isEmpty() && !stack.isEmpty()) {
 			return true;
 		} else {
 			// TODO: more complex stuff, such as filter items

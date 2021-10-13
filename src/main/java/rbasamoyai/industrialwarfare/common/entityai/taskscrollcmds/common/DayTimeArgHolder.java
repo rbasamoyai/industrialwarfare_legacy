@@ -2,26 +2,25 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.Optional;
 
-import net.minecraft.util.Direction;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 
-public class StorageSideAccessArgHolder implements IArgHolder {
+public class DayTimeArgHolder implements IArgHolder {
 
-	private Direction arg;
+	private int dayTime;
 	
 	@Override
 	public void accept(ArgWrapper wrapper) {
-		this.arg = Direction.from3DDataValue(wrapper.getArgNum());
+		this.dayTime = wrapper.getArgNum();
 	}
-	
+
 	@Override
 	public ArgWrapper getWrapper() {
-		return new ArgWrapper(this.arg.get3DDataValue());
+		return new ArgWrapper(this.dayTime);
 	}
-	
+
 	@Override
 	public boolean isItemStackArg() {
 		return false;
@@ -29,7 +28,7 @@ public class StorageSideAccessArgHolder implements IArgHolder {
 
 	@Override
 	public Optional<ArgSelector<?>> getSelector(TaskScrollContainer container) {
-		return Optional.of(new StorageSideAccessArgSelector(this.arg.get3DDataValue()));
+		return Optional.of(new DayTimeArgSelector(this.dayTime));
 	}
-	
+
 }

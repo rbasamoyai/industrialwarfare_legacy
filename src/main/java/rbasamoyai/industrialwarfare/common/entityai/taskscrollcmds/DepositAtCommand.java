@@ -21,6 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;
@@ -33,7 +34,7 @@ public class DepositAtCommand extends TaskScrollCommand {
 	private static final int ITEM_COUNT_ARG_INDEX = 3;
 	
 	public DepositAtCommand() {
-		super(TaskScrollCommand.ITEM_TRANSFER_ARGS);
+		super(CommandTrees.ITEM_HANDLING);
 		this.setRegistryName(IndustrialWarfare.MOD_ID, "deposit_at");
 	}
 	
@@ -119,13 +120,6 @@ public class DepositAtCommand extends TaskScrollCommand {
 		if (!brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE)) {
 			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
 		}
-	}
-
-	@Override
-	public boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		boolean cantInterface = brain.getMemory(MemoryModuleTypeInit.CANT_INTERFACE).orElse(false);
-		return !cantInterface;
 	}
 
 }

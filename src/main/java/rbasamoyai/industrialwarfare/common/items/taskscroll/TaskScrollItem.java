@@ -30,7 +30,6 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.Ta
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.TaskScrollDataProvider;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
-import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
@@ -39,10 +38,16 @@ public class TaskScrollItem extends Item {
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".task_scroll.title");
 	private static final IFormattableTextComponent TOOLTIP_LABEL = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".task_scroll.label");
-	private static final IFormattableTextComponent TOOLTIP_BLANK_LABEL = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".task_scroll.blank_label");
 	
 	private static final Supplier<List<TaskScrollCommand>> VALID_COMMANDS = () -> {
-		return Arrays.asList(TaskScrollCommandInit.MOVE_TO, TaskScrollCommandInit.TAKE_FROM, TaskScrollCommandInit.DEPOSIT_AT, TaskScrollCommandInit.WAIT_FOR);
+		return Arrays.asList(
+				TaskScrollCommandInit.MOVE_TO,
+				TaskScrollCommandInit.TAKE_FROM,
+				TaskScrollCommandInit.DEPOSIT_AT,
+				TaskScrollCommandInit.WAIT_FOR,
+				TaskScrollCommandInit.JUMP_TO,
+				TaskScrollCommandInit.SWITCH_ORDER
+				);
 	};
 	
 	public TaskScrollItem() {
@@ -128,13 +133,7 @@ public class TaskScrollItem extends Item {
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_LABEL,
 				getDataHandler(stack)
-					.map(h1 -> LabelItem.getDataHandler(h1.getLabel())
-							.map(h2 -> {
-								IFormattableTextComponent tc = (IFormattableTextComponent) h2.getCachedName();
-								return TooltipUtils.charLength(tc) > 0 ? tc : TOOLTIP_BLANK_LABEL;
-							})
-							.orElse(TooltipUtils.NOT_AVAILABLE)
-							)
+					.map(h -> (IFormattableTextComponent) h.getLabel().getHoverName())
 					.orElse(TooltipUtils.NOT_AVAILABLE)
 				));
 	}

@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.Collectors;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
@@ -36,13 +37,7 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public static TaskScrollOrder filledWith(TaskScrollCommand command, ArgWrapper wrapper) {
-		List<IArgHolder> args = new ArrayList<>(command.getArgCount());
-		for (int i = 0; i < command.getArgCount(); i++) {
-			IArgHolder holder = command.getArgHolderSupplier(i).get();
-			holder.accept(wrapper);
-			args.add(holder);
-		}
-		return new TaskScrollOrder(command, args);
+		return new TaskScrollOrder(command, command.getCommandTree().getArgumentsWith(wrapper));
 	}
 	
 	public static TaskScrollOrder empty(TaskScrollCommand command) {
@@ -53,16 +48,11 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 		return filledWith(command, new ArgWrapper(pos));
 	}
 	
-	public final void setCommand(TaskScrollCommand command) {
+	public final void setCommand(TaskScrollCommand command, ArgWrapper fill) {
 		TaskScrollCommand oldCommand = this.command;
 		this.command = command;
 		if (oldCommand != this.command) {
-			this.args.clear();
-			for (int i = 0; i < this.command.getArgCount(); i++) {
-				IArgHolder holder = this.command.getArgHolderSupplier(i).get();
-				holder.accept(ArgWrapper.EMPTY);
-				this.args.add(holder);
-			}
+			this.args = this.command.getCommandTree().getArgumentsWith(fill);
 		}
 	}
 	
@@ -70,22 +60,36 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 		return this.command;
 	}
 	
-	public final void setArg(int i, ArgWrapper wrapper) {
+	public final boolean setArg(int i, ArgWrapper arg, ArgWrapper fill) {
+		boolean changedBranch = false;
 		if (this.isValidIndex(i)) {
-			this.args.get(i).accept(wrapper);
+			changedBranch = this.willBranchDifferently(arg, i);
+			this.args.get(i).accept(arg);
+			if (changedBranch) {
+				this.args = this.command.getCommandTree().fillArgumentsAfterPoint(this.args, i, fill);
+			}
 		}
+		return changedBranch;
 	}
 	
 	public final ArgWrapper getWrappedArg(int i) {
-		return this.isValidIndex(i) ? this.args.get(i).getWrapper() : new ArgWrapper(0);
+		return this.isValidIndex(i) ? this.args.get(i).getWrapper() : ArgWrapper.EMPTY;
 	}
 	
 	public final IArgHolder getArgHolder(int i) {
 		return this.isValidIndex(i) ? this.args.get(i) : new EmptyArgHolder();
 	}
 	
+	public final int currentArgLength() {
+		return this.args.size();
+	}
+	
 	private boolean isValidIndex(int i) {
 		return 0 <= i && i < this.args.size();
+	}
+	
+	public final boolean willBranchDifferently(ArgWrapper other, int index) {
+		return this.command.getCommandTree().differentBranches(this.args.subList(0, index), this.args.get(index).getWrapper(), other, index);
 	}
 
 	@Override
@@ -94,7 +98,10 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 		tag.putString(TAG_COMMAND, this.command.getRegistryName().toString());
 		
 		ListNBT argTag = new ListNBT();
-		this.args.forEach(arg -> argTag.add(arg.serializeNBT()));
+		this.args.stream()
+				.map(IArgHolder::getWrapper)
+				.map(ArgWrapper::serializeNBT)
+				.forEach(argTag::add);
 		tag.put(TAG_ARGS, argTag);
 		
 		return tag;
@@ -102,31 +109,34 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
-		this.setCommand(IWModRegistries.TASK_SCROLL_COMMANDS.getValue(new ResourceLocation(nbt.getString(TAG_COMMAND))));
+		this.setCommand(IWModRegistries.TASK_SCROLL_COMMANDS.getValue(new ResourceLocation(nbt.getString(TAG_COMMAND))), ArgWrapper.EMPTY);
+		
 		ListNBT argTags = nbt.getList(TAG_ARGS, Constants.NBT.TAG_COMPOUND);
-		for (int i = 0; i < this.command.getArgCount(); i++) {
-			IArgHolder holder = this.args.get(i);
-			holder.deserializeNBT((CompoundNBT) argTags.get(i));
-		}
+		List<ArgWrapper> wrappers = argTags.stream()
+				.map(tag -> (CompoundNBT) tag)
+				.map(ArgWrapper::fromNBT)
+				.collect(Collectors.toList());
+		this.args = this.command.getCommandTree().getArguments(wrappers);
 	}
 	
 	public void toNetwork(PacketBuffer buf) {
 		buf.writeResourceLocation(this.command.getRegistryName());
-		// Expecting to write appropriate amount of args, so i depends on this.command#getArgCount rather than this.args#size
-		for (int i = 0; i < this.command.getArgCount(); i++) {
-			this.args.get(i).toNetwork(buf);
-		}
+		buf.writeVarInt(this.args.size());
+		this.args.stream()
+				.map(IArgHolder::getWrapper)
+				.forEach(wrapper -> wrapper.toNetwork(buf));
 	}
 	
 	public static TaskScrollOrder fromNetwork(PacketBuffer buf) {
-		TaskScrollCommand cmd = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(buf.readResourceLocation());
-		List<IArgHolder> holders = new ArrayList<>(cmd.getArgCount());
-		for (int i = 0; i < cmd.getArgCount(); i++) {
-			IArgHolder holder = cmd.getArgHolderSupplier(i).get();
-			holder.fromNetwork(buf);
-			holders.add(holder);
+		TaskScrollCommand command = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(buf.readResourceLocation());
+		int sz = buf.readVarInt();
+		
+		List<ArgWrapper> wrappers = new ArrayList<>();
+		for (int i = 0; i < sz; i++) {
+			wrappers.add(ArgWrapper.fromNetwork(buf));
 		}
-		return new TaskScrollOrder(cmd, holders);
+		
+		return new TaskScrollOrder(command, command.getCommandTree().getArguments(wrappers));
 	}
 	
 	@Override
