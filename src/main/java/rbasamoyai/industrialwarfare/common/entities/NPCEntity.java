@@ -61,6 +61,7 @@ public class NPCEntity extends CreatureEntity {
 	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 			MemoryModuleType.DOORS_TO_CLOSE,
+			MemoryModuleType.HEARD_BELL_TIME,
 			MemoryModuleType.HOME,
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.MEETING_POINT,
@@ -70,7 +71,9 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleTypeInit.CANT_INTERFACE,
 			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX,
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION,
+			MemoryModuleTypeInit.JUMP_TO,
 			MemoryModuleTypeInit.STOP_EXECUTION,
+			MemoryModuleTypeInit.WAIT_FOR,
 			MemoryModuleTypeInit.WORKING
 			);
 	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(
@@ -210,7 +213,7 @@ public class NPCEntity extends CreatureEntity {
 		super.customServerAiStep();
 	}
 	
-	/**
+	/*
 	 * INTERFACING METHODS
 	 */
 	

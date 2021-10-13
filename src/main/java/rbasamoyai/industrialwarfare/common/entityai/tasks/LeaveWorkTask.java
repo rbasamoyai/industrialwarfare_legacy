@@ -145,9 +145,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		boolean cantInterface = brain.getMemory(MemoryModuleTypeInit.CANT_INTERFACE).orElse(false);
-		boolean stopExecution = brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION);
-		return !cantInterface && !stopExecution;
+		return !brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE) && !brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE);
 	}
 	
 	@Override
@@ -156,7 +154,6 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		
 		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
 		
-		brain.eraseMemory(MemoryModuleTypeInit.CANT_INTERFACE);
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
 		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);

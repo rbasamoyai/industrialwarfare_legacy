@@ -10,6 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
@@ -18,7 +19,7 @@ public class MoveToCommand extends TaskScrollCommand {
 	private static final int POS_ARG_INDEX = 0;
 	
 	public MoveToCommand() {
-		super(TaskScrollCommand.POS_ONLY);
+		super(CommandTrees.POS_ONLY);
 		this.setRegistryName(IndustrialWarfare.MOD_ID, "move_to");
 	}
 	
@@ -55,9 +56,4 @@ public class MoveToCommand extends TaskScrollCommand {
 		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
 	}
 
-	@Override
-	public boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		return npc.getBrain().getMemory(MemoryModuleTypeInit.STOP_EXECUTION).orElse(true);
-	}
-	
 }

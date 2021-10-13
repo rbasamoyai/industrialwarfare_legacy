@@ -1,10 +1,14 @@
 package rbasamoyai.industrialwarfare.client.screen.taskscroll;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -22,10 +26,10 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.TaskCommandArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -138,6 +142,8 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private final int labelBorderEndColor;
 	private final int labelFieldColor;
 	
+	private final ArgWrapper fillWrapper = new ArgWrapper(this.menu.getPlayer().blockPosition());
+	
 	private Button prevPageButton;
 	private Button nextPageButton;
 	private Button addOrderButton;
@@ -147,6 +153,8 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private final TaskScrollArgSelectorWidget[][] asWidgetArray = new TaskScrollArgSelectorWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
 	private final RowIndexWidget[] riWidgetArray = new RowIndexWidget[TaskScrollContainer.ROW_COUNT];
 	private final ItemArgWidget[][] iaWidgetArray = new ItemArgWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
+	
+	private final Map<Integer, Map<Integer, Optional<ArgSelector<?>>>> cachedSelectors = new HashMap<>();
 	
 	public TaskScrollScreen(TaskScrollContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
 		super(container, playerInv, localTitle);
@@ -241,6 +249,11 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		int topIndex = this.menu.getTopIndex();
 		int baseArgIndex = this.page * 2 - 1;
 		
+		Runnable updateRunnable = () -> {
+			this.saveWidgetsToOrders();
+			this.updateScreen();
+		};
+		
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
 			for (int j = 0; j < this.asWidgetArray[i].length; j++) {
 				int x = this.leftPos + LIST_WIDGET_START_X + COLUMN_SPACING * j;
@@ -258,8 +271,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				} else {
 					selector = Optional.empty();
 				}
-					
-				this.asWidgetArray[i][j] = this.addWidget(new TaskScrollArgSelectorWidget(this.minecraft, this, x, y, LIST_WIDGET_WIDTH, selector));
+				
+				
+				this.asWidgetArray[i][j] = this.addWidget(new TaskScrollArgSelectorWidget(this.minecraft, x, y, LIST_WIDGET_WIDTH, selector, updateRunnable));
 			}
 		}
 		
@@ -539,7 +553,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.lastPage = 0;
 		List<TaskScrollOrder> orderList = this.menu.getOrderList();
 		for (TaskScrollOrder order : orderList) {
-			int possibleLength = MathHelper.ceil((float)(order.getCommand().getArgCount() + 1) * 0.5f) - 1;
+			int possibleLength = MathHelper.ceil((float)(order.currentArgLength() + 1) * 0.5f) - 1;
 			if (possibleLength > this.lastPage) this.lastPage = possibleLength;
 		}
 		if (this.page > this.lastPage) this.page = this.lastPage;
@@ -552,12 +566,6 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	}
 	
 	private void updateScreen() {
-		this.updateWidgets();
-		this.updateMaxPages();
-	}
-	
-	public void updateSelectorRelatedFeatures() {
-		this.saveWidgetsToOrders();
 		this.updateWidgets();
 		this.updateMaxPages();
 	}
@@ -578,9 +586,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 					if (argIndex == -1) {
 						asWidget.setSelector(Optional.of(new TaskCommandArgSelector(this.validCmds, order)));
 					} else if (!holder.isItemStackArg()) {
-						asWidget.setSelector(holder.getSelector(this.menu));
+						asWidget.setSelector(this.retrieveOrGetNewSelector(orderIndex, argIndex, () -> holder.getSelector(this.menu)));
 					}
-					boolean inRange = -1 <= argIndex && argIndex < order.getCommand().getArgCount();
+					boolean inRange = -1 <= argIndex && argIndex < order.currentArgLength();
 					WidgetUtils.setActiveAndVisible(asWidget, inRange && !holder.isItemStackArg());
 				}
 			} else {
@@ -599,7 +607,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 					int argIndex = argIndexBase + j;
 					iaWidget.setOrderIndex(orderIndex);
 					iaWidget.setArgIndex(argIndex);
-					boolean inRange = 0 <= argIndex && argIndex < order.getCommand().getArgCount();
+					boolean inRange = 0 <= argIndex && argIndex < order.currentArgLength();
 					WidgetUtils.setActiveAndVisible(iaWidget, inRange && order.getArgHolder(argIndex).isItemStackArg());
 				}
 			} else {
@@ -620,13 +628,19 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		int topIndex = this.menu.getTopIndex();
 		int argIndexBase = this.page * 2 - 1;
 		
-		Set<Integer> changedCommands = new HashSet<>();
+		Set<Pair<Integer, Integer>> changedOrders = new HashSet<>();
+		BiPredicate<Integer, Integer> canChange = (ordInd, argInd) -> {
+			return changedOrders.stream()
+					.filter(c -> ordInd.intValue() == c.getFirst().intValue())
+					.filter(c -> argInd.intValue() > c.getSecond().intValue())
+					.count() < 1L;
+		};
 		
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
 			int orderIndex = topIndex + i;
 			Optional<TaskScrollOrder> orderOptional = this.menu.getOrder(orderIndex);
 			
-			if (orderOptional.isPresent() && !changedCommands.contains(orderIndex)) {
+			if (orderOptional.isPresent()) {
 				TaskScrollOrder order = orderOptional.get();
 				
 				for (int j = 0; j < this.asWidgetArray[i].length; j++) {
@@ -637,36 +651,27 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 						Optional<ArgSelector<?>> selector = asWidget.getSelector();
 						if (selector.isPresent()) {
 							TaskScrollCommand oldCommand = order.getCommand();
-							order.setCommand(selector.get().getSelectedArg().getLoc()
+							TaskScrollCommand newCommand = selector.get().getSelectedArg().getLoc()
 									.map(IWModRegistries.TASK_SCROLL_COMMANDS::getValue)
-									.orElse(this.validCmds.get(0)));
-							if (order.getCommand() != oldCommand) changedCommands.add(orderIndex);
+									.orElse(this.validCmds.get(0));
+							order.setCommand(newCommand, this.fillWrapper);
+							if (newCommand != oldCommand) {
+								changedOrders.add(Pair.of(orderIndex, argIndex));
+								this.clearOrderSelectorsAfter(orderIndex, argIndex);
+							}
 						}
-					} else if (!holder.isItemStackArg()) {
-						asWidget.getSelector().ifPresent(as -> {
-							holder.accept(as.getSelectedArg());
-						});
+					} else if (!holder.isItemStackArg() && canChange.test(orderIndex, argIndex) && argIndex < order.currentArgLength()) {
+						Optional<ArgSelector<?>> asOptional = asWidget.getSelector();
+						if (asOptional.isPresent()) {
+							ArgSelector<?> argSelector = asOptional.get();
+							ArgWrapper asArg = argSelector.getSelectedArg();
+							if (order.setArg(argIndex, asArg, this.fillWrapper)) {
+								changedOrders.add(Pair.of(orderIndex, argIndex));
+								this.clearOrderSelectorsAfter(orderIndex, argIndex);
+							}
+						}
 					}
 				}
-			}
-		}
-		
-		for (int i = 0; i < this.iaWidgetArray.length; i++) {
-			int orderIndex = topIndex + i;
-			Optional<TaskScrollOrder> orderOptional = this.menu.getOrder(orderIndex);
-			
-			if (orderOptional.isPresent() && !changedCommands.contains(orderIndex)) {
-				TaskScrollOrder order = orderOptional.get();
-				
-				for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
-					ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
-					int argIndex = argIndexBase + j;
-					IArgHolder holder = order.getArgHolder(argIndex);
-					if (holder.isItemStackArg()) {
-						holder.accept(new ArgWrapper(iaWidget.getItem()));
-					}
-				}
-				
 			}
 		}
 	}
@@ -708,7 +713,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		if (!this.menu.isOrderListFull()) {
 			float oldSize = (float) this.getScrollLength();
 			this.saveWidgetsToOrders();
+			
 			this.menu.getOrderList().add(TaskScrollOrder.withPos(this.validCmds.get(0), this.menu.getPlayer().blockPosition()));
+			
 			this.updateScreen();
 			this.updateScrollOffs(oldSize);
 		}
@@ -721,7 +728,10 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		if (this.menu.isValidSlotOffs(index)) {
 			float oldSize = (float) this.getScrollLength();
 			this.saveWidgetsToOrders();
+			
+			this.cachedSelectors.remove(index);
 			this.menu.getOrderList().remove(index);
+			
 			this.updateScreen();
 			this.updateScrollOffs(oldSize);
 		}
@@ -734,10 +744,41 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		if (this.menu.isValidSlotOffs(index) && !this.menu.isOrderListFull()) {
 			float oldSize = (float) this.getScrollLength();
 			this.saveWidgetsToOrders();
+			
+			Map<Integer, Optional<ArgSelector<?>>> map = this.cachedSelectors.get(index);
+			this.cachedSelectors.remove(index);
 			this.menu.getOrderList().add(index, TaskScrollOrder.withPos(this.validCmds.get(0), this.menu.getPlayer().blockPosition()));
+			this.cachedSelectors.put(index + 1, map);
+
 			this.updateScreen();
 			this.updateScrollOffs(oldSize);
 		}
 	}
 	
+	private Optional<ArgSelector<?>> retrieveOrGetNewSelector(int orderIndex, int argIndex, Supplier<Optional<ArgSelector<?>>> selectorSupplier) {
+		Map<Integer, Optional<ArgSelector<?>>> orderCache = this.cachedSelectors.get(orderIndex);
+		Optional<ArgSelector<?>> selector;
+		if (orderCache != null) {
+			selector = orderCache.get(argIndex);
+			if (selector == null) {
+				selector = selectorSupplier.get();
+				orderCache.put(argIndex, selector);
+			}
+		} else {
+			Map<Integer, Optional<ArgSelector<?>>> args = new HashMap<>();
+			selector = selectorSupplier.get();
+			args.put(argIndex, selector);
+			this.cachedSelectors.put(orderIndex, args);
+		}
+		return selector;
+	}
+	
+	private void clearOrderSelectorsAfter(int orderIndex, int argIndex) {
+		Map<Integer, Optional<ArgSelector<?>>> orderCache = this.cachedSelectors.get(orderIndex);
+		if (orderCache != null) {
+			orderCache.entrySet().removeIf(e -> e.getKey().intValue() > argIndex);
+		}
+	}
+	
 }
+ 

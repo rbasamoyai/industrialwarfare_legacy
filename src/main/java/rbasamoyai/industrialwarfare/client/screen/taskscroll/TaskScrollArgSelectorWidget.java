@@ -4,25 +4,25 @@ import java.util.Optional;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.IFormattableTextComponent;
-import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
 import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelectorWidget;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class TaskScrollArgSelectorWidget extends ArgSelectorWidget {
 	
-	private TaskScrollScreen screen;
+	private Runnable runnable;
 	
-	public TaskScrollArgSelectorWidget(Minecraft minecraft, TaskScrollScreen screen, int x, int y, int width, Optional<ArgSelector<?>> initialSelector) {
+	public TaskScrollArgSelectorWidget(Minecraft minecraft, int x, int y, int width, Optional<ArgSelector<?>> initialSelector, Runnable runnable) {
 		super(minecraft, x, y, width, initialSelector);
-		this.screen = screen;
+		this.runnable = runnable;
 	}
 	
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollDist) {
 		if (!this.isMouseOver(mouseX, mouseY)) return false;
 		super.mouseScrolled(mouseX, mouseY, scrollDist);
-		if (this.selector.isPresent()) this.screen.updateSelectorRelatedFeatures();
+		if (this.selector.isPresent()) this.runnable.run();
 		return true;
 	}
 	

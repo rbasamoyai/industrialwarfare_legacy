@@ -183,7 +183,7 @@
 	"gui.industrialwarfare.task_scroll.tooltip.selector.block_pos.looking_at":		"(Where you are looking at)",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.block_pos.not_looking_at":	"(You are not looking at a nearby non-air block!)",
 	
-	"gui.industrialwarfare.task_scroll.tooltip.selector.item_count": "How many items do you want to extract?",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_count": "How many items?",
 	
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side": "Which side do you want to access the storage block from?",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.down":		"Down",
@@ -193,16 +193,63 @@
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.west":		"West",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.storage_side.east":		"East",
 	
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.day_time":	"Day time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode":			"How do you want the NPC to wait?",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.day_time":	"Day time (NPC waits until given time of day)",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.relative_time":	"Relative time (NPC waits for given time)",
 	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_mode.bell":	"Bell (NPC waits until it hears a bell nearby)",
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.day_time":	"Day time",
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
+	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
 	
-	"gui.industrialwarfare.task_scroll.tooltip.selector.wait_time":		"How long do you want the NPC to wait for? This is ignored if the \"wait mode\" argument is set to \"Bell\".",
-	"gui.industrialwarfare.task_scroll.selector.wait_time.time_format":	"%1$ss",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.day_time":		"What time?",
+	"gui.industrialwarfare.task_scroll.selector.day_time.time_format":	"%1$s:%2$s",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.time_count":		"How long do you want the NPC to wait for?",
+	"gui.industrialwarfare.task_scroll.selector.time_count.time_format":	"%1$ss",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.jump_index":	"What index do you want to jump to?",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.base_jump_condition":		"Jump to the given index...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.base_jump_condition.unconditional":		"always",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.base_jump_condition.day_time":		"if day time...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.base_jump_condition.has_items":		"if the NPC has...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.base_jump_condition.heard_bell":	"if bell heard",
+	"gui.industrialwarfare.task_scroll.selector.base_jump_condition.unconditional":	"No condition",
+	"gui.industrialwarfare.task_scroll.selector.base_jump_condition.day_time":		"Day time",
+	"gui.industrialwarfare.task_scroll.selector.base_jump_condition.has_items":		"Has items",
+	"gui.industrialwarfare.task_scroll.selector.base_jump_condition.heard_bell":	"Heard bell",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.day_time_condition":		"...if the day time...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.day_time_condition.before":		"is before...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.day_time_condition.after":		"is after...",
+	"gui.industrialwarfare.task_scroll.selector.day_time_condition.before":	"Before",
+	"gui.industrialwarfare.task_scroll.selector.day_time_condition.after":	"After",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_condition":		"...if the item count...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_condition.unconditional":	"always",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_condition.more_than":	"is more than...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_condition.less_than":	"is less than...",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.item_condition.equal_to":	"is equal to...",
+	"gui.industrialwarfare.task_scroll.selector.item_condition.unconditional":	"No condition",
+	"gui.industrialwarfare.task_scroll.selector.item_condition.more_than":		"More than",
+	"gui.industrialwarfare.task_scroll.selector.item_condition.less_than":		"Less than",
+	"gui.industrialwarfare.task_scroll.selector.item_condition.equal_to":		"Equal to",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.look_for_num":	"What label number should the NPC look for?",
+	"gui.industrialwarfare.task_scroll.selector.look_for_num.any":	"Any number",
+	"gui.industrialwarfare.task_scroll.selector.look_for_num.none":	"No number",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.look_for_name":	"Should the NPC look for a label with its name?",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.look_for_name.dont_look":	"No",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.look_for_name.look":	"Yes",
+	"gui.industrialwarfare.task_scroll.selector.look_for_name.dont_look":	"Don't look",
+	"gui.industrialwarfare.task_scroll.selector.look_for_name.look":	"Look",
+	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.pos_mode":	"Where should the NPC look for the task scroll?",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.pos_mode.job_site":	"At the job site",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.pos_mode.pos":	"At the given position",
+	"gui.industrialwarfare.task_scroll.selector.pos_mode.job_site":	"At job shelf",
+	"gui.industrialwarfare.task_scroll.selector.pos_mode.pos":	"At position",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",

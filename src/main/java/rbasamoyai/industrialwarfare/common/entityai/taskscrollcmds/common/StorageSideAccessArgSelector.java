@@ -9,7 +9,7 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelector;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
@@ -19,7 +19,7 @@ public class StorageSideAccessArgSelector extends ArgSelector<Direction> {
 	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
 	
 	public StorageSideAccessArgSelector(int index) {
-		super(Arrays.asList(Direction.values()), index);
+		super(Arrays.asList(Direction.values()), index); // Direction#values is only used for size
 	}
 	
 	@Override
