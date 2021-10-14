@@ -11,12 +11,13 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.registries.ObjectHolder;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 @ObjectHolder(IndustrialWarfare.MOD_ID)
 public class MemoryModuleTypeInit {
 
-	public static final MemoryModuleType<Boolean> CANT_INTERFACE = null;
+	public static final MemoryModuleType<NPCComplaint> COMPLAINT = null;
 	public static final MemoryModuleType<Integer> CURRENT_INSTRUCTION_INDEX = null;
 	public static final MemoryModuleType<Boolean> EXECUTING_INSTRUCTION = null;
 	public static final MemoryModuleType<Integer> JUMP_TO = null;
@@ -27,7 +28,7 @@ public class MemoryModuleTypeInit {
 	@SubscribeEvent
 	public static void registerMemoryModuleTypes(RegistryEvent.Register<MemoryModuleType<?>> event) {
 		event.getRegistry().registerAll(new MemoryModuleType<?>[] {
-			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "cant_interface"),
+			new MemoryModuleType<>(Optional.of(NPCComplaint.CODEC)).setRegistryName(IndustrialWarfare.MOD_ID, "complaint"),
 			new MemoryModuleType<>(Optional.of(Codec.INT)).setRegistryName(IndustrialWarfare.MOD_ID, "current_instruction_index"),
 			new MemoryModuleType<>(Optional.of(Codec.BOOL)).setRegistryName(IndustrialWarfare.MOD_ID, "executing_instruction"),
 			new MemoryModuleType<>(Optional.empty()).setRegistryName(IndustrialWarfare.MOD_ID, "jump_to"),

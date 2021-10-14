@@ -9,6 +9,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 public class WaitForCommand extends TaskScrollCommand {
@@ -27,7 +28,8 @@ public class WaitForCommand extends TaskScrollCommand {
 		boolean doingDaylightCycle = world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
 		
 		if (waitMode == WaitModes.DAY_TIME && !doingDaylightCycle) {
-			// TODO: complain that the day isn't running - somehow they sense that doDaylightCycle is false, don't ask how
+			// somehow the NPCs sense that doDaylightCycle is false, don't ask how
+			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TIME_STOPPED);
 		}
 		
 		return waitMode == WaitModes.DAY_TIME && doingDaylightCycle || waitMode == WaitModes.RELATIVE_TIME || waitMode == WaitModes.BELL;

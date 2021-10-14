@@ -27,7 +27,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 				.put(MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.JOB_SITE, MemoryModuleStatus.VALUE_PRESENT)
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CANT_INTERFACE, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.JUMP_TO, MemoryModuleStatus.REGISTERED)
@@ -42,7 +42,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 		Brain<?> brain = npc.getBrain();
 		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)
 				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)
-				|| brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE)) {
+				|| brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
 			return false;
 		}
 		
@@ -104,7 +104,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 		return brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)
 				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)
 				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE);
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT);
 	}
 	
 	@Override

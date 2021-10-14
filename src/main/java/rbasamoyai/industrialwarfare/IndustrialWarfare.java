@@ -34,6 +34,7 @@ import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.core.init.RecipeInit;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
@@ -63,6 +64,7 @@ public class IndustrialWarfare {
 		modEventBus.register(EntityTypeInit.class);
 		modEventBus.register(MemoryModuleTypeInit.class);
 		
+		modEventBus.register(NPCComplaintInit.class);
 		modEventBus.register(TaskScrollCommandInit.class);
 		
 		ModLoadingContext.get().registerConfig(Type.SERVER, IWConfig.SPEC, "industrialwarfare-server.toml");

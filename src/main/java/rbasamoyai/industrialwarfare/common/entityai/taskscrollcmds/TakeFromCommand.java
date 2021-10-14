@@ -24,6 +24,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
 public class TakeFromCommand extends TaskScrollCommand {
@@ -40,16 +41,16 @@ public class TakeFromCommand extends TaskScrollCommand {
 	
 	@Override
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
+		Brain<?> brain = npc.getBrain();
 		Optional<BlockPos> pos = order.getWrappedArg(POS_ARG_INDEX).getPos();
 		if (!pos.isPresent()) {
-			// TODO: complain that order can't be read
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
 			return false;
 		}
 		
 		boolean result = pos.get().closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
 		if (!result) {
-			// TODO: do some complaining that target is too far
-			
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
 		}
 		return result;
 	}
@@ -68,8 +69,7 @@ public class TakeFromCommand extends TaskScrollCommand {
 			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 		});
 		if (!accessPos.isPresent()) {
-			// TODO: Complain that area cannot be accessed
-			brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 		}
 	}
 
@@ -107,9 +107,12 @@ public class TakeFromCommand extends TaskScrollCommand {
 					brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
 				});
 				if (!blockInvOptional.isPresent()) {
-					// TODO: Complain that there's nothing to access here
-					brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 				}
+			} else if (te == null) {
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			} else if (!box.contains(npc.position())) {
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 			}
 		}
 	}
@@ -117,7 +120,7 @@ public class TakeFromCommand extends TaskScrollCommand {
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE)) {
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
 			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
 		}
 	}

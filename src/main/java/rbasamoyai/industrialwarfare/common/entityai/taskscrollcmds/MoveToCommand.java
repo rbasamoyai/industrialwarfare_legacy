@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
 public class MoveToCommand extends TaskScrollCommand {
 	
@@ -27,7 +28,7 @@ public class MoveToCommand extends TaskScrollCommand {
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
 		Optional<BlockPos> pos = order.getWrappedArg(POS_ARG_INDEX).getPos();
 		if (!pos.isPresent()) {
-			// TODO: complain that order can't be read
+			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
 			return false;
 		}
 		

@@ -258,5 +258,16 @@
 	"command.industrialwarfare.jump_to":	"Jump to",
 	"command.industrialwarfare.switch_order":	"Switch order",
 	
-	"command.industrialwarfare.args.filter":	"Filter"
+	"command.industrialwarfare.args.filter":	"Filter",
+	
+	"complaint.industrialwarfare.cant_access":		"I can't access this place.",
+	"complaint.industrialwarfare.cant_deposit_item":	"I can't deposit something here.",
+	"complaint.industrialwarfare.cant_get_item":	"I can't get something here.",
+	"complaint.industrialwarfare.cant_open":		"I can't open the storage here.",
+	"complaint.industrialwarfare.clear":			"Fine day, isn't it?",
+	"complaint.industrialwarfare.invalid_order":	"I can't read this order.",
+	"complaint.industrialwarfare.nothing_here":		"There is nothing to access here.",
+	"complaint.industrialwarfare.time_stopped":		"For some reason it just feels like time isn't running.",
+	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away."
+	
 }
