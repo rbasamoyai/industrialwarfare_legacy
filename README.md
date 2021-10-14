@@ -31,9 +31,7 @@ can fight stuff.
 
 ### Currently working on (or not)
 * Basic NPC AI
-    * NPC task handling
-    * Base NPC tasks
-    * Rewriting NPC commands to be more versatile
+    * Complaints system so you can figure out why stuff isnt working
 
 ---
 
