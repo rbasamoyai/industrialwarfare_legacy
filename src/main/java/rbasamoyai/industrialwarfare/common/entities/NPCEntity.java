@@ -19,7 +19,6 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.goal.LookRandomlyGoal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
@@ -113,7 +112,8 @@ public class NPCEntity extends CreatureEntity {
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
 		this.equipmentItemHandler = new EquipmentItemHandler(this);
 		
-		((GroundPathNavigator) this.getNavigation()).setCanOpenDoors(true);
+		GroundPathNavigator nav = (GroundPathNavigator) this.getNavigation();
+		nav.setCanOpenDoors(true);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -149,19 +149,6 @@ public class NPCEntity extends CreatureEntity {
 	 */
 	
 	@Override
-	protected void registerGoals() {
-		super.registerGoals();
-		
-		this.goalSelector.addGoal(1, new LookRandomlyGoal(this));
-		
-		this.addTargetGoals();
-	}
-	
-	protected void addTargetGoals() {
-	
-	}
-	
-	@Override
 	protected BrainCodec<NPCEntity> brainProvider() {
 		return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
 	}
@@ -186,9 +173,14 @@ public class NPCEntity extends CreatureEntity {
 		brain.addActivity(Activity.REST, NPCTasks.getRestPackage());
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
-		brain.setActiveActivityIfPossible(Activity.IDLE);
 		
-		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
+		if (brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) {
+			brain.setActiveActivityIfPossible(Activity.WORK);
+			brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
+		} else {
+			brain.setActiveActivityIfPossible(Activity.IDLE);
+		}
+		
 		brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 10)));
 		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
@@ -199,6 +191,18 @@ public class NPCEntity extends CreatureEntity {
 		Brain<NPCEntity> brain = this.getBrain();
 		brain.tick((ServerWorld) this.level, this);
 		
+		this.updateActivity();
+		
+		if (this.level.getGameTime() % 20 == 0) {
+			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR), this.blockPosition()); 
+			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
+		}
+			
+		super.customServerAiStep();
+	}
+	
+	protected void updateActivity() {
+		Brain<NPCEntity> brain = this.getBrain();
 		ItemStack scheduleItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
 		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
 		
@@ -209,16 +213,11 @@ public class NPCEntity extends CreatureEntity {
 		// 2 added if not working as the NPCs will go to their workplace before actually working
 		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
 		
-		if (shouldWork && !isWorking) {
+		if (shouldWork) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
 		} else if (!shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.IDLE);
 		}
-		
-		CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR), this.blockPosition()); 
-		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
-		
-		super.customServerAiStep();
 	}
 	
 	/*
