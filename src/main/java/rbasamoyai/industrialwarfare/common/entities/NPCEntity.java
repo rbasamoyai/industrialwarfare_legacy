@@ -39,6 +39,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
@@ -50,6 +51,9 @@ import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
+import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessage;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 /*
@@ -68,7 +72,7 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
-			MemoryModuleTypeInit.CANT_INTERFACE,
+			MemoryModuleTypeInit.COMPLAINT,
 			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX,
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION,
 			MemoryModuleTypeInit.JUMP_TO,
@@ -210,6 +214,10 @@ public class NPCEntity extends CreatureEntity {
 		} else if (!shouldWork && !isWorking) {
 			brain.setActiveActivityIfPossible(Activity.IDLE);
 		}
+		
+		CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR), this.blockPosition()); 
+		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
+		
 		super.customServerAiStep();
 	}
 	

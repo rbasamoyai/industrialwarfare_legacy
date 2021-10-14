@@ -15,6 +15,7 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.C
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.ArgUtils;
 
 public class JumpToCommand extends TaskScrollCommand {
@@ -34,7 +35,7 @@ public class JumpToCommand extends TaskScrollCommand {
 		LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(scroll);
 		
 		if (!optional.map(h -> 0 <= jumpPos || jumpPos < h.getList().size()).orElse(false)) {
-			// TODO: Complain that position is not valid
+			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
 			return false;
 		} else {
 			return true;

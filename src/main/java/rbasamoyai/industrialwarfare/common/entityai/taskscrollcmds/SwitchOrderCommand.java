@@ -28,6 +28,7 @@ import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
 public class SwitchOrderCommand extends TaskScrollCommand {
 
@@ -52,7 +53,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		
 		if (mode == PosModes.GET_FROM_POS) {
 			if (!optional.isPresent()) {
-				// TODO: complain that order can't be read
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
 				return false;
 			} else {
 				pos = optional.get();
@@ -63,8 +64,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		
 		boolean result = pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
 		if (!result) {
-			// TODO: do some complaining that target is too far
-			
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
 		}
 		return result;
 	}
@@ -85,8 +85,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 		});
 		if (!accessPos.isPresent()) {
-			// TODO: Complain that area cannot be accessed
-			brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 		}
 	}
 
@@ -126,14 +125,16 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 					}
 					
 					if (!switched) {
-						// TODO: complain that can't find scroll
-						brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+						brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_GET_ITEM);
 					}
 				});
 				if (!blockInvOptional.isPresent()) {
-					// TODO: Complain that there's nothing to access here
-					brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 				}
+			} else if (te == null) {
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			} else if (!box.contains(npc.position())) {
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 			}
 		}
 	}
@@ -177,14 +178,16 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 				}
 				
 				if (!switched) {
-					// TODO: complain that can't find scroll
-					brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_GET_ITEM);
 				}
 			});
 			if (!blockInvOptional.isPresent()) {
-				// TODO: Complain that there's nothing to access here
-				brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 			}
+		} else if (te == null) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+		} else if (!box.contains(npc.position())) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 		}
 	}
 	

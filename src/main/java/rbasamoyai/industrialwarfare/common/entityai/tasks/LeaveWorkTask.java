@@ -27,6 +27,7 @@ import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 /**
@@ -46,7 +47,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	public LeaveWorkTask(MemoryModuleType<GlobalPos> posMemoryType, float speedModifier, int closeEnoughDist, int maxDistanceFromPoi) {
 		super(ImmutableMap.of(
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.CANT_INTERFACE, MemoryModuleStatus.REGISTERED,
+				MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT,
 				posMemoryType, MemoryModuleStatus.VALUE_PRESENT
@@ -64,7 +65,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		boolean result = gpOptional.map(gp -> npc.level.dimension() == gp.dimension() && gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)).orElse(false);
 		if (!result) {
-			// TODO: do some complaining if result is false
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, !gpOptional.isPresent() ? NPCComplaintInit.INVALID_ORDER : NPCComplaintInit.TOO_FAR);
 			return false;
 		}
 		
@@ -95,8 +96,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 					brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, this.speedModifier, this.closeEnoughDist));
 				});
 				if (!accessPos.isPresent()) {
-					// TODO: Complain that area cannot be accessed
-					brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 				}
 			});
 			this.nextOkStartTime = gameTime + 80L;
@@ -129,14 +129,16 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 							}
 						}
 						if (!inserted) {
-							// TODO: Complain that can't deposit scroll
-							brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+							brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_DEPOSIT_ITEM);
 						}
 					});
 					if (!blockInvOptional.isPresent()) {
-						// TODO: Complain that there's nothing to access here
-						brain.setMemory(MemoryModuleTypeInit.CANT_INTERFACE, true);
+						brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 					}
+				} else if (te == null) {
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+				} else if (!box.contains(npc.position())) {
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 				}
 			});
 		}
@@ -145,7 +147,8 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		return !brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE) && !brain.hasMemoryValue(MemoryModuleTypeInit.CANT_INTERFACE);
+		return !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION);
 	}
 	
 	@Override
