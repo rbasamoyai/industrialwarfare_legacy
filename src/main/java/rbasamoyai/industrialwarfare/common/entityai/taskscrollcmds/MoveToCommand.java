@@ -37,8 +37,7 @@ public class MoveToCommand extends TaskScrollCommand {
 
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
+		npc.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 	}
 	
 	@Override
@@ -46,8 +45,11 @@ public class MoveToCommand extends TaskScrollCommand {
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
 		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2));
+		
 		if (box.contains(npc.position())) {
 			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+		} else if (npc.getNavigation().isDone()) {
+			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 		}
 	}
 

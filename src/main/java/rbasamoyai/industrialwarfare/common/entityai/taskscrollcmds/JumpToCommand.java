@@ -110,7 +110,6 @@ public class JumpToCommand extends TaskScrollCommand {
 		
 		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
 		brain.eraseMemory(MemoryModuleTypeInit.JUMP_TO);
-		IndustrialWarfare.LOGGER.debug(this.getRegistryName().toString() + " finished, index is now " + brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0));
 	}
 	
 	public static class BaseCondition {

@@ -25,7 +25,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	public RunCommandFromTaskScrollTask() {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
 				.put(MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleType.JOB_SITE, MemoryModuleStatus.VALUE_PRESENT)
+				.put(MemoryModuleType.JOB_SITE, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, MemoryModuleStatus.REGISTERED)
@@ -33,7 +33,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 				.put(MemoryModuleTypeInit.JUMP_TO, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.WAIT_FOR, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT)
+				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.REGISTERED)
 				.build(), 6000); // Ample amount of time, maybe not so much if you're waiting for relative time
 	}
 	

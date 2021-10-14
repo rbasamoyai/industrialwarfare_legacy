@@ -1,19 +1,14 @@
 package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
 
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigator;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -28,6 +23,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
+import rbasamoyai.industrialwarfare.utils.CommandUtils;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 /**
@@ -84,21 +80,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		if (gameTime > this.nextOkStartTime) {
 			Brain<?> brain = npc.getBrain();
 			Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
-			gpOptional.ifPresent(gp -> {
-				BlockPos targetPos = gp.pos();
-				List<BlockPos> list = BlockPos.betweenClosedStream(targetPos.offset(-1, -2, -1), targetPos.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
-				Collections.shuffle(list);
-				Optional<BlockPos> accessPos = list.stream()
-						.filter(pos -> world.loadedAndEntityCanStandOn(pos, npc))
-						.filter(pos -> world.noCollision(npc))
-						.findFirst();
-				accessPos.ifPresent(pos -> {
-					brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, this.speedModifier, this.closeEnoughDist));
-				});
-				if (!accessPos.isPresent()) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
-				}
-			});
+			gpOptional.ifPresent(gp -> CommandUtils.trySetWalkTarget(world, npc, gp.pos(), this.speedModifier, this.closeEnoughDist));
 			this.nextOkStartTime = gameTime + 80L;
 		}
 	}
@@ -106,42 +88,43 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	@Override
 	protected void tick(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		PathNavigator nav = npc.getNavigation();
-		if (nav.isDone()) {
-			brain.getMemory(this.posMemoryType).ifPresent(gp -> {
-				BlockPos pos = gp.pos();
-				TileEntity te = world.getBlockEntity(pos);
-				AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
-				if (world.isLoaded(pos) && te != null && box.contains(npc.position())) {
-					LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-					blockInvOptional.ifPresent(blockInv -> {
-						EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
-						ItemStack taskScrollTest = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, true);
-						boolean inserted = false;
-						for (int i = 0; i < blockInv.getSlots(); i++) {
-							ItemStack result = blockInv.insertItem(i, taskScrollTest, true);
-							if (result == ItemStack.EMPTY) {
-								ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
-								blockInv.insertItem(i, taskScroll, false);
-								inserted = true;
-								brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
-								break;
-							}
+		brain.getMemory(this.posMemoryType).ifPresent(gp -> {
+			BlockPos pos = gp.pos();
+			TileEntity te = world.getBlockEntity(pos);
+			AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
+			
+			boolean hasTE = te != null;
+			boolean atDestination = box.contains(npc.position());
+			
+			if (world.isLoaded(pos) && hasTE && atDestination) {
+				LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+				blockInvOptional.ifPresent(blockInv -> {
+					EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
+					ItemStack taskScrollTest = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, true);
+					boolean inserted = false;
+					for (int i = 0; i < blockInv.getSlots(); i++) {
+						ItemStack result = blockInv.insertItem(i, taskScrollTest, true);
+						if (result == ItemStack.EMPTY) {
+							ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
+							blockInv.insertItem(i, taskScroll, false);
+							inserted = true;
+							brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+							break;
 						}
-						if (!inserted) {
-							brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_DEPOSIT_ITEM);
-						}
-					});
-					if (!blockInvOptional.isPresent()) {
-						brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 					}
-				} else if (te == null) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
-				} else if (!box.contains(npc.position())) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+					if (!inserted) {
+						brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_DEPOSIT_ITEM);
+					}
+				});
+				if (!blockInvOptional.isPresent()) {
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
 				}
-			});
-		}
+			} else if (!hasTE) {
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			} else if (!atDestination && npc.getNavigation().isDone()) {
+				CommandUtils.trySetWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
+			}
+		});
 	}	
 	
 	@Override
