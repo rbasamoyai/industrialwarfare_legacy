@@ -1,10 +1,11 @@
 {
-	"credit": "Made with Blockbench",
+	"credit": "Made with Blockbench by rbasamoyai",
 	"texture_size": [64, 64],
 	"textures": {
 		"0": "industrialwarfare:block/task_scroll_shelf",
 		"particle": "minecraft:block/acacia_log"
 	},
+	"ambientocclusion": false,
 	"elements": [
 		{
 			"from": [0, 0, 8],
