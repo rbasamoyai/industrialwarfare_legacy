@@ -24,14 +24,13 @@ can fight stuff.
     * NPC occupations
     * NPCs actually doing something
     * Combat NPCs
-* Generated structures and NPCs
+* Generated structures with NPCs
 * Research trees
 * Some ores
 * Weapons
 
 ### Currently working on (or not)
-* Basic NPC AI
-    * Complaints system so you can figure out why stuff isnt working
+* NPC professions
 
 ---
 
