@@ -15,6 +15,6 @@ p Add worker npcs
 
 Current TODO:
 	- Add NPCs
-		- Add Worker NPCS
-			- Add worker AI
+		- Ditch WorkerNPCEntity
+		- Add occupations
 				  
