@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntityType;
@@ -17,8 +18,10 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.IWorkstationDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.workstations.RecipeItemHandler;
+import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.recipes.NormalWorkstationRecipe;
 import rbasamoyai.industrialwarfare.common.recipes.NormalWorkstationRecipeGetter;
 import rbasamoyai.industrialwarfare.common.recipes.NormalWorkstationRecipeWrapper;
@@ -76,17 +79,25 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
 		if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-			if (side == Direction.UP) return this.inputOptional.cast();
-			else if (side == Direction.DOWN) return this.outputOptional.cast();
+			return side == Direction.DOWN ? this.outputOptional.cast() : this.inputOptional.cast();
 		}
 		return super.getCapability(cap, side);
+	}
+	
+	@Override
+	public void setRecipe(ItemStack stack, boolean dropItem) {
+		ItemStack previousRecipe = this.recipeItemHandler.getStackInSlot(0);
+		if (!previousRecipe.isEmpty() && dropItem) {
+			ItemStack previousRecipeDrop = this.recipeItemHandler.extractItem(0, this.recipeItemHandler.getSlotLimit(0), false);
+			InventoryHelper.dropItemStack(this.level, (double) this.worldPosition.getX(), this.worldPosition.above().getY(), this.worldPosition.getZ(), previousRecipeDrop);
+		}
+		this.recipeItemHandler.setStackInSlot(0, stack);
 	}
 	
 	@Override
 	public void nullRecipe() {
 		this.workingRecipe = null;
 		this.getDataHandler().ifPresent(h -> {
-			h.setWorker(null);
 			h.setWorkingTicks(0);
 		});
 		this.setChangedAndForceUpdate();
@@ -94,64 +105,87 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 	
 	@Override
 	public void tick() {
-		if (this.clockTicks <= 0) {
-			if (!this.level.isClientSide) {
-				LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
-				
-				NormalWorkstationRecipeWrapper matchWrapper = new NormalWorkstationRecipeWrapper(this.inputItemHandler, this.recipeItemHandler, this.workstation, Optional.empty());
-				
-				if (this.workingRecipe != null) {
-					if (!this.workingRecipe.matches(matchWrapper, this.level)) this.haltCrafting();
-				}
-				
-				LivingEntity workerEntity = checkForWorkerEntity();
-				optional.ifPresent(h -> h.setWorker(workerEntity));
-				
-				// TODO: Implement code if worker not found
-				if (workerEntity == null) {
-					
-				} else {
-					optional.ifPresent(h -> h.setIsWorking(true));
-				}
-				
-				if (optional.map(IWorkstationDataHandler::getWorkingTicks).orElse(0) >= this.baseWorkTicks && workerEntity != null && this.workingRecipe != null) {
-					NormalWorkstationRecipeWrapper assemblyWrapper = new NormalWorkstationRecipeWrapper(this.recipeItemHandler, this.recipeItemHandler, this.workstation, Optional.of(workerEntity));
-					ItemStack result = this.workingRecipe.assemble(assemblyWrapper);
-					this.outputItemHandler.insertResult(0, result, false);
-					// Reset recipe and see if we can try again
-					this.nullRecipe();
-					this.attemptCraft(workerEntity);
-				}
-			}
-		}
+		this.innerTick();
 		super.tick();
+	}
+	
+	private void innerTick() {
+		if (this.clockTicks > 0) return;
+		if (this.level.isClientSide) return;
+		
+		LazyOptional<IWorkstationDataHandler> teOptional = this.getDataHandler();
+		
+		LivingEntity workerEntity = this.checkForWorkerEntity();
+		teOptional.ifPresent(h -> {
+			h.setWorker(workerEntity);
+			h.setIsWorking(workerEntity != null);
+		});
+		if (workerEntity == null) return;
+		boolean isNPC = workerEntity instanceof NPCEntity;
+		
+		ItemStack recipeItem;
+		
+		if (this.workingRecipe == null) {
+			if (isNPC) this.attemptCraft(workerEntity);
+			return;
+		}
+		
+		if (isNPC) {
+			LazyOptional<INPCDataHandler> npcOptional = ((NPCEntity) workerEntity).getDataHandler();
+			recipeItem = npcOptional.map(INPCDataHandler::getRecipeItem).orElse(ItemStack.EMPTY);
+		} else {
+			recipeItem = this.recipeItemHandler.getStackInSlot(0);
+		}
+		
+		NormalWorkstationRecipeWrapper wrapper = new NormalWorkstationRecipeWrapper(this.inputItemHandler, recipeItem, this.workstation, Optional.of(workerEntity));
+		
+		if (!this.workingRecipe.matches(wrapper, this.level)) {
+			this.haltCrafting();
+			return;
+		}
+		
+		if (teOptional.map(IWorkstationDataHandler::getWorkingTicks).orElse(0) < this.baseWorkTicks) return;
+		
+		ItemStack result = this.workingRecipe.assemble(wrapper);
+		this.outputItemHandler.insertResult(0, result, false);
+		this.nullRecipe(); // Reset recipe
 	}
 	
 	@Override
 	public void attemptCraft(LivingEntity entity) {
+		if (this.level.isClientSide) return;
 		if (!ItemStack.matches(this.outputItemHandler.getStackInSlot(0), ItemStack.EMPTY)) return;
-		if (!this.level.isClientSide) {
-			LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
+		
+		LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
+		
+		LivingEntity workerEntity = this.checkForEntity(entity);
+		if (workerEntity == null) {
+			optional.ifPresent(h -> h.setWorker(null));
+			return;
+		}
+		
+		boolean isNPC = workerEntity instanceof NPCEntity;
+		ItemStack recipeItem = isNPC
+				? ((NPCEntity) workerEntity).getDataHandler().map(INPCDataHandler::getRecipeItem).orElse(ItemStack.EMPTY)
+				: this.recipeItemHandler.getStackInSlot(0);
+		
+		NormalWorkstationRecipeWrapper wrapper = new NormalWorkstationRecipeWrapper(this.inputItemHandler, recipeItem, this.workstation, Optional.empty());
+		List<NormalWorkstationRecipe> recipesForBlock = NormalWorkstationRecipeGetter.INSTANCE.getRecipes(this.level.getRecipeManager(), this.workstation);
+		
+		for (NormalWorkstationRecipe recipe : recipesForBlock) {
+			if (!recipe.matches(wrapper, this.level)) continue;
 			
-			LivingEntity workerEntity = checkForEntity(entity);
-			if (workerEntity == null) {
-				optional.ifPresent(h -> h.setWorker(null));
-				return;
-			}
-			
-			NormalWorkstationRecipeWrapper wrapper = new NormalWorkstationRecipeWrapper(this.inputItemHandler, this.recipeItemHandler, this.workstation, Optional.empty());
-			List<NormalWorkstationRecipe> recipesForBlock = NormalWorkstationRecipeGetter.INSTANCE.getRecipes(this.level.getRecipeManager(), this.workstation);
-			for (NormalWorkstationRecipe recipe : recipesForBlock) {
-				if (recipe.matches(wrapper, this.level)) {
-					this.workingRecipe = recipe;
-					optional.ifPresent(h -> h.setWorker(entity));
-					break;
-				}
-			}
+			this.workingRecipe = recipe;
+			this.setRecipe(recipeItem, !isNPC);
+			optional.ifPresent(h -> {
+				h.setWorker(entity);
+				h.setIsWorking(true);
+			});
+			return;
 		}
 	}
 	
-	private LivingEntity checkForWorkerEntity() {
+	public LivingEntity checkForWorkerEntity() {
 		double x1 = (double) this.worldPosition.getX() - 1;
 		double y1 = (double) this.worldPosition.getY();
 		double z1 = (double) this.worldPosition.getZ() - 1;

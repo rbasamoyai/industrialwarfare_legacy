@@ -6,7 +6,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
-import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 
 public class SNPCContainerActivateMessage {
@@ -34,9 +33,7 @@ public class SNPCContainerActivateMessage {
 			ServerPlayerEntity player = context.getSender();
 			Container ct = player.containerMenu;
 			if (ct instanceof NPCContainer) {
-				NPCContainer npcCt = (NPCContainer) ct;
-				npcCt.setNPCEquipmentSlotsActive(msg.page == NPCBaseScreen.MAIN_PAGE);
-				npcCt.setNPCInventorySlotsActive(msg.page == NPCBaseScreen.INVENTORY_PAGE);
+				((NPCContainer) ct).updateActiveSlots(msg.page);
 			}
 		});
 		context.setPacketHandled(true);

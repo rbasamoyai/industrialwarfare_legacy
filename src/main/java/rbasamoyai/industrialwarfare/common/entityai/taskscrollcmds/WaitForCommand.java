@@ -45,16 +45,16 @@ public class WaitForCommand extends TaskScrollCommand {
 		
 		long waitUntil = 0;
 		
-		if (waitMode == WaitModes.DAY_TIME) { // Day time mode
+		if (waitMode == WaitModes.DAY_TIME) {
 			waitUntil = waitTime;
-		} else if (waitMode == WaitModes.RELATIVE_TIME) { // Relative time mode
+		} else if (waitMode == WaitModes.RELATIVE_TIME) {
 			waitUntil = gameTime + waitTime;
-		} else if (waitMode == WaitModes.BELL) { // Bell mode, nothing
+		} else if (waitMode == WaitModes.BELL) {
 			
 		}
 		
 		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
-		if (waitMode != 2) brain.setMemory(MemoryModuleTypeInit.WAIT_FOR, waitUntil);
+		if (waitMode != WaitModes.BELL) brain.setMemory(MemoryModuleTypeInit.WAIT_FOR, waitUntil);
 	}
 
 	@Override
@@ -63,6 +63,10 @@ public class WaitForCommand extends TaskScrollCommand {
 		boolean heardBell = brain.hasMemoryValue(MemoryModuleType.HEARD_BELL_TIME);
 		long waitUntil = brain.getMemory(MemoryModuleTypeInit.WAIT_FOR).orElse(0L);
 		int waitMode = order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum();
+		
+		if (waitMode == WaitModes.DAY_TIME && !world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TIME_STOPPED);
+		}
 		
 		if (waitMode == WaitModes.DAY_TIME && (int)((world.getDayTime() + TimeUtils.TIME_OFFSET) % 24000L) >= waitUntil 
 				|| waitMode == WaitModes.RELATIVE_TIME && gameTime >= waitUntil
@@ -75,7 +79,9 @@ public class WaitForCommand extends TaskScrollCommand {
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		
-		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
+		}
 		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR);
 	}
 

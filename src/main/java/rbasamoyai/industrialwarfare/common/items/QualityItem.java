@@ -51,7 +51,7 @@ public class QualityItem extends Item {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_QUALITY,
 				getDataHandler(stack)
 						.map(h -> Screen.hasShiftDown()
-								? new StringTextComponent(TooltipUtils.formatFloat(h.getQuality()).concat("%"))
+								? new StringTextComponent(TooltipUtils.formatFloat(h.getQuality() * 100.0f).concat("%"))
 								: TooltipUtils.getWordedQuality(h.getQuality()))
 						.orElseGet(() -> TooltipUtils.NOT_AVAILABLE))
 		);

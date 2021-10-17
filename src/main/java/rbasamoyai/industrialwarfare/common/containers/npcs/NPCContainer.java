@@ -23,6 +23,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.itemhandlers.ToggleableSlotItemHandler;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
@@ -245,12 +246,9 @@ public class NPCContainer extends Container {
 		return this.data.get(2) > 0;
 	}
 	
-	public void setNPCEquipmentSlotsActive(boolean active) {
-		this.npcEquipmentSlots.forEach(s -> s.setActive(active));
-	}
-	
-	public void setNPCInventorySlotsActive(boolean active) {
-		this.npcInventorySlots.forEach(s -> s.setActive(active));
+	public void updateActiveSlots(int page) {
+		this.npcEquipmentSlots.forEach(s -> s.setActive(page == NPCBaseScreen.MAIN_PAGE));
+		this.npcInventorySlots.forEach(s -> s.setActive(page == NPCBaseScreen.INVENTORY_PAGE));
 	}
 
 }

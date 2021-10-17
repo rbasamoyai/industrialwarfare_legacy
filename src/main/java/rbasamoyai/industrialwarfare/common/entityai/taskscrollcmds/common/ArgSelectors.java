@@ -101,4 +101,7 @@ public class ArgSelectors {
 	private static final ITextComponent POS_MODE_HEADER = new TranslationTextComponent(TASK_SCROLL_TOOLTIP_ROOT_KEY + ".pos_mode").withStyle(ArgSelector.HEADER_STYLE);
 	public static final BiFunction<Integer, TaskScrollContainer, ArgSelector<?>> POS_MODE_SELECTOR = (i, menu) -> new WordedArgSelector(POS_MODE_GROUPS, i, POS_MODE_HEADER);
 	
+	private static final ITextComponent WORK_MODE_HEADER = new TranslationTextComponent(TASK_SCROLL_TOOLTIP_ROOT_KEY + ".work_mode").withStyle(ArgSelector.HEADER_STYLE);
+	public static final BiFunction<Integer, TaskScrollContainer, ArgSelector<?>> WORK_MODE_SELECTOR = (i, menu) -> new WordedArgSelector(WAIT_MODE_GROUPS, i, WORK_MODE_HEADER);
+	
 }

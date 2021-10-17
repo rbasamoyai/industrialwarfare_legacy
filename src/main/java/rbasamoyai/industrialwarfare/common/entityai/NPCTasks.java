@@ -21,10 +21,12 @@ public class NPCTasks {
 
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getCorePackage() {
 		return ImmutableList.of(
+				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
+				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new WalkToTargetTask()),
-				Pair.of(2, new LookTask(45, 90)),
 				Pair.of(0, new InteractWithDoorTask()),
-				Pair.of(0, new SwimTask(0.8f))
+				Pair.of(0, new SwimTask(0.8f)),
+				Pair.of(1, new LookTask(45, 90))
 				);
 	}
 	
@@ -38,8 +40,6 @@ public class NPCTasks {
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
 		return ImmutableList.of(
-				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
-				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(1, new RunCommandFromTaskScrollTask())
 				);
 	}

@@ -43,17 +43,15 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
-import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
+import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessage;
-import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
 /*
  * Base NPC entity class for rbasamoyai's Industrial Warfare.
@@ -67,10 +65,12 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.HEARD_BELL_TIME,
 			MemoryModuleType.HOME,
 			MemoryModuleType.JOB_SITE,
+			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
+			MemoryModuleTypeInit.CACHED_POS,
 			MemoryModuleTypeInit.COMPLAINT,
 			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX,
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION,
@@ -87,8 +87,6 @@ public class NPCEntity extends CreatureEntity {
 	public static final String TAG_WORKSTUFFS = "workstuffs";
 	private static final String TAG_INVENTORY = "items";
 	
-	public static final String DEFAULT_NAME = "Incognito";
-	
 	public static final int MAX_SLOTS_BEFORE_WARN = 54;
 	
 	public static final UUID GAIA_UUID = new UUID(0L, 0L); // A null player generally means that the NPC belongs to "Gaia" (thanks, Age of Empires!).
@@ -96,24 +94,26 @@ public class NPCEntity extends CreatureEntity {
 	protected final ItemStackHandler inventoryItemHandler;
 	protected final EquipmentItemHandler equipmentItemHandler;
 
-	protected NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, String occupation, String name, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
+	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
+		this(type, worldIn, NPCProfessionInit.JOBLESS, null, 5, false);
+	}
+	
+	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, NPCProfession profession, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
 		super(type, worldIn);
 		
-		// TODO: Add code to default to "jobless" if not in pool of occupations
-		this.setCustomName(new StringTextComponent(name));
+		this.setCustomName(new StringTextComponent("Unnamed NPC"));
 		
 		this.getDataHandler().ifPresent(h -> {
 			h.setCanWearEquipment(canWearEquipment);
-			h.setOccupation(occupation);
 			h.setFirstOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
 			h.setOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
+			h.setProfession(profession);
 		});
 		
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
 		this.equipmentItemHandler = new EquipmentItemHandler(this);
 		
-		GroundPathNavigator nav = (GroundPathNavigator) this.getNavigation();
-		nav.setCanOpenDoors(true);
+		((GroundPathNavigator) this.getNavigation()).setCanOpenDoors(true);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -132,7 +132,7 @@ public class NPCEntity extends CreatureEntity {
 		return this.equipmentItemHandler;
 	}
 	
-	public LazyOptional<? extends INPCDataHandler> getDataHandler() {
+	public LazyOptional<INPCDataHandler> getDataHandler() {
 		return this.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY);
 	}
 	
@@ -182,7 +182,6 @@ public class NPCEntity extends CreatureEntity {
 		}
 		
 		brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 10)));
-		brain.setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 0)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
 	
@@ -191,33 +190,12 @@ public class NPCEntity extends CreatureEntity {
 		Brain<NPCEntity> brain = this.getBrain();
 		brain.tick((ServerWorld) this.level, this);
 		
-		this.updateActivity();
-		
 		if (this.level.getGameTime() % 20 == 0) {
 			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR), this.blockPosition()); 
 			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
 		}
 			
 		super.customServerAiStep();
-	}
-	
-	protected void updateActivity() {
-		Brain<NPCEntity> brain = this.getBrain();
-		ItemStack scheduleItem = this.equipmentItemHandler.getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
-		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
-		
-		long dayTime = this.level.getDayTime() + TimeUtils.TIME_OFFSET;
-		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
-		
-		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
-		// 2 added if not working as the NPCs will go to their workplace before actually working
-		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek + (isWorking ? 0 : 2))).orElse(false);
-		
-		if (shouldWork) {
-			brain.setActiveActivityIfPossible(Activity.WORK);
-		} else if (!shouldWork && !isWorking) {
-			brain.setActiveActivityIfPossible(Activity.IDLE);
-		}
 	}
 	
 	/*
@@ -246,11 +224,8 @@ public class NPCEntity extends CreatureEntity {
 	
 	protected ActionResultType checkAndHandleImportantInteractions(PlayerEntity player, Hand handIn) {
 		ItemStack handStack = player.getItemInHand(handIn);
-		if (handStack.getItem() == ItemInit.LABEL) {
-			return handStack.interactLivingEntity(player, this, handIn);
-		} else {
-			return ActionResultType.PASS;
-		}
+		//Item handItem = handStack.getItem();
+		return handStack.interactLivingEntity(player, this, handIn);
 	}
 
 	@Override

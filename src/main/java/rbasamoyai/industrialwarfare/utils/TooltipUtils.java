@@ -29,9 +29,11 @@ public class TooltipUtils {
 	public static final Style VALUE_STYLE = Style.EMPTY.applyFormats(TextFormatting.WHITE);
 	
 	public static IFormattableTextComponent makeItemFieldTooltip(IFormattableTextComponent field, IFormattableTextComponent value) {
+		IFormattableTextComponent valuetc = value.copy();
+		if (valuetc.getStyle() == Style.EMPTY) valuetc = valuetc.withStyle(VALUE_STYLE);
 		return formatAsStyle(field.copy(), FIELD_STYLE)
 				.append(new StringTextComponent(": ").withStyle(FIELD_STYLE))
-				.append(value.copy().withStyle(VALUE_STYLE));
+				.append(valuetc);
 	}
 	
 	public static IFormattableTextComponent getWordedQuality(float f) {
@@ -63,7 +65,7 @@ public class TooltipUtils {
 	}
 	
 	public static String formatFloat(float f) {
-		return String.format("%.2f", f * 100.0f);
+		return String.format("%.2f", f);
 	}
 	
 	public static IFormattableTextComponent getShortenedTitle(IFormattableTextComponent title, FontRenderer font, int width) {

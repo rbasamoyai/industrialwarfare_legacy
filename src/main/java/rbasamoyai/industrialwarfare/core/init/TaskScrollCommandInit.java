@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.SwitchOrderCo
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TakeFromCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WaitForCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
 
 @EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 @ObjectHolder(IndustrialWarfare.MOD_ID)
@@ -23,6 +24,7 @@ public class TaskScrollCommandInit {
 	public static final TaskScrollCommand DEPOSIT_AT = null;
 	public static final TaskScrollCommand WAIT_FOR = null;
 	public static final TaskScrollCommand JUMP_TO = null;
+	public static final TaskScrollCommand WORK_AT = null;
 	public static final TaskScrollCommand SWITCH_ORDER = null;
 	
 	@SubscribeEvent
@@ -33,6 +35,7 @@ public class TaskScrollCommandInit {
 				new DepositAtCommand(),
 				new WaitForCommand(),
 				new JumpToCommand(),
+				new WorkAtCommand(),
 				new SwitchOrderCommand()
 		});
 	}

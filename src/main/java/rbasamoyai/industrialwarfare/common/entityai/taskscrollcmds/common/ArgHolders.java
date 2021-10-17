@@ -22,5 +22,6 @@ public class ArgHolders {
 	public static final Supplier<IArgHolder> POS_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.POS_MODE_SELECTOR);
 	public static final Supplier<IArgHolder> TIME_COUNT_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.TIME_COUNT_SELECTOR);
 	public static final Supplier<IArgHolder> WAIT_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.WAIT_MODE_SELECTOR);
+	public static final Supplier<IArgHolder> WORK_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.WORK_MODE_SELECTOR);
 	
 }

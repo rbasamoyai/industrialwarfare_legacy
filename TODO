@@ -2,19 +2,21 @@ General TODO:
 
 p Add Recipe Systems
 
-p Add worker npcs
-
-- Add warrior npcs
+p Add NPCs
+	- Add NPC professions
+		- Add worker professions
+		- Add warrior professions
 
 - Add Weapons
 
 - Add all the normal workstation
   npcs, blocks, etc.
 
+- Refactoring?
+
 - D O C U M E N T A T I O N
 
 Current TODO:
 	- Add NPCs
-		- Ditch WorkerNPCEntity
-		- Add occupations
+		- Add professions
 				  

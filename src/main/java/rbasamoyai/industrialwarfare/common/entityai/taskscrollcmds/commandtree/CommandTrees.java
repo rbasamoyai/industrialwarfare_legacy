@@ -59,4 +59,12 @@ public class CommandTrees {
 			.endNode()
 			.build();
 	
+	public static final CommandTree WORK_AT =
+			CommandTree.builder(BlockPosArgHolder::new)
+			.beginNode(ArgHolders.WORK_MODE_ARG_HOLDER, ALWAYS_TRUE)
+					.addTerminalNode(DayTimeArgHolder::new, wrapper -> wrapper.getArgNum() == WaitModes.DAY_TIME)
+					.addTerminalNode(ArgHolders.TIME_COUNT_ARG_HOLDER, wrapper -> wrapper.getArgNum() == WaitModes.RELATIVE_TIME)
+			.endNode()
+			.build();
+	
 }

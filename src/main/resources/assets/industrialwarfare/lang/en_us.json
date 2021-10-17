@@ -46,6 +46,10 @@
 	"item.industrialwarfare.label":			"Label",
 	"item.industrialwarfare.schedule":		"Schedule",
 	
+	"item.industrialwarfare.job_site_pointer":	"Job Site Pointer",
+	"item.industrialwarfare.debug_owner":		"Debug Owner",
+	"item.industrialwarfare.complaint_remover":	"Complaint Remover",
+	
 	"block.industrialwarfare.armorer_workstation":		"Armory Table",
 	"block.industrialwarfare.assembler_workstation":	"Assembly Table",
 	"block.industrialwarfare.bladesmith_workstation":	"Bladesmithing Anvil",
@@ -106,6 +110,7 @@
 	"item.industrialwarfare.rifle_martini_henry":	"Martini-Henry",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
+	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
 	"itemGroup.industrialwarfare.blocks":	"Industrial Warfare Blocks",
 	"itemGroup.industrialwarfare.parts":	"Industrial Warfare Assembly Parts",
 	"itemGroup.industrialwarfare.recipes":	"Industrial Warfare Recipe Items",
@@ -201,10 +206,12 @@
 	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
 	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
 	
+	"gui.industrialwarfare.task_scroll.tooltip.selector.work_mode":			"Until when do you want the NPC to work for?",
+	
 	"gui.industrialwarfare.task_scroll.tooltip.selector.day_time":		"What time?",
 	"gui.industrialwarfare.task_scroll.selector.day_time.time_format":	"%1$s:%2$s",
 	
-	"gui.industrialwarfare.task_scroll.tooltip.selector.time_count":		"How long do you want the NPC to wait for?",
+	"gui.industrialwarfare.task_scroll.tooltip.selector.time_count":		"How long?",
 	"gui.industrialwarfare.task_scroll.selector.time_count.time_format":	"%1$ss",
 	
 	"gui.industrialwarfare.task_scroll.tooltip.selector.jump_index":	"What index do you want to jump to?",
@@ -251,11 +258,16 @@
 	"gui.industrialwarfare.task_scroll.selector.pos_mode.job_site":	"At job shelf",
 	"gui.industrialwarfare.task_scroll.selector.pos_mode.pos":	"At position",
 	
+	"gui.industrialwarfare.text.set_job_site":			"Set %1$s's job site to %2$s",
+	"gui.industrialwarfare.text.not_owned_by_you":		"You do not own this NPC!",
+	"gui.industrialwarfare.text.removed_complaints":	"Removed %1$s's complaint (was %2$s)",
+	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",
 	"command.industrialwarfare.deposit_at":	"Deposit at",
 	"command.industrialwarfare.wait_for":	"Wait for",
 	"command.industrialwarfare.jump_to":	"Jump to",
+	"command.industrialwarfare.work_at":	"Work at",
 	"command.industrialwarfare.switch_order":	"Switch order",
 	
 	"command.industrialwarfare.args.filter":	"Filter",
@@ -265,9 +277,13 @@
 	"complaint.industrialwarfare.cant_get_item":	"I can't get something here.",
 	"complaint.industrialwarfare.cant_open":		"I can't open the storage here.",
 	"complaint.industrialwarfare.clear":			"Fine day, isn't it?",
+	"complaint.industrialwarfare.invalid_workstation":	"I can't work there.",
 	"complaint.industrialwarfare.invalid_order":	"I can't read this order.",
+	"complaint.industrialwarfare.no_data_handler":	"For some reason, I just can't.",
 	"complaint.industrialwarfare.nothing_here":		"There is nothing to access here.",
 	"complaint.industrialwarfare.time_stopped":		"For some reason it just feels like time isn't running.",
-	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away."
+	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away.",
 	
+	"profession.industrialwarfare.assembler":	"Assembler",
+	"profession.industrialwarfare.jobless":		"Jobless"
 }

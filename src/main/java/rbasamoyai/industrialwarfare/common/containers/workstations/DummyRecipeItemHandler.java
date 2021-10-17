@@ -5,7 +5,7 @@ import net.minecraftforge.items.ItemStackHandler;
 
 public class DummyRecipeItemHandler extends ItemStackHandler {
 
-	public boolean canInsert = true;
+	public boolean canInteract = true;
 	
 	public DummyRecipeItemHandler(int slots) {
 		super(slots);
@@ -13,13 +13,19 @@ public class DummyRecipeItemHandler extends ItemStackHandler {
 	
 	@Override
 	public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-		if (!this.canInsert) return stack;
+		if (!this.canInteract) return stack;
 		return super.insertItem(slot, stack, simulate);
 	}
 	
 	@Override
+	public ItemStack extractItem(int slot, int amount, boolean simulate) {
+		if (!this.canInteract) return ItemStack.EMPTY;
+		return super.extractItem(slot, amount, simulate);
+	}
+	
+	@Override
 	public boolean isItemValid(int slot, ItemStack stack) {
-		return this.canInsert;
+		return this.canInteract;
 	}
 	
 }

@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -41,13 +42,14 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	private long nextOkStartTime;
 	
 	public LeaveWorkTask(MemoryModuleType<GlobalPos> posMemoryType, float speedModifier, int closeEnoughDist, int maxDistanceFromPoi) {
-		super(ImmutableMap.of(
-				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT,
-				posMemoryType, MemoryModuleStatus.VALUE_PRESENT
-				),
+		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
+				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT)
+				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
+				.build(),
 				180);
 		this.posMemoryType = posMemoryType;
 		this.speedModifier = speedModifier;
@@ -59,20 +61,31 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
-		boolean result = gpOptional.map(gp -> npc.level.dimension() == gp.dimension() && gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)).orElse(false);
-		if (!result) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, !gpOptional.isPresent() ? NPCComplaintInit.INVALID_ORDER : NPCComplaintInit.TOO_FAR);
+		if (!gpOptional.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 			return false;
 		}
+		GlobalPos gp = gpOptional.get();
+		
+		if (gp.dimension() != world.dimension()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			return false;
+		}
+		if (gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
+			return false;
+		}
+
+		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) return false;
+		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)) return false;		
 		
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
 		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
-		long dayTime = world.getDayTime() + TimeUtils.TIME_OFFSET;
-		int minuteOfTheWeek = (int)(dayTime % TimeUtils.WEEK_TICKS / TimeUtils.MINUTE_TICKS);
-		boolean shouldWork = scheduleOptional.map(h -> h.shouldWork(minuteOfTheWeek)).orElse(false);
-		boolean isWorking = brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false);
+		if (!scheduleOptional.isPresent()) return true;
+		IScheduleItemDataHandler handler = scheduleOptional.resolve().get();
 		
-		return !shouldWork && isWorking;
+		int minute = TimeUtils.getMinuteOfTheWeek(world);
+		return handler.shouldWork(minute);
 	}
 	
 	@Override
@@ -109,7 +122,8 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 							blockInv.insertItem(i, taskScroll, false);
 							inserted = true;
 							brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
-							break;
+							te.setChanged();
+							return;
 						}
 					}
 					if (!inserted) {
@@ -143,6 +157,8 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
 		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);
+		
+		brain.setActiveActivityIfPossible(Activity.IDLE);
 	}
 	
 }

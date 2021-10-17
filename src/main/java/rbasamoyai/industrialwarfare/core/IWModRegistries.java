@@ -12,6 +12,7 @@ import net.minecraftforge.registries.RegistryBuilder;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 
 /**
  * Time to take notes from {@link net.minecraftforge.registries.ForgeRegistries} and {@link net.minecraftforge.registries.GameData}
@@ -23,6 +24,7 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCom
 public class IWModRegistries {
 	
 	public static IForgeRegistry<NPCComplaint> NPC_COMPLAINTS = null;
+	public static IForgeRegistry<NPCProfession> NPC_PROFESSIONS = null;
 	public static IForgeRegistry<TaskScrollCommand> TASK_SCROLL_COMMANDS = null;
 	
 	@SubscribeEvent
@@ -34,6 +36,14 @@ public class IWModRegistries {
 				.setMaxID(MAX_ID)
 				.setType(NPCComplaint.class)
 				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "cant_open"))
+				.allowModification()
+				.create();
+		
+		NPC_PROFESSIONS = new RegistryBuilder<NPCProfession>()
+				.setName(KEY_NPC_PROFESSIONS.location())
+				.setMaxID(MAX_ID)
+				.setType(NPCProfession.class)
+				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "jobless"))
 				.allowModification()
 				.create();
 		
@@ -49,6 +59,7 @@ public class IWModRegistries {
 	}
 	
 	private static final RegistryKey<Registry<NPCComplaint>> KEY_NPC_COMPLAINTS = key("npc_complaints");
+	private static final RegistryKey<Registry<NPCProfession>> KEY_NPC_PROFESSIONS = key("npc_professions");
 	private static final RegistryKey<Registry<TaskScrollCommand>> KEY_TASK_COMMANDS = key("task_commands");
 	
 	private static final int MAX_ID = Integer.MAX_VALUE - 1;

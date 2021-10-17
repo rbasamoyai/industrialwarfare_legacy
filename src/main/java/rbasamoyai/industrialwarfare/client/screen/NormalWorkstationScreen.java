@@ -132,7 +132,7 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 		if (clientRecipeSlot instanceof SlotItemHandler) {
 			IItemHandler handler = ((SlotItemHandler) clientRecipeSlot).getItemHandler();
 			if (handler instanceof DummyRecipeItemHandler) {
-				((DummyRecipeItemHandler) handler).canInsert = this.menu.isViewerDifferentFromWorker();
+				((DummyRecipeItemHandler) handler).canInteract = !this.menu.isViewerDifferentFromWorker();
 			}
 		}
 	}

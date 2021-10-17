@@ -2,10 +2,10 @@
   "type": "industrialwarfare:normal_workstation_recipe",
   "input": [
     {
-      "item": "minecraft:iron_nugget"
+      "item": "industrialwarfare:part_iron_wire"
     },
     {
-      "item": "industrialwarfare:part_iron_wire"
+      "item": "minecraft:iron_nugget"
     }
   ],
   "output": {
