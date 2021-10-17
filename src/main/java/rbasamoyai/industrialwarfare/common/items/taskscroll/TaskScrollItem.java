@@ -46,6 +46,7 @@ public class TaskScrollItem extends Item {
 				TaskScrollCommandInit.DEPOSIT_AT,
 				TaskScrollCommandInit.WAIT_FOR,
 				TaskScrollCommandInit.JUMP_TO,
+				TaskScrollCommandInit.WORK_AT,
 				TaskScrollCommandInit.SWITCH_ORDER
 				);
 	};

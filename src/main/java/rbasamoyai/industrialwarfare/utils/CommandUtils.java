@@ -9,6 +9,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPosWrapper;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -26,12 +27,12 @@ public class CommandUtils {
 				.filter(pos -> world.noCollision(npc))
 				.findFirst();
 		accessPos.ifPresent(pos -> {
+			brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
 			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, speedModifier, closeEnoughDist));
 		});
 		if (!accessPos.isPresent()) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
 		}
-	}
-	
+	}	
 	
 }

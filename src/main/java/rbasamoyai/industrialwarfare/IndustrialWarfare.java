@@ -89,7 +89,7 @@ public class IndustrialWarfare {
 		ScreenManager.register(ContainerInit.TASK_SCROLL, TaskScrollScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF, TaskScrollShelfScreen::new);
 		
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.WORKER_NPC, NPCRenderer::new);
+		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC, NPCRenderer::new);
 		
 		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF, TaskScrollShelfTileEntityRenderer::new);
 	}
@@ -105,7 +105,7 @@ public class IndustrialWarfare {
 
 	@SubscribeEvent
 	public void addEntityAttributes(EntityAttributeCreationEvent event) {
-		event.put(EntityTypeInit.WORKER_NPC, NPCEntity.setAttributes().build());
+		event.put(EntityTypeInit.NPC, NPCEntity.setAttributes().build());
 	}
 	
 }

@@ -23,7 +23,9 @@ public class RecipeItemHandler extends ItemStackHandler {
 		ItemStack before = this.getStackInSlot(slot);
 		ItemStack result = super.extractItem(slot, amount, simulate);
 		ItemStack after = this.getStackInSlot(slot);
-		if (!ItemStack.matches(before, after)) this.te.haltCrafting();
+		if (!ItemStack.matches(before, after) && !before.isEmpty()) {
+			this.te.haltCrafting();
+		}
 		return result;
 	}
 		

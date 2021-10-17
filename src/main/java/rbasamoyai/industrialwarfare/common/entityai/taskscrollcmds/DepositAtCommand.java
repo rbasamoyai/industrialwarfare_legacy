@@ -65,7 +65,7 @@ public class DepositAtCommand extends TaskScrollCommand {
 		boolean hasTE = te != null;
 		boolean atDestination = box.contains(npc.position());
 		
-		if (world.isLoaded(pos) && hasTE && atDestination) {
+		if (hasTE && atDestination) {
 			Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
 			LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
 			

@@ -25,15 +25,9 @@ public class ItemModels extends ItemModelProvider {
 	@Override
 	protected void registerModels() {
 		LOGGER.debug("Generating item models for rbasamoyai's Industrial Warfare mod");
-		simpleBuilder("ammo_111");
-		simpleBuilder("ammo_112");
-		simpleBuilder("ammo_113");
-		simpleBuilder("ammo_121");
-		simpleBuilder("ammo_122");
-		simpleBuilder("ammo_123");
-		simpleBuilder("ammo_131");
-		simpleBuilder("ammo_132");
-		simpleBuilder("ammo_133");
+		simpleBuilder("job_site_pointer", "debug_tool");
+		simpleBuilder("complaint_remover", "debug_tool");
+		simpleBuilder("debug_owner", "debug_tool");
 		
 		simpleBuilder("body_part");
 		simpleBuilder("cured_flesh");
@@ -59,26 +53,17 @@ public class ItemModels extends ItemModelProvider {
 		simpleBuilder("task_scroll");
 		simpleBuilder("schedule");
 		simpleBuilder("label");
-		
-		// Smokeless ammo uses same texture as metal casing ammo, so simpleBuilder() is not applicable here
-		getBuilder("ammo_231")
-			.parent(new UncheckedModelFile("item/generated"))
-			.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/ammo_131"));
-		
-		getBuilder("ammo_232")
-			.parent(new UncheckedModelFile("item/generated"))
-			.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/ammo_132"));
-		
-		getBuilder("ammo_233")
-			.parent(new UncheckedModelFile("item/generated"))
-			.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/ammo_133"));
 	}
 	
 	// """Macro""" time
 	private ItemModelBuilder simpleBuilder(String id) {
-		return getBuilder(id)
+		return simpleBuilder(id, id);
+	}
+	
+	private ItemModelBuilder simpleBuilder(String itemId, String textureId) {
+		return getBuilder(itemId)
 				.parent(new UncheckedModelFile("item/generated"))
-				.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/" + id));
+				.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/" + textureId));
 	}
 	
 	@Override

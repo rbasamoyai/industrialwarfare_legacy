@@ -17,7 +17,9 @@ public class NPCComplaintInit {
 	public static final NPCComplaint CANT_GET_ITEM = null;
 	public static final NPCComplaint CANT_OPEN = null;
 	public static final NPCComplaint CLEAR = null;
+	public static final NPCComplaint INVALID_WORKSTATION = null;
 	public static final NPCComplaint INVALID_ORDER = null;
+	public static final NPCComplaint NO_DATA_HANDLER = null;
 	public static final NPCComplaint NOTHING_HERE = null;
 	public static final NPCComplaint TIME_STOPPED = null;
 	public static final NPCComplaint TOO_FAR = null;
@@ -30,7 +32,9 @@ public class NPCComplaintInit {
 				new NPCComplaint("cant_get_item"),
 				new NPCComplaint("cant_open"),
 				new NPCComplaint("clear"),
+				new NPCComplaint("invalid_workstation"),
 				new NPCComplaint("invalid_order"),
+				new NPCComplaint("no_data_handler"),
 				new NPCComplaint("nothing_here"),
 				new NPCComplaint("time_stopped"),
 				new NPCComplaint("too_far")

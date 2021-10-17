@@ -186,8 +186,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 		WidgetUtils.setActiveAndVisible(this.prevPageButton, this.page > 0);
 		WidgetUtils.setActiveAndVisible(this.nextPageButton, this.page < LAST_PAGE);
 		
-		this.menu.setNPCEquipmentSlotsActive(this.page == MAIN_PAGE);
-		this.menu.setNPCInventorySlotsActive(this.page == INVENTORY_PAGE);
+		this.menu.updateActiveSlots(this.page);
 		IWNetwork.CHANNEL.sendToServer(new SNPCContainerActivateMessage(this.page));
 	}
 	

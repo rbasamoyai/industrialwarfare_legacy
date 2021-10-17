@@ -3,10 +3,12 @@ package rbasamoyai.industrialwarfare.common.tileentities;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -14,6 +16,7 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants;
@@ -160,7 +163,7 @@ public class WorkstationTileEntity extends TileEntity implements ITickableTileEn
 		if (!this.level.isClientSide) {
 			LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
 			if (optional.map(IWorkstationDataHandler::isWorking).orElse(false)) {
-				optional.ifPresent(h -> h.incrementWorkingTicks(1));
+				optional.ifPresent(h -> h.setWorkingTicks(MathHelper.clamp(h.getWorkingTicks() + 1, 0, this.baseWorkTicks)));
 			}
 		}
 		this.setChanged();
@@ -168,6 +171,10 @@ public class WorkstationTileEntity extends TileEntity implements ITickableTileEn
 
 	public void attemptCraft(LivingEntity entity) {
 		IndustrialWarfare.LOGGER.warn("In WorkstationTileEntity#attemptCraft, should not be here! Make sure to override this method in the inheriting class.");
+	}
+	
+	public void setRecipe(ItemStack stack, boolean dropItem) {
+		IndustrialWarfare.LOGGER.warn("In WorkstationTileEntity#setRecipe, should not be here! Make sure to override this method in the inheriting class.");
 	}
 
 	public void nullRecipe() {
@@ -179,14 +186,15 @@ public class WorkstationTileEntity extends TileEntity implements ITickableTileEn
 	}
 
 	public void onPlayerCloseScreen(PlayerEntity player) {
-		if (!this.level.isClientSide) { 
-			// Despite this having to do with the workstation GUI, this function is called from WorkstationPlayerActionMessage#handle
-			// from a message sent from the client to the server.
-			LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
-			if (optional.map(IWorkstationDataHandler::getWorkerUUID).orElseGet(() -> new UUID(0L, player.getUUID().getLeastSignificantBits())).equals(player.getUUID())) {
-				optional.ifPresent(h -> { h.setWorker(null); });
-				this.nullRecipe();
-			}
+		if (this.level.isClientSide) return;
+		// Despite this having to do with the workstation GUI, this function is called from WorkstationPlayerActionMessage#handle
+		// from a message sent from the client to the server.
+		LazyOptional<IWorkstationDataHandler> optional = this.getDataHandler();
+		
+		UUID workerUUID = optional.map(IWorkstationDataHandler::getWorkerUUID).orElse(null);
+		if (player.getUUID().equals(workerUUID)) {
+			optional.ifPresent(h -> h.setWorker(null));
+			this.nullRecipe();
 		}
 	}
 }

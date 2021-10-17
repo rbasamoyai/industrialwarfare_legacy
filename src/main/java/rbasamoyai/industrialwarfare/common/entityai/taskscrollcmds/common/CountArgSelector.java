@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.List;
 
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -33,7 +34,7 @@ public class CountArgSelector extends ArgSelector<Integer> {
 	
 	@Override
 	public void scrollSelectedArg(double scrollDist) {
-		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist, (double) this.min, (double) this.max));
+		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? 10.0d : 1.0d), (double) this.min, (double) this.max));
 	}
 
 	@Override

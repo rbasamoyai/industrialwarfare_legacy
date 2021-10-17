@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,6 @@ import com.google.gson.JsonObject;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;
@@ -27,9 +27,10 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.IPartItemDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem.IRecipeItemDataHandler;
-import rbasamoyai.industrialwarfare.common.entities.WorkerNPCEntity;
+import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.core.config.IWConfig;
@@ -49,7 +50,7 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 	public static final String TAG_ADDED_WEIGHT = "added_weight";
 	
 	public static final Serializer SERIALIZER = new Serializer();
-	private static final Random rand = new Random();
+	private static final Random RNG = new Random();
 	
 	private final ResourceLocation id;
 	private final Map<Ingredient, Integer> ingredients;
@@ -57,11 +58,9 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 	private final int addedWeight;
 	private final Block workstation;
 	
-	private static final float WEIGHT_SUM_RECIPROCAL = 1.0f / (IWConfig.part_weight.get() + IWConfig.skill_weight.get() + IWConfig.recipe_weight.get());
-	
 	private static final ResourceLocation INVALID_ID = new ResourceLocation(IndustrialWarfare.MOD_ID, "invalid_id");
 	
-	public NormalWorkstationRecipe(final ResourceLocation id, final Map<Ingredient, Integer> ingredients, final ItemStack output, final int addedWeight, final Block workstation) {
+	public NormalWorkstationRecipe(ResourceLocation id, Map<Ingredient, Integer> ingredients, ItemStack output, int addedWeight, Block workstation) {
 		this.id = id;
 		this.ingredients = ingredients;
 		this.output = output.copy();
@@ -77,12 +76,14 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 		// Enjoy the if statement gauntlet that is to follow
 		ItemStack recipeItem = wrapper.getRecipeItem();
 		LazyOptional<IRecipeItemDataHandler> optional = RecipeItem.getDataHandler(recipeItem);
-		if (recipeItem.getItem() != ItemInit.RECIPE_MANUAL || !optional.isPresent()) return false;
+		if (recipeItem.getItem() != ItemInit.RECIPE_MANUAL) return false;
+		if (!optional.isPresent()) return false;
 		
 		// Please don't use industrialwarfare:unused_id :pleading:
-		// If someone can tell me a better way to safeguard this statement against
+		// If someone can tell me a better way to safeguard this statement against invalid ids, tell me
 		ResourceLocation recipeItemId = optional.map(IRecipeItemDataHandler::getItemId).orElse(INVALID_ID);
-		if (!ForgeRegistries.ITEMS.containsKey(recipeItemId) || recipeItemId.equals(INVALID_ID)) return false;
+		if (!ForgeRegistries.ITEMS.containsKey(recipeItemId)) return false;
+		if (recipeItemId.equals(INVALID_ID)) return false;
 		if (ForgeRegistries.ITEMS.getValue(recipeItemId) != this.output.getItem()) return false; // That's all, folks!
 						
 		Map<Ingredient, Integer> invIngredientCount = this.copyIngredients();
@@ -107,6 +108,7 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 
 	@Override
 	public ItemStack assemble(NormalWorkstationRecipeWrapper wrapper) {
+		float weightSum = IWConfig.part_weight.get() + IWConfig.skill_weight.get() + IWConfig.recipe_weight.get();
 		ItemStack newOutput = this.output.copy();
 
 		if (PartItem.getDataHandler(newOutput).isPresent()) {
@@ -118,11 +120,12 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 			for (int i = 0; i < wrapper.getContainerSize(); i++) {
 				ItemStack currentItem = wrapper.getItem(i);
 				for (Ingredient ingredient : ingredientsCopy.keySet()) {
-					if (ingredient.test(currentItem) && ingredientsCopy.get(ingredient) > 0) { 
-						int minCount = Math.min(currentItem.getCount(), ingredientsCopy.get(ingredient)); 
-						weight += PartItem.getDataHandler(currentItem).map(IPartItemDataHandler::getWeight).orElse(1.0f) * minCount;
-						ingredientsCopy.put(ingredient, ingredientsCopy.get(ingredient) - minCount);
-					}
+					if (!ingredient.test(currentItem)) continue;
+					if (ingredientsCopy.get(ingredient) <= 0) continue;
+					
+					int minCount = Math.min(currentItem.getCount(), ingredientsCopy.get(ingredient)); 
+					weight += PartItem.getDataHandler(currentItem).map(IPartItemDataHandler::getWeight).orElse(1.0f) * minCount;
+					ingredientsCopy.put(ingredient, ingredientsCopy.get(ingredient) - minCount);
 				}
 			}
 			
@@ -132,19 +135,24 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 					.stream()
 					.map(stack -> PartItem.getDataHandler(stack)
 							.map(h -> h.getQuality() * h.getWeight())
-							.orElse(1.0f) * (float) stack.getCount()
-						)
+							.orElse(1.0f) * (float) stack.getCount())
 					.reduce(Float::sum)
 					.orElse(weight)
 					/ weight;
 			
 			// Adding together the weights
-			quality =
-					(
-							quality * IWConfig.part_weight.get()
-							+ wrapper.getCrafterOptional().map(crafter -> crafter instanceof WorkerNPCEntity ? 0.0f : rand.nextFloat()).orElse(0.0f) * IWConfig.skill_weight.get()
-							+ RecipeItem.getDataHandler(wrapper.getRecipeItem()).map(IRecipeItemDataHandler::getQuality).orElse(0.0f) * IWConfig.recipe_weight.get()
-					) * WEIGHT_SUM_RECIPROCAL;
+			float skill = wrapper.getCrafterOptional().map(crafter -> crafter instanceof NPCEntity
+					? ((NPCEntity) crafter).getDataHandler().map(INPCDataHandler::getSkill).orElse(0.0f)
+					: RNG.nextFloat()).orElse(0.0f);
+			skill *= IWConfig.skill_weight.get();
+			
+			float recipeQuality = RecipeItem.getDataHandler(wrapper.getRecipeItem()).map(IRecipeItemDataHandler::getQuality).orElse(0.0f);
+			recipeQuality *= IWConfig.recipe_weight.get();
+			
+			quality *= IWConfig.part_weight.get();
+			quality += skill;
+			quality += recipeQuality;
+			quality /= weightSum;		
 			
 			PartItem.setQualityValues(newOutput, quality, partCount, weight + this.addedWeight);
 		}
@@ -154,20 +162,23 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 	private List<ItemStack> getUsedIngredientsAndUse(NormalWorkstationRecipeWrapper inventory) {
 		List<ItemStack> result = new ArrayList<>();
 		Map<Ingredient, Integer> count = this.copyIngredients();
+		
 		for (int i = 0; i < inventory.getContainerSize(); i++) {
 			ItemStack currentItem = inventory.getItem(i);
-			if (currentItem == ItemStack.EMPTY || currentItem.getItem() == Items.AIR) continue;
-			for (Ingredient ingredient : this.ingredients.keySet()) {
-				int ingredientCount = this.ingredients.get(ingredient);
-				if (ingredient.test(currentItem) && ingredientCount > 0) {
-					int minCount = Math.min(currentItem.getCount(), ingredientCount);
-					ItemStack addItem = currentItem.copy();
-					addItem.setCount(minCount);
-					result.add(addItem);
-					currentItem.shrink(minCount);
-					count.put(ingredient, ingredientCount - minCount);
-					break;
-				}
+			if (currentItem.isEmpty()) continue;
+			
+			for (Ingredient ingredient : count.keySet()) {
+				int ingredientCount = count.get(ingredient);
+				if (ingredientCount <= 0) continue;
+				if (!ingredient.test(currentItem)) continue;
+				
+				int minCount = Math.min(currentItem.getCount(), ingredientCount);
+				ItemStack addItem = currentItem.copy();
+				addItem.setCount(minCount);
+				result.add(addItem);
+				currentItem.shrink(minCount);
+				count.put(ingredient, ingredientCount - minCount);
+				break;
 			}
 		}
 		return result;
@@ -203,7 +214,7 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 	}
 	
 	private Map<Ingredient, Integer> copyIngredients() {
-		return this.ingredients.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+		return this.ingredients.entrySet().stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 	}
 	
 	private static class Serializer extends ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<NormalWorkstationRecipe> {
