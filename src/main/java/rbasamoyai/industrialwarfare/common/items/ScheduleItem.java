@@ -35,8 +35,6 @@ public class ScheduleItem extends Item {
 	
 	public ScheduleItem() {
 		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).stacksTo(1));
-		
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "schedule");
 	}
 	
 	@Override

@@ -28,12 +28,12 @@ public class Recipes extends RecipeProvider {
 	protected void buildShapelessRecipes(Consumer<IFinishedRecipe> consumer) {
 		LOGGER.debug("Building recipes for rbasamoyai's Inudstrial Warfare mod");
 		
-		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_SCREW), 4, 0, BlockInit.ASSEMBLER_WORKSTATION)
-			.addIngredient(ItemInit.PART_IRON_WIRE, 1)
+		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_SCREW.get()), 4, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
+			.addIngredient(ItemInit.PART_IRON_WIRE.get(), 1)
 			.addIngredient(Items.IRON_NUGGET, 1)
 			.save(consumer, new ResourceLocation(IndustrialWarfare.MOD_ID, "part_screw"));
 		
-		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_IRON_WIRE), 2, 0, BlockInit.ASSEMBLER_WORKSTATION)
+		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_IRON_WIRE.get()), 2, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
 			.addIngredient(Items.IRON_INGOT, 1)
 			.save(consumer, new ResourceLocation(IndustrialWarfare.MOD_ID, "part_iron_wire"));
 	}

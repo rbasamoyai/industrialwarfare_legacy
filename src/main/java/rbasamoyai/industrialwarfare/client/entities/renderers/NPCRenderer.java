@@ -38,7 +38,7 @@ public class NPCRenderer<T extends NPCEntity> extends BipedRenderer<T, NPCModel<
 	@Override
 	public void render(T npc, float p_225623_2_, float partialTicks, MatrixStack stack, IRenderTypeBuffer buf, int packedLight) {
 		super.render(npc, p_225623_2_, partialTicks, stack, buf, packedLight);
-		Optional<NPCComplaint> complaint = npc.getBrain().getMemory(MemoryModuleTypeInit.COMPLAINT);
+		Optional<NPCComplaint> complaint = npc.getBrain().getMemory(MemoryModuleTypeInit.COMPLAINT.get());
 		if (complaint.isPresent()) {
 			stack.pushPose();
 			stack.translate(0.0d, 0.25d, 0.0d);

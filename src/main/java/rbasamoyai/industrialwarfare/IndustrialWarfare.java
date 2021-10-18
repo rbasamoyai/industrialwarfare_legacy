@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -37,6 +38,7 @@ import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
+import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.init.RecipeInit;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
@@ -57,16 +59,19 @@ public class IndustrialWarfare {
 		
 		modEventBus.register(IWModRegistries.class);
 		
-		modEventBus.register(ItemInit.class);
-		modEventBus.register(BlockInit.class);
-		modEventBus.register(TileEntityTypeInit.class);
-		modEventBus.register(ContainerInit.class);
-		modEventBus.register(RecipeInit.class);
-		modEventBus.register(EntityTypeInit.class);
-		modEventBus.register(MemoryModuleTypeInit.class);
+		BlockInit.BLOCKS.register(modEventBus);
+		ItemInit.ITEMS.register(modEventBus);
+		TileEntityTypeInit.TILE_ENTITY_TYPES.register(modEventBus);
+		ContainerInit.CONTAINER_TYPES.register(modEventBus);
+		EntityTypeInit.ENTITY_TYPES.register(modEventBus);
+		MemoryModuleTypeInit.MEMORY_MODULE_TYPES.register(modEventBus);
 		
-		modEventBus.register(NPCComplaintInit.class);
-		modEventBus.register(TaskScrollCommandInit.class);
+		NPCComplaintInit.COMPLAINTS.register(modEventBus);
+		NPCProfessionInit.PROFESSIONS.register(modEventBus);
+		TaskScrollCommandInit.TASK_SCROLL_COMMANDS.register(modEventBus);
+		
+		modEventBus.addGenericListener(EntityType.class, EntityTypeInit::registerSpawnEggs);
+		modEventBus.register(RecipeInit.class);
 		
 		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modEventBus.addListener(this::addTexturesToStitcher));
 		
@@ -85,16 +90,16 @@ public class IndustrialWarfare {
 	
 	@SubscribeEvent
 	public void clientSetup(FMLClientSetupEvent event) {
-		ScreenManager.register(ContainerInit.EDIT_LABEL, EditLabelScreen::new);
-		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION, NormalWorkstationScreen::new);
-		ScreenManager.register(ContainerInit.NPC_BASE, NPCBaseScreen::new);
-		ScreenManager.register(ContainerInit.SCHEDULE, EditScheduleScreen::new);
-		ScreenManager.register(ContainerInit.TASK_SCROLL, TaskScrollScreen::new);
-		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF, TaskScrollShelfScreen::new);
+		ScreenManager.register(ContainerInit.EDIT_LABEL.get(), EditLabelScreen::new);
+		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
+		ScreenManager.register(ContainerInit.NPC_BASE.get(), NPCBaseScreen::new);
+		ScreenManager.register(ContainerInit.SCHEDULE.get(), EditScheduleScreen::new);
+		ScreenManager.register(ContainerInit.TASK_SCROLL.get(), TaskScrollScreen::new);
+		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
 		
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC, NPCRenderer::new);
+		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);
 		
-		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF, TaskScrollShelfTileEntityRenderer::new);
+		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);
 	}
 	
 	@SubscribeEvent
@@ -108,7 +113,7 @@ public class IndustrialWarfare {
 
 	@SubscribeEvent
 	public void addEntityAttributes(EntityAttributeCreationEvent event) {
-		event.put(EntityTypeInit.NPC, NPCEntity.setAttributes().build());
+		event.put(EntityTypeInit.NPC.get(), NPCEntity.setAttributes().build());
 	}
 	
 }

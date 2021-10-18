@@ -10,13 +10,11 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
@@ -31,15 +29,8 @@ public class WorkstationBlock extends Block {
 	public static final AbstractBlock.Properties WORKSTATION_STONE	= AbstractBlock.Properties.of(Material.STONE, MaterialColor.STONE).harvestTool(ToolType.PICKAXE).strength(3.5f, 3.5f).harvestLevel(1).sound(SoundType.STONE).requiresCorrectToolForDrops();
 	public static final AbstractBlock.Properties WORKSTATION_WOOD	= AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD);
 	
-	public final ResourceLocation blockId;
-	public final String blockIdString;
-	
-	public WorkstationBlock(String blockId, AbstractBlock.Properties properties) {
+	public WorkstationBlock(AbstractBlock.Properties properties) {
 		super(properties);
-		
-		this.blockIdString = blockId;
-		this.blockId = new ResourceLocation(IndustrialWarfare.MOD_ID, blockId);
-		this.setRegistryName(this.blockId);
 	}
 	
 	@Override

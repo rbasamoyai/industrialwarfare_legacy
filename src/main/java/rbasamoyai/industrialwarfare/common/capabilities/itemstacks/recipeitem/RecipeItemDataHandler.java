@@ -8,7 +8,7 @@ import rbasamoyai.industrialwarfare.core.init.ItemInit;
 public class RecipeItemDataHandler extends QualityItemDataHandler implements IRecipeItemDataHandler {
 	
 	// Defaulting to the iron wire id to be safe
-	private ResourceLocation itemId = ItemInit.PART_IRON_WIRE.getRegistryName();
+	private ResourceLocation itemId = ItemInit.PART_IRON_WIRE.get().getRegistryName();
 
 	@Override
 	public void setItemId(Item item) {

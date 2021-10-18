@@ -30,7 +30,7 @@ public class BlockStates extends BlockStateProvider {
 		LOGGER.debug("Generating block states and models for rbasamoyai's Industrial Warfare mod");
 		ItemModelProvider itemModels = itemModels();
 		
-		getVariantBuilder(BlockInit.ASSEMBLER_WORKSTATION)
+		getVariantBuilder(BlockInit.ASSEMBLER_WORKSTATION.get())
 				.forAllStates(state -> {
 					return ConfiguredModel.builder()
 							.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")))
@@ -39,7 +39,7 @@ public class BlockStates extends BlockStateProvider {
 		itemModels.getBuilder("assembler_workstation")
 				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")));
 		
-		getVariantBuilder(BlockInit.TASK_SCROLL_SHELF)
+		getVariantBuilder(BlockInit.TASK_SCROLL_SHELF.get())
 				.forAllStates(state -> {
 					return ConfiguredModel.builder()
 							.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")))

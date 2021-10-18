@@ -41,13 +41,13 @@ public class TaskScrollItem extends Item {
 	
 	private static final Supplier<List<TaskScrollCommand>> VALID_COMMANDS = () -> {
 		return Arrays.asList(
-				TaskScrollCommandInit.MOVE_TO,
-				TaskScrollCommandInit.TAKE_FROM,
-				TaskScrollCommandInit.DEPOSIT_AT,
-				TaskScrollCommandInit.WAIT_FOR,
-				TaskScrollCommandInit.JUMP_TO,
-				TaskScrollCommandInit.WORK_AT,
-				TaskScrollCommandInit.SWITCH_ORDER
+				TaskScrollCommandInit.MOVE_TO.get(),
+				TaskScrollCommandInit.TAKE_FROM.get(),
+				TaskScrollCommandInit.DEPOSIT_AT.get(),
+				TaskScrollCommandInit.WAIT_FOR.get(),
+				TaskScrollCommandInit.JUMP_TO.get(),
+				TaskScrollCommandInit.WORK_AT.get(),
+				TaskScrollCommandInit.SWITCH_ORDER.get()
 				);
 	};
 	
@@ -134,7 +134,10 @@ public class TaskScrollItem extends Item {
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_LABEL,
 				getDataHandler(stack)
-					.map(h -> (IFormattableTextComponent) h.getLabel().getHoverName())
+					.map(h -> {
+						ItemStack label = h.getLabel();
+						return label.isEmpty() ? TooltipUtils.NOT_AVAILABLE : (IFormattableTextComponent) h.getLabel().getHoverName();
+					})
 					.orElse(TooltipUtils.NOT_AVAILABLE)
 				));
 	}

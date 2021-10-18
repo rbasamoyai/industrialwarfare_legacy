@@ -48,7 +48,7 @@ import rbasamoyai.industrialwarfare.core.init.ItemInit;
  * 		Contains equipment items, such as shields, quivers, pouches, etc.
  * </ul>
  * <hr></hr>
- * Some groups' {@code ItemGroup#fillItemList} method does not call the superclass method and instead clears the "items" argument,
+ * Most groups' {@code ItemGroup#fillItemList} method does not call the superclass method and instead clears the "items" argument,
  * then adds some new items to said argument. This is for adding items with NBT tags/capabilities attached. In effect, this renders the
  * {@code Item.Properties#tab} method used in initialization unused, but the code will be kept for documentation and readability
  * purposes.
@@ -62,36 +62,37 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.HAMMER),
-					getItemStack(ItemInit.WAND),
-					getItemStack(ItemInit.CURED_FLESH),
-					getItemStack(ItemInit.BODY_PART),
-					getItemStack(ItemInit.MAKESHIFT_BRAIN),
-					getItemStack(ItemInit.MAKESHIFT_HEAD),
-					getItemStack(ItemInit.TASK_SCROLL),
-					getItemStack(ItemInit.LABEL),
-					getItemStack(ItemInit.SCHEDULE)
+					getItemStack(ItemInit.HAMMER.get()),
+					getItemStack(ItemInit.WAND.get()),
+					getItemStack(ItemInit.CURED_FLESH.get()),
+					getItemStack(ItemInit.BODY_PART.get()),
+					getItemStack(ItemInit.MAKESHIFT_BRAIN.get()),
+					getItemStack(ItemInit.MAKESHIFT_HEAD.get()),
+					getItemStack(ItemInit.TASK_SCROLL.get()),
+					getItemStack(ItemInit.LABEL.get()),
+					getItemStack(ItemInit.SCHEDULE.get())
 					));
 		}
 		
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.HAMMER);
+			return getItemStack(ItemInit.HAMMER.get());
 		}	
 	};
 	
 	public static final ItemGroup TAB_DEBUG = new ItemGroup(groupId++, "industrialwarfare.debug") {
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.JOB_SITE_POINTER),
-					getItemStack(ItemInit.COMPLAINT_REMOVER),
-					getItemStack(ItemInit.DEBUG_OWNER)
+					getItemStack(ItemInit.JOB_SITE_POINTER.get()),
+					getItemStack(ItemInit.COMPLAINT_REMOVER.get()),
+					getItemStack(ItemInit.DEBUG_OWNER.get()),
+					getItemStack(ItemInit.NPC_SPAWN_EGG.get())
 					));
 		}	
 		
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.JOB_SITE_POINTER);
+			return getItemStack(ItemInit.JOB_SITE_POINTER.get());
 		}
 	};
 
@@ -99,14 +100,14 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.ASSEMBLER_WORKSTATION),
-					getItemStack(ItemInit.TASK_SCROLL_SHELF)
+					getItemStack(ItemInit.ASSEMBLER_WORKSTATION.get()),
+					getItemStack(ItemInit.TASK_SCROLL_SHELF.get())
 					));
 		}
 		
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.ASSEMBLER_WORKSTATION);
+			return getItemStack(ItemInit.ASSEMBLER_WORKSTATION.get());
 		}
 	};
 	
@@ -114,14 +115,14 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					PartItem.setQualityValues(getItemStack(ItemInit.PART_IRON_WIRE), 1.0f, 1, 1),
-					PartItem.setQualityValues(getItemStack(ItemInit.PART_SCREW), 1.0f, 1, 1)
+					PartItem.setQualityValues(getItemStack(ItemInit.PART_IRON_WIRE.get()), 1.0f, 1, 1.0f),
+					PartItem.setQualityValues(getItemStack(ItemInit.PART_SCREW.get()), 1.0f, 1, 1.0f)
 					));
 		}
 			
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.PART_SCREW);
+			return getItemStack(ItemInit.PART_SCREW.get());
 		}		
 	};
 	
@@ -129,14 +130,14 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_IRON_WIRE), 1.0f),
-					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_SCREW), 1.0f)
+					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_IRON_WIRE.get()), 1.0f),
+					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_SCREW.get()), 1.0f)
 					));
 		}
 		
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.RECIPE_MANUAL);
+			return getItemStack(ItemInit.RECIPE_MANUAL.get());
 		}	
 	};
 	

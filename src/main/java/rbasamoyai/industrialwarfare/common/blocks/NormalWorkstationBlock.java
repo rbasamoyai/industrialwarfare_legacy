@@ -14,23 +14,28 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.workstations.NormalWorkstationContainer;
 import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
 public class NormalWorkstationBlock extends WorkstationBlock {
 	
+	private static final ITextComponent TITLE = new TranslationTextComponent("tile." + IndustrialWarfare.MOD_ID + ".task_scroll_shelf");
+	
 	protected final Supplier<? extends NormalWorkstationTileEntity> teSupplier;
 	
-	public NormalWorkstationBlock(String blockId, AbstractBlock.Properties properties, Supplier<? extends NormalWorkstationTileEntity> teSupplier) {
-		super(blockId, properties);
+	public NormalWorkstationBlock(AbstractBlock.Properties properties, Supplier<? extends NormalWorkstationTileEntity> teSupplier) {
+		super(properties);
 		this.teSupplier = teSupplier;
 	}
 	
-	public static NormalWorkstationBlock assemblerWorkstation() { String id = "assembler_workstation"; return new NormalWorkstationBlock(id, WORKSTATION_WOOD, () -> NormalWorkstationTileEntity.assemblerTE()); }
+	public static NormalWorkstationBlock assemblerWorkstation() { return new NormalWorkstationBlock(WORKSTATION_WOOD, NormalWorkstationTileEntity::assemblerTE); }
 	
 	@Override
 	public TileEntity createTileEntity(BlockState state, IBlockReader world) { 
@@ -56,16 +61,17 @@ public class NormalWorkstationBlock extends WorkstationBlock {
 	
 	@Override
 	public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-		if (!world.isClientSide) {
-			TileEntity te = world.getBlockEntity(pos);
-			if (te instanceof NormalWorkstationTileEntity && player instanceof ServerPlayerEntity) {
-				IContainerProvider provider = NormalWorkstationContainer.getServerContainerProvider((NormalWorkstationTileEntity) te, pos);
-				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, this.getName());
-				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, pos);
-			}
-			return ActionResultType.CONSUME;
-		}
-		return ActionResultType.SUCCESS;
+		if (!world.isClientSide) return ActionResultType.SUCCESS;
+		if (!(player instanceof ServerPlayerEntity)) return ActionResultType.SUCCESS;
+		
+		TileEntity te = world.getBlockEntity(pos);
+		if (te == null) return ActionResultType.FAIL;
+		if (!(te instanceof NormalWorkstationTileEntity)) return ActionResultType.FAIL;
+		
+		IContainerProvider provider = NormalWorkstationContainer.getServerContainerProvider((NormalWorkstationTileEntity) te, pos);
+		INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, TITLE);
+		NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, pos);
+		return ActionResultType.CONSUME;
 	}
 	
 }

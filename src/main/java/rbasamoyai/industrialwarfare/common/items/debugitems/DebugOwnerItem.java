@@ -6,7 +6,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
@@ -14,7 +13,6 @@ public class DebugOwnerItem extends Item {
 
 	public DebugOwnerItem() {
 		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_DEBUG));
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "debug_owner");
 	}
 	
 	@Override

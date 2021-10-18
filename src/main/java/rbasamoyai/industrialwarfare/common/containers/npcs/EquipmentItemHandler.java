@@ -123,7 +123,7 @@ public class EquipmentItemHandler extends ItemStackHandler {
 	public static boolean isItemValid(int slot, ItemStack stack, boolean armorSlotsEnabled) {
 		switch (slot) {
 		case TASK_ITEM_INDEX: return stack.getItem() instanceof TaskScrollItem;
-		case SCHEDULE_ITEM_INDEX: return stack.getItem() == ItemInit.SCHEDULE;
+		case SCHEDULE_ITEM_INDEX: return stack.getItem() == ItemInit.SCHEDULE.get();
 		default: return getSlotType(slot).getType() != EquipmentSlotType.Group.ARMOR || armorSlotsEnabled && NPCEntity.getEquipmentSlotForItem(stack) == getSlotType(slot);
 		}
 	}

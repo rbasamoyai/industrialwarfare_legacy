@@ -1,10 +1,7 @@
 package rbasamoyai.industrialwarfare.core.init;
 
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.registries.ObjectHolder;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.registries.DeferredRegister;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.DepositAtCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.JumpToCommand;
@@ -15,29 +12,16 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCom
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WaitForCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
 
-@EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
-@ObjectHolder(IndustrialWarfare.MOD_ID)
 public class TaskScrollCommandInit {
 
-	public static final TaskScrollCommand MOVE_TO = null;
-	public static final TaskScrollCommand TAKE_FROM = null;
-	public static final TaskScrollCommand DEPOSIT_AT = null;
-	public static final TaskScrollCommand WAIT_FOR = null;
-	public static final TaskScrollCommand JUMP_TO = null;
-	public static final TaskScrollCommand WORK_AT = null;
-	public static final TaskScrollCommand SWITCH_ORDER = null;
+	public static final DeferredRegister<TaskScrollCommand> TASK_SCROLL_COMMANDS = DeferredRegister.create(TaskScrollCommand.class, IndustrialWarfare.MOD_ID);
 	
-	@SubscribeEvent
-	public static void registerTaskScrollCommands(RegistryEvent.Register<TaskScrollCommand> event) {
-		event.getRegistry().registerAll(new TaskScrollCommand[] {
-				new MoveToCommand(),
-				new TakeFromCommand(),
-				new DepositAtCommand(),
-				new WaitForCommand(),
-				new JumpToCommand(),
-				new WorkAtCommand(),
-				new SwitchOrderCommand()
-		});
-	}
+	public static final RegistryObject<TaskScrollCommand> MOVE_TO = TASK_SCROLL_COMMANDS.register("move_to", MoveToCommand::new);
+	public static final RegistryObject<TaskScrollCommand> TAKE_FROM = TASK_SCROLL_COMMANDS.register("take_from", TakeFromCommand::new);
+	public static final RegistryObject<TaskScrollCommand> DEPOSIT_AT = TASK_SCROLL_COMMANDS.register("deposit_at", DepositAtCommand::new);
+	public static final RegistryObject<TaskScrollCommand> WAIT_FOR = TASK_SCROLL_COMMANDS.register("wait_for", WaitForCommand::new);
+	public static final RegistryObject<TaskScrollCommand> JUMP_TO = TASK_SCROLL_COMMANDS.register("jump_to", JumpToCommand::new);
+	public static final RegistryObject<TaskScrollCommand> WORK_AT = TASK_SCROLL_COMMANDS.register("work_at", WorkAtCommand::new);
+	public static final RegistryObject<TaskScrollCommand> SWITCH_ORDER = TASK_SCROLL_COMMANDS.register("switch_order", SwitchOrderCommand::new);
 	
 }

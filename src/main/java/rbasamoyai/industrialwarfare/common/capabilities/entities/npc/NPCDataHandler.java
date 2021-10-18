@@ -28,7 +28,7 @@ public class NPCDataHandler implements INPCDataHandler {
 	@Override public boolean canWearEquipment() { return this.canWearEquipment; }
 	
 	@Override public void setRecipeItem(ItemStack recipe) { 
-		if (recipe.getItem() != ItemInit.RECIPE_MANUAL) return;
+		if (recipe.getItem() != ItemInit.RECIPE_MANUAL.get()) return;
 		this.recipeItem = recipe;
 	}	
 	@Override public ItemStack getRecipeItem() { return this.recipeItem == null ? ItemStack.EMPTY : this.recipeItem; }

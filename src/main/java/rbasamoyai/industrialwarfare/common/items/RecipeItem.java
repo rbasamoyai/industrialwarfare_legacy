@@ -28,7 +28,7 @@ public class RecipeItem extends QualityItem {
 	private static final IFormattableTextComponent TOOLTIP_QUALITY = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".recipe.item");
 	
 	public RecipeItem() {
-		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_RECIPES), "recipe_manual");
+		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_RECIPES));
 	}
 	
 	@Override
@@ -68,7 +68,7 @@ public class RecipeItem extends QualityItem {
 	}
 	
 	public static ItemStack getRecipeManualOf(Item recipeItem) {
-		ItemStack stack = new ItemStack(ItemInit.RECIPE_MANUAL);
+		ItemStack stack = new ItemStack(ItemInit.RECIPE_MANUAL.get());
 		getDataHandler(stack).ifPresent(h -> h.setItemId(recipeItem));
 		return stack;
 	}

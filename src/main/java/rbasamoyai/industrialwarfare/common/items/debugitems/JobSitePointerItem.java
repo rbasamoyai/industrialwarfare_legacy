@@ -37,7 +37,6 @@ public class JobSitePointerItem extends Item {
 	
 	public JobSitePointerItem() {
 		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_DEBUG));
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "job_site_pointer");
 	}
 	
 	@Override

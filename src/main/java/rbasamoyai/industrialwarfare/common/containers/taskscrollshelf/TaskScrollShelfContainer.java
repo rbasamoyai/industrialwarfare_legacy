@@ -49,7 +49,7 @@ public class TaskScrollShelfContainer extends Container {
 	}
 	
 	protected TaskScrollShelfContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler handler) {
-		super(ContainerInit.TASK_SCROLL_SHELF, windowId);
+		super(ContainerInit.TASK_SCROLL_SHELF.get(), windowId);
 		this.canUse = IWorldPosCallable.create(playerInv.player.level, activationPos);
 		this.block = playerInv.player.level.getBlockState(activationPos).getBlock();
 		

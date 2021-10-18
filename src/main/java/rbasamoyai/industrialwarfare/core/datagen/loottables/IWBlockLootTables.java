@@ -13,8 +13,8 @@ public class IWBlockLootTables extends BlockLootTables {
 
 	@Override
 	protected void addTables() {
-		this.dropSelf(BlockInit.ASSEMBLER_WORKSTATION);
-		this.dropSelf(BlockInit.TASK_SCROLL_SHELF);
+		this.dropSelf(BlockInit.ASSEMBLER_WORKSTATION.get());
+		this.dropSelf(BlockInit.TASK_SCROLL_SHELF.get());
 	}
 	
 	@Override

@@ -49,6 +49,7 @@
 	"item.industrialwarfare.job_site_pointer":	"Job Site Pointer",
 	"item.industrialwarfare.debug_owner":		"Debug Owner",
 	"item.industrialwarfare.complaint_remover":	"Complaint Remover",
+	"item.industrialwarfare.npc_spawn_egg":	"NPC Spawn Egg",
 	
 	"block.industrialwarfare.armorer_workstation":		"Armory Table",
 	"block.industrialwarfare.assembler_workstation":	"Assembly Table",

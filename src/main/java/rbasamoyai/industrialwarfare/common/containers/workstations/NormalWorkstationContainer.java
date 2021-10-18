@@ -55,7 +55,7 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 	}
 	
 	public NormalWorkstationContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler input, IItemHandler output, IItemHandler recipe, IIntArray data, Optional<NormalWorkstationTileEntity> te) {
-		super(ContainerInit.NORMAL_WORKSTATION, windowId, playerInv.player, activationPos, data, te);
+		super(ContainerInit.NORMAL_WORKSTATION.get(), windowId, playerInv.player, activationPos, data, te);
 		
 		// Adding block slots
 		for (int i = 0; i < INPUT_SLOT_COUNT; i++) {
@@ -95,7 +95,7 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 					return ItemStack.EMPTY;
 				}
 			} else {
-				if (slotStack.getItem() == ItemInit.RECIPE_MANUAL) {
+				if (slotStack.getItem() == ItemInit.RECIPE_MANUAL.get()) {
 					if (!this.moveItemStackTo(slotStack, RECIPE_SLOT_INDEX, RECIPE_SLOT_INDEX + 1, false)) {
 						return ItemStack.EMPTY;
 					}

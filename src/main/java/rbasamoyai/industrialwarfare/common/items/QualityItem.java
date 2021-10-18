@@ -24,9 +24,8 @@ public class QualityItem extends Item {
 	
 	private static final IFormattableTextComponent TOOLTIP_QUALITY = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".quality");
 	
-	public QualityItem(Item.Properties properties, String id) {
+	public QualityItem(Item.Properties properties) {
 		super(properties);
-		this.setRegistryName(IndustrialWarfare.MOD_ID, id);
 	}
 	
 	@Override

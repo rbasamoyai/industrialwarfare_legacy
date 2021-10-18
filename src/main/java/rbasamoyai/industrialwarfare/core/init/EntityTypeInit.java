@@ -5,28 +5,29 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.ObjectHolder;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.items.debugitems.ModSpawnEggItem;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
-@ObjectHolder(IndustrialWarfare.MOD_ID)
 public class EntityTypeInit {
 	
-	public static final EntityType<NPCEntity> NPC = null;
+	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITIES, IndustrialWarfare.MOD_ID);
+	
+	public static final RegistryObject<EntityType<NPCEntity>> NPC = ENTITY_TYPES.register("npc",
+			() -> EntityType.Builder.<NPCEntity>of(NPCEntity::new, EntityClassification.CREATURE)
+					.sized(0.6f, 1.8f)
+					.setTrackingRange(8)
+					.build(makeId("npc").toString()));
 	
 	@SubscribeEvent
-	public static void registerEntityTypes(RegistryEvent.Register<EntityType<?>> event) {
-		IForgeRegistry<EntityType<?>> registry = event.getRegistry();
-
-		registry.register(EntityType.Builder.<NPCEntity>of(NPCEntity::new, EntityClassification.CREATURE)
-				.sized(0.6f, 1.8f)
-				.setTrackingRange(8)
-				.build(makeId("npc").toString())
-				.setRegistryName(IndustrialWarfare.MOD_ID, "npc"));
+	public static void registerSpawnEggs(RegistryEvent.Register<EntityType<?>> event) {
+		ModSpawnEggItem.registerSpawnEggs();
 	}
 	
 	private static ResourceLocation makeId(String id) {

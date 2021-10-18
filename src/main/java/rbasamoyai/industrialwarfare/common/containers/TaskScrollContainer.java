@@ -68,7 +68,7 @@ public class TaskScrollContainer extends Container {
 		@Override
 		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
 			ItemStack result = stack;
-			if (stack.getItem() == ItemInit.LABEL) result = super.insertItem(slot, stack, simulate);
+			if (stack.getItem() == ItemInit.LABEL.get()) result = super.insertItem(slot, stack, simulate);
 			return result;
 		}
 		
@@ -97,7 +97,7 @@ public class TaskScrollContainer extends Container {
 		ItemStackHandler labelItemHandler = ANONYMOUS_HANDLER_SUPPLIER.get();
 		labelItemHandler.setStackInSlot(0, buf.readItem());
 		
-		return new TaskScrollContainer(ContainerInit.TASK_SCROLL, windowId, playerInv, labelItemHandler, validCmdSet, orderList, maxOrderCount, stackIndex, hand);
+		return new TaskScrollContainer(ContainerInit.TASK_SCROLL.get(), windowId, playerInv, labelItemHandler, validCmdSet, orderList, maxOrderCount, stackIndex, hand);
 	}
 	
 	public static IContainerProvider getServerContainerProvider(ItemStack stack, List<TaskScrollCommand> validCmdSet, int stackIndex, Hand hand) {
@@ -109,7 +109,7 @@ public class TaskScrollContainer extends Container {
 		ItemStackHandler labelItemHandler = ANONYMOUS_HANDLER_SUPPLIER.get();
 		labelItemHandler.setStackInSlot(0, labelItem);
 		
-		return (windowId, playerInv, data) -> new TaskScrollContainer(ContainerInit.TASK_SCROLL, windowId, playerInv, labelItemHandler, validCmdSet, orderList, maxOrderCount, stackIndex, hand);
+		return (windowId, playerInv, data) -> new TaskScrollContainer(ContainerInit.TASK_SCROLL.get(), windowId, playerInv, labelItemHandler, validCmdSet, orderList, maxOrderCount, stackIndex, hand);
 	}
 	
 	protected TaskScrollContainer(ContainerType<?> type, int windowId, PlayerInventory playerInv, IItemHandler labelItemHandler, List<TaskScrollCommand> validCmdSet, List<TaskScrollOrder> orderList, int maxOrders, int stackIndex, Hand hand) {

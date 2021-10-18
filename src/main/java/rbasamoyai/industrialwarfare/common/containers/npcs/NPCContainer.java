@@ -96,11 +96,11 @@ public class NPCContainer extends Container {
 		data.set(0, npcSlots);
 		data.set(2, armorSlotsEnabled ? 1 : 0);
 		
-		return new NPCContainer(ContainerInit.NPC_BASE, windowId, playerInv, new DummyEquipmentItemHandler(data), new ItemStackHandler(npcSlots), data, Optional.empty());
+		return new NPCContainer(ContainerInit.NPC_BASE.get(), windowId, playerInv, new DummyEquipmentItemHandler(data), new ItemStackHandler(npcSlots), data, Optional.empty());
 	}
 	
 	public static IContainerProvider getServerContainerProvider(NPCEntity entity) {
-		return (windowId, playerInv, data) -> new NPCContainer(ContainerInit.NPC_BASE, windowId, playerInv, entity.getEquipmentItemHandler(), entity.getInventoryItemHandler(), new NPCContainerDataSync(entity, playerInv.player), Optional.of(entity));
+		return (windowId, playerInv, data) -> new NPCContainer(ContainerInit.NPC_BASE.get(), windowId, playerInv, entity.getEquipmentItemHandler(), entity.getInventoryItemHandler(), new NPCContainerDataSync(entity, playerInv.player), Optional.of(entity));
 	}
 	
 	protected NPCContainer(ContainerType<?> type, int windowId, PlayerInventory playerInv, IItemHandler equipmentItemHandler, IItemHandler inventoryItemHandler, IIntArray data, Optional<? extends NPCEntity> entity) {
@@ -196,7 +196,7 @@ public class NPCContainer extends Container {
 					}
 				}
 				
-				if (slotCopy.getItem() == ItemInit.SCHEDULE) {
+				if (slotCopy.getItem() == ItemInit.SCHEDULE.get()) {
 					if (!this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 2, false)) {
 						return ItemStack.EMPTY;
 					}
@@ -209,9 +209,9 @@ public class NPCContainer extends Container {
 				if (slotCopy.getItem() instanceof TaskScrollItem) {
 					this.entityOptional.ifPresent(npc -> {
 						Brain<?> brain = npc.getBrain();
-						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 					});
-				} else if (slotCopy.getItem() == ItemInit.SCHEDULE) {
+				} else if (slotCopy.getItem() == ItemInit.SCHEDULE.get()) {
 					this.entityOptional.ifPresent(npc -> {
 						
 					});
