@@ -45,9 +45,9 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.VALUE_PRESENT)
+				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.VALUE_PRESENT)
 				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
 				.build(),
 				180);
@@ -62,22 +62,22 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		Brain<?> brain = npc.getBrain();
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		if (!gpOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
 		GlobalPos gp = gpOptional.get();
 		
 		if (gp.dimension() != world.dimension()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
 		if (gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
 			return false;
 		}
 
-		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) return false;
-		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)) return false;		
+		if (!brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) return false;
+		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)) return false;		
 		
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
 		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
@@ -121,20 +121,20 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 							ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
 							blockInv.insertItem(i, taskScroll, false);
 							inserted = true;
-							brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+							brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 							te.setChanged();
 							return;
 						}
 					}
 					if (!inserted) {
-						brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_DEPOSIT_ITEM);
+						brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_DEPOSIT_ITEM.get());
 					}
 				});
 				if (!blockInvOptional.isPresent()) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
 				}
 			} else if (!hasTE) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 			} else if (!atDestination && npc.getNavigation().isDone()) {
 				CommandUtils.trySetWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
 			}
@@ -144,19 +144,19 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		return !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION);
+		return !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		brain.setMemory(MemoryModuleTypeInit.WORKING, false);
+		brain.setMemory(MemoryModuleTypeInit.WORKING.get(), false);
 		
-		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
-		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
-		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);
+		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get());
+		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
+		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION.get());
 		
 		brain.setActiveActivityIfPossible(Activity.IDLE);
 	}

@@ -49,7 +49,7 @@ public class EditScheduleContainer extends Container {
 	}
 	
 	public EditScheduleContainer(int windowId, IIntArray data, List<Pair<Integer, Integer>> schedule, Hand hand) {
-		super(ContainerInit.SCHEDULE, windowId);
+		super(ContainerInit.SCHEDULE.get(), windowId);
 		
 		this.hand = hand;
 		

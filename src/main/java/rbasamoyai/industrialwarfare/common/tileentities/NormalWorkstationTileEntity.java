@@ -52,7 +52,7 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 	}
 	
 	public static NormalWorkstationTileEntity assemblerTE() {
-		return new NormalWorkstationTileEntity(TileEntityTypeInit.ASSEMBLER_WORKSTATION, BlockInit.ASSEMBLER_WORKSTATION, 100);
+		return new NormalWorkstationTileEntity(TileEntityTypeInit.ASSEMBLER_WORKSTATION.get(), BlockInit.ASSEMBLER_WORKSTATION.get(), 100);
 	}
 	
 	public ItemStackHandler getRecipeItemHandler() {

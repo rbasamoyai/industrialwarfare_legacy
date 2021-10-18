@@ -28,30 +28,30 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 				.put(MemoryModuleType.JOB_SITE, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CACHED_POS, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.JUMP_TO, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WAIT_FOR, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.JUMP_TO.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.build(), 6000); // Ample amount of time, maybe not so much if you're waiting for relative time
 	}
 	
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)
-				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)
-				|| brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
+		if (!brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
+				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
+				|| brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
 			return false;
 		}
 		
-		Optional<Integer> indexOptional = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX);
+		Optional<Integer> indexOptional = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get());
 		int currentIndex;
 		if (indexOptional.orElse(-1) < 0) {
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
 			currentIndex = 0;
 		} else {
 			currentIndex = indexOptional.get();
@@ -78,9 +78,9 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 			LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
 			
 			optional.ifPresent(h -> {
-				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0));
+				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
 				order.getCommand().start(world, npc, gameTime, order);
-				brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION, true);
+				brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), true);
 			});
 			
 			this.nextOkStartTime = gameTime + 20L;
@@ -94,7 +94,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 		LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
 		
 		optional.ifPresent(h -> {
-			TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0));
+			TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
 			order.getCommand().tick(world, npc, gameTime, order);
 		});
 	}
@@ -103,25 +103,25 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		return brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)
-				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION).orElse(false)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT);
+		return brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
+				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get())
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get());
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		if (brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION)) {
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get())) {
 			ItemStack stack = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
 			LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
 			
 			optional.ifPresent(h -> {
-				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0));
+				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
 				order.getCommand().stop(world, npc, gameTime, order);
 			});
-			brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION, false);
-			brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);
+			brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), false);
+			brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION.get());
 		}
 	}
 	

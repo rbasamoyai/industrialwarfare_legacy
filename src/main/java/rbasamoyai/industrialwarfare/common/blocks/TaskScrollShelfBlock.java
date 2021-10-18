@@ -28,6 +28,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -35,10 +37,13 @@ import net.minecraftforge.common.ToolType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
+import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.common.tileentities.TaskScrollShelfTileEntity;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
 public class TaskScrollShelfBlock extends Block {
+	
+	private static final ITextComponent TITLE = new TranslationTextComponent("tile." + IndustrialWarfare.MOD_ID + ".assembler_workstation");
 	
 	public static final DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
 	
@@ -60,8 +65,6 @@ public class TaskScrollShelfBlock extends Block {
 	
 	public TaskScrollShelfBlock() {
 		super(AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).noOcclusion().harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD));
-		
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "task_scroll_shelf");
 		
 		this.registerDefaultState(
 				this.stateDefinition.any()
@@ -130,16 +133,17 @@ public class TaskScrollShelfBlock extends Block {
 	
 	@Override
 	public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-		if (!world.isClientSide) {
-			TileEntity te = world.getBlockEntity(pos);
-			if (te instanceof TaskScrollShelfTileEntity && player instanceof ServerPlayerEntity) {
-				IContainerProvider containerProvider = TaskScrollShelfContainer.getServerContainerProvider((TaskScrollShelfTileEntity) te, pos);
-				INamedContainerProvider namedContainerProvider = new SimpleNamedContainerProvider(containerProvider, this.getName());
-				NetworkHooks.openGui((ServerPlayerEntity) player, namedContainerProvider, buf -> {});
-			}
-			return ActionResultType.CONSUME;
-		}
-		return ActionResultType.SUCCESS;
+		if (!world.isClientSide) return ActionResultType.SUCCESS;
+		if (!(player instanceof ServerPlayerEntity)) return ActionResultType.SUCCESS;
+		
+		TileEntity te = world.getBlockEntity(pos);
+		if (te == null) return ActionResultType.FAIL;
+		if (!(te instanceof NormalWorkstationTileEntity)) return ActionResultType.FAIL;
+		
+		IContainerProvider containerProvider = TaskScrollShelfContainer.getServerContainerProvider((TaskScrollShelfTileEntity) te, pos);
+		INamedContainerProvider namedContainerProvider = new SimpleNamedContainerProvider(containerProvider, TITLE);
+		NetworkHooks.openGui((ServerPlayerEntity) player, namedContainerProvider, buf -> {});
+		return ActionResultType.CONSUME;
 	}
 	
 }

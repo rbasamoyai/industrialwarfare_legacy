@@ -21,7 +21,6 @@ public class ComplaintRemoverItem extends Item {
 	
 	public ComplaintRemoverItem() {
 		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_DEBUG));
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "complaint_remover");
 	}
 	
 	@Override
@@ -32,9 +31,9 @@ public class ComplaintRemoverItem extends Item {
 		
 		NPCEntity npc = (NPCEntity) entity;
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) return ActionResultType.CONSUME;
-		NPCComplaint oldComplaint = brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR);
-		brain.eraseMemory(MemoryModuleTypeInit.COMPLAINT);
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) return ActionResultType.CONSUME;
+		NPCComplaint oldComplaint = brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get());
+		brain.eraseMemory(MemoryModuleTypeInit.COMPLAINT.get());
 		player.displayClientMessage(new TranslationTextComponent(REMOVED_COMPLAINTS_KEY, npc.getDisplayName(), oldComplaint.getRegistryName()), true);
 		return ActionResultType.CONSUME;
 	}

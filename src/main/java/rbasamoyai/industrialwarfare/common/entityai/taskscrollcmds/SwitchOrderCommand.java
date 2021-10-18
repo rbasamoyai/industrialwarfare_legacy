@@ -14,7 +14,6 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.ILabelItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
@@ -36,7 +35,6 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 	
 	public SwitchOrderCommand() {
 		super(CommandTrees.SWITCH_ORDER);
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "switch_order");
 	}
 	
 	@Override
@@ -49,7 +47,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		
 		if (mode == PosModes.GET_FROM_POS) {
 			if (!optional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 				return false;
 			} else {
 				pos = optional.get();
@@ -60,7 +58,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		
 		boolean result = pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
 		if (!result) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
 		}
 		return result;
 	}
@@ -105,20 +103,20 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 					if (matchesNum && matchesName) {
 						// Start switching in SwitchOrderCommand#stop
 						switched = true;
-						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 						break;
 					}
 				}
 				
 				if (!switched) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_GET_ITEM);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
 				}
 			});
 			if (!blockInvOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
 			}
 		} else if (!hasTE) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 		} else if (!atDestination && npc.getNavigation().isDone()) {
 			CommandUtils.trySetWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 		}
@@ -158,21 +156,21 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 						blockInv.insertItem(i, depositScroll, false);
 						npcInv.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, takeScroll, false);
 						switched = true;
-						brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
-						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+						brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
+						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 						break;
 					}
 				}
 				
 				if (!switched) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_GET_ITEM);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
 				}
 			});
 			if (!blockInvOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
 			}
 		} else if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 		}
 	}
 	

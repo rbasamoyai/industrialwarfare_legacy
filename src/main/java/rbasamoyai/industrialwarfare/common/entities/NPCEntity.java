@@ -70,14 +70,14 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
-			MemoryModuleTypeInit.CACHED_POS,
-			MemoryModuleTypeInit.COMPLAINT,
-			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX,
-			MemoryModuleTypeInit.EXECUTING_INSTRUCTION,
-			MemoryModuleTypeInit.JUMP_TO,
-			MemoryModuleTypeInit.STOP_EXECUTION,
-			MemoryModuleTypeInit.WAIT_FOR,
-			MemoryModuleTypeInit.WORKING
+			MemoryModuleTypeInit.CACHED_POS.get(),
+			MemoryModuleTypeInit.COMPLAINT.get(),
+			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(),
+			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
+			MemoryModuleTypeInit.JUMP_TO.get(),
+			MemoryModuleTypeInit.STOP_EXECUTION.get(),
+			MemoryModuleTypeInit.WAIT_FOR.get(),
+			MemoryModuleTypeInit.WORKING.get()
 			);
 	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(
 			SensorType.NEAREST_PLAYERS, 
@@ -95,7 +95,7 @@ public class NPCEntity extends CreatureEntity {
 	protected final EquipmentItemHandler equipmentItemHandler;
 
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
-		this(type, worldIn, NPCProfessionInit.JOBLESS, null, 5, false);
+		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), null, 5, false);
 	}
 	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, NPCProfession profession, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
@@ -174,9 +174,9 @@ public class NPCEntity extends CreatureEntity {
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
 		
-		if (brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) {
+		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
-			brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION);
+			brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
 		} else {
 			brain.setActiveActivityIfPossible(Activity.IDLE);
 		}
@@ -191,7 +191,7 @@ public class NPCEntity extends CreatureEntity {
 		brain.tick((ServerWorld) this.level, this);
 		
 		if (this.level.getGameTime() % 20 == 0) {
-			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT).orElse(NPCComplaintInit.CLEAR), this.blockPosition()); 
+			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get()), this.blockPosition()); 
 			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
 		}
 			

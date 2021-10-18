@@ -18,10 +18,10 @@ public class CNPCBrainDataSyncHandler {
 		if (e != null && e instanceof NPCEntity) {
 			NPCEntity npc = (NPCEntity) e;
 			Brain<?> brain = npc.getBrain();
-			if (msg.complaint == NPCComplaintInit.CLEAR) {
-				brain.eraseMemory(MemoryModuleTypeInit.COMPLAINT);
+			if (msg.complaint == NPCComplaintInit.CLEAR.get()) {
+				brain.eraseMemory(MemoryModuleTypeInit.COMPLAINT.get());
 			} else {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, msg.complaint);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), msg.complaint);
 			}
 		}
 	}

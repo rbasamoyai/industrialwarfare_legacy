@@ -25,7 +25,7 @@ public class TaskScrollShelfTileEntity extends TileEntity {
 	private final LazyOptional<IItemHandler> itemOptional = LazyOptional.of(() -> this.itemHandler);
 	
 	public TaskScrollShelfTileEntity() {
-		super(TileEntityTypeInit.TASK_SCROLL_SHELF);
+		super(TileEntityTypeInit.TASK_SCROLL_SHELF.get());
 	}
 	
 	public TaskScrollShelfItemHandler getItemHandler() {

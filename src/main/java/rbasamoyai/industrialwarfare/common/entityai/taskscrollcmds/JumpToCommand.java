@@ -7,7 +7,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.ItemStackHandler;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
@@ -25,7 +24,6 @@ public class JumpToCommand extends TaskScrollCommand {
 	
 	public JumpToCommand() {
 		super(CommandTrees.JUMP_TO);
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "jump_to");
 	}
 	
 	@Override
@@ -35,7 +33,7 @@ public class JumpToCommand extends TaskScrollCommand {
 		LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(scroll);
 		
 		if (!optional.map(h -> 0 <= jumpPos || jumpPos < h.getList().size()).orElse(false)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
+			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 			return false;
 		} else {
 			return true;
@@ -91,11 +89,12 @@ public class JumpToCommand extends TaskScrollCommand {
 						|| itemCondition == ItemCondition.LESS_THAN && itemCount < itemCountCondition
 						|| itemCondition == ItemCondition.EQUAL_TO && itemCount == itemCountCondition)
 				|| condition == BaseCondition.HEARD_BELL && heardBell) {
-			brain.setMemory(MemoryModuleTypeInit.JUMP_TO, order.getWrappedArg(JUMP_POS_ARG_INDEX).getArgNum());
+			brain.setMemory(MemoryModuleTypeInit.JUMP_TO.get(), order.getWrappedArg(JUMP_POS_ARG_INDEX).getArgNum());
 		} else {
-			brain.setMemory(MemoryModuleTypeInit.JUMP_TO, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
+			int index = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0);
+			brain.setMemory(MemoryModuleTypeInit.JUMP_TO.get(), index + 1);
 		}
-		brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+		brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 	}
 
 	@Override
@@ -106,10 +105,11 @@ public class JumpToCommand extends TaskScrollCommand {
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 
-		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.JUMP_TO).orElse(0));
+		int jumpIndex = brain.getMemory(MemoryModuleTypeInit.JUMP_TO.get()).orElse(0);
+		brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), jumpIndex);
 		
 		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
-		brain.eraseMemory(MemoryModuleTypeInit.JUMP_TO);
+		brain.eraseMemory(MemoryModuleTypeInit.JUMP_TO.get());
 	}
 	
 	public static class BaseCondition {

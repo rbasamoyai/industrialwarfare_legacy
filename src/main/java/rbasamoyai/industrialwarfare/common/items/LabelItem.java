@@ -38,8 +38,6 @@ public class LabelItem extends Item {
 	
 	public LabelItem() {
 		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL));
-		
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "label");
 	}
 	
 	@Override

@@ -76,7 +76,7 @@ public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeW
 		// Enjoy the if statement gauntlet that is to follow
 		ItemStack recipeItem = wrapper.getRecipeItem();
 		LazyOptional<IRecipeItemDataHandler> optional = RecipeItem.getDataHandler(recipeItem);
-		if (recipeItem.getItem() != ItemInit.RECIPE_MANUAL) return false;
+		if (recipeItem.getItem() != ItemInit.RECIPE_MANUAL.get()) return false;
 		if (!optional.isPresent()) return false;
 		
 		// Please don't use industrialwarfare:unused_id :pleading:

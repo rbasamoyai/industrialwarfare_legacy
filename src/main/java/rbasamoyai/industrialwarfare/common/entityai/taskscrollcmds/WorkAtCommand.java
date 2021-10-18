@@ -13,7 +13,6 @@ import net.minecraft.util.math.BlockPosWrapper;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.server.ServerWorld;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.IWorkstationDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WaitForCommand.WaitModes;
@@ -33,7 +32,6 @@ public class WorkAtCommand extends TaskScrollCommand {
 	
 	public WorkAtCommand() {
 		super(CommandTrees.WORK_AT);
-		this.setRegistryName(IndustrialWarfare.MOD_ID, "work_at");
 	}
 	
 	@Override
@@ -41,7 +39,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		Brain<?> brain = npc.getBrain();
 		Optional<BlockPos> optional = order.getWrappedArg(POS_ARG_INDEX).getPos();
 		if (!optional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_ORDER);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 			return false;
 		}
 		
@@ -52,7 +50,10 @@ public class WorkAtCommand extends TaskScrollCommand {
 				&& inRange;
 		
 		if (!blockCheck) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, inRange ? NPCComplaintInit.CANT_ACCESS : NPCComplaintInit.TOO_FAR);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(),
+					inRange
+					? NPCComplaintInit.CANT_ACCESS.get()
+					: NPCComplaintInit.TOO_FAR.get());
 			return false;
 		}
 		
@@ -63,9 +64,10 @@ public class WorkAtCommand extends TaskScrollCommand {
 				|| workMode == WaitModes.BELL;
 		
 		if (!workCheck) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, workMode == WaitForCommand.WaitModes.DAY_TIME && !doingDaylightCycle 
-					? NPCComplaintInit.TIME_STOPPED
-					: NPCComplaintInit.INVALID_ORDER);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(),
+					workMode == WaitForCommand.WaitModes.DAY_TIME && !doingDaylightCycle 
+					? NPCComplaintInit.TIME_STOPPED.get()
+					: NPCComplaintInit.INVALID_ORDER.get());
 			return false;
 		}
 		
@@ -82,14 +84,14 @@ public class WorkAtCommand extends TaskScrollCommand {
 			Optional<BlockPos> posOptional = profession.getWorkComponent().getWorkingArea(world, target, npc);
 			posOptional.ifPresent(pos -> {
 				brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
-				brain.setMemory(MemoryModuleTypeInit.CACHED_POS, GlobalPos.of(world.dimension(), pos));
+				brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(world.dimension(), pos));
 			});
 			if (!posOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			}
 		});
 		if (!npc.getDataHandler().isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NO_DATA_HANDLER);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
 		}
 	}
 
@@ -104,7 +106,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		
 		if (!atDestination) {
 			if (npc.getNavigation().isDone()) {
-				BlockPos cachedPos = brain.getMemory(MemoryModuleTypeInit.CACHED_POS).map(GlobalPos::pos).orElse(pos.below());
+				BlockPos cachedPos = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get()).map(GlobalPos::pos).orElse(pos.below());
 				brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(cachedPos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 			}
 			return;
@@ -112,12 +114,12 @@ public class WorkAtCommand extends TaskScrollCommand {
 		
 		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_WORKSTATION);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
 			return;
 		}
 		
 		if (!(te instanceof WorkstationTileEntity)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_WORKSTATION);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
 			return;
 		}
 		
@@ -125,7 +127,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		Optional<IWorkstationDataHandler> optional = workstationTE.getDataHandler().resolve();
 		
 		if (!optional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_WORKSTATION);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
 			return;
 		}
 		
@@ -133,7 +135,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		
 		if (handler.hasWorker()) {
 			if (!handler.getWorkerUUID().equals(npc.getUUID())) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.INVALID_WORKSTATION);
+				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
 				return;
 			}
 		} else {
@@ -147,7 +149,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		int workMode = order.getWrappedArg(WORK_MODE_ARG_INDEX).getArgNum();
 		boolean doingDaylightCycle = world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
 		
-		if (workMode != WaitModes.BELL && brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR)) {
+		if (workMode != WaitModes.BELL && brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR.get())) {
 			int workTimeArg = order.getWrappedArg(WORK_TIME_ARG_INDEX).getArgNum();
 			long workTime = (long) workTimeArg * 20L;
 			long workUntil = 0;
@@ -156,37 +158,38 @@ public class WorkAtCommand extends TaskScrollCommand {
 				workUntil = workTime;
 			} else if (workMode == WaitModes.RELATIVE_TIME) {
 				if (!doingDaylightCycle) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TIME_STOPPED);
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
 					return;
 				}
 				workUntil = gameTime + workTime;
 			}
 			
 			brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
-			brain.setMemory(MemoryModuleTypeInit.WAIT_FOR, workUntil);
+			brain.setMemory(MemoryModuleTypeInit.WAIT_FOR.get(), workUntil);
 		}
 		
 		if (workMode == WaitModes.DAY_TIME && !doingDaylightCycle) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TIME_STOPPED);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
 			return;
 		}
 		
-		int workUntil = brain.getMemory(MemoryModuleTypeInit.WAIT_FOR).orElse(0L).intValue();
+		int workUntil = brain.getMemory(MemoryModuleTypeInit.WAIT_FOR.get()).orElse(0L).intValue();
 		if (workMode == WaitModes.DAY_TIME && (int)(world.getDayTime() + TimeUtils.TIME_OFFSET) % 24000L >= workUntil
 				|| workMode == WaitModes.RELATIVE_TIME && gameTime >= workUntil
 				|| workMode == WaitModes.BELL && brain.hasMemoryValue(MemoryModuleType.HEARD_BELL_TIME)) {
-			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 		}
 	}
 
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX).orElse(0) + 1);
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
+			int index = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0);
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), index + 1);
 		}
-		brain.eraseMemory(MemoryModuleTypeInit.CACHED_POS);
-		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR);
+		brain.eraseMemory(MemoryModuleTypeInit.CACHED_POS.get());
+		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR.get());
 		
 		TileEntity te = world.getBlockEntity(order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
 		if (te == null) return;

@@ -32,6 +32,7 @@ public class ItemModels extends ItemModelProvider {
 		simpleBuilder("body_part");
 		simpleBuilder("cured_flesh");
 		simpleBuilder("makeshift_brain");
+		getBuilder("npc_spawn_egg").parent(new UncheckedModelFile("item/template_spawn_egg"));
 	
 		simpleBuilder("essence_armorer");
 		simpleBuilder("essence_assembler");

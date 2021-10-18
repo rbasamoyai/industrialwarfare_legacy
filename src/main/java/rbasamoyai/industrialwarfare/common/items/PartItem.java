@@ -25,8 +25,8 @@ public class PartItem extends QualityItem {
 	private static final IFormattableTextComponent TOOLTIP_PART_COUNT = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".part.part_count");
 	private static final IFormattableTextComponent TOOLTIP_WEIGHT = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".part.weight");
 	
-	public PartItem(String id) {
-		super(new Item.Properties().tab(IWItemGroups.TAB_PARTS), "part_" + id);
+	public PartItem() {
+		super(new Item.Properties().tab(IWItemGroups.TAB_PARTS));
 	}
 	
 	@Override

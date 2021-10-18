@@ -32,7 +32,7 @@ public class EditLabelContainer extends Container {
 	}
 	
 	private EditLabelContainer(int windowId, Hand hand, UUID labelUUID, byte labelNum, ITextComponent labelCachedName) {
-		super(ContainerInit.EDIT_LABEL, windowId);
+		super(ContainerInit.EDIT_LABEL.get(), windowId);
 		this.hand = hand;
 		this.labelUUID = labelUUID;
 		this.labelNum = labelNum;

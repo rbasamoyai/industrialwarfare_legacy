@@ -31,7 +31,7 @@ public class CommandUtils {
 			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, speedModifier, closeEnoughDist));
 		});
 		if (!accessPos.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 		}
 	}	
 	

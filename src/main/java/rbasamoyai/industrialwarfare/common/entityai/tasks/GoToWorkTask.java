@@ -47,10 +47,10 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.COMPLAINT, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.STOP_EXECUTION, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
 				.build(),
 				180);
@@ -74,21 +74,21 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (!scheduleHandler.shouldWork(minute + 2)) return false;
 		
 		Brain<?> brain = npc.getBrain();
-		if (brain.getMemory(MemoryModuleTypeInit.WORKING).orElse(false)) return false;
+		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) return false;
 		
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		if (!gpOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
 		GlobalPos gp = gpOptional.get();
 		
 		if (gp.dimension() != world.dimension()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
 		if (gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.TOO_FAR);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
 			return false;
 		}
 		
@@ -110,7 +110,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		Brain<?> brain = npc.getBrain();
 		Optional<GlobalPos> gp = brain.getMemory(this.posMemoryType);
 		if (!gp.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_ACCESS);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return;
 		}
 			
@@ -126,7 +126,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		
 		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.NOTHING_HERE);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 		}
 		
 		if (!world.isLoaded(pos)) return;
@@ -134,7 +134,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
 		// Me omw to have a minor pyramid of doom, not too deep but i think we can do better
 		if (!blockInvOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_OPEN);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
 			return;
 		}
 		IItemHandler blockInv = blockInvOptional.resolve().get();
@@ -153,33 +153,33 @@ public class GoToWorkTask extends Task<NPCEntity> {
 				equipmentHandler.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, taskScrollItem, false);
 				blockInv.insertItem(i, npcSlotItem, false);
 				te.setChanged();
-				brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION, true);
+				brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 				return;
 			}
 		}
 		if (!matches) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT, NPCComplaintInit.CANT_GET_ITEM);
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
 		}
 	}
 	
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		boolean hasComplaint = brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT);
-		boolean stopExecution = brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION);
+		boolean hasComplaint = brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get());
+		boolean stopExecution = brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
 		return !hasComplaint && !stopExecution;
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT)) {
-			brain.setMemory(MemoryModuleTypeInit.WORKING, true);
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX, 0);
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
+			brain.setMemory(MemoryModuleTypeInit.WORKING.get(), true);
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
 			
 			brain.setActiveActivityIfPossible(Activity.WORK);
 		}
-		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION);
+		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION.get());
 	}
 	
 }

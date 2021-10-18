@@ -50,7 +50,7 @@ public class TaskScrollDataCapability {
 			ListNBT orderTags = tag.getList(TAG_ORDER_LIST, Constants.NBT.TAG_COMPOUND);
 			List<TaskScrollOrder> orderList = orderTags.stream()
 					.map(ot -> {
-						TaskScrollOrder order = TaskScrollOrder.empty(TaskScrollCommandInit.MOVE_TO);
+						TaskScrollOrder order = TaskScrollOrder.empty(TaskScrollCommandInit.MOVE_TO.get());
 						order.deserializeNBT((CompoundNBT) ot);
 						return order;
 					}).collect(Collectors.toList());

@@ -19,5 +19,6 @@ p Add NPCs
 Current TODO:
 	- Add NPCs
 		- Add professions
+		- Add spawn eggs for debugging
 		- Fix stuff
-				  
+		- Convert to RegistryObject
