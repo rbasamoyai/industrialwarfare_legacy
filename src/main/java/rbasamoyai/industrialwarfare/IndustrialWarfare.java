@@ -5,10 +5,12 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -51,7 +53,6 @@ public class IndustrialWarfare {
 		
 		modEventBus.addListener(this::commonSetup);
 		modEventBus.addListener(this::clientSetup);
-		modEventBus.addListener(this::addTexturesToStitcher);
 		modEventBus.addListener(this::addEntityAttributes);
 		
 		modEventBus.register(IWModRegistries.class);
@@ -66,6 +67,8 @@ public class IndustrialWarfare {
 		
 		modEventBus.register(NPCComplaintInit.class);
 		modEventBus.register(TaskScrollCommandInit.class);
+		
+		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modEventBus.addListener(this::addTexturesToStitcher));
 		
 		ModLoadingContext.get().registerConfig(Type.SERVER, IWConfig.SPEC, "industrialwarfare-server.toml");
 	}

@@ -67,7 +67,10 @@ public class IWItemGroups {
 					getItemStack(ItemInit.CURED_FLESH),
 					getItemStack(ItemInit.BODY_PART),
 					getItemStack(ItemInit.MAKESHIFT_BRAIN),
-					getItemStack(ItemInit.MAKESHIFT_HEAD)
+					getItemStack(ItemInit.MAKESHIFT_HEAD),
+					getItemStack(ItemInit.TASK_SCROLL),
+					getItemStack(ItemInit.LABEL),
+					getItemStack(ItemInit.SCHEDULE)
 					));
 		}
 		
