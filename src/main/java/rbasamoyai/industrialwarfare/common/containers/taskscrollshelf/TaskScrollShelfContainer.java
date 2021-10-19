@@ -1,5 +1,7 @@
 package rbasamoyai.industrialwarfare.common.containers.taskscrollshelf;
 
+import java.util.Optional;
+
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -37,19 +39,21 @@ public class TaskScrollShelfContainer extends Container {
 	private static final int SHELF_INDEX_START = 0;
 	private static final int INVENTORY_INDEX_START = SHELF_SLOT_COUNT;
 	
+	private final Optional<TaskScrollShelfTileEntity> optional;
 	private final IWorldPosCallable canUse;
 	private final Block block;
 	
 	public static TaskScrollShelfContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		return new TaskScrollShelfContainer(windowId, playerInv, BlockPos.ZERO, new DummyTaskScrollShelfItemHandler(SHELF_SLOT_COUNT));
+		return new TaskScrollShelfContainer(windowId, playerInv, BlockPos.ZERO, new DummyTaskScrollShelfItemHandler(SHELF_SLOT_COUNT), Optional.empty());
 	}
 	
 	public static IContainerProvider getServerContainerProvider(TaskScrollShelfTileEntity te, BlockPos activationPos) {
-		return (windowId, playerInv, data) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler());
+		return (windowId, playerInv, data) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler(), Optional.of(te));
 	}
 	
-	protected TaskScrollShelfContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler handler) {
+	protected TaskScrollShelfContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler handler, Optional<TaskScrollShelfTileEntity> optional) {
 		super(ContainerInit.TASK_SCROLL_SHELF.get(), windowId);
+		this.optional = optional;
 		this.canUse = IWorldPosCallable.create(playerInv.player.level, activationPos);
 		this.block = playerInv.player.level.getBlockState(activationPos).getBlock();
 		
@@ -92,7 +96,7 @@ public class TaskScrollShelfContainer extends Container {
 			slotCopy = slotStack.copy();
 			
 			if (index < INVENTORY_INDEX_START) { // Move to player inventory
-				if (!this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
+				if (this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
 					return ItemStack.EMPTY;
 				}
 			} else { // Move to tile entity inventory
@@ -100,9 +104,12 @@ public class TaskScrollShelfContainer extends Container {
 					return ItemStack.EMPTY;
 				}
 			}
+			this.optional.ifPresent(TaskScrollShelfTileEntity::setChanged);
 			
 			if (slotStack.isEmpty()) {
 				slot.set(ItemStack.EMPTY);
+			} else {
+				slot.setChanged();
 			}
 			
 			slot.onTake(player, slotStack);

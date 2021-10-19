@@ -49,6 +49,26 @@ public class PartItem extends QualityItem {
 	}
 	
 	@Override
+	public CompoundNBT getShareTag(ItemStack stack) {
+		CompoundNBT tag = stack.getOrCreateTag();
+		getDataHandler(stack).ifPresent(h -> {
+			tag.put("item_cap", PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.writeNBT(h, null));
+		});
+		return tag;
+	}
+	
+	@Override
+	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+		super.readShareTag(stack, nbt);
+		
+		if (nbt != null) {
+			getDataHandler(stack).ifPresent(h -> {
+				PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+			});
+		}
+	}
+	
+	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		super.appendHoverText(stack, world, tooltip, flag);
 		LazyOptional<IPartItemDataHandler> optional = getDataHandler(stack);
@@ -73,4 +93,9 @@ public class PartItem extends QualityItem {
 		});
 		return stack;
 	}
+	
+	public static ItemStack stackOf(Item item, float quality, int partCount, float weight) {
+		return setQualityValues(new ItemStack(item), quality, partCount, weight);
+	}
+	
 }

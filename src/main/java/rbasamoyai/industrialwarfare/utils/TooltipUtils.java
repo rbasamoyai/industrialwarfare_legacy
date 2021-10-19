@@ -13,7 +13,6 @@ import net.minecraft.util.text.LanguageMap;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TextProcessing;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
@@ -56,12 +55,11 @@ public class TooltipUtils {
 	}
 	
 	public static int charLength(ITextComponent tc) {
-		MutableInt length = new MutableInt(0);
-		TextProcessing.iterateFormatted(tc, Style.EMPTY, (index, style, codepoint) -> {
-			length.increment();
-			return true;
-		});
-		return length.intValue();
+		int len = tc.getContents().length();
+		for (ITextComponent sibling : tc.getSiblings()) {
+			len += charLength(sibling);
+		}
+		return len;
 	}
 	
 	public static String formatFloat(float f) {

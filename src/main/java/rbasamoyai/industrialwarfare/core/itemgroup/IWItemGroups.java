@@ -7,8 +7,8 @@ import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.NonNullList;
+import net.minecraftforge.fml.RegistryObject;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
-import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
@@ -62,15 +62,15 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.HAMMER.get()),
-					getItemStack(ItemInit.WAND.get()),
-					getItemStack(ItemInit.CURED_FLESH.get()),
-					getItemStack(ItemInit.BODY_PART.get()),
-					getItemStack(ItemInit.MAKESHIFT_BRAIN.get()),
-					getItemStack(ItemInit.MAKESHIFT_HEAD.get()),
-					getItemStack(ItemInit.TASK_SCROLL.get()),
-					getItemStack(ItemInit.LABEL.get()),
-					getItemStack(ItemInit.SCHEDULE.get())
+					getItemStack(ItemInit.HAMMER),
+					getItemStack(ItemInit.WAND),
+					getItemStack(ItemInit.CURED_FLESH),
+					getItemStack(ItemInit.BODY_PART),
+					getItemStack(ItemInit.MAKESHIFT_BRAIN),
+					getItemStack(ItemInit.MAKESHIFT_HEAD),
+					getItemStack(ItemInit.TASK_SCROLL),
+					getItemStack(ItemInit.LABEL),
+					getItemStack(ItemInit.SCHEDULE)
 					));
 		}
 		
@@ -100,8 +100,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.ASSEMBLER_WORKSTATION.get()),
-					getItemStack(ItemInit.TASK_SCROLL_SHELF.get())
+					getItemStack(ItemInit.ASSEMBLER_WORKSTATION),
+					getItemStack(ItemInit.TASK_SCROLL_SHELF)
 					));
 		}
 		
@@ -115,8 +115,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					PartItem.setQualityValues(getItemStack(ItemInit.PART_IRON_WIRE.get()), 1.0f, 1, 1.0f),
-					PartItem.setQualityValues(getItemStack(ItemInit.PART_SCREW.get()), 1.0f, 1, 1.0f)
+					PartItem.stackOf(ItemInit.PART_IRON_WIRE.get(), 1.0f, 1, 1.0f),
+					PartItem.stackOf(ItemInit.PART_SCREW.get(), 1.0f, 1, 1.0f)
 					));
 		}
 			
@@ -130,8 +130,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_IRON_WIRE.get()), 1.0f),
-					QualityItem.setQualityValues(RecipeItem.getRecipeManualOf(ItemInit.PART_SCREW.get()), 1.0f)
+					RecipeItem.stackOf(ItemInit.PART_IRON_WIRE.get(), 1.0f),
+					RecipeItem.stackOf(ItemInit.PART_SCREW.get(), 1.0f)
 					));
 		}
 		
@@ -157,6 +157,10 @@ public class IWItemGroups {
 	
 	private static ItemStack getItemStack(Item item) {
 		return new ItemStack(item);
+	}
+	
+	private static ItemStack getItemStack(RegistryObject<Item> item) {
+		return getItemStack(item.get());
 	}
 	
 }
