@@ -37,7 +37,6 @@ import net.minecraftforge.common.ToolType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
-import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.common.tileentities.TaskScrollShelfTileEntity;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
@@ -133,12 +132,12 @@ public class TaskScrollShelfBlock extends Block {
 	
 	@Override
 	public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-		if (!world.isClientSide) return ActionResultType.SUCCESS;
+		if (world.isClientSide) return ActionResultType.SUCCESS;
 		if (!(player instanceof ServerPlayerEntity)) return ActionResultType.SUCCESS;
 		
 		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) return ActionResultType.FAIL;
-		if (!(te instanceof NormalWorkstationTileEntity)) return ActionResultType.FAIL;
+		if (!(te instanceof TaskScrollShelfTileEntity)) return ActionResultType.FAIL;
 		
 		IContainerProvider containerProvider = TaskScrollShelfContainer.getServerContainerProvider((TaskScrollShelfTileEntity) te, pos);
 		INamedContainerProvider namedContainerProvider = new SimpleNamedContainerProvider(containerProvider, TITLE);

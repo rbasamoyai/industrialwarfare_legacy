@@ -61,7 +61,7 @@ public class NormalWorkstationBlock extends WorkstationBlock {
 	
 	@Override
 	public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-		if (!world.isClientSide) return ActionResultType.SUCCESS;
+		if (world.isClientSide) return ActionResultType.SUCCESS;
 		if (!(player instanceof ServerPlayerEntity)) return ActionResultType.SUCCESS;
 		
 		TileEntity te = world.getBlockEntity(pos);

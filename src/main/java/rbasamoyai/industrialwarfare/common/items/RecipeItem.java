@@ -50,6 +50,26 @@ public class RecipeItem extends QualityItem {
 	}
 
 	@Override
+	public CompoundNBT getShareTag(ItemStack stack) {
+		CompoundNBT tag = stack.getOrCreateTag();
+		getDataHandler(stack).ifPresent(h -> {
+			tag.put("item_cap", RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY.writeNBT(h, null));
+		});
+		return tag;
+	}
+	
+	@Override
+	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+		super.readShareTag(stack, nbt);
+		
+		if (nbt != null) {
+			getDataHandler(stack).ifPresent(h -> {
+				RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+			});
+		}
+	}
+	
+	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		super.appendHoverText(stack, world, tooltip, flag);
 		
@@ -67,10 +87,16 @@ public class RecipeItem extends QualityItem {
 		);
 	}
 	
-	public static ItemStack getRecipeManualOf(Item recipeItem) {
-		ItemStack stack = new ItemStack(ItemInit.RECIPE_MANUAL.get());
-		getDataHandler(stack).ifPresent(h -> h.setItemId(recipeItem));
+	public static ItemStack setQualityValues(ItemStack stack, Item recipeItem, float quality) {
+		getDataHandler(stack).ifPresent(h -> {
+			QualityItem.setQualityValues(stack, quality);
+			h.setItemId(recipeItem);
+		});
 		return stack;
+	}
+	
+	public static ItemStack stackOf(Item recipeItem, float quality) {
+		return setQualityValues(new ItemStack(ItemInit.RECIPE_MANUAL.get()), recipeItem, quality);
 	}
 	
 }

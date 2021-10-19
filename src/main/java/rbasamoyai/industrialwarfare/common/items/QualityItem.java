@@ -20,7 +20,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.Q
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataProvider;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
-public class QualityItem extends Item {
+public abstract class QualityItem extends Item {
 	
 	private static final IFormattableTextComponent TOOLTIP_QUALITY = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".quality");
 	

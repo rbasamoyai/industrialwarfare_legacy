@@ -212,9 +212,7 @@ public class NPCContainer extends Container {
 						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 					});
 				} else if (slotCopy.getItem() == ItemInit.SCHEDULE.get()) {
-					this.entityOptional.ifPresent(npc -> {
-						
-					});
+					
 				}
 				
 				if (!this.moveItemStackTo(slotStack, PLAYER_INVENTORY_SLOTS_START_INDEX, NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX, true)) {
