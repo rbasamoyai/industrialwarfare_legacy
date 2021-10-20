@@ -2,18 +2,23 @@ package rbasamoyai.industrialwarfare.common.containers.workstations;
 
 import java.util.Optional;
 
+import com.mojang.datafixers.util.Pair;
+
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.IContainerProvider;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.IIntArray;
 import net.minecraft.util.IntArray;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.itemhandlers.UninsertableItemHandler;
 import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
@@ -25,6 +30,8 @@ import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
 public class NormalWorkstationContainer extends WorkstationContainer {
 
+	private static final Pair<ResourceLocation, ResourceLocation> RECIPE_MANUAL_ICON = Pair.of(PlayerContainer.BLOCK_ATLAS, new ResourceLocation(IndustrialWarfare.MOD_ID, "item/recipe_manual_icon"));
+	
 	private static final int SLOT_SPACING = 18;
 	private static final int INPUT_SLOT_START_X = 8;
 	private static final int INPUT_SLOT_COUNT = 5;
@@ -62,7 +69,12 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 			int x = INPUT_SLOT_START_X + SLOT_SPACING * i;
 			this.addSlot(new SlotItemHandler(input, i, x, INPUT_SLOT_Y));
 		}
-		this.addSlot(new SlotItemHandler(recipe, 0, RECIPE_SLOT_X, RECIPE_SLOT_Y));
+		this.addSlot(new SlotItemHandler(recipe, 0, RECIPE_SLOT_X, RECIPE_SLOT_Y) {
+			@Override
+			public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+				return RECIPE_MANUAL_ICON;
+			}
+		});
 		this.addSlot(new SlotItemHandler(output, 0, OUTPUT_SLOT_X, INPUT_SLOT_Y));
 		
 		// Player inventory slots

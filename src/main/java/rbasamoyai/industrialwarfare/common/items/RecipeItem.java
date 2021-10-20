@@ -13,6 +13,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -48,7 +49,7 @@ public class RecipeItem extends QualityItem {
 	public static LazyOptional<IRecipeItemDataHandler> getDataHandler(ItemStack stack) {
 		return stack.getCapability(RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY);
 	}
-
+	
 	@Override
 	public CompoundNBT getShareTag(ItemStack stack) {
 		CompoundNBT tag = stack.getOrCreateTag();
@@ -60,13 +61,18 @@ public class RecipeItem extends QualityItem {
 	
 	@Override
 	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
-		super.readShareTag(stack, nbt);
+		stack.setTag(nbt);
 		
-		if (nbt != null) {
-			getDataHandler(stack).ifPresent(h -> {
-				RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-			});
+		if (nbt == null) return;
+		
+		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+			readCreativeData(stack, nbt.getCompound("creativeData"));
+			return;
 		}
+		
+		getDataHandler(stack).ifPresent(h -> {
+			RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+		});
 	}
 	
 	@Override
@@ -88,8 +94,8 @@ public class RecipeItem extends QualityItem {
 	}
 	
 	public static ItemStack setQualityValues(ItemStack stack, Item recipeItem, float quality) {
+		QualityItem.setQualityValues(stack, quality);
 		getDataHandler(stack).ifPresent(h -> {
-			QualityItem.setQualityValues(stack, quality);
 			h.setItemId(recipeItem);
 		});
 		return stack;
@@ -97,6 +103,27 @@ public class RecipeItem extends QualityItem {
 	
 	public static ItemStack stackOf(Item recipeItem, float quality) {
 		return setQualityValues(new ItemStack(ItemInit.RECIPE_MANUAL.get()), recipeItem, quality);
+	}
+	
+	public static ItemStack creativeStack(Item item, float quality) {
+		ItemStack stack = stackOf(item, quality);
+		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
+		return stack;
+	}
+	
+	protected static CompoundNBT getCreativeData(ItemStack stack) {
+		CompoundNBT tag = QualityItem.getCreativeData(stack);
+		getDataHandler(stack).ifPresent(h -> {
+			tag.putString(RecipeItemDataCapability.TAG_RECIPE_ITEM, h.getItemId().toString());
+		});
+		return tag;
+	}
+	
+	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+		QualityItem.readCreativeData(stack, nbt);
+		getDataHandler(stack).ifPresent(h -> {
+			h.setItemId(nbt.getString(RecipeItemDataCapability.TAG_RECIPE_ITEM));
+		});
 	}
 	
 }

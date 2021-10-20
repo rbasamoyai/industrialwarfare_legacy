@@ -22,16 +22,14 @@ public class RecipeItemDataCapability {
 	public static class Storage extends QualityItemDataCapability.Storage<IRecipeItemDataHandler> {
 		
 		@Override
-		public INBT writeNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance,
-				Direction side) {
+		public INBT writeNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance, Direction side) {
 			CompoundNBT tag = (CompoundNBT) super.writeNBT(capability, instance, side);
 			tag.putString(TAG_RECIPE_ITEM, instance.getItemId().toString());
 			return tag;
 		}
 		
 		@Override
-		public void readNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance,
-				Direction side, INBT nbt) {
+		public void readNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance, Direction side, INBT nbt) {
 			super.readNBT(capability, instance, side, nbt);
 			CompoundNBT tag = (CompoundNBT) nbt;
 			instance.setItemId(tag.getString(TAG_RECIPE_ITEM));

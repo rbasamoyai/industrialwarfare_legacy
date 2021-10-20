@@ -12,6 +12,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.IPartItemDataHandler;
@@ -59,13 +60,18 @@ public class PartItem extends QualityItem {
 	
 	@Override
 	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
-		super.readShareTag(stack, nbt);
+		stack.setTag(nbt);
 		
-		if (nbt != null) {
-			getDataHandler(stack).ifPresent(h -> {
-				PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-			});
+		if (nbt == null) return;
+		
+		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+			readCreativeData(stack, nbt.getCompound("creativeData"));
+			return;
 		}
+		
+		getDataHandler(stack).ifPresent(h -> {
+			PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+		});
 	}
 	
 	@Override
@@ -86,8 +92,8 @@ public class PartItem extends QualityItem {
 	}
 
 	public static ItemStack setQualityValues(ItemStack stack, float quality, int partCount, float weight) {
+		QualityItem.setQualityValues(stack, quality);
 		getDataHandler(stack).ifPresent(h -> {
-			QualityItem.setQualityValues(stack, quality);
 			h.setPartCount(partCount);
 			h.setWeight(weight);
 		});
@@ -96,6 +102,29 @@ public class PartItem extends QualityItem {
 	
 	public static ItemStack stackOf(Item item, float quality, int partCount, float weight) {
 		return setQualityValues(new ItemStack(item), quality, partCount, weight);
+	}
+	
+	public static ItemStack creativeStack(Item item, float quality, int partCount, float weight) {
+		ItemStack stack = stackOf(item, quality);
+		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
+		return stack;
+	}
+	
+	protected static CompoundNBT getCreativeData(ItemStack stack) {
+		CompoundNBT tag = QualityItem.getCreativeData(stack);
+		getDataHandler(stack).ifPresent(h -> {
+			tag.putInt(PartItemDataCapability.TAG_PART_COUNT, h.getPartCount());
+			tag.putFloat(PartItemDataCapability.TAG_WEIGHT, h.getWeight());
+		});
+		return tag;
+	}
+	
+	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+		QualityItem.readCreativeData(stack, nbt);
+		getDataHandler(stack).ifPresent(h -> {
+			h.setPartCount(nbt.getInt(PartItemDataCapability.TAG_PART_COUNT));
+			h.setWeight(nbt.getFloat(PartItemDataCapability.TAG_WEIGHT));
+		});
 	}
 	
 }
