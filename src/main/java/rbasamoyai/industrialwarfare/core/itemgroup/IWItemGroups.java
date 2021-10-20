@@ -115,8 +115,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					PartItem.stackOf(ItemInit.PART_IRON_WIRE.get(), 1.0f, 1, 1.0f),
-					PartItem.stackOf(ItemInit.PART_SCREW.get(), 1.0f, 1, 1.0f)
+					PartItem.creativeStack(ItemInit.PART_IRON_WIRE.get(), 1.0f, 1, 1.0f),
+					PartItem.creativeStack(ItemInit.PART_SCREW.get(), 1.0f, 1, 1.0f)
 					));
 		}
 			
@@ -130,8 +130,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					RecipeItem.stackOf(ItemInit.PART_IRON_WIRE.get(), 1.0f),
-					RecipeItem.stackOf(ItemInit.PART_SCREW.get(), 1.0f)
+					RecipeItem.creativeStack(ItemInit.PART_IRON_WIRE.get(), 1.0f),
+					RecipeItem.creativeStack(ItemInit.PART_SCREW.get(), 1.0f)
 					));
 		}
 		

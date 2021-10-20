@@ -33,27 +33,13 @@ public class ItemModels extends ItemModelProvider {
 		simpleBuilder("cured_flesh");
 		simpleBuilder("makeshift_brain");
 		getBuilder("npc_spawn_egg").parent(new UncheckedModelFile("item/template_spawn_egg"));
-	
-		simpleBuilder("essence_armorer");
-		simpleBuilder("essence_assembler");
-		simpleBuilder("essence_bladesmith");
-		simpleBuilder("essence_chemist");
-		simpleBuilder("essence_commander");
-		simpleBuilder("essence_founder");
-		simpleBuilder("essence_gunsmith");
-		simpleBuilder("essence_machinist");
-		simpleBuilder("essence_medic");
-		simpleBuilder("essence_metalsmith");
-		simpleBuilder("essence_reanimator");
-		simpleBuilder("essence_researcher");
-		simpleBuilder("essence_transporter");
-		simpleBuilder("essence_warrior");
-		simpleBuilder("essence_weaponsmith");
-		simpleBuilder("essence_woodworker");
 		
 		simpleBuilder("task_scroll");
 		simpleBuilder("schedule");
 		simpleBuilder("label");
+		
+		simpleBuilder("recipe_manual");
+		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	
 	// """Macro""" time

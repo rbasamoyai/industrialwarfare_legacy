@@ -13,6 +13,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.IQualityItemDataHandler;
@@ -20,7 +21,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.Q
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataProvider;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
-public abstract class QualityItem extends Item {
+public class QualityItem extends Item {
 	
 	private static final IFormattableTextComponent TOOLTIP_QUALITY = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".quality");
 	
@@ -46,6 +47,31 @@ public abstract class QualityItem extends Item {
 	}
 	
 	@Override
+	public CompoundNBT getShareTag(ItemStack stack) {
+		CompoundNBT tag = stack.getOrCreateTag();
+		getDataHandler(stack).ifPresent(h -> {
+			tag.put("item_cap", QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.writeNBT(h, null));
+		});
+		return tag;
+	}
+	
+	@Override
+	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+		stack.setTag(nbt);
+		
+		if (nbt == null) return;
+		
+		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+			readCreativeData(stack, nbt.getCompound("creativeData"));
+			return;
+		}
+		
+		getDataHandler(stack).ifPresent(h -> {
+			QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+		});
+	}
+	
+	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_QUALITY,
 				getDataHandler(stack)
@@ -60,4 +86,31 @@ public abstract class QualityItem extends Item {
 		getDataHandler(stack).ifPresent(h -> h.setQuality(quality));
 		return stack;
 	}
+	
+	public static ItemStack stackOf(Item item, float quality) {
+		return setQualityValues(new ItemStack(item), quality);
+	}
+	
+	/* Creative mode methods to get around issue where capability data is lost */
+	
+	public static ItemStack creativeStack(Item item, float quality) {
+		ItemStack stack = stackOf(item, quality);
+		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
+		return stack;
+	}
+	
+	protected static CompoundNBT getCreativeData(ItemStack stack) {
+		CompoundNBT tag = new CompoundNBT();
+		getDataHandler(stack).ifPresent(h -> {
+			tag.putFloat(QualityItemDataCapability.TAG_QUALITY, h.getQuality());
+		});
+		return tag;
+	}
+	
+	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+		getDataHandler(stack).ifPresent(h -> {
+			h.setQuality(nbt.getFloat(QualityItemDataCapability.TAG_QUALITY));
+		});
+	}
+	
 }

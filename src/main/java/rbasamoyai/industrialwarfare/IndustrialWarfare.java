@@ -107,6 +107,7 @@ public class IndustrialWarfare {
 		event.addSprite(new ResourceLocation(MOD_ID, "item/task_icon"));
 		event.addSprite(new ResourceLocation(MOD_ID, "item/schedule_icon"));
 		event.addSprite(new ResourceLocation(MOD_ID, "item/label_icon"));
+		event.addSprite(new ResourceLocation(MOD_ID, "item/recipe_manual_icon"));
 		
 		event.addSprite(new ResourceLocation(MOD_ID, "entity/task_scroll"));
 	}
