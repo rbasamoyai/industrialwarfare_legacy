@@ -67,6 +67,7 @@ public class RecipeItem extends QualityItem {
 		
 		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
 			readCreativeData(stack, nbt.getCompound("creativeData"));
+			nbt.remove("creativeData");
 			return;
 		}
 		
