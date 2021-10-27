@@ -21,7 +21,6 @@ can fight stuff.
 
 ### """planned""" features:
 * More NPCs
-    * NPC occupations
     * NPCs actually doing something
     * Combat NPCs
 * Generated structures with NPCs
@@ -31,6 +30,9 @@ can fight stuff.
 
 ### Currently working on (or not)
 * NPC professions
+    * NPCs working at their places
+* Combat NPCs
+* Combat orders
 
 ---
 
