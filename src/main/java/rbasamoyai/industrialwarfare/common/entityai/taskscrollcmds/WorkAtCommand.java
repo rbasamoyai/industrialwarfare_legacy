@@ -13,7 +13,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
@@ -114,27 +113,10 @@ public class WorkAtCommand extends TaskScrollCommand {
 		lzop.resolve().get().getProfession().getWorkUnit().work(world, npc, gameTime, order);
 		
 		WaitMode workMode = WaitMode.fromId(order.getWrappedArg(WORK_MODE_ARG_INDEX).getArgNum());
-		boolean doingDaylightCycle = world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
-		
-		if (workMode != WaitMode.HEARD_BELL && brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR.get())) {
-			int workTimeArg = order.getWrappedArg(WORK_TIME_ARG_INDEX).getArgNum();
-			long workTime = (long) workTimeArg * 20L;
-			long workUntil = 0;
-			
-			if (workMode == WaitMode.DAY_TIME) {
-				workUntil = workTime;
-			} else if (workMode == WaitMode.RELATIVE_TIME) {
-				if (!doingDaylightCycle) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
-					return;
-				}
-				workUntil = gameTime + workTime;
-			}
-			
-			brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
-			brain.setMemory(MemoryModuleTypeInit.WAIT_FOR.get(), workUntil);
+		if (workMode != WaitMode.HEARD_BELL && !brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR.get())) {
+			if (!CommandUtils.validateWait(world, npc, workMode, NPCComplaintInit.INVALID_ORDER.get())) return;
+			CommandUtils.startWait(npc, workMode, gameTime, (long) order.getWrappedArg(WORK_TIME_ARG_INDEX).getArgNum() * 20L);
 		}
-		
 		CommandUtils.tickWait(world, npc, workMode, gameTime);
 	}
 

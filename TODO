@@ -8,6 +8,8 @@ p Add NPCs
 		- Add warrior professions
 	- Add safeguarding to dimension switch
 
+- Add diplomacy
+
 - Add research system
 
 - Add Weapons
@@ -29,3 +31,5 @@ Current TODO:
 		  to allow for other
 		  kinds of work
 		- Add combat component
+		- Add combat tasks
+	- Add diplomacy

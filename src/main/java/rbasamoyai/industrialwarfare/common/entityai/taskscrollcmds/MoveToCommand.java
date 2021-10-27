@@ -22,7 +22,6 @@ public class MoveToCommand extends TaskScrollCommand {
 	
 	public MoveToCommand() {
 		super(CommandTrees.POS_ONLY, ImmutableMap.of(
-				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
 				));
 	}
@@ -35,6 +34,7 @@ public class MoveToCommand extends TaskScrollCommand {
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
+		
 		npc.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
 	}
 	
