@@ -6,6 +6,9 @@ p Add NPCs
 	- Add NPC professions
 		- Add worker professions
 		- Add warrior professions
+	- Add safeguarding to dimension switch
+
+- Add research system
 
 - Add Weapons
 
@@ -17,5 +20,12 @@ p Add NPCs
 - D O C U M E N T A T I O N
 
 Current TODO:
-	- Add NPCs
-		- Add professions
+	- Add attack commands
+		- Add equip command
+		- Add unequip command
+		- Add patrol command
+	- Add professions
+		- Rewrite work component
+		  to allow for other
+		  kinds of work
+		- Add combat component

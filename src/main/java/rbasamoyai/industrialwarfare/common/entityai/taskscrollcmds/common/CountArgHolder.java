@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
@@ -10,10 +9,10 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 
 public class CountArgHolder implements IArgHolder {
 
-	private final BiFunction<Integer, TaskScrollContainer, ArgSelector<?>> selectorProvider;
+	private final IArgSelectorProvider selectorProvider;
 	protected int arg;
 	
-	public CountArgHolder(BiFunction<Integer, TaskScrollContainer, ArgSelector<?>> selectorProvider) {
+	public CountArgHolder(IArgSelectorProvider selectorProvider) {
 		this.selectorProvider = selectorProvider;
 	}
 

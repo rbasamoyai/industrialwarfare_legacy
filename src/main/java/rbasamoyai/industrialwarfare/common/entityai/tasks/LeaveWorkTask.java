@@ -80,9 +80,9 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)) return false;		
 		
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
-		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
-		if (!scheduleOptional.isPresent()) return true;
-		IScheduleItemDataHandler handler = scheduleOptional.resolve().get();
+		LazyOptional<IScheduleItemDataHandler> lzop = ScheduleItem.getDataHandler(scheduleItem);
+		if (!lzop.isPresent()) return true;
+		IScheduleItemDataHandler handler = lzop.resolve().get();
 		
 		int minute = TimeUtils.getMinuteOfTheWeek(world);
 		return handler.shouldWork(minute);
@@ -93,7 +93,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		if (gameTime > this.nextOkStartTime) {
 			Brain<?> brain = npc.getBrain();
 			Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
-			gpOptional.ifPresent(gp -> CommandUtils.trySetWalkTarget(world, npc, gp.pos(), this.speedModifier, this.closeEnoughDist));
+			gpOptional.ifPresent(gp -> CommandUtils.trySetInterfaceWalkTarget(world, npc, gp.pos(), this.speedModifier, this.closeEnoughDist));
 			this.nextOkStartTime = gameTime + 80L;
 		}
 	}
@@ -101,51 +101,52 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	@Override
 	protected void tick(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		brain.getMemory(this.posMemoryType).ifPresent(gp -> {
-			BlockPos pos = gp.pos();
-			TileEntity te = world.getBlockEntity(pos);
-			AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
-			
-			boolean hasTE = te != null;
-			boolean atDestination = box.contains(npc.position());
-			
-			if (world.isLoaded(pos) && hasTE && atDestination) {
-				LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-				blockInvOptional.ifPresent(blockInv -> {
-					EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
-					ItemStack taskScrollTest = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, true);
-					boolean inserted = false;
-					for (int i = 0; i < blockInv.getSlots(); i++) {
-						ItemStack result = blockInv.insertItem(i, taskScrollTest, true);
-						if (result == ItemStack.EMPTY) {
-							ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
-							blockInv.insertItem(i, taskScroll, false);
-							inserted = true;
-							brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
-							te.setChanged();
-							return;
-						}
-					}
-					if (!inserted) {
-						brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_DEPOSIT_ITEM.get());
-					}
-				});
-				if (!blockInvOptional.isPresent()) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
-				}
-			} else if (!hasTE) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
-			} else if (!atDestination && npc.getNavigation().isDone()) {
-				CommandUtils.trySetWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
+		Optional<GlobalPos> gp = brain.getMemory(this.posMemoryType);
+		if (!gp.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			return;
+		}
+		BlockPos pos = gp.get().pos();
+		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
+		if (!box.contains(npc.position())) {
+			if (npc.getNavigation().isDone()) {
+				CommandUtils.trySetInterfaceWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
 			}
-		});
+			return;
+		}
+		
+		TileEntity te = world.getBlockEntity(pos);
+		if (te == null) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+			return;
+		}
+		
+		LazyOptional<IItemHandler> lzop = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+		if (!lzop.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+			return;
+		}
+		IItemHandler blockInv = lzop.resolve().get();
+		
+		EquipmentItemHandler equipmentHandler = npc.getEquipmentItemHandler();
+		ItemStack taskScrollTest = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, true);
+		for (int i = 0; i < blockInv.getSlots(); i++) {
+			ItemStack result = blockInv.insertItem(i, taskScrollTest, true);
+			if (result != ItemStack.EMPTY) continue;
+			
+			ItemStack taskScroll = equipmentHandler.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
+			blockInv.insertItem(i, taskScroll, false);
+			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
+			te.setChanged();
+			return;
+		}
+		brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_DEPOSIT_ITEM.get());
 	}	
 	
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		return !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
+		return !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
 	}
 	
 	@Override
@@ -154,7 +155,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		
 		brain.setMemory(MemoryModuleTypeInit.WORKING.get(), false);
 		
-		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get());
+		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get());
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
 		brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION.get());
 		

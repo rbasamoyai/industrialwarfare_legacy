@@ -1,15 +1,18 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
+import com.google.common.collect.ImmutableMap;
+
 import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
-import rbasamoyai.industrialwarfare.utils.TimeUtils;
+import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
 public class WaitForCommand extends TaskScrollCommand {
 	
@@ -17,79 +20,36 @@ public class WaitForCommand extends TaskScrollCommand {
 	private static final int WAIT_TIME_ARG_INDEX = 1;
 	
 	public WaitForCommand() {
-		super(CommandTrees.WAIT_FOR);
+		super(CommandTrees.WAIT_FOR, ImmutableMap.of(
+				MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED,
+				MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED
+				));
 	}
 	
 	@Override
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
-		int waitMode = order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum();
-		boolean doingDaylightCycle = world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT);
-		
-		if (waitMode == WaitModes.DAY_TIME && !doingDaylightCycle) {
-			// somehow the NPCs sense that doDaylightCycle is false, don't ask how
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
-		}
-		
-		return waitMode == WaitModes.DAY_TIME && doingDaylightCycle || waitMode == WaitModes.RELATIVE_TIME || waitMode == WaitModes.BELL;
+		return CommandUtils.validateWait(world, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), NPCComplaintInit.INVALID_ORDER.get());
 	}
 
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		int waitMode = order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum();
-		int waitTimeArg = order.getWrappedArg(WAIT_TIME_ARG_INDEX).getArgNum();
-		
-		long waitTime = (long) waitTimeArg * 20L;
-		
-		long waitUntil = 0;
-		
-		if (waitMode == WaitModes.DAY_TIME) {
-			waitUntil = waitTime;
-		} else if (waitMode == WaitModes.RELATIVE_TIME) {
-			waitUntil = gameTime + waitTime;
-		} else if (waitMode == WaitModes.BELL) {
-			
-		}
-		
-		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
-		if (waitMode != WaitModes.BELL) brain.setMemory(MemoryModuleTypeInit.WAIT_FOR.get(), waitUntil);
+		WaitMode mode = WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum());
+		long waitTime = (long) order.getWrappedArg(WAIT_TIME_ARG_INDEX).getArgNum() * 20L;
+		CommandUtils.startWait(npc, mode, gameTime, waitTime);
 	}
 
 	@Override
 	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		boolean heardBell = brain.hasMemoryValue(MemoryModuleType.HEARD_BELL_TIME);
-		long waitUntil = brain.getMemory(MemoryModuleTypeInit.WAIT_FOR.get()).orElse(0L);
-		int waitMode = order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum();
-		
-		if (waitMode == WaitModes.DAY_TIME && !world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
-		}
-		
-		if (waitMode == WaitModes.DAY_TIME && (int)((world.getDayTime() + TimeUtils.TIME_OFFSET) % 24000L) >= waitUntil 
-				|| waitMode == WaitModes.RELATIVE_TIME && gameTime >= waitUntil
-				|| waitMode == WaitModes.BELL && heardBell) {
-			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
-		}
+		CommandUtils.tickWait(world, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), gameTime);
 	}
 
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
-		
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
-			int index = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0);
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), index + 1);
+		if (!CommandUtils.hasComplaint(npc)) {
+			CommandUtils.incrementCurrentInstructionIndexMemory(npc);
 		}
 		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR.get());
-	}
-
-	public static class WaitModes {
-		public static final int DAY_TIME = 0;
-		public static final int RELATIVE_TIME = 1;
-		public static final int BELL = 2;
-		
-		public static final int[] VALUES = new int[] {DAY_TIME, RELATIVE_TIME, BELL};
 	}
 	
 }

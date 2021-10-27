@@ -48,7 +48,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
@@ -64,14 +64,14 @@ public class GoToWorkTask extends Task<NPCEntity> {
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		// TODO: Add wanted scroll details
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
-		LazyOptional<IScheduleItemDataHandler> scheduleOptional = ScheduleItem.getDataHandler(scheduleItem);
-		if (!scheduleOptional.isPresent()) {
+		LazyOptional<IScheduleItemDataHandler> lzop = ScheduleItem.getDataHandler(scheduleItem);
+		if (!lzop.isPresent()) {
 			return false;
 		}
-		IScheduleItemDataHandler scheduleHandler = scheduleOptional.resolve().get();
+		IScheduleItemDataHandler handler = lzop.resolve().get();
 		
 		int minute = TimeUtils.getMinuteOfTheWeek(world);
-		if (!scheduleHandler.shouldWork(minute + 2)) return false;
+		if (!handler.shouldWork(minute + 2)) return false;
 		
 		Brain<?> brain = npc.getBrain();
 		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) return false;
@@ -100,7 +100,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (gameTime > this.nextOkStartTime) {
 			Brain<?> brain = npc.getBrain();
 			Optional<GlobalPos> optional = brain.getMemory(this.posMemoryType);
-			optional.ifPresent(gp -> CommandUtils.trySetWalkTarget(world, npc, gp.pos(), this.speedModifier, this.closeEnoughDist));
+			optional.ifPresent(gp -> CommandUtils.trySetInterfaceWalkTarget(world, npc, gp.pos(), this.speedModifier, this.closeEnoughDist));
 			this.nextOkStartTime = gameTime + 80L;
 		}
 	}
@@ -113,13 +113,11 @@ public class GoToWorkTask extends Task<NPCEntity> {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return;
 		}
-			
 		BlockPos pos = gp.get().pos();
 		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
-		
 		if (!box.contains(npc.position())) {
 			if (!npc.getNavigation().isDone()) {
-				CommandUtils.trySetWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
+				CommandUtils.trySetInterfaceWalkTarget(world, npc, pos, this.speedModifier, this.closeEnoughDist);
 			}
 			return;
 		}
@@ -128,8 +126,6 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (te == null) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 		}
-		
-		if (!world.isLoaded(pos)) return;
 		
 		LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
 		// Me omw to have a minor pyramid of doom, not too deep but i think we can do better
@@ -164,18 +160,15 @@ public class GoToWorkTask extends Task<NPCEntity> {
 	
 	@Override
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
-		Brain<?> brain = npc.getBrain();
-		boolean hasComplaint = brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get());
-		boolean stopExecution = brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
-		return !hasComplaint && !stopExecution;
+		return !CommandUtils.hasComplaint(npc) && !npc.getBrain().hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
+		if (!CommandUtils.hasComplaint(npc)) {
 			brain.setMemory(MemoryModuleTypeInit.WORKING.get(), true);
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), 0);
 			
 			brain.setActiveActivityIfPossible(Activity.WORK);
 		}

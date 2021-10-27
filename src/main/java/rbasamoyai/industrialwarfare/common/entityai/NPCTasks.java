@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.task.AttackTargetTask;
 import net.minecraft.entity.ai.brain.task.InteractWithDoorTask;
 import net.minecraft.entity.ai.brain.task.LookAtEntityTask;
 import net.minecraft.entity.ai.brain.task.LookTask;
@@ -46,6 +47,12 @@ public class NPCTasks {
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {
 		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.HOME, 2.5f, 1, 100)));
+	}
+	
+	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getFightPackage() {
+		return ImmutableList.of(
+				Pair.of(0, new AttackTargetTask(20))
+				);
 	}
 	
 }

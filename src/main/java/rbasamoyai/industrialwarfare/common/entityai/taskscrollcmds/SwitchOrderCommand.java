@@ -3,7 +3,10 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.common.collect.ImmutableMap;
+
 import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -15,6 +18,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.ILabelItemDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
@@ -34,41 +38,45 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 	private static final int POS_ARG_INDEX = 4;
 	
 	public SwitchOrderCommand() {
-		super(CommandTrees.SWITCH_ORDER);
+		super(CommandTrees.SWITCH_ORDER, ImmutableMap.of(
+				MemoryModuleType.JOB_SITE, MemoryModuleStatus.VALUE_PRESENT,
+				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
+				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
+				));
 	}
 	
 	@Override
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		int mode = order.getWrappedArg(POS_MODE_ARG_INDEX).getArgNum();
+		
 		BlockPos pos;
-		
-		Optional<BlockPos> optional = order.getWrappedArg(POS_ARG_INDEX).getPos();
-		
 		if (mode == PosModes.GET_FROM_POS) {
+			Optional<BlockPos> optional = order.getWrappedArg(POS_ARG_INDEX).getPos();
 			if (!optional.isPresent()) {
 				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 				return false;
-			} else {
-				pos = optional.get();
 			}
+			pos = optional.get();
 		} else {
 			pos = brain.getMemory(MemoryModuleType.JOB_SITE).get().pos();
 		}
-		
-		boolean result = pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
-		if (!result) {
+		if (!pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI)) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
+			return false;
 		}
-		return result;
+		return true;
 	}
 
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		BlockPos targetPos = order.getWrappedArg(POS_MODE_ARG_INDEX).getArgNum() == PosModes.GET_FROM_JOB_SITE
-				? npc.getBrain().getMemory(MemoryModuleType.JOB_SITE).get().pos()
-				: order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO);
-		CommandUtils.trySetWalkTarget(world, npc, targetPos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+		BlockPos targetPos;
+		if (order.getWrappedArg(POS_MODE_ARG_INDEX).getArgNum() == PosModes.GET_FROM_JOB_SITE) {
+			targetPos = npc.getBrain().getMemory(MemoryModuleType.JOB_SITE).get().pos();
+		} else {
+			targetPos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
+		}
+		CommandUtils.trySetInterfaceWalkTarget(world, npc, targetPos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 	}
 
 	@Override
@@ -76,101 +84,63 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(POS_MODE_ARG_INDEX).getArgNum() == PosModes.GET_FROM_JOB_SITE
 				? brain.getMemory(MemoryModuleType.JOB_SITE).get().pos()
-				: order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO);
-		TileEntity te = world.getBlockEntity(pos);
+				: order.getWrappedArg(POS_ARG_INDEX).getPos().get();
 		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
 		
-		boolean hasTE = te != null;
-		boolean atDestination = box.contains(npc.position());
-		
-		if (world.isLoaded(pos) && hasTE && atDestination) {
-			Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
-			LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
-			
-			blockInvOptional.ifPresent(blockInv -> {
-				boolean switched = false;
-				int lookForNum = order.getWrappedArg(LOOK_FOR_NUMBER).getArgNum();
-				boolean lookForName = order.getWrappedArg(LOOK_FOR_NAME).getArgNum() == LookNameModes.LOOK_FOR_NAME;
-				UUID npcUUID = npc.getUUID();
-				
-				for (int i = 0; i < blockInv.getSlots(); i++) {
-					ItemStack scroll = blockInv.getStackInSlot(i);
-					ItemStack label = TaskScrollItem.getDataHandler(scroll).map(h -> h.getLabel()).orElse(ItemStack.EMPTY);
-					LazyOptional<ILabelItemDataHandler> optional = LabelItem.getDataHandler(label);
-					boolean matchesNum = lookForNum == -1 ? true : optional.map(h -> h.getNumber() == lookForNum).orElse(false);
-					boolean matchesName = lookForName ? optional.map(h -> h.getUUID().equals(npcUUID)).orElse(false) : true;
-					
-					if (matchesNum && matchesName) {
-						// Start switching in SwitchOrderCommand#stop
-						switched = true;
-						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
-						break;
-					}
-				}
-				
-				if (!switched) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
-				}
-			});
-			if (!blockInvOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+		if (!box.contains(npc.position())) {
+			if (npc.getNavigation().isDone()) {
+				CommandUtils.trySetInterfaceWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 			}
-		} else if (!hasTE) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
-		} else if (!atDestination && npc.getNavigation().isDone()) {
-			CommandUtils.trySetWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+			return;
 		}
+		
+		TileEntity te = world.getBlockEntity(pos);
+		if (te == null) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+			return;
+		}
+		
+		Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
+		LazyOptional<IItemHandler> teLzop = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
+		if (!teLzop.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+			return;
+		}
+		IItemHandler blockInv = teLzop.resolve().get();
+		
+		int lookForNum = order.getWrappedArg(LOOK_FOR_NUMBER).getArgNum();
+		boolean anyNumber = lookForNum == -1;
+		boolean lookForName = order.getWrappedArg(LOOK_FOR_NAME).getArgNum() == LookNameModes.LOOK_FOR_NAME;
+		UUID npcUUID = npc.getUUID();
+		
+		for (int i = 0; i < blockInv.getSlots(); i++) {
+			ItemStack scroll = blockInv.getStackInSlot(i);
+			ItemStack label = TaskScrollItem.getDataHandler(scroll).map(ITaskScrollDataHandler::getLabel).orElse(ItemStack.EMPTY);
+			LazyOptional<ILabelItemDataHandler> labelLzop = LabelItem.getDataHandler(label);
+			
+			if (labelLzop.isPresent()) {
+				ILabelItemDataHandler labelData = labelLzop.resolve().get();
+				if (!anyNumber && labelData.getNumber() != lookForNum) continue;
+				if (lookForName && !labelData.getUUID().equals(npcUUID)) continue;
+			}
+			
+			EquipmentItemHandler npcInv = npc.getEquipmentItemHandler();
+			ItemStack takeScroll = blockInv.extractItem(i, 1, false);
+			ItemStack depositScroll = npcInv.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
+			blockInv.insertItem(i, depositScroll, false);
+			npcInv.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, takeScroll, false);
+			
+			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
+			return;
+		}
+		brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
 	}
 
-	// Have to copy a lot of code again, it's ugly but it should work
-	// Switching in tick would result in the order in the other scroll at this position be called, if it exists at all
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
-		BlockPos pos = order.getWrappedArg(POS_MODE_ARG_INDEX).getArgNum() == PosModes.GET_FROM_JOB_SITE
-				? brain.getMemory(MemoryModuleType.JOB_SITE).get().pos()
-				: order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO);
-		TileEntity te = world.getBlockEntity(pos);
-		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
-		if (world.isLoaded(pos) && te != null && box.contains(npc.position())) {
-			Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
-			LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
-			
-			blockInvOptional.ifPresent(blockInv -> {
-				boolean switched = false;
-				EquipmentItemHandler npcInv = npc.getEquipmentItemHandler();
-				int lookForNum = order.getWrappedArg(LOOK_FOR_NUMBER).getArgNum();
-				boolean lookForName = order.getWrappedArg(LOOK_FOR_NAME).getArgNum() == LookNameModes.LOOK_FOR_NAME;
-				UUID npcUUID = npc.getUUID();
-				
-				for (int i = 0; i < blockInv.getSlots(); i++) {
-					ItemStack scroll = blockInv.getStackInSlot(i);
-					ItemStack label = TaskScrollItem.getDataHandler(scroll).map(h -> h.getLabel()).orElse(ItemStack.EMPTY);
-					LazyOptional<ILabelItemDataHandler> optional = LabelItem.getDataHandler(label);
-					boolean matchesNum = lookForNum == -1 ? true : optional.map(h -> h.getNumber() == lookForNum).orElse(false);
-					boolean matchesName = lookForName ? optional.map(h -> h.getUUID().equals(npcUUID)).orElse(false) : true;
-					
-					if (matchesNum && matchesName) {
-						ItemStack takeScroll = blockInv.extractItem(i, 1, false);
-						ItemStack depositScroll = npcInv.extractItem(EquipmentItemHandler.TASK_ITEM_INDEX, 1, false);
-						blockInv.insertItem(i, depositScroll, false);
-						npcInv.insertItem(EquipmentItemHandler.TASK_ITEM_INDEX, takeScroll, false);
-						switched = true;
-						brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
-						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
-						break;
-					}
-				}
-				
-				if (!switched) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
-				}
-			});
-			if (!blockInvOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
-			}
-		} else if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+		if (!CommandUtils.hasComplaint(npc)) {
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), 0);
 		}
 	}
 	
