@@ -19,7 +19,9 @@ public class ArgHolders {
 	public static final Supplier<IArgHolder> JUMP_INDEX_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.JUMP_INDEX_SELECTOR);
 	public static final Supplier<IArgHolder> LOOK_FOR_NAME_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.LOOK_FOR_NAME_SELECTOR);
 	public static final Supplier<IArgHolder> LOOK_FOR_NUM_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.LOOK_FOR_NUM_SELECTOR);
+	public static final Supplier<IArgHolder> PATROL_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.PATROL_MODE_SELECTOR);
 	public static final Supplier<IArgHolder> POS_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.POS_MODE_SELECTOR);
+	public static final Supplier<IArgHolder> PURSUIT_DISTANCE_HOLDER = () -> new CountArgHolder(ArgSelectors.PURSUIT_DISTANCE_SELECTOR);
 	public static final Supplier<IArgHolder> TIME_COUNT_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.TIME_COUNT_SELECTOR);
 	public static final Supplier<IArgHolder> WAIT_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.WAIT_MODE_SELECTOR);
 	public static final Supplier<IArgHolder> WORK_MODE_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.WORK_MODE_SELECTOR);

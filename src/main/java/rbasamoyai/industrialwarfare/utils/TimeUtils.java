@@ -14,7 +14,7 @@ public class TimeUtils {
 	 */
 	public static final long TIME_OFFSET = 6000L;
 	
-	public static final int getMinuteOfTheWeek(World world) {
+	public static int getMinuteOfTheWeek(World world) {
 		long time = world.getDayTime() + TIME_OFFSET;
 		return (int)(time % WEEK_TICKS / MINUTE_TICKS);
 	}

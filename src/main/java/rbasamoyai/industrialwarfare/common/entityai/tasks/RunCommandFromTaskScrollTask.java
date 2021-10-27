@@ -14,9 +14,11 @@ import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
 public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	
@@ -24,50 +26,43 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	
 	public RunCommandFromTaskScrollTask() {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
-				.put(MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleType.JOB_SITE, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CURRENT_ORDER.get(), MemoryModuleStatus.VALUE_ABSENT)
+				.put(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.JUMP_TO.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.ORDER_INTERRUPTED.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
-				.build(), 6000); // Ample amount of time, maybe not so much if you're waiting for relative time
+				.build());
 	}
 	
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
-		Brain<?> brain = npc.getBrain();
+		Brain<NPCEntity> brain = npc.getBrain();
 		if (!brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
 				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
 				|| brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
 			return false;
 		}
 		
-		Optional<Integer> indexOptional = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get());
+		Optional<Integer> indexOptional = brain.getMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get());
 		int currentIndex;
 		if (indexOptional.orElse(-1) < 0) {
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), 0);
+			brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), 0);
 			currentIndex = 0;
 		} else {
 			currentIndex = indexOptional.get();
 		}
 		
 		ItemStack stack = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
-		LazyOptional<ITaskScrollDataHandler> taskScrollOptional = TaskScrollItem.getDataHandler(stack);
-		boolean indexIsValid = taskScrollOptional.map(h -> 0 <= currentIndex && currentIndex < h.getList().size()).orElse(false);
-		if (indexIsValid) {
-			return taskScrollOptional.map(h -> {
-				TaskScrollOrder order = h.getOrder(currentIndex);
-				return order.getCommand().checkExtraStartConditions(world, npc, order);
-			}).orElse(false);
-		} else {
-			return false;
-		}
+		LazyOptional<ITaskScrollDataHandler> handlerOptional = TaskScrollItem.getDataHandler(stack);
+		if (!handlerOptional.isPresent()) return false;
+		ITaskScrollDataHandler handler = handlerOptional.resolve().get();
+		
+		if (currentIndex < 0 || currentIndex >= handler.getList().size()) return false;
+		TaskScrollOrder order = handler.getOrder(currentIndex);
+		TaskScrollCommand command = order.getCommand();
+		return command.hasRequiredMemories(brain) && command.checkExtraStartConditions(world, npc, order);
 	}
 	
 	@Override
@@ -78,8 +73,9 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 			LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
 			
 			optional.ifPresent(h -> {
-				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
+				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get()).orElse(0));
 				order.getCommand().start(world, npc, gameTime, order);
+				brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER.get(), order);
 				brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), true);
 			});
 			
@@ -90,13 +86,10 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	@Override
 	protected void tick(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		ItemStack stack = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
-		LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.ORDER_INTERRUPTED.get())) return;
 		
-		optional.ifPresent(h -> {
-			TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
-			order.getCommand().tick(world, npc, gameTime, order);
-		});
+		TaskScrollOrder order = brain.getMemory(MemoryModuleTypeInit.CURRENT_ORDER.get()).get();
+		order.getCommand().tick(world, npc, gameTime, order);
 	}
 	
 	@Override
@@ -105,24 +98,28 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 		
 		return brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
 				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get())
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get());
+				&& !CommandUtils.hasComplaint(npc)
+				&& brain.hasMemoryValue(MemoryModuleTypeInit.CURRENT_ORDER.get())
+				&& !brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get());
 	}
 	
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		if (brain.hasMemoryValue(MemoryModuleTypeInit.STOP_EXECUTION.get())) {
-			ItemStack stack = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
-			LazyOptional<ITaskScrollDataHandler> optional = TaskScrollItem.getDataHandler(stack);
-			
-			optional.ifPresent(h -> {
-				TaskScrollOrder order = h.getOrder(brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0));
+		if (!CommandUtils.hasComplaint(npc)) {
+			if (brain.hasMemoryValue(MemoryModuleTypeInit.CURRENT_ORDER.get())) {
+				TaskScrollOrder order = brain.getMemory(MemoryModuleTypeInit.CURRENT_ORDER.get()).get();
 				order.getCommand().stop(world, npc, gameTime, order);
-			});
-			brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), false);
+			}
 			brain.eraseMemory(MemoryModuleTypeInit.STOP_EXECUTION.get());
 		}
+		brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), false);
+		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_ORDER.get());
+	}
+	
+	@Override
+	protected boolean timedOut(long time) {
+		return false;
 	}
 	
 }

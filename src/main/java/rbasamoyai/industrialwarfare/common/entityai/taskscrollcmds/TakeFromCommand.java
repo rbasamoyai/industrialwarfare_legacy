@@ -1,8 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
-import java.util.Optional;
+import com.google.common.collect.ImmutableMap;
 
 import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
@@ -29,81 +31,74 @@ public class TakeFromCommand extends TaskScrollCommand {
 	private static final int ITEM_COUNT_ARG_INDEX = 3;
 	
 	public TakeFromCommand() {
-		super(CommandTrees.ITEM_HANDLING);
+		super(CommandTrees.ITEM_HANDLING, ImmutableMap.of(
+				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
+				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
+				));
 	}
 	
 	@Override
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		Optional<BlockPos> pos = order.getWrappedArg(POS_ARG_INDEX).getPos();
-		if (!pos.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
-			return false;
-		}
-		
-		boolean result = pos.get().closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI);
-		if (!result) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
-		}
-		return result;
+		return CommandUtils.validatePos(world, npc, order.getWrappedArg(POS_ARG_INDEX).getPos(), TaskScrollCommand.MAX_DISTANCE_FROM_POI, NPCComplaintInit.INVALID_ORDER.get());
 	}
 
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		CommandUtils.trySetWalkTarget(world, npc, order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+		CommandUtils.trySetInterfaceWalkTarget(world, npc, order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 	}
 
 	@Override
 	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO);
-		TileEntity te = world.getBlockEntity(pos);
 		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
 		
-		boolean hasTE = te != null;
-		boolean atDestination = box.contains(npc.position());
-		
-		if (world.isLoaded(pos) && hasTE && atDestination) {
-			Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
-			LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
-			
-			blockInvOptional.ifPresent(blockInv -> {
-				int count = order.getWrappedArg(ITEM_COUNT_ARG_INDEX).getArgNum();
-				boolean flag = count == 0;
-				ItemStack filter = order.getWrappedArg(FILTER_ARG_INDEX).getItem().orElse(ItemStack.EMPTY);
-				
-				ItemStackHandler npcInv = npc.getInventoryItemHandler();
-				for (int i = 0; i < blockInv.getSlots(); i++) {
-					if (ArgUtils.filterMatches(filter, blockInv.getStackInSlot(i))) {
-						ItemStack takeItem = blockInv.extractItem(i, flag ? blockInv.getSlotLimit(i) : count, false);
-						for (int j = 0; j < npcInv.getSlots(); j++) {
-							int stackCount = takeItem.getCount();
-							takeItem = npcInv.insertItem(j, takeItem, false);
-							count -= stackCount - takeItem.getCount();
-							if (takeItem.isEmpty() || count < 1 && !flag) break;
-						}
-						blockInv.insertItem(i, takeItem, false);
-						if (count < 1 && !flag) break;
-					}
-				}
-				brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
-			});
-			if (!blockInvOptional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+		if (!box.contains(npc.position())) {
+			if (npc.getNavigation().isDone()) {
+				CommandUtils.trySetInterfaceWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 			}
-		} else if (!hasTE) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
-		} else if (!atDestination && npc.getNavigation().isDone()) {
-			CommandUtils.trySetWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+			return;
 		}
+		
+		TileEntity te = world.getBlockEntity(pos);
+		if (te == null) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+			return;
+		}
+		
+		Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
+		LazyOptional<IItemHandler> lzop = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
+		if (!lzop.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+			return;
+		}
+		IItemHandler blockInv = lzop.resolve().get();
+		
+		int count = order.getWrappedArg(ITEM_COUNT_ARG_INDEX).getArgNum();
+		boolean flag = count == 0;
+		ItemStack filter = order.getWrappedArg(FILTER_ARG_INDEX).getItem().orElse(ItemStack.EMPTY);
+		
+		ItemStackHandler npcInv = npc.getInventoryItemHandler();
+		for (int i = 0; i < blockInv.getSlots(); i++) {
+			if (!ArgUtils.filterMatches(filter, blockInv.getStackInSlot(i))) continue;
+			
+			ItemStack takeItem = blockInv.extractItem(i, flag ? blockInv.getSlotLimit(i) : count, false);
+			for (int j = 0; j < npcInv.getSlots(); j++) {
+				int stackCount = takeItem.getCount();
+				takeItem = npcInv.insertItem(j, takeItem, false);
+				count -= stackCount - takeItem.getCount();
+				if (takeItem.isEmpty() || count < 1 && !flag) break;
+			}
+			blockInv.insertItem(i, takeItem, false);
+			if (count < 1 && !flag) break;
+		}
+		brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 	}
 
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
-			int index = brain.getMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get()).orElse(0);
-			brain.setMemory(MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(), index + 1);
+		if (!CommandUtils.hasComplaint(npc)) {
+			CommandUtils.incrementCurrentInstructionIndexMemory(npc);
 		}
 	}
 

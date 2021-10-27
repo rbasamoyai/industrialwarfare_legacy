@@ -60,6 +60,8 @@ import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessa
 public class NPCEntity extends CreatureEntity {
 	
 	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+			MemoryModuleType.ATTACK_COOLING_DOWN,
+			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 			MemoryModuleType.DOORS_TO_CLOSE,
 			MemoryModuleType.HEARD_BELL_TIME,
@@ -67,12 +69,14 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
+			MemoryModuleType.LIVING_ENTITIES,
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.CACHED_POS.get(),
+			MemoryModuleTypeInit.CAN_ATTACK.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
-			MemoryModuleTypeInit.CURRENT_INSTRUCTION_INDEX.get(),
+			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
@@ -81,7 +85,8 @@ public class NPCEntity extends CreatureEntity {
 			);
 	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(
 			SensorType.NEAREST_PLAYERS, 
-			SensorType.NEAREST_BED
+			SensorType.NEAREST_BED,
+			SensorType.NEAREST_LIVING_ENTITIES
 			);
 	
 	public static final String TAG_WORKSTUFFS = "workstuffs";
@@ -170,6 +175,7 @@ public class NPCEntity extends CreatureEntity {
 		brain.addActivity(Activity.CORE, NPCTasks.getCorePackage());
 		brain.addActivity(Activity.IDLE, NPCTasks.getIdlePackage());
 		brain.addActivity(Activity.WORK, NPCTasks.getWorkPackage());
+		brain.addActivity(Activity.FIGHT, NPCTasks.getFightPackage());
 		brain.addActivity(Activity.REST, NPCTasks.getRestPackage());
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
@@ -177,6 +183,8 @@ public class NPCEntity extends CreatureEntity {
 		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) {
 			brain.setActiveActivityIfPossible(Activity.WORK);
 			brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
+		} else if (brain.getMemory(MemoryModuleTypeInit.FIGHTING.get()).orElse(false)) {
+			brain.setActiveActivityIfPossible(Activity.FIGHT);
 		} else {
 			brain.setActiveActivityIfPossible(Activity.IDLE);
 		}
