@@ -33,7 +33,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 	private static final int WORK_TIME_ARG_INDEX = 2;
 	
 	public WorkAtCommand() {
-		super(CommandTrees.WORK_AT, ImmutableMap.of(
+		super(CommandTrees.WORK_AT, () -> ImmutableMap.of(
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED

@@ -8,12 +8,13 @@ import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessa
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.SOpenDiplomacyScreenMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActionMessage;
 
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.3.3";
+	public static final String NETWORK_VERSION = "0.4.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -28,6 +29,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, SEditScheduleSyncMessage.class, SEditScheduleSyncMessage::encode, SEditScheduleSyncMessage::decode, SEditScheduleSyncMessage::handle);
 		CHANNEL.registerMessage(id++, SNPCContainerActivateMessage.class, SNPCContainerActivateMessage::encode, SNPCContainerActivateMessage::decode, SNPCContainerActivateMessage::handle);
 		CHANNEL.registerMessage(id++, CNPCBrainDataSyncMessage.class, CNPCBrainDataSyncMessage::encode, CNPCBrainDataSyncMessage::decode, CNPCBrainDataSyncMessage::handle);
+		CHANNEL.registerMessage(id++, SOpenDiplomacyScreenMessage.class, SOpenDiplomacyScreenMessage::encode, SOpenDiplomacyScreenMessage::decode, SOpenDiplomacyScreenMessage::handle);
 	}
 
 }

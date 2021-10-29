@@ -117,6 +117,9 @@
 	"itemGroup.industrialwarfare.recipes":	"Industrial Warfare Recipe Items",
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
 	
+	"key.industrialwarfare.category":	"Industrial Warfare",
+	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
+	
 	"entity.industrialwarfare.projectile_bullet": "Bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",

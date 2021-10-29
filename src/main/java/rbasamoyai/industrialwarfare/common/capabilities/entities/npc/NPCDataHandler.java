@@ -1,25 +1,28 @@
 package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 
-import java.util.UUID;
-
 import net.minecraft.item.ItemStack;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.ItemInit;
 
 public class NPCDataHandler implements INPCDataHandler {
 	
-	private UUID firstOwnerUUID;
-	private UUID currentOwnerUUID;
+	private PlayerIDTag firstOwner;
+	private PlayerIDTag currentOwner;
 	private NPCProfession profession;
 	private boolean canWearEquipment;
 	private ItemStack recipeItem;
 	private float skill;
 	
-	@Override public void setFirstOwnerUUID(UUID firstOwnerUUID) { this.firstOwnerUUID = firstOwnerUUID; }
-	@Override public UUID getFirstOwnerUUID() { return this.firstOwnerUUID; }
+	@Override public void setFirstOwner(PlayerIDTag firstOwner) { this.firstOwner = firstOwner; }
+	@Override public PlayerIDTag getFirstOwner() { return this.firstOwner; }
 
-	@Override public void setOwnerUUID(UUID newOwnerUUID) { this.currentOwnerUUID = newOwnerUUID; }
-	@Override public UUID getOwnerUUID() { return this.currentOwnerUUID; }
+	@Override
+	public void setOwner(PlayerIDTag newOwner) {
+		if (this.firstOwner.equals(PlayerIDTag.NO_OWNER)) this.setFirstOwner(newOwner);
+		this.currentOwner = newOwner;
+	}
+	@Override public PlayerIDTag getOwner() { return this.currentOwner; }
 
 	@Override public void setProfession(NPCProfession profession) { this.profession = profession; }
 	@Override public NPCProfession getProfession() { return this.profession; }

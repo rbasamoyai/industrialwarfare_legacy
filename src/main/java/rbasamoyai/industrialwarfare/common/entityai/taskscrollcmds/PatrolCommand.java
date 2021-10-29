@@ -2,7 +2,6 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -17,6 +16,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
@@ -33,7 +33,7 @@ public class PatrolCommand extends TaskScrollCommand {
 	private static final int WAIT_TIME_ARG_INDEX = 3;
 	
 	public PatrolCommand() {
-		super(CommandTrees.PATROL, ImmutableMap.of(
+		super(CommandTrees.PATROL, () -> ImmutableMap.of(
 				MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED,
@@ -61,7 +61,7 @@ public class PatrolCommand extends TaskScrollCommand {
 	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		
-		UUID npcOwnerUUID = npc.getDataHandler().map(INPCDataHandler::getOwnerUUID).orElse(NPCEntity.GAIA_UUID);
+		PlayerIDTag npcOwner = npc.getDataHandler().map(INPCDataHandler::getOwner).orElse(PlayerIDTag.NO_OWNER);
 		
 		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(Arrays.asList());
 		for (LivingEntity e : visibleEntities) {
@@ -69,7 +69,7 @@ public class PatrolCommand extends TaskScrollCommand {
 			if (elzop.isPresent()) {
 				INPCDataHandler handler = elzop.resolve().get();
 				// TODO: implement diplomacy
-				if (!handler.getOwnerUUID().equals(npcOwnerUUID)) {
+				if (!handler.getOwner().equals(npcOwner)) {
 					// Fight
 				}
 			}

@@ -21,7 +21,7 @@ public class MoveToCommand extends TaskScrollCommand {
 	private static final int POS_ARG_INDEX = 0;
 	
 	public MoveToCommand() {
-		super(CommandTrees.POS_ONLY, ImmutableMap.of(
+		super(CommandTrees.POS_ONLY, () -> ImmutableMap.of(
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
 				));
 	}

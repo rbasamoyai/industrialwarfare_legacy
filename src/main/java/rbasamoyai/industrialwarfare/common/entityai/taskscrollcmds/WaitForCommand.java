@@ -20,7 +20,7 @@ public class WaitForCommand extends TaskScrollCommand {
 	private static final int WAIT_TIME_ARG_INDEX = 1;
 	
 	public WaitForCommand() {
-		super(CommandTrees.WAIT_FOR, ImmutableMap.of(
+		super(CommandTrees.WAIT_FOR, () -> ImmutableMap.of(
 				MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED
 				));

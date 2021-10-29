@@ -38,7 +38,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 	private static final int POS_ARG_INDEX = 4;
 	
 	public SwitchOrderCommand() {
-		super(CommandTrees.SWITCH_ORDER, ImmutableMap.of(
+		super(CommandTrees.SWITCH_ORDER, () -> ImmutableMap.of(
 				MemoryModuleType.JOB_SITE, MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED

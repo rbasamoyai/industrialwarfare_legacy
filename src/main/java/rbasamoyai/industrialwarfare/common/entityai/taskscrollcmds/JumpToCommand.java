@@ -26,7 +26,7 @@ public class JumpToCommand extends TaskScrollCommand {
 	private static final int CONDITION_TYPE_INDEX = 1;
 	
 	public JumpToCommand() {
-		super(CommandTrees.JUMP_TO, ImmutableMap.of(
+		super(CommandTrees.JUMP_TO, () -> ImmutableMap.of(
 				MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.JUMP_TO.get(), MemoryModuleStatus.REGISTERED
 				));
