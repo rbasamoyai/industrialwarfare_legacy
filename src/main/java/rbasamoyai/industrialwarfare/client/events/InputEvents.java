@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.KeyBindingsInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
-import rbasamoyai.industrialwarfare.core.network.messages.SOpenDiplomacyScreenMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class InputEvents {
@@ -21,7 +21,7 @@ public class InputEvents {
 		
 		if (mc.screen == null) {
 			if (KeyBindingsInit.DIPLOMACY_SCREEN.isDown()) {
-				IWNetwork.CHANNEL.sendToServer(new SOpenDiplomacyScreenMessage());
+				IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SRequestData(true));
 			}
 		}
 	}

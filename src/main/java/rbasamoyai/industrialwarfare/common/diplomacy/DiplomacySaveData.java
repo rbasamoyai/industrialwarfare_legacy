@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.common.diplomacy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.entity.player.PlayerEntity;
@@ -54,6 +55,22 @@ public class DiplomacySaveData extends WorldSavedData {
 			this.setDirty();
 		}
 		return diplomaticStatuses;
+	}
+	
+	public DiplomaticStatus getDiplomaticStatus(PlayerIDTag of, PlayerIDTag towards) {
+		if (of.equals(towards)) {
+			throw new IllegalArgumentException("Cannot get diplomatic status between the same player");
+		}
+		DiplomaticStatus status = this.getDiplomaticStatuses(of).get(towards);
+		if (status == null) {
+			status = towards.isPlayer() ? DiplomaticStatus.NEUTRAL : DiplomaticStatus.UNKNOWN;
+			this.setDiplomaticStatus(of, towards, status);
+		}
+		return status;
+	}
+	
+	public Set<PlayerIDTag> getPlayers() {
+		return this.diplomacyTable.keySet();
 	}
 	
 	public boolean hasPlayerIdTag(PlayerIDTag player) {

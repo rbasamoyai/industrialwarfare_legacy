@@ -8,20 +8,19 @@ import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessa
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
-import rbasamoyai.industrialwarfare.core.network.messages.SOpenDiplomacyScreenMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActionMessage;
 
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.4.0";
+	public static final String NETWORK_VERSION = "0.5.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
 			NETWORK_VERSION::equals);
 
 	public void init() {
-		// Tile entity messages
 		int id = 0;
 		CHANNEL.registerMessage(id++, SWorkstationPlayerActionMessage.class, SWorkstationPlayerActionMessage::encode, SWorkstationPlayerActionMessage::decode, SWorkstationPlayerActionMessage::handle);
 		CHANNEL.registerMessage(id++, STaskScrollSyncMessage.class, STaskScrollSyncMessage::encode, STaskScrollSyncMessage::decode, STaskScrollSyncMessage::handle);
@@ -29,7 +28,8 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, SEditScheduleSyncMessage.class, SEditScheduleSyncMessage::encode, SEditScheduleSyncMessage::decode, SEditScheduleSyncMessage::handle);
 		CHANNEL.registerMessage(id++, SNPCContainerActivateMessage.class, SNPCContainerActivateMessage::encode, SNPCContainerActivateMessage::decode, SNPCContainerActivateMessage::handle);
 		CHANNEL.registerMessage(id++, CNPCBrainDataSyncMessage.class, CNPCBrainDataSyncMessage::encode, CNPCBrainDataSyncMessage::decode, CNPCBrainDataSyncMessage::handle);
-		CHANNEL.registerMessage(id++, SOpenDiplomacyScreenMessage.class, SOpenDiplomacyScreenMessage::encode, SOpenDiplomacyScreenMessage::decode, SOpenDiplomacyScreenMessage::handle);
+		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SRequestData.class, DiplomacyScreenMessages.SRequestData::encode, DiplomacyScreenMessages.SRequestData::decode, DiplomacyScreenMessages.SRequestData::handle);
+		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.CSendData.class, DiplomacyScreenMessages.CSendData::encode, DiplomacyScreenMessages.CSendData::decode, DiplomacyScreenMessages.CSendData::handle);
 	}
 
 }

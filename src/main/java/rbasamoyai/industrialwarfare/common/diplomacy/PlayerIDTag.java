@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.INBTSerializable;
 
 public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
@@ -45,6 +46,18 @@ public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
 	public UUID getPlayerUuid() { return this.playerUuid; }
 	public UUID getNpcFactionUuid() { return this.npcFactionUuid; }
 	public boolean isPlayer() { return !this.playerUuid.equals(GAIA_UUID); }
+	
+	public void toNetwork(PacketBuffer buf) {
+		buf
+				.writeUUID(this.playerUuid)
+				.writeUUID(this.npcFactionUuid);
+	}
+	
+	public static PlayerIDTag fromNetwork(PacketBuffer buf) {
+		UUID playerUuid = buf.readUUID();
+		UUID npcFactionUuid = buf.readUUID();
+		return new PlayerIDTag(playerUuid, npcFactionUuid);
+	}
 	
 	@Override
 	public CompoundNBT serializeNBT() {
