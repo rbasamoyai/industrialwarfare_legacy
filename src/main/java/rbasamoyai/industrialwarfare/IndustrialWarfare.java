@@ -24,6 +24,7 @@ import rbasamoyai.industrialwarfare.client.KeyBindingsInit;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
+import rbasamoyai.industrialwarfare.client.screen.diplomacy.DiplomacyScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
@@ -93,6 +94,7 @@ public class IndustrialWarfare {
 	
 	@SubscribeEvent
 	public void clientSetup(FMLClientSetupEvent event) {
+		ScreenManager.register(ContainerInit.DIPLOMACY.get(), DiplomacyScreen::new);
 		ScreenManager.register(ContainerInit.EDIT_LABEL.get(), EditLabelScreen::new);
 		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
 		ScreenManager.register(ContainerInit.NPC_BASE.get(), NPCBaseScreen::new);

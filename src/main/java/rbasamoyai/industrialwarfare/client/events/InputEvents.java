@@ -21,7 +21,7 @@ public class InputEvents {
 		
 		if (mc.screen == null) {
 			if (KeyBindingsInit.DIPLOMACY_SCREEN.isDown()) {
-				IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SRequestData(true));
+				IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SOpenScreen());
 			}
 		}
 	}

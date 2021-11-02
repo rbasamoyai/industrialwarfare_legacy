@@ -3,8 +3,12 @@ package rbasamoyai.industrialwarfare.common.diplomacy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.mojang.datafixers.util.Pair;
+
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -47,7 +51,7 @@ public class DiplomacySaveData extends WorldSavedData {
 	
 	/* diplomacyTable methods */
 	
-	public Map<PlayerIDTag, DiplomaticStatus> getDiplomaticStatuses(PlayerIDTag player) {
+	public Map<PlayerIDTag, DiplomaticStatus> getDiplomaticStatusesOf(PlayerIDTag player) {
 		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatuses = this.diplomacyTable.get(player);
 		if (diplomaticStatuses == null) {
 			diplomaticStatuses = new HashMap<>();
@@ -57,13 +61,47 @@ public class DiplomacySaveData extends WorldSavedData {
 		return diplomaticStatuses;
 	}
 	
+	public Map<PlayerIDTag, DiplomaticStatus> getDiplomaticStatusesTowards(PlayerIDTag player) {
+		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatusesTowards = new HashMap<>();
+		
+		for (Entry<PlayerIDTag, Map<PlayerIDTag, DiplomaticStatus>> entry : this.diplomacyTable.entrySet()) {
+			PlayerIDTag tag = entry.getKey();
+			if (tag.equals(player)) continue;
+			
+			Map<PlayerIDTag, DiplomaticStatus> entryStatuses = entry.getValue();
+			if (entryStatuses == null) {
+				entryStatuses = new HashMap<>();
+				if (tag.isPlayer()) {
+					entryStatuses.put(player, DiplomaticStatus.NEUTRAL);
+				}
+				entry.setValue(entryStatuses);
+			}
+			DiplomaticStatus status = entryStatuses.get(player);
+			if (status == null) continue;
+			diplomaticStatusesTowards.put(tag, status);
+		}
+				
+		return diplomaticStatusesTowards;
+	}
+	
+	public Map<PlayerIDTag, Pair<DiplomaticStatus, DiplomaticStatus>> getDiplomaticStatusesBothWays(PlayerIDTag player) {
+		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatusesOf = this.getDiplomaticStatusesOf(player);
+		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatusesTowards = this.getDiplomaticStatusesTowards(player);
+			
+		return diplomaticStatusesOf
+				.entrySet()
+				.stream()
+				.filter(e -> diplomaticStatusesTowards.containsKey(e.getKey()))
+				.collect(Collectors.toMap(Entry::getKey, e -> Pair.of(e.getValue(), diplomaticStatusesTowards.get(e.getKey()))));
+	}
+	
 	public DiplomaticStatus getDiplomaticStatus(PlayerIDTag of, PlayerIDTag towards) {
 		if (of.equals(towards)) {
 			throw new IllegalArgumentException("Cannot get diplomatic status between the same player");
 		}
-		DiplomaticStatus status = this.getDiplomaticStatuses(of).get(towards);
+		DiplomaticStatus status = this.getDiplomaticStatusesOf(of).get(towards);
 		if (status == null) {
-			status = towards.isPlayer() ? DiplomaticStatus.NEUTRAL : DiplomaticStatus.UNKNOWN;
+			status = DiplomaticStatus.getDefault(towards.isPlayer());
 			this.setDiplomaticStatus(of, towards, status);
 		}
 		return status;
@@ -79,7 +117,7 @@ public class DiplomacySaveData extends WorldSavedData {
 	
 	public void setDiplomaticStatus(PlayerIDTag setting, PlayerIDTag target, DiplomaticStatus status) {
 		if (setting.equals(target)) return;
-		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatuses = this.getDiplomaticStatuses(setting);
+		Map<PlayerIDTag, DiplomaticStatus> diplomaticStatuses = this.getDiplomaticStatusesOf(setting);
 		diplomaticStatuses.put(target, status);
 		this.setDirty();
 	}
@@ -112,8 +150,28 @@ public class DiplomacySaveData extends WorldSavedData {
 		return relations;
 	}
 	
+	public Map<UUID, Byte> getRelationsTowards(PlayerIDTag player) {
+		Map<UUID, Byte> relations = new HashMap<>();
+		
+		for (Entry<UUID, Map<PlayerIDTag, Byte>> entry : this.npcFactionsRelationsTable.entrySet()) {
+			UUID npcFactionUuid = entry.getKey();
+			if (!player.isPlayer() && player.getUUID().equals(npcFactionUuid)) continue;
+			
+			Map<PlayerIDTag, Byte> relationships = entry.getValue();
+			if (relationships == null) {
+				relationships = new HashMap<>();
+				entry.setValue(relationships);
+			}
+			Byte relationship = relationships.get(player);
+			if (relationship == null) continue;
+			relations.put(npcFactionUuid, relationship);
+		}
+		
+		return relations;
+	}
+	
 	public void setRelations(UUID setting, PlayerIDTag target, byte relationship) {
-		if (setting.equals(target.getNpcFactionUuid())) return;
+		if (setting.equals(target.getUUID()) && !target.isPlayer()) return;
 		Map<PlayerIDTag, Byte> relations = this.getRelations(setting);
 		relations.put(target, relationship);
 		this.setDirty();
