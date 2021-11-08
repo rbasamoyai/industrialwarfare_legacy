@@ -10,6 +10,8 @@ public class BaseScreenPage implements IScreenPage {
 		this.screen = screen;
 	}
 	
+	@Override public void tick() {}
+	
 	@Override public Screen getScreen() { return this.screen; }
 	
 }

@@ -13,6 +13,8 @@ public interface IScreenPage extends IGuiEventListener {
 
 	default void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {}
 	
+	public void tick();
+	
 	public Screen getScreen();
 	
 	public static Builder builder(IScreenPage page) {

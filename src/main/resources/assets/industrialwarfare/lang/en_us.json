@@ -272,6 +272,10 @@
 	"gui.industrialwarfare.diplomacy.their_status.short": "T.S.",
 	"gui.industrialwarfare.diplomacy.our_status": "Our status",
 	"gui.industrialwarfare.diplomacy.our_status.short": "O.S.",
+	"gui.industrialwarfare.diplomacy.loading_player_info": "Loading player info",
+	"gui.industrialwarfare.diplomacy.could_not_load": "Could not load",
+	"gui.industrialwarfare.diplomacy.clear_changes": "Clear changes",
+	"gui.industrialwarfare.diplomacy.commit_changes": "Commit changes",
 	
 	"gui.industrialwarfare.diplomacy.unknown": "Unknown",
 	"gui.industrialwarfare.diplomacy.ally": "Ally",

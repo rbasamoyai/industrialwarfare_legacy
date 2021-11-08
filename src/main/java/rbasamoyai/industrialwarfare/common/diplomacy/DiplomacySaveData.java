@@ -3,12 +3,12 @@ package rbasamoyai.industrialwarfare.common.diplomacy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.mojang.datafixers.util.Pair;
-
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -92,7 +92,7 @@ public class DiplomacySaveData extends WorldSavedData {
 				.entrySet()
 				.stream()
 				.filter(e -> diplomaticStatusesTowards.containsKey(e.getKey()))
-				.collect(Collectors.toMap(Entry::getKey, e -> Pair.of(e.getValue(), diplomaticStatusesTowards.get(e.getKey()))));
+				.collect(Collectors.toMap(Entry::getKey, e -> Pair.of(diplomaticStatusesTowards.get(e.getKey()), e.getValue())));
 	}
 	
 	public DiplomaticStatus getDiplomaticStatus(PlayerIDTag of, PlayerIDTag towards) {
@@ -124,19 +124,48 @@ public class DiplomacySaveData extends WorldSavedData {
 	
 	public void initPlayerDiplomacyStatuses(PlayerEntity player) {
 		PlayerIDTag tag = PlayerIDTag.of(player);
-		Map<PlayerIDTag, DiplomaticStatus> playerDiplomaticStatuses = new HashMap<>();
 		
 		for (PlayerIDTag keyTag : this.diplomacyTable.keySet()) {
 			if (!keyTag.isPlayer()) continue;
 			
-			playerDiplomaticStatuses.put(keyTag, DiplomaticStatus.NEUTRAL);
+			this.setDiplomaticStatus(tag, keyTag, DiplomaticStatus.NEUTRAL);
 			this.setDiplomaticStatus(keyTag, tag, DiplomaticStatus.NEUTRAL);
 		}
 		
-		this.diplomacyTable.put(tag, playerDiplomaticStatuses);
+		/* DEBUG START
+		this.initDebugDiplomaticStatus(tag);
+		DEBUG END */
 		
 		this.setDirty();
 	}
+	
+	/* DEBUG */ public void initDebugDiplomaticStatus(PlayerIDTag tag) {
+		// Starring a bunch of notable Mojang employees!
+		Stream.of( // Players
+				new PlayerIDTag(UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5"), true), // Notch
+				new PlayerIDTag(UUID.fromString("853c80ef-3c37-49fd-aa49-938b674adae6"), true), // jeb_
+				new PlayerIDTag(UUID.fromString("61699b2e-d327-4a01-9f1e-0ea8c3f06bc6"), true), // Dinnerbone
+				new PlayerIDTag(UUID.fromString("e6b5c088-0680-44df-9e1b-9bf11792291b"), true), // Grumm
+				new PlayerIDTag(UUID.fromString("13655ac1-584d-4785-b227-650308195121"), true), // kingbdogz
+				new PlayerIDTag(UUID.fromString("a6484c2f-cd05-460f-81d1-36e92d8f8f9e"), true), // Cojomax99
+				new PlayerIDTag(UUID.fromString("696a82ce-41f4-4b51-aa31-b8709b8686f0"), true), // Searge
+				new PlayerIDTag(UUID.fromString("8eb57c51-5df2-4ad7-9a07-01d67d1e0a41"), true), // Jappaa
+				new PlayerIDTag(UUID.fromString("6a085b2c-19fb-4986-b453-231aa942bbec"), true)  // LadyAgnes
+		).forEach(debugPlayer -> {
+			this.setDiplomaticStatus(tag, debugPlayer, DiplomaticStatus.NEUTRAL);
+			this.setDiplomaticStatus(debugPlayer, tag, DiplomaticStatus.NEUTRAL);
+		});
+		
+		Stream.of( // NPCs
+				new PlayerIDTag(UUID.fromString("a018e03e-5aa0-44b6-91d6-f63126520f73"), false),
+				new PlayerIDTag(UUID.fromString("0c5b80b9-266b-42f9-9f07-3f50d722afcd"), false),
+				new PlayerIDTag(UUID.fromString("e69f9e1f-0880-4680-bc64-3d983f942e36"), false),
+				new PlayerIDTag(UUID.fromString("e5150739-c3a0-4e65-a449-266ec0ed98ab"), false)
+		).forEach(debugPlayer -> {
+			this.setDiplomaticStatus(tag, debugPlayer, DiplomaticStatus.UNKNOWN);
+			this.setDiplomaticStatus(debugPlayer, tag, DiplomaticStatus.UNKNOWN);
+		});
+}
 	
 	/* npcFactionsRelationsTable methods */
 	

@@ -21,6 +21,7 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
+import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.core.network.handlers.DiplomacyScreenCHandlers;
@@ -65,7 +66,7 @@ public class DiplomacyScreenMessages {
 	}
 	
 	public static class CBroadcastChanges {
-		public Map<PlayerIDTag, Pair<DiplomaticStatus, DiplomaticStatus>> diplomaticStatuses; // first status is player -> other, second is other -> player
+		public Map<PlayerIDTag, Pair<DiplomaticStatus, DiplomaticStatus>> diplomaticStatuses; // first status is other -> player, second is player -> other 
 		public Map<UUID, Byte> npcFactionRelationships;
 		
 		public CBroadcastChanges() {}
@@ -122,6 +123,48 @@ public class DiplomacyScreenMessages {
 			NetworkEvent.Context context = contextSupplier.get();
 			context.enqueueWork(() -> {
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> DiplomacyScreenCHandlers.handleCBroadcastChanges(msg, contextSupplier));
+			});
+			context.setPacketHandled(true);
+		}
+	}
+	
+	public static class SDiplomaticStatusChangeSync {
+		public Map<PlayerIDTag, DiplomaticStatus> statusChanges;
+		
+		public SDiplomaticStatusChangeSync() {}
+		
+		public SDiplomaticStatusChangeSync(Map<PlayerIDTag, DiplomaticStatus> statusChanges) {
+			this.statusChanges = statusChanges;
+		}
+		
+		public static void encode(SDiplomaticStatusChangeSync msg, PacketBuffer buf) {
+			buf.writeVarInt(msg.statusChanges.size());
+			msg.statusChanges.forEach((tag, status) -> {
+				tag.toNetwork(buf);
+				buf.writeByte(status.getValue());
+			});
+		}
+		
+		public static SDiplomaticStatusChangeSync decode(PacketBuffer buf) {
+			int sz = buf.readVarInt();
+			Map<PlayerIDTag, DiplomaticStatus> statuses = new HashMap<>();
+			for (int i = 0; i < sz; i++) {
+				PlayerIDTag tag = PlayerIDTag.fromNetwork(buf);
+				DiplomaticStatus status = DiplomaticStatus.fromValue(buf.readByte());
+				statuses.put(tag, status);
+			}
+			return new SDiplomaticStatusChangeSync(statuses);
+		}
+		
+		public static void handle(SDiplomaticStatusChangeSync msg, Supplier<NetworkEvent.Context> contextSupplier) {
+			NetworkEvent.Context context = contextSupplier.get();
+			context.enqueueWork(() -> {
+				ServerPlayerEntity player = context.getSender();
+				DiplomacySaveData saveData = DiplomacySaveData.get(player.level);
+				PlayerIDTag playerTag = PlayerIDTag.of(player);
+				msg.statusChanges.forEach((tag, status) -> {
+					saveData.setDiplomaticStatus(playerTag, tag, status);
+				});
 			});
 			context.setPacketHandled(true);
 		}

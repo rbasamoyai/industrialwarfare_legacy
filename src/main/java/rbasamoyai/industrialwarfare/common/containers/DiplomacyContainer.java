@@ -38,6 +38,8 @@ public class DiplomacyContainer extends Container {
 	private final Map<PlayerIDTag, Pair<DiplomaticStatus, DiplomaticStatus>> diplomaticStatuses = new HashMap<>();
 	private final Map<UUID, Byte> npcFactionRelationships = new HashMap<>();
 	
+	private boolean dirty = false;
+	
 	protected DiplomacyContainer(int windowId, PlayerEntity player, Optional<ServerWorld> overworld) {
 		super(ContainerInit.DIPLOMACY.get(), windowId);
 		
@@ -86,5 +88,14 @@ public class DiplomacyContainer extends Container {
 	public Map<UUID, Byte> getRelationships() {
 		return this.npcFactionRelationships;
 	}
+	
+	public boolean isDirty() { return this.dirty; }
+	
+	public void setDirty() { this.setDirty(true); }
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
+	}
+	
+	public PlayerEntity getPlayer() { return this.player; }
 	
 }

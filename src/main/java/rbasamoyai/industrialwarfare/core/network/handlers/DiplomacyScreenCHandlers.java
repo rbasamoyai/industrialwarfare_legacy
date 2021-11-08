@@ -19,6 +19,7 @@ public class DiplomacyScreenCHandlers {
 		DiplomacyContainer diplomacyCt = (DiplomacyContainer) ct;
 		diplomacyCt.setDiplomaticStatuses(msg.diplomaticStatuses);
 		diplomacyCt.setRelationships(msg.npcFactionRelationships);
+		diplomacyCt.setDirty();
 	}
 	
 }

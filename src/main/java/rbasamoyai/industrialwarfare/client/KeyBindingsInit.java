@@ -14,7 +14,7 @@ public class KeyBindingsInit {
 	public static final String KEY_ROOT = "key." + IndustrialWarfare.MOD_ID;
 	public static final String CATEGORY = KEY_ROOT + ".category";
 	
-	public static KeyBinding DIPLOMACY_SCREEN = new KeyBinding(KEY_ROOT + ".diplomacy_screen", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.Type.KEYSYM, KeyEvent.VK_D, CATEGORY);
+	public static KeyBinding DIPLOMACY_SCREEN = new KeyBinding(KEY_ROOT + ".diplomacy_screen", KeyConflictContext.IN_GAME, KeyModifier.ALT, InputMappings.Type.KEYSYM, KeyEvent.VK_1, CATEGORY);
 	
 	public static void register() {
 		ClientRegistry.registerKeyBinding(DIPLOMACY_SCREEN);

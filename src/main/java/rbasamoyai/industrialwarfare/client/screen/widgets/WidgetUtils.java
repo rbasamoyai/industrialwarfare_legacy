@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.utils;
+package rbasamoyai.industrialwarfare.client.screen.widgets;
 
 import net.minecraft.client.gui.widget.Widget;
 

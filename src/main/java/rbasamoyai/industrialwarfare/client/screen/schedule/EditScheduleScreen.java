@@ -25,6 +25,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
@@ -32,7 +33,6 @@ import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
 import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
-import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 

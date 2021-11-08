@@ -12,7 +12,7 @@ public class DiplomacyStatusWidget extends Widget {
 	public static final int WIDGET_LENGTH = 8;
 	
 	private static final int STATUS_ICONS_TEX_X = 238;
-	private static final int STATUS_ICONS_TEX_START_Y = 108;
+	private static final int STATUS_ICONS_TEX_START_Y = 116;
 	
 	private final ITooltip onTooltip;
 	

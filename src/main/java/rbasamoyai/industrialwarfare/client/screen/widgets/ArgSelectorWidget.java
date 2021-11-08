@@ -15,7 +15,6 @@ import net.minecraft.util.text.StringTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
-import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class ArgSelectorWidget extends Widget {
 

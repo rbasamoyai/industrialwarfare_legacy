@@ -31,6 +31,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SOpenScreen.class, DiplomacyScreenMessages.SOpenScreen::encode, DiplomacyScreenMessages.SOpenScreen::decode, DiplomacyScreenMessages.SOpenScreen::handle);
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SRequestUpdate.class, DiplomacyScreenMessages.SRequestUpdate::encode, DiplomacyScreenMessages.SRequestUpdate::decode, DiplomacyScreenMessages.SRequestUpdate::handle);
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.CBroadcastChanges.class, DiplomacyScreenMessages.CBroadcastChanges::encode, DiplomacyScreenMessages.CBroadcastChanges::decode, DiplomacyScreenMessages.CBroadcastChanges::handle);
+		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SDiplomaticStatusChangeSync.class, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::encode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::decode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::handle);
 	}
 
 }

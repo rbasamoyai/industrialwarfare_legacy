@@ -22,6 +22,8 @@ public class DraggableDecorator extends BlitDecorator {
 	private final Point dragDimensions;
 	private final Point start;
 	
+	private final IDragged dragged;
+	
 	private FloatPoint output;
 	
 	private boolean isDragging;
@@ -35,10 +37,14 @@ public class DraggableDecorator extends BlitDecorator {
 		
 		this.dragDimensions = properties.dragDimensions;
 		this.start = properties.startingPoint;
+		
+		this.dragged = properties.dragged;
+		
 		this.output = properties.startingOutput;
 		
 		this.regularTexPosY = this.texPos.y;
 		
+		this.dragged.onDrag(this.output.x, this.output.y);		
 		this.recalculatePos();
 	}
 	
@@ -70,6 +76,7 @@ public class DraggableDecorator extends BlitDecorator {
 		this.output.y = (float)(mouseY1 - (double) this.start.y) / (float) this.dragDimensions.y;
 		this.output.y = MathHelper.clamp(this.output.y, 0.0f, 1.0f);
 		
+		this.dragged.onDrag(this.output.x, this.output.y);	
 		this.recalculatePos();
 		
 		return true;
@@ -91,6 +98,10 @@ public class DraggableDecorator extends BlitDecorator {
 	public void setActive(boolean isActive) { this.isActive = isActive; }
 	public float getOutputX() { return this.output.x; }
 	public float getOutputY() { return this.output.y; }
+	public void setOutput(FloatPoint output) {
+		this.output = output;
+		this.recalculatePos();
+	}
 	
 	private boolean insideDragArea(double mouseX, double mouseY) {
 		double startX = (double) this.start.x;
@@ -108,6 +119,7 @@ public class DraggableDecorator extends BlitDecorator {
 		public FloatPoint startingOutput = new FloatPoint(0.0f, 0.0f);
 		public Point dragDimensions = new Point(0, 0);
 		public Point startingPoint = new Point(0, 0);
+		public IDragged dragged = (ox, oy) -> {};
 		
 		public Properties startingOutput(FloatPoint startingOutput) {
 			this.startingOutput = startingOutput;
@@ -121,6 +133,11 @@ public class DraggableDecorator extends BlitDecorator {
 		
 		public Properties startingPoint(Point startingPoint) {
 			this.startingPoint = startingPoint;
+			return this;
+		}
+		
+		public Properties dragged(IDragged dragged) {
+			this.dragged = dragged;
 			return this;
 		}
 	}
@@ -137,6 +154,11 @@ public class DraggableDecorator extends BlitDecorator {
 		public FloatPoint(FloatPoint point) {
 			this(point.x, point.y);
 		}
+	}
+	
+	@FunctionalInterface
+	public static interface IDragged {
+		public void onDrag(float ox, float oy);
 	}
 	
 }

@@ -2,9 +2,15 @@ package rbasamoyai.industrialwarfare.client.screen.diplomacy;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.Widget;
@@ -13,27 +19,89 @@ import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.BaseScreenPage;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.DraggableDecorator;
+import rbasamoyai.industrialwarfare.client.screen.widgets.page.DraggableDecorator.FloatPoint;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.IScreenPage;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.TextDecorator;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.WidgetCollectionDecorator;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
+import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
-import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 
 	public static final ResourceLocation DIPLOMACY_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/diplomacy.png");
 	
-	private static final String TRANSLATION_ROOT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".diplomacy";
+	public static final String TRANSLATION_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".diplomacy";
 	
-	private static final ITextComponent DIPLOMATIC_RELATIONS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_ROOT_KEY + ".diplomatic_relations");
-	private static final ITextComponent NPC_FACTION_RELATIONSHIPS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_ROOT_KEY + ".npc_faction_relationships");
+	/* DEBUG */ public static final ITextComponent DEBUG_NPC = (new StringTextComponent("*DEBUG*").withStyle(TextFormatting.DARK_RED)).append(new StringTextComponent(" An NPC Faction").withStyle(TextFormatting.RESET));
+	
+	private static final ITextComponent DIPLOMATIC_RELATIONS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".diplomatic_relations");
+	private static final ITextComponent NPC_FACTION_RELATIONSHIPS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".npc_faction_relationships");
+	
+	public static final ITextComponent THEIR_STATUS = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".their_status");
+	public static final ITextComponent THEIR_STATUS_SHORT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".their_status.short");
+	public static final ITextComponent OUR_STATUS = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".our_status");
+	public static final ITextComponent OUR_STATUS_SHORT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".our_status.short");
+	public static final ITextComponent LOADING_PLAYER_INFO = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".loading_player_info");
+	public static final ITextComponent COULD_NOT_LOAD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".could_not_load").withStyle(TextFormatting.DARK_RED);
+	public static final ITextComponent NO_DIPLOMACY_AVAILABLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".no_diplomacy_available").withStyle(TextFormatting.DARK_RED);
+	
+	private static final List<ITextComponent> LOADING_FRAMES =
+			Arrays.asList(
+					new StringTextComponent(""),
+					new StringTextComponent("."),
+					new StringTextComponent(".."),
+					new StringTextComponent("...")
+					);
+	
+	public static final Map<DiplomaticStatus, ITextComponent> STATUSES =
+			Arrays.stream(DiplomaticStatus.values())
+					.collect(Collectors.toMap(ds -> ds, ds -> {
+						return new TranslationTextComponent(TRANSLATION_KEY_ROOT + "." + ds.getName());
+					}));
+	
+	public static final Map<DiplomaticStatus, ITextComponent> STATUSES_COLORED =
+			STATUSES
+					.entrySet()
+					.stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> {
+						return e.getValue().copy().withStyle(e.getKey().getStyle());
+					}));
+	
+	public static final Map<DiplomaticStatus, ITextComponent> OUR_STATUSES =
+			STATUSES_COLORED
+					.entrySet()
+					.stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> {
+						return OUR_STATUS.copy().append(": ").append(e.getValue());
+					}));
+	
+	public static final Map<DiplomaticStatus, ITextComponent> THEIR_STATUSES =
+			STATUSES
+					.entrySet()
+					.stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> {
+						return THEIR_STATUS.copy().append(": ").append(e.getValue());
+					}));
+	
+	public static final Map<DiplomaticStatus, ITextComponent> THEIR_STATUSES_COLORED =
+			STATUSES_COLORED
+					.entrySet()
+					.stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> {
+						return THEIR_STATUS.copy().append(": ").append(e.getValue());
+					}));
 	
 	private static final int PAGE_BUTTON_WIDTH = 7;
 	private static final int PAGE_BUTTON_HEIGHT = 11;
@@ -41,7 +109,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	private static final int PAGE_BUTTON_PREV_GUI_X = 7;
 	private static final int PAGE_BUTTON_GUI_Y = 20;
 	private static final int PAGE_BUTTON_TEX_X = 238;
-	private static final int PAGE_BUTTON_NEXT_TEX_Y = 64;
+	private static final int PAGE_BUTTON_NEXT_TEX_Y = 72;
 	private static final int PAGE_BUTTON_PREV_TEX_Y = PAGE_BUTTON_NEXT_TEX_Y + PAGE_BUTTON_HEIGHT * 2;
 	
 	private static final int SCROLL_BAR_WIDGET_TEX_X = 238;
@@ -58,6 +126,9 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	private static final int LIST_Y = 34;
 	private static final int LIST_ROWS = 8;
 	
+	private static final int INFO_X = 7;
+	private static final int INFO_Y = 148;
+	
 	private static final float PAGE_TITLE_Y = 22.0f;
 	
 	private static final int TEXT_COLOR = 4210752;
@@ -67,6 +138,8 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	
 	private final List<IScreenPage> pages = new ArrayList<>(2);
 	
+	private final Map<PlayerIDTag, DiplomaticStatus> statusBuffer = new HashMap<>();
+	
 	private int page = 0;
 	
 	private float scrollOutput = 0.0f;
@@ -74,11 +147,12 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	private DraggableDecorator drpScrollbar;
 	private WidgetCollectionDecorator drpStatuses;
 	private DiplomacyStatusesListDecorator drpList;
+	private DiplomacyStatusInfoDecorator drpInfo;
 	
 	private Button prevPageButton;
 	private Button nextPageButton;
 	
-	private int ticks = 0;
+	private int ticks = REFRESH_AFTER;
 	
 	public DiplomacyScreen(DiplomacyContainer container, PlayerInventory playerInv, ITextComponent title) {
 		super(container, playerInv, title);
@@ -127,14 +201,23 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 				.startingOutput(new DraggableDecorator.FloatPoint(0.0f, this.scrollOutput))
 				.dragDimensions(new Point(0, SCROLL_BAR_DRAG_HEIGHT))
 				.startingPoint(new Point(SCROLL_BAR_WIDGET_GUI_START_X, SCROLL_BAR_WIDGET_GUI_START_Y))
+				.dragged(this::setDrpListTopIndex)
 				.texturePos(new Point(SCROLL_BAR_WIDGET_TEX_X, SCROLL_BAR_WIDGET_TEX_Y))
 				.textureDimensions(new Point(SCROLL_BAR_WIDGET_WIDTH, SCROLL_BAR_WIDGET_HEIGHT))
 				.textureLocation(DIPLOMACY_GUI));
 		this.drpScrollbar = new DraggableDecorator(diplomaticRelationsPage, this, drpScrollBar$properties);
-		this.drpStatuses = new WidgetCollectionDecorator(drpScrollbar, new Widget[] {});
-		this.drpList = new DiplomacyStatusesListDecorator(drpStatuses, LIST_ROWS, LIST_X, LIST_Y);
+		this.drpStatuses = new WidgetCollectionDecorator(this.drpScrollbar, new Widget[] {});
+		this.drpList = new DiplomacyStatusesListDecorator(
+				this.drpStatuses,
+				LIST_ROWS,
+				LIST_X, LIST_Y,
+				this::setInfoDecoratorData,
+				this::clearChanges,
+				this::commitChanges,
+				this::onKeyScroll);
+		this.drpInfo = new DiplomacyStatusInfoDecorator(this.drpList, INFO_X, INFO_Y, this::dsiCallbackToDrp, this::dsbDisplay, this::dsbPressable);
 		
-		diplomaticRelationsPage = this.drpList;
+		diplomaticRelationsPage = this.drpInfo;
 		
 		this.pages.add(diplomaticRelationsPage);
 		
@@ -198,11 +281,25 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	}
 	
 	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifier) {
+		if (this.getCurrentPage().keyPressed(keyCode, scanCode, modifier)) {
+			return true;
+		}
+		return super.keyPressed(keyCode, scanCode, modifier);
+	}
+	
+	@Override
 	public void tick() {
 		if (++this.ticks >= REFRESH_AFTER) {
 			IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SRequestUpdate());
+			if (this.menu.isDirty() && this.drpList != null) {
+				this.drpList.sortUsing(DiplomacyListComparator.noSort());
+				this.menu.setDirty(false);
+			}
 			this.ticks = 0;
 		}
+		this.getCurrentPage().tick();
+		this.drpScrollbar.setActive(this.drpList == null ? false : this.drpList.getSize() > LIST_ROWS);
 		super.tick();
 	}
 	
@@ -250,4 +347,70 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 		WidgetUtils.setActiveAndVisible(this.nextPageButton, this.page + 1 < this.pages.size());
 	}
 	
+	private void setInfoDecoratorData(PlayerIDTag tag) {
+		this.drpInfo.setTag(tag);
+	}
+	
+	public static ITextComponent getLoadingText(int frame) {
+		return LOADING_PLAYER_INFO.copy().append(LOADING_FRAMES.get(frame));
+	}
+	
+	private void setDrpListTopIndex(float ox, float oy) {
+		if (this.drpList == null) return;
+		float size = Math.max((float) this.drpList.getSize() - 8.0f, 0.0f);
+		int index = MathHelper.floor(oy * size);
+		this.drpList.setTopIndex(index);
+	}
+	
+	private void onKeyScroll(int newTopIndex) {
+		if (this.drpList.getSize() - LIST_ROWS <= 0) {
+			this.drpScrollbar.setOutput(new FloatPoint(0.0f, 0.0f));
+			return;
+		}
+		
+		float oy = (float) newTopIndex / (float)(this.drpList.getSize() - LIST_ROWS);
+		this.drpScrollbar.setOutput(new FloatPoint(0.0f, oy));
+	}
+	
+	private void clearChanges(Button button) {
+		this.statusBuffer.clear();
+	}
+	
+	private void commitChanges(Button button) {
+		if (this.statusBuffer.isEmpty()) return;
+		IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SDiplomaticStatusChangeSync(this.statusBuffer));
+		this.statusBuffer.clear();
+	}
+	
+	private void dsiCallbackToDrp(Button button) {
+		this.drpList.setButtonsActive(true);
+	}
+	
+	private DiplomacyStatusButton.IDisplay dsbDisplay(DiplomaticStatus status) {
+		return tag -> {
+			Pair<DiplomaticStatus, DiplomaticStatus> statuses = this.menu.getDiplomaticStatuses().get(tag);
+			if (statuses == null) {
+				return DiplomacyStatusButton.DisplayType.NOT_SELECTED;
+			}
+			boolean sameAsOldStatus = statuses.getSecond() == status;
+			boolean selected = this.statusBuffer.get(tag) == status;
+			if (sameAsOldStatus) {
+				return this.statusBuffer.containsKey(tag) ? DiplomacyStatusButton.DisplayType.PREVIOUS : DiplomacyStatusButton.DisplayType.SELECTED;
+			}
+			return selected ? DiplomacyStatusButton.DisplayType.SELECTED : DiplomacyStatusButton.DisplayType.NOT_SELECTED;
+		};
+	}
+	
+	private DiplomacyStatusButton.IPressable dsbPressable(DiplomaticStatus status) {
+		return tag -> {
+			Pair<DiplomaticStatus, DiplomaticStatus> statuses = this.menu.getDiplomaticStatuses().get(tag);
+			if (statuses == null) return;
+			if (statuses.getSecond() == status) {
+				this.statusBuffer.remove(tag);
+			} else {
+				this.statusBuffer.put(tag, status);
+			}
+		};
+	}
+			
 }
