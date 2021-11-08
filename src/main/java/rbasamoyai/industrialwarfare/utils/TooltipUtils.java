@@ -49,7 +49,7 @@ public class TooltipUtils {
 	
 	public static IFormattableTextComponent formatAsStyle(ITextComponent tc, Style formatStyle) {
 		IFormattableTextComponent result = (IFormattableTextComponent) tc;
-		result.withStyle(formatStyle);
+		result.setStyle(formatStyle);
 		result.getSiblings().forEach(s -> formatAsStyle(s, formatStyle));
 		return result;
 	}

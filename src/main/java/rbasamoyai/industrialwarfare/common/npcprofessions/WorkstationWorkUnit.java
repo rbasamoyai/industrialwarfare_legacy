@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -28,7 +29,7 @@ import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
 public class WorkstationWorkUnit implements IWorkUnit {
 
-	private final ImmutableMap<MemoryModuleType<?>, MemoryModuleStatus> memoryChecks;
+	private final Supplier<ImmutableMap<MemoryModuleType<?>, MemoryModuleStatus>> memoryChecks;
 	private final Set<Block> workstations;
 	
 	public WorkstationWorkUnit(Block workstation) {
@@ -36,7 +37,7 @@ public class WorkstationWorkUnit implements IWorkUnit {
 	}
 	
 	public WorkstationWorkUnit(Set<Block> workstations) {
-		this.memoryChecks = ImmutableMap.of(
+		this.memoryChecks = () -> ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED
 				);
@@ -46,7 +47,7 @@ public class WorkstationWorkUnit implements IWorkUnit {
 	@Override
 	public boolean checkMemories(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.memoryChecks.entrySet()) {
+		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.memoryChecks.get().entrySet()) {
 			if (!brain.checkMemory(e.getKey(), e.getValue())) return false;
 		}
 		return true;

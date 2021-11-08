@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +9,10 @@ import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.JumpToCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.SwitchOrderCommand;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.CountArgSelector;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.IArgSelectorProvider;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WordedArgSelector;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WordedArgSelector.ArgGroup;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 

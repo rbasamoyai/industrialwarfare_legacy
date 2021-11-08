@@ -14,7 +14,7 @@ can fight stuff.
 
 ### Features currently implemented:
 * The mod actually starting up
-* An NPC with some brain, can follow instructions
+* An NPC with some brain, can follow instructions and do some basic work
 * some cool GUIs
 * A simple "workstation" block
 * A microcrafting system
@@ -22,17 +22,14 @@ can fight stuff.
 ### """planned""" features:
 * More NPCs
     * NPCs actually doing something
-    * Combat NPCs
+    * NPC Combat
 * Generated structures with NPCs
 * Research trees
 * Some ores
 * Weapons
 
 ### Currently working on (or not)
-* NPC professions
-    * NPCs working at their places
-* Combat NPCs
-* Combat orders
+* Diplomacy
 
 ---
 

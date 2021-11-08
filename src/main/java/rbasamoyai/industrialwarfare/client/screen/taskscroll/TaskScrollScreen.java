@@ -26,6 +26,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.TaskCommandArgSelector;
@@ -38,7 +39,6 @@ import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
 import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
-import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 /**
  * A lot of scrolling-related code here is based on {@link net.minecraft.client.gui.screen.inventory.CreativeScreen}.

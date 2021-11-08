@@ -5,9 +5,9 @@ import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.IFormattableTextComponent;
 import rbasamoyai.industrialwarfare.client.screen.widgets.ArgSelectorWidget;
+import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
-import rbasamoyai.industrialwarfare.utils.WidgetUtils;
 
 public class TaskScrollArgSelectorWidget extends ArgSelectorWidget {
 	

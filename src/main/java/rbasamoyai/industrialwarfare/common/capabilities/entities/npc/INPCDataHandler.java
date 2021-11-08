@@ -1,17 +1,16 @@
 package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 
-import java.util.UUID;
-
 import net.minecraft.item.ItemStack;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 
 public interface INPCDataHandler {
 	
-	public void setFirstOwnerUUID(UUID firstOwnerUUID);
-	public UUID getFirstOwnerUUID();
+	public void setFirstOwner(PlayerIDTag firstOwnerUUID);
+	public PlayerIDTag getFirstOwner();
 	
-	public void setOwnerUUID(UUID newOwnerUUID);
-	public UUID getOwnerUUID();
+	public void setOwner(PlayerIDTag newOwnerUUID);
+	public PlayerIDTag getOwner();
 	
 	public void setProfession(NPCProfession profession);
 	public NPCProfession getProfession();

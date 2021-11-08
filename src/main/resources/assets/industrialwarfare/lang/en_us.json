@@ -117,6 +117,9 @@
 	"itemGroup.industrialwarfare.recipes":	"Industrial Warfare Recipe Items",
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
 	
+	"key.industrialwarfare.category":	"Industrial Warfare",
+	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
+	
 	"entity.industrialwarfare.projectile_bullet": "Bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",
@@ -260,6 +263,25 @@
 	"selector.title.industrialwarfare.pos_mode.pos":	"At position",
 	
 	"selector.tooltip.industrialwarfare.pursuit":	"How far should the NPC pursue its target?",
+	
+	"gui.industrialwarfare.diplomacy": "Diplomacy",
+	"gui.industrialwarfare.diplomacy.diplomatic_relations": "Diplomatic relations",
+	"gui.industrialwarfare.diplomacy.npc_faction_relationships": "NPC Faction relationships",
+	"gui.industrialwarfare.diplomacy.player": "Player/NPC Faction",
+	"gui.industrialwarfare.diplomacy.their_status": "Their status",
+	"gui.industrialwarfare.diplomacy.their_status.short": "T.S.",
+	"gui.industrialwarfare.diplomacy.our_status": "Our status",
+	"gui.industrialwarfare.diplomacy.our_status.short": "O.S.",
+	"gui.industrialwarfare.diplomacy.loading_player_info": "Loading player info",
+	"gui.industrialwarfare.diplomacy.could_not_load": "Could not load",
+	"gui.industrialwarfare.diplomacy.clear_changes": "Clear changes",
+	"gui.industrialwarfare.diplomacy.commit_changes": "Commit changes",
+	
+	"gui.industrialwarfare.diplomacy.unknown": "Unknown",
+	"gui.industrialwarfare.diplomacy.ally": "Ally",
+	"gui.industrialwarfare.diplomacy.neutral": "Neutral",
+	"gui.industrialwarfare.diplomacy.enemy": "Enemy",
+	"gui.industrialwarfare.diplomacy.no_diplomacy_available": "No diplomacy available",
 	
 	"gui.industrialwarfare.text.set_job_site":			"Set %1$s's job site to %2$s",
 	"gui.industrialwarfare.text.not_owned_by_you":		"You do not own this NPC!",

@@ -30,7 +30,6 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 				.put(MemoryModuleTypeInit.CURRENT_ORDER.get(), MemoryModuleStatus.VALUE_ABSENT)
 				.put(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.ORDER_INTERRUPTED.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.build());
@@ -85,10 +84,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	
 	@Override
 	protected void tick(ServerWorld world, NPCEntity npc, long gameTime) {
-		Brain<?> brain = npc.getBrain();
-		if (brain.hasMemoryValue(MemoryModuleTypeInit.ORDER_INTERRUPTED.get())) return;
-		
-		TaskScrollOrder order = brain.getMemory(MemoryModuleTypeInit.CURRENT_ORDER.get()).get();
+		TaskScrollOrder order = npc.getBrain().getMemory(MemoryModuleTypeInit.CURRENT_ORDER.get()).get();
 		order.getCommand().tick(world, npc, gameTime, order);
 	}
 	

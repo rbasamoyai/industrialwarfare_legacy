@@ -6,6 +6,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
@@ -21,7 +22,7 @@ public class DebugOwnerItem extends Item {
 		if (!entity.isAlive()) return ActionResultType.PASS;
 		if (!(entity instanceof NPCEntity)) return ActionResultType.PASS;
 		
-		((NPCEntity) entity).getDataHandler().ifPresent(h -> h.setOwnerUUID(player.getUUID()));
+		((NPCEntity) entity).getDataHandler().ifPresent(h -> h.setOwner(PlayerIDTag.of(player)));
 		return ActionResultType.CONSUME;
 	}
 	

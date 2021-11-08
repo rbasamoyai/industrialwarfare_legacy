@@ -6,6 +6,7 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
@@ -17,6 +18,9 @@ public class ContainerInit {
 	
 	public static final DeferredRegister<ContainerType<?>> CONTAINER_TYPES = DeferredRegister.create(ForgeRegistries.CONTAINERS, IndustrialWarfare.MOD_ID);
 
+	public static final RegistryObject<ContainerType<DiplomacyContainer>> DIPLOMACY = CONTAINER_TYPES.register("diplomacy",
+			() -> IForgeContainerType.create(DiplomacyContainer::getClientContainer));
+	
 	public static final RegistryObject<ContainerType<EditLabelContainer>> EDIT_LABEL = CONTAINER_TYPES.register("edit_label",
 			() -> IForgeContainerType.create(EditLabelContainer::getClientContainer));
 	

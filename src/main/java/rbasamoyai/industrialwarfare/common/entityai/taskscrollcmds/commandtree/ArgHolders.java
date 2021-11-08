@@ -1,10 +1,12 @@
-package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
+package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree;
 
 import java.util.function.Supplier;
 
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.CountArgHolder;
+import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.ItemArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 
 public class ArgHolders {

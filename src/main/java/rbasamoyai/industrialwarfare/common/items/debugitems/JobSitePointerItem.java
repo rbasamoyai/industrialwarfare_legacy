@@ -1,7 +1,5 @@
 package rbasamoyai.industrialwarfare.common.items.debugitems;
 
-import java.util.UUID;
-
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
@@ -24,6 +22,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
@@ -77,10 +76,10 @@ public class JobSitePointerItem extends Item {
 		if (!entity.isAlive()) return ActionResultType.PASS;
 		if (!(entity instanceof NPCEntity)) return ActionResultType.PASS;
 		
-		UUID ownerUUID = ((NPCEntity) entity).getDataHandler()
-				.map(INPCDataHandler::getOwnerUUID)
-				.orElse(NPCEntity.GAIA_UUID);
-		if (!player.getUUID().equals(ownerUUID)) {
+		PlayerIDTag owner = ((NPCEntity) entity).getDataHandler()
+				.map(INPCDataHandler::getOwner)
+				.orElse(PlayerIDTag.NO_OWNER);
+		if (!PlayerIDTag.of(player).equals(owner)) {
 			player.displayClientMessage(NOT_OWNED_BY_YOU, true);
 			return ActionResultType.FAIL;
 		}

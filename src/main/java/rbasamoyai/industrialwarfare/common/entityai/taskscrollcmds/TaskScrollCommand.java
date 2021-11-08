@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
@@ -27,9 +28,9 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	protected static final Vector3i TOO_FAR = new Vector3i(MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d);
 	
 	private final CommandTree tree;
-	private final Map<MemoryModuleType<?>, MemoryModuleStatus> requiredMemories;
+	private final Supplier<Map<MemoryModuleType<?>, MemoryModuleStatus>> requiredMemories;
 	
-	public TaskScrollCommand(CommandTree tree, Map<MemoryModuleType<?>, MemoryModuleStatus> requiredMemories) {
+	public TaskScrollCommand(CommandTree tree, Supplier<Map<MemoryModuleType<?>, MemoryModuleStatus>> requiredMemories) {
 		this.tree = tree;
 		this.requiredMemories = requiredMemories;
 	}
@@ -47,7 +48,7 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	}
 	
 	public final boolean hasRequiredMemories(Brain<NPCEntity> brain) {
-		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.requiredMemories.entrySet()) {
+		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.requiredMemories.get().entrySet()) {
 			if (!brain.checkMemory(e.getKey(), e.getValue())) return false;
 		}
 		return true;

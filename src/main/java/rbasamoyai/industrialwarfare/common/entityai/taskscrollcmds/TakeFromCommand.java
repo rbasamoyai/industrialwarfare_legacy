@@ -31,7 +31,7 @@ public class TakeFromCommand extends TaskScrollCommand {
 	private static final int ITEM_COUNT_ARG_INDEX = 3;
 	
 	public TakeFromCommand() {
-		super(CommandTrees.ITEM_HANDLING, ImmutableMap.of(
+		super(CommandTrees.ITEM_HANDLING, () -> ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
 				));

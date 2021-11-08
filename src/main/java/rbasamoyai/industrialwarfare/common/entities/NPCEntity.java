@@ -1,7 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -45,6 +45,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHan
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -59,7 +60,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessa
 
 public class NPCEntity extends CreatureEntity {
 	
-	protected static final List<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_COOLING_DOWN,
 			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
@@ -74,16 +75,16 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.CACHED_POS.get(),
-			MemoryModuleTypeInit.CAN_ATTACK.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
+			MemoryModuleTypeInit.FIGHTING.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get(),
 			MemoryModuleTypeInit.WORKING.get()
 			);
-	protected static final List<SensorType<? extends Sensor<? super NPCEntity>>> SENSOR_TYPES = ImmutableList.of(
+	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(
 			SensorType.NEAREST_PLAYERS, 
 			SensorType.NEAREST_BED,
 			SensorType.NEAREST_LIVING_ENTITIES
@@ -93,8 +94,6 @@ public class NPCEntity extends CreatureEntity {
 	private static final String TAG_INVENTORY = "items";
 	
 	public static final int MAX_SLOTS_BEFORE_WARN = 54;
-	
-	public static final UUID GAIA_UUID = new UUID(0L, 0L); // A null player generally means that the NPC belongs to "Gaia" (thanks, Age of Empires!).
 	
 	protected final ItemStackHandler inventoryItemHandler;
 	protected final EquipmentItemHandler equipmentItemHandler;
@@ -110,8 +109,7 @@ public class NPCEntity extends CreatureEntity {
 		
 		this.getDataHandler().ifPresent(h -> {
 			h.setCanWearEquipment(canWearEquipment);
-			h.setFirstOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
-			h.setOwnerUUID(owner == null ? GAIA_UUID : owner.getUUID());
+			h.setOwner(owner == null ? PlayerIDTag.NO_OWNER : PlayerIDTag.of(owner));
 			h.setProfession(profession);
 		});
 		
@@ -155,7 +153,7 @@ public class NPCEntity extends CreatureEntity {
 	
 	@Override
 	protected BrainCodec<NPCEntity> brainProvider() {
-		return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
+		return Brain.provider(MEMORY_TYPES.get(), SENSOR_TYPES.get());
 	}
 	
 	@Override
