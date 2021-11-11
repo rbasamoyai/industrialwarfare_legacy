@@ -21,6 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
@@ -47,10 +48,10 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.VALUE_PRESENT)
 				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
 				.build(),
 				180);
@@ -74,7 +75,9 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (!handler.shouldWork(minute + 2)) return false;
 		
 		Brain<?> brain = npc.getBrain();
-		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) return false;
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.NO_ACTIVITY) {
+			return false;
+		}
 		
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		if (!gpOptional.isPresent()) {
@@ -87,7 +90,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
-		if (gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
+		if (!gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
 			return false;
 		}
@@ -126,9 +129,18 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (te == null) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
 		}
+	
+		ItemStack schedule = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
+		LazyOptional<IScheduleItemDataHandler> scheduleLzop = ScheduleItem.getDataHandler(schedule);
+		if (!scheduleLzop.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), false); // Do not work if schedule not found
+			return;
+		}
+		IScheduleItemDataHandler scheduleHandler = scheduleLzop.resolve().get();
+		int minute = TimeUtils.getMinuteOfTheWeek(world);
+		if (!scheduleHandler.shouldWork(minute)) return; // Only access when time of work
 		
 		LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-		// Me omw to have a minor pyramid of doom, not too deep but i think we can do better
 		if (!blockInvOptional.isPresent()) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
 			return;
@@ -166,8 +178,8 @@ public class GoToWorkTask extends Task<NPCEntity> {
 	@Override
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
-		if (!CommandUtils.hasComplaint(npc)) {
-			brain.setMemory(MemoryModuleTypeInit.WORKING.get(), true);
+		if (!CommandUtils.hasComplaint(npc) && brain.getMemory(MemoryModuleTypeInit.STOP_EXECUTION.get()).orElse(true)) {
+			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.WORKING);
 			brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), 0);
 			
 			brain.setActiveActivityIfPossible(Activity.WORK);

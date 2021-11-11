@@ -16,7 +16,7 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class TaskCommandArgSelector extends ArgSelector<TaskScrollCommand> {
 	
-	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".task_scroll.tooltip.selector.command").withStyle(ArgSelector.HEADER_STYLE);
+	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent("selector.tooltip." + IndustrialWarfare.MOD_ID + ".command").withStyle(ArgSelector.HEADER_STYLE);
 	
 	public TaskCommandArgSelector(List<TaskScrollCommand> possibleArgs, TaskScrollOrder order) {
 		super(possibleArgs, possibleArgs.indexOf(order.getCommand()));

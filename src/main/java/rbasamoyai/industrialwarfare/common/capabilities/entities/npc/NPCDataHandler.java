@@ -19,7 +19,9 @@ public class NPCDataHandler implements INPCDataHandler {
 
 	@Override
 	public void setOwner(PlayerIDTag newOwner) {
-		if (this.firstOwner.equals(PlayerIDTag.NO_OWNER)) this.setFirstOwner(newOwner);
+		if (this.firstOwner == null || this.firstOwner.equals(PlayerIDTag.NO_OWNER)) {
+			this.setFirstOwner(newOwner);
+		}
 		this.currentOwner = newOwner;
 	}
 	@Override public PlayerIDTag getOwner() { return this.currentOwner; }

@@ -206,17 +206,18 @@
 	"selector.tooltip.industrialwarfare.wait_mode.day_time":	"Day time (NPC waits until given time of day)",
 	"selector.tooltip.industrialwarfare.wait_mode.relative_time":	"Relative time (NPC waits for given time)",
 	"selector.tooltip.industrialwarfare.wait_mode.bell":	"Bell (NPC waits until it hears a bell nearby)",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.day_time":	"Day time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
+	"selector.title.industrialwarfare.wait_mode.day_time":	"Day time",
+	"selector.title.industrialwarfare.wait_mode.relative_time":	"Relative time",
+	"selector.title.industrialwarfare.wait_mode.bell":	"Bell",
 	
-	"selector.tooltip.industrialwarfare.work_mode":			"Until when do you want the NPC to work for?",
+	"selector.tooltip.industrialwarfare.work_mode": "Until when do you want the NPC to work for?",
+	"selector.tooltip.industrialwarfare.patrol_mode": "Until when do you want the NPC to patrol for?",
 	
 	"selector.tooltip.industrialwarfare.day_time":		"What time?",
-	"gui.industrialwarfare.task_scroll.selector.day_time.time_format":	"%1$s:%2$s",
+	"selector.title.industrialwarfare.day_time.time_format":	"%1$s:%2$s",
 	
 	"selector.tooltip.industrialwarfare.time_count":		"How long?",
-	"gui.industrialwarfare.task_scroll.selector.time_count.time_format":	"%1$ss",
+	"selector.title.industrialwarfare.time_count.time_format":	"%1$ss",
 	
 	"selector.tooltip.industrialwarfare.jump_index":	"What index do you want to jump to?",
 	
@@ -294,6 +295,7 @@
 	"command.industrialwarfare.jump_to":	"Jump to",
 	"command.industrialwarfare.work_at":	"Work at",
 	"command.industrialwarfare.switch_order":	"Switch order",
+	"command.industrialwarfare.patrol":		"Patrol",
 	
 	"command.industrialwarfare.args.filter":	"Filter",
 	

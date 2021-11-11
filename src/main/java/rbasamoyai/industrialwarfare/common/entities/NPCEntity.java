@@ -11,6 +11,8 @@ import com.mojang.serialization.Dynamic;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.IRangedAttackMob;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
@@ -46,6 +48,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapa
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -58,7 +61,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessa
  * Base NPC entity class for rbasamoyai's Industrial Warfare.
  */
 
-public class NPCEntity extends CreatureEntity {
+public class NPCEntity extends CreatureEntity implements IRangedAttackMob {
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_COOLING_DOWN,
@@ -74,15 +77,16 @@ public class NPCEntity extends CreatureEntity {
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
+			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
+			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
-			MemoryModuleTypeInit.FIGHTING.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
+			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
-			MemoryModuleTypeInit.WAIT_FOR.get(),
-			MemoryModuleTypeInit.WORKING.get()
+			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
 	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(
 			SensorType.NEAREST_PLAYERS, 
@@ -178,13 +182,25 @@ public class NPCEntity extends CreatureEntity {
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
 		
-		if (brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) {
+		NPCActivityStatus status;
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.ACTIVITY_STATUS.get())) {
+			status = NPCActivityStatus.NO_ACTIVITY;
+			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), status);
+		} else {
+			status = brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get();
+		}
+		
+		switch (status) {
+		case NO_ACTIVITY:
+			brain.setActiveActivityIfPossible(Activity.IDLE);
+			break;
+		case WORKING:
 			brain.setActiveActivityIfPossible(Activity.WORK);
 			brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
-		} else if (brain.getMemory(MemoryModuleTypeInit.FIGHTING.get()).orElse(false)) {
+			break;
+		case FIGHTING:
 			brain.setActiveActivityIfPossible(Activity.FIGHT);
-		} else {
-			brain.setActiveActivityIfPossible(Activity.IDLE);
+			break;
 		}
 		
 		brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 10)));
@@ -258,6 +274,11 @@ public class NPCEntity extends CreatureEntity {
 	@Override
 	public void tick() {
 		super.tick();
+	}
+
+	@Override
+	public void performRangedAttack(LivingEntity target, float damage) {
+		
 	}
 	
 }

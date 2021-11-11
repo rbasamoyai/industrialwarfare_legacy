@@ -21,6 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
@@ -45,9 +46,9 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
 				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.VALUE_PRESENT)
 				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.VALUE_PRESENT)
 				.put(posMemoryType, MemoryModuleStatus.VALUE_PRESENT)
 				.build(),
 				180);
@@ -71,12 +72,14 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return false;
 		}
-		if (gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
+		if (!gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
 			return false;
 		}
 
-		if (!brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)) return false;
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.WORKING) {
+			return false;
+		}
 		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)) return false;		
 		
 		ItemStack scheduleItem = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
@@ -85,7 +88,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 		IScheduleItemDataHandler handler = lzop.resolve().get();
 		
 		int minute = TimeUtils.getMinuteOfTheWeek(world);
-		return handler.shouldWork(minute);
+		return !handler.shouldWork(minute);
 	}
 	
 	@Override
@@ -153,7 +156,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		brain.setMemory(MemoryModuleTypeInit.WORKING.get(), false);
+		brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.NO_ACTIVITY);
 		
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get());
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
