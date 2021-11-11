@@ -14,6 +14,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -26,21 +27,21 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	
 	public RunCommandFromTaskScrollTask() {
 		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
+				.put(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.VALUE_PRESENT)
 				.put(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.CURRENT_ORDER.get(), MemoryModuleStatus.VALUE_ABSENT)
 				.put(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.REGISTERED)
 				.put(MemoryModuleTypeInit.STOP_EXECUTION.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.WORKING.get(), MemoryModuleStatus.REGISTERED)
 				.build());
 	}
 	
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		Brain<NPCEntity> brain = npc.getBrain();
-		if (!brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.WORKING
 				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
-				|| brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) {
+				|| CommandUtils.hasComplaint(npc)) {
 			return false;
 		}
 		
@@ -92,7 +93,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		return brain.getMemory(MemoryModuleTypeInit.WORKING.get()).orElse(false)
+		return brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() == NPCActivityStatus.WORKING
 				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
 				&& !CommandUtils.hasComplaint(npc)
 				&& brain.hasMemoryValue(MemoryModuleTypeInit.CURRENT_ORDER.get())

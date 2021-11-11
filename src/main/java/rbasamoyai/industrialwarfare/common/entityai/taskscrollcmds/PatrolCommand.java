@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -10,14 +9,13 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
+import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.LazyOptional;
-import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
-import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
-import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -33,12 +31,16 @@ public class PatrolCommand extends TaskScrollCommand {
 	private static final int WAIT_TIME_ARG_INDEX = 3;
 	
 	public PatrolCommand() {
-		super(CommandTrees.PATROL, () -> ImmutableMap.of(
-				MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.REGISTERED,
-				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.ON_PATROL.get(), MemoryModuleStatus.REGISTERED
-				));
+		super(CommandTrees.PATROL,
+				() -> ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
+				.put(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.ON_PATROL.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED)
+				.build());
 	}
 	
 	@Override
@@ -52,27 +54,25 @@ public class PatrolCommand extends TaskScrollCommand {
 	@Override
 	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
+		
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
+		Optional<GlobalPos> gpop = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get());
+		if (gpop.isPresent()) {
+			GlobalPos gp = gpop.get();
+			if (gp.dimension() == world.dimension()) pos = gp.pos();
+		}
+		
 		brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
-		brain.setMemory(MemoryModuleTypeInit.ON_PATROL.get(), true);
+		brain.setMemory(MemoryModuleTypeInit.ON_PATROL.get(), order.getWrappedArg(PURSUIT_ARG_INDEX).getArgNum());
 	}
 
 	@Override
 	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		
-		PlayerIDTag npcOwner = npc.getDataHandler().map(INPCDataHandler::getOwner).orElse(PlayerIDTag.NO_OWNER);
-		
-		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(Arrays.asList());
-		for (LivingEntity e : visibleEntities) {
-			LazyOptional<INPCDataHandler> elzop = e.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY);
-			if (elzop.isPresent()) {
-				INPCDataHandler handler = elzop.resolve().get();
-				// TODO: implement diplomacy
-				if (!handler.getOwner().equals(npcOwner)) {
-					// Fight
-				}
-			}
+		Optional<LivingEntity> target = brain.getMemory(MemoryModuleType.ATTACK_TARGET);
+		if (target.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), false);
 		}
 		
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
@@ -96,10 +96,23 @@ public class PatrolCommand extends TaskScrollCommand {
 	@Override
 	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
-		if (CommandUtils.hasComplaint(npc)) return;
-		if (brain.getMemory(MemoryModuleTypeInit.STOP_EXECUTION.get()).get() == false) return; // Interrupt
+		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
+		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR.get());
+		
+		if (CommandUtils.hasComplaint(npc)) {
+			return;
+		}
+		
+		if (!brain.getMemory(MemoryModuleTypeInit.STOP_EXECUTION.get()).orElse(true)) { // Interrupt
+			brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(world.dimension(), npc.blockPosition()));
+			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
+			brain.setActiveActivityIfPossible(Activity.FIGHT);
+			return;
+		}
 		
 		CommandUtils.incrementCurrentInstructionIndexMemory(npc);
+		brain.eraseMemory(MemoryModuleTypeInit.CACHED_POS.get());
+		brain.eraseMemory(MemoryModuleTypeInit.ON_PATROL.get());
 	}
 
 }

@@ -25,7 +25,6 @@ Current TODO:
 	- Add attack commands
 		- Add equip command
 		- Add unequip command
-		- Add patrol command
 	- Add professions
 		- Rewrite work component
 		  to allow for other
@@ -33,6 +32,4 @@ Current TODO:
 		- Add combat component
 		- Add combat tasks
 	- Add diplomacy
-		- Add diplomacy savedata
-		- Add diplomacy screen
 		- Add known npcs

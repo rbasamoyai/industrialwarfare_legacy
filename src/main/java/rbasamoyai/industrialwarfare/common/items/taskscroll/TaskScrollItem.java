@@ -47,7 +47,8 @@ public class TaskScrollItem extends Item {
 				TaskScrollCommandInit.WAIT_FOR.get(),
 				TaskScrollCommandInit.JUMP_TO.get(),
 				TaskScrollCommandInit.WORK_AT.get(),
-				TaskScrollCommandInit.SWITCH_ORDER.get()
+				TaskScrollCommandInit.SWITCH_ORDER.get(),
+				TaskScrollCommandInit.PATROL.get()
 				);
 	};
 	

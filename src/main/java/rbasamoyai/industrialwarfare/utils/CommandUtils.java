@@ -160,4 +160,14 @@ public class CommandUtils {
 		return npc.getBrain().hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get());
 	}
 	
+	/**
+	 * @implNote
+	 * NPC brain requires:
+	 * <ul>
+	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#COMPLAINT}</li>
+	 * </ul>
+	 */
+	public static void complain(NPCEntity npc, NPCComplaint complaint) {
+		npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), complaint);
+	}
 }

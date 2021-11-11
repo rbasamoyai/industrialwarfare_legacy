@@ -62,7 +62,7 @@ public class JobSitePointerItem extends Item {
 		GlobalPos siteLocation = GlobalPos.of(dimension, pos);
 		brain.setMemory(MemoryModuleType.JOB_SITE, siteLocation);
 		
-		String locationString = dimension.getRegistryName().toString() + " " + pos.getX() + " " + pos.getY() + " " + pos.getZ();
+		String locationString = dimension.location().toString() + " " + pos.getX() + " " + pos.getY() + " " + pos.getZ();
 		player.displayClientMessage(new TranslationTextComponent(SET_JOB_SITE_KEY, npc.getDisplayName(), locationString), true);
 		
 		player.getCooldowns().addCooldown(this, 10);

@@ -96,7 +96,7 @@ public class TaskScrollShelfContainer extends Container {
 			slotCopy = slotStack.copy();
 			
 			if (index < INVENTORY_INDEX_START) { // Move to player inventory
-				if (this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
+				if (!this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
 					return ItemStack.EMPTY;
 				}
 			} else { // Move to tile entity inventory
