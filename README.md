@@ -18,6 +18,7 @@ can fight stuff.
 * some cool GUIs
 * A simple "workstation" block
 * A microcrafting system
+* Diplomacy
 
 ### """planned""" features:
 * More NPCs
@@ -29,7 +30,10 @@ can fight stuff.
 * Weapons
 
 ### Currently working on (or not)
-* Diplomacy
+* NPC Combat
+    * Patrol
+    * Ranged attacks
+* Ranged weapons (hello, single shot rifles!)
 
 ---
 
