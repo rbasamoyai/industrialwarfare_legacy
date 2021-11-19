@@ -42,7 +42,7 @@ import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
 public class TaskScrollShelfBlock extends Block {
 	
-	private static final ITextComponent TITLE = new TranslationTextComponent("tile." + IndustrialWarfare.MOD_ID + ".assembler_workstation");
+	private static final ITextComponent TITLE = new TranslationTextComponent("tile." + IndustrialWarfare.MOD_ID + ".task_scroll_shelf");
 	
 	public static final DirectionProperty HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
 	

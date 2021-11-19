@@ -12,9 +12,9 @@ public class NPCProfessionInit {
 	public static final DeferredRegister<NPCProfession> PROFESSIONS = DeferredRegister.create(NPCProfession.class, IndustrialWarfare.MOD_ID);
 	
 	public static final RegistryObject<NPCProfession> ASSEMBLER = PROFESSIONS.register("assembler",
-			() -> new NPCProfession(new WorkstationWorkUnit(BlockInit.ASSEMBLER_WORKSTATION.get())));
+			() -> NPCProfession.untrainedCombat(new WorkstationWorkUnit(BlockInit.ASSEMBLER_WORKSTATION.get())));
 	
 	public static final RegistryObject<NPCProfession> JOBLESS = PROFESSIONS.register("jobless",
-			() -> new NPCProfession(new JoblessWorkUnit()));
+			() -> NPCProfession.untrainedCombat(new JoblessWorkUnit()));
 	
 }

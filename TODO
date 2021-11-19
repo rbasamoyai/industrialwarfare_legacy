@@ -33,3 +33,7 @@ Current TODO:
 		- Add combat tasks
 	- Add diplomacy
 		- Add known npcs
+	- Add test gun
+	- Rewrite QualityItem et al
+	  to be more component oriented
+	  

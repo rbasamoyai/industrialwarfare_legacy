@@ -106,7 +106,7 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		
 		ListNBT handItems = nbt.getList("HandItems", Constants.NBT.TAG_COMPOUND);
 		for (int i = 0; i < handItems.size(); i++) {
-			this.setStackInSlot(4 + i, ItemStack.of(handItems.getCompound(i)));
+			this.setStackInSlot(5 - i, ItemStack.of(handItems.getCompound(i)));
 		}
 	}
 	

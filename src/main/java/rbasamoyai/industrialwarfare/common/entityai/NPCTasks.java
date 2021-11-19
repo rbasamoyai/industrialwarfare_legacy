@@ -19,7 +19,6 @@ import net.minecraft.entity.ai.brain.task.MoveToTargetTask;
 import net.minecraft.entity.ai.brain.task.SwimTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.WalkToTargetTask;
-import net.minecraft.entity.ai.brain.task.WalkTowardsLookTargetTask;
 import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
@@ -32,6 +31,7 @@ import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndAttackWithPatrolTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
@@ -73,9 +73,10 @@ public class NPCTasks {
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getFightPackage() {
 		return ImmutableList.of(
 				Pair.of(0, new MoveToTargetTask(3.0f)),
-				Pair.of(0, new AttackTargetTask(20)),
+				Pair.of(0, new ExtendedShootTargetTask<>()),
 				Pair.of(0, new ForgetAttackTargetTask<>(NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(0, new EndAttackWithPatrolTask()),
+				Pair.of(1, new AttackTargetTask(20)),
 				Pair.of(1, new ReturnToWorkIfPatrollingTask())
 				);
 	}
