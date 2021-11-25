@@ -19,11 +19,9 @@ can fight stuff.
 * A simple "workstation" block
 * A microcrafting system
 * Diplomacy
+* Simple defensive npc combat
 
 ### """planned""" features:
-* More NPCs
-    * NPCs actually doing something
-    * NPC Combat
 * Generated structures with NPCs
 * Research trees
 * Some ores
@@ -31,8 +29,7 @@ can fight stuff.
 
 ### Currently working on (or not)
 * NPC Combat
-    * Patrol
-    * Ranged attacks
+   * NPC attack orders
 * Ranged weapons (hello, single shot rifles!)
 
 ---
