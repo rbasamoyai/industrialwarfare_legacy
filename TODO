@@ -22,9 +22,6 @@ p Add NPCs
 - D O C U M E N T A T I O N
 
 Current TODO:
-	- Add attack commands
-		- Add equip command
-		- Add unequip command
 	- Add professions
 		- Rewrite work component
 		  to allow for other
