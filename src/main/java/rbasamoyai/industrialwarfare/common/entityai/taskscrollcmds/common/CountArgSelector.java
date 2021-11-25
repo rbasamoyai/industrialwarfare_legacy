@@ -14,12 +14,18 @@ public class CountArgSelector extends ArgSelector<Integer> {
 	private final List<ITextComponent> tooltip;
 	private final int min;
 	private final int max;
+	private final double shiftModifier;
 	
-	public CountArgSelector(int i, int min, int max, List<ITextComponent> tooltip) {
+	public CountArgSelector(int i, int min, int max, int shiftModifier, List<ITextComponent> tooltip) {
 		super(null, i);
 		this.tooltip = tooltip;
 		this.min = min;
 		this.max = max;
+		this.shiftModifier = (double) shiftModifier;
+	}
+	
+	public CountArgSelector(int i, int min, int max, List<ITextComponent> tooltip) {
+		this(i, min, max, 10, tooltip);
 	}
 	
 	@Override
@@ -34,7 +40,7 @@ public class CountArgSelector extends ArgSelector<Integer> {
 	
 	@Override
 	public void scrollSelectedArg(double scrollDist) {
-		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? 10.0d : 1.0d), (double) this.min, (double) this.max));
+		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? this.shiftModifier : 1.0d), (double) this.min, (double) this.max));
 	}
 
 	@Override

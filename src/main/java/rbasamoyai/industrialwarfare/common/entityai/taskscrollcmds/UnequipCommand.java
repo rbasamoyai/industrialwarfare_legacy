@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
@@ -14,7 +16,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -22,15 +24,14 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
-public class DepositAtCommand extends TaskScrollCommand {
+public class UnequipCommand extends TaskScrollCommand {
 
 	private static final int POS_ARG_INDEX = 0;
-	private static final int FILTER_ARG_INDEX = 1;
+	private static final int EQUIP_SLOT_ARG_INDEX = 1;
 	private static final int ACCESS_SIDE_ARG_INDEX = 2;
-	private static final int ITEM_COUNT_ARG_INDEX = 3;
-	
-	public DepositAtCommand() {
-		super(CommandTrees.ITEM_HANDLING, () -> ImmutableMap.of(
+
+	public UnequipCommand() {
+		super(CommandTrees.UNEQUIP, () -> ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
 				));
@@ -73,24 +74,19 @@ public class DepositAtCommand extends TaskScrollCommand {
 		}
 		IItemHandler blockInv = lzop.resolve().get();
 		
-		int count = order.getWrappedArg(ITEM_COUNT_ARG_INDEX).getArgNum();
-		boolean flag = count == 0;
-		ItemStack filter = order.getWrappedArg(FILTER_ARG_INDEX).getItem().orElse(ItemStack.EMPTY);
+		EquipmentItemHandler npcEquipment = npc.getEquipmentItemHandler();
+		EquipmentSlotType type = CommandUtils.equipmentSlotTypeFromFilterFlag(order.getWrappedArg(EQUIP_SLOT_ARG_INDEX).getArgNum());
+		int slot = EquipmentItemHandler.getTypeSlot(type);
+		ItemStack unequipItem = npcEquipment.extractItem(slot, npcEquipment.getSlotLimit(slot), false);
 		
-		ItemStackHandler npcInv = npc.getInventoryItemHandler();
-		for (int i = 0; i < npcInv.getSlots(); i++) {
-			if (!CommandUtils.filterMatches(filter, npcInv.getStackInSlot(i))) continue;
-			
-			ItemStack depositItem = npcInv.extractItem(i, flag ? npcInv.getSlotLimit(i) : count, false);
-			for (int j = 0; j < blockInv.getSlots(); j++) {
-				int stackCount = depositItem.getCount();
-				depositItem = blockInv.insertItem(j, depositItem, false);
-				count -= stackCount - depositItem.getCount();
-				if (depositItem.isEmpty() || count < 1 && !flag) break;
-			}
-			npcInv.insertItem(i, depositItem, true);
-			if (count < 1 && !flag) break;
+		for (int i = 0; i < blockInv.getSlots(); i++) {
+			unequipItem = blockInv.insertItem(i, unequipItem, false);
+			if (unequipItem.isEmpty()) break;
 		}
+		if (!unequipItem.isEmpty()) {
+			InventoryHelper.dropItemStack(world, npc.getX(), npc.getY(), npc.getZ(), unequipItem);
+		}
+		
 		brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 	}
 
@@ -99,6 +95,7 @@ public class DepositAtCommand extends TaskScrollCommand {
 		if (!CommandUtils.hasComplaint(npc)) {
 			CommandUtils.incrementCurrentInstructionIndexMemory(npc);
 		}
+
 	}
 
 }

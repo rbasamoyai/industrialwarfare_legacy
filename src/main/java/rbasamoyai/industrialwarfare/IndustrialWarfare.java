@@ -10,7 +10,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -81,8 +80,7 @@ public class IndustrialWarfare {
 		
 		ModLoadingContext.get().registerConfig(Type.SERVER, IWConfig.SPEC, "industrialwarfare-server.toml");
 	}
-	
-	@SubscribeEvent
+	 
 	public void commonSetup(FMLCommonSetupEvent event) {
 		IWNetwork initNetwork = new IWNetwork();
 		initNetwork.init();
@@ -92,7 +90,6 @@ public class IndustrialWarfare {
 		capHandler.addCapabilityListeners();
 	}
 	
-	@SubscribeEvent
 	public void clientSetup(FMLClientSetupEvent event) {
 		ScreenManager.register(ContainerInit.DIPLOMACY.get(), DiplomacyScreen::new);
 		ScreenManager.register(ContainerInit.EDIT_LABEL.get(), EditLabelScreen::new);
@@ -109,7 +106,6 @@ public class IndustrialWarfare {
 		KeyBindingsInit.register();
 	}
 	
-	@SubscribeEvent
 	public void addTexturesToStitcher(TextureStitchEvent.Pre event) {
 		event.addSprite(new ResourceLocation(MOD_ID, "item/task_icon"));
 		event.addSprite(new ResourceLocation(MOD_ID, "item/schedule_icon"));
@@ -119,7 +115,6 @@ public class IndustrialWarfare {
 		event.addSprite(new ResourceLocation(MOD_ID, "entity/task_scroll"));
 	}
 
-	@SubscribeEvent
 	public void addEntityAttributes(EntityAttributeCreationEvent event) {
 		event.put(EntityTypeInit.NPC.get(), NPCEntity.setAttributes().build());
 	}

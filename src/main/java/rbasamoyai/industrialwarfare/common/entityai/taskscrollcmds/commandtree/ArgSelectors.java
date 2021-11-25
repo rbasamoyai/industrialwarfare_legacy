@@ -2,9 +2,12 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.JumpToCommand;
@@ -20,6 +23,18 @@ public class ArgSelectors {
 
 	private static final String SELECTOR_TOOLTIP_ROOT_KEY =  "selector.tooltip." + IndustrialWarfare.MOD_ID;
 	private static final String SELECTOR_TITLE_ROOT_KEY = "selector.title." + IndustrialWarfare.MOD_ID;
+	
+	private static final List<ITextComponent> DAY_TIME_TOOLTIP = Arrays.asList(
+			new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".day_time"),
+			new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".day_time.shift_modifier").withStyle(TextFormatting.DARK_GRAY));
+	public static final IArgSelectorProvider DAY_TIME_SELECTOR = (i, menu) -> new CountArgSelector(i, 0, 1200, 60, DAY_TIME_TOOLTIP) {
+		@Override
+		public ITextComponent getTitle() {
+			String minute = String.format("%02d", this.selectedArg / 60);
+			String second = String.format("%02d", this.selectedArg % 60);
+			return new TranslationTextComponent(SELECTOR_TITLE_ROOT_KEY + ".day_time.time_format", minute, second);
+		}
+	};
 	
 	private static final List<ITextComponent> ITEM_COUNT_TOOLTIP = Arrays.asList(new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".item_count").withStyle(ArgSelector.HEADER_STYLE));
 	public static final IArgSelectorProvider ITEM_COUNT_SELECTOR = (i, menu) -> new CountArgSelector(i, 0, 1024, ITEM_COUNT_TOOLTIP);
@@ -73,6 +88,26 @@ public class ArgSelectors {
 	private static final ITextComponent DAY_TIME_CONDITION_HEADER = new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".day_time_condition").withStyle(ArgSelector.HEADER_STYLE);
 	public static final IArgSelectorProvider DAY_TIME_CONDITION_SELECTOR = (i, menu) -> new WordedArgSelector(DAY_TIME_CONDITION_GROUPS, i, DAY_TIME_CONDITION_HEADER);
 	
+	private static final List<ArgGroup> EQUIP_SLOT_GROUPS =
+			Arrays.stream(EquipmentSlotType.values())
+			.map(e -> {
+				String s = ".equip_slot." + e.getName();
+				return new ArgGroup(e.getFilterFlag(), new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + s), new TranslationTextComponent(SELECTOR_TITLE_ROOT_KEY + s));
+			})
+			.collect(Collectors.toList());
+	private static final ITextComponent EQUIP_SLOT_HEADER = new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".equip_slot").withStyle(ArgSelector.HEADER_STYLE);
+	public static final IArgSelectorProvider EQUIP_SLOT_SELECTOR = (i, menu) -> new WordedArgSelector(EQUIP_SLOT_GROUPS, i, EQUIP_SLOT_HEADER);
+	
+	private static final List<ArgGroup> UNEQUIP_SLOT_GROUPS =
+			Arrays.stream(EquipmentSlotType.values())
+			.map(e -> {
+				String s = ".unequip_slot." + e.getName();
+				return new ArgGroup(e.getFilterFlag(), new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + s), new TranslationTextComponent(SELECTOR_TITLE_ROOT_KEY + s));
+			})
+			.collect(Collectors.toList());
+	private static final ITextComponent UNEQUIP_SLOT_HEADER = new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".unequip_slot").withStyle(ArgSelector.HEADER_STYLE);
+	public static final IArgSelectorProvider UNEQUIP_SLOT_SELECTOR = (i, menu) -> new WordedArgSelector(UNEQUIP_SLOT_GROUPS, i, UNEQUIP_SLOT_HEADER);
+
 	private static final List<ArgGroup> ITEM_CONDITION_GROUPS = 
 			Arrays.asList(
 					new ArgGroup(JumpToCommand.ItemCondition.UNCONDITIONAL, new TranslationTextComponent(SELECTOR_TOOLTIP_ROOT_KEY + ".item_condition.unconditional"), new TranslationTextComponent(SELECTOR_TITLE_ROOT_KEY + ".item_condition.unconditional")),

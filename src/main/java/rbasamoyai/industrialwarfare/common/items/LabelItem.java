@@ -44,13 +44,13 @@ public class LabelItem extends Item {
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		LabelItemDataProvider provider = new LabelItemDataProvider();
 		CompoundNBT tag = nbt;
-		if (nbt == null) tag = this.defaultNBT(new CompoundNBT());
+		if (nbt == null) tag = defaultNBT(new CompoundNBT());
 		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
 		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
 		nbt.putUUID(LabelItemDataCapability.TAG_NPC_UUID, new UUID(0L, 0L));
 		nbt.putString(LabelItemDataCapability.TAG_CACHED_NAME, ITextComponent.Serializer.toJson(StringTextComponent.EMPTY));
 		return nbt;

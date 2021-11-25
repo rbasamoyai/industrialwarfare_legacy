@@ -383,6 +383,7 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob 
 		
 		if (weaponItem instanceof BowItem) {
 			this.shootUsingBow(target);
+			weapon.hurtAndBreak(1, this, npc -> this.broadcastBreakEvent(this.getUsedItemHand()));
 			this.stopUsingItem();
 		} else if (weaponItem instanceof CrossbowItem) {
 			this.shootUsingCrossbow(target);
@@ -399,7 +400,8 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob 
 	 * Code based on {@link net.minecraft.entity.monster.AbstractSkeletonEntity#performRangedAttack AbstractSkeletonEntity#performRangedAttack}
 	 */
 	private void shootUsingBow(LivingEntity target) {
-		ItemStack projectile = this.getProjectile(this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem)));
+		ItemStack bow = this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem));
+		ItemStack projectile = this.getProjectile(bow);
 		AbstractArrowEntity arrow = ProjectileHelper.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
 		Item mainhandItem = this.getMainHandItem().getItem();
 		if (mainhandItem instanceof BowItem) {

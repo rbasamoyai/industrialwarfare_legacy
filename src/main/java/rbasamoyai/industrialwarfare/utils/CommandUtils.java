@@ -1,13 +1,18 @@
 package rbasamoyai.industrialwarfare.utils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.server.ServerWorld;
@@ -20,6 +25,9 @@ import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 public class CommandUtils {
 
 	/**
+	 * Will not set a new walk target if the NPC is within range of
+	 * <b>target</b>.
+	 * 
 	 * @implNote
 	 * NPC brain requires:
 	 * <ul>
@@ -28,6 +36,9 @@ public class CommandUtils {
 	 * </ul>
 	 */
 	public static void trySetInterfaceWalkTarget(ServerWorld world, NPCEntity npc, BlockPos target, float speedModifier, int closeEnoughDist) {
+		AxisAlignedBB box = new AxisAlignedBB(target.offset(-1, -2, -1), target.offset(2, 1, 2));
+		if (box.contains(npc.position())) return;
+		
 		List<BlockPos> list = BlockPos.betweenClosedStream(target.offset(-1, -2, -1), target.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
 		Collections.shuffle(list);
 		Optional<BlockPos> optional = list.stream()
@@ -169,5 +180,23 @@ public class CommandUtils {
 	 */
 	public static void complain(NPCEntity npc, NPCComplaint complaint) {
 		npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), complaint);
+	}
+
+	public static boolean filterMatches(ItemStack filter, ItemStack stack) {
+		if (filter.isEmpty() && !stack.isEmpty()) {
+			return true;
+		} else {
+			// TODO: more complex stuff, such as filter items
+			return filter.getItem().equals(stack.getItem());
+		}
+	}
+	
+	private static final Map<Integer, EquipmentSlotType> BY_FILTER_FLAG =
+			Arrays.stream(EquipmentSlotType.values())
+			.collect(Collectors.toMap(EquipmentSlotType::getFilterFlag, e -> e));
+
+	
+	public static EquipmentSlotType equipmentSlotTypeFromFilterFlag(int flag) {
+		return BY_FILTER_FLAG.get(flag);
 	}
 }

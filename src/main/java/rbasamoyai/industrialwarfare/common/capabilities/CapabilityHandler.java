@@ -11,6 +11,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataProvider;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.LabelItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.PartItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataCapability;
@@ -31,6 +32,7 @@ public class CapabilityHandler {
 		
 		QualityItemDataCapability.register();
 		PartItemDataCapability.register();
+		FirearmItemDataCapability.register();
 		RecipeItemDataCapability.register();
 		TaskScrollDataCapability.register();
 		LabelItemDataCapability.register();

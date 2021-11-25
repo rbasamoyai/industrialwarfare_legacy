@@ -20,7 +20,6 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.C
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
 public class TakeFromCommand extends TaskScrollCommand {
@@ -80,7 +79,7 @@ public class TakeFromCommand extends TaskScrollCommand {
 		
 		ItemStackHandler npcInv = npc.getInventoryItemHandler();
 		for (int i = 0; i < blockInv.getSlots(); i++) {
-			if (!ArgUtils.filterMatches(filter, blockInv.getStackInSlot(i))) continue;
+			if (!CommandUtils.filterMatches(filter, blockInv.getStackInSlot(i))) continue;
 			
 			ItemStack takeItem = blockInv.extractItem(i, flag ? blockInv.getSlotLimit(i) : count, false);
 			for (int j = 0; j < npcInv.getSlots(); j++) {

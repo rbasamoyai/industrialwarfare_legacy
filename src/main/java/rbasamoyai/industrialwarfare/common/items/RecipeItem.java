@@ -35,13 +35,15 @@ public class RecipeItem extends QualityItem {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		RecipeItemDataProvider provider = new RecipeItemDataProvider();
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(new CompoundNBT());
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	@Override
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
-		super.defaultNBT(nbt);
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
+		QualityItem.defaultNBT(nbt);
 		nbt.putString(RecipeItemDataCapability.TAG_RECIPE_ITEM, "");
 		return nbt;
 	}

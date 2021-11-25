@@ -17,14 +17,13 @@ public class PartItemDataCapability {
 	public static Capability<IPartItemDataHandler> PART_ITEM_DATA_CAPABILITY = null;
 	
 	public static void register() {
-		CapabilityManager.INSTANCE.register(IPartItemDataHandler.class, new Storage(), PartItemDataHandler::new);
+		CapabilityManager.INSTANCE.register(IPartItemDataHandler.class, new Storage<>(), PartItemDataHandler::new);
 	}
 	
-	public static class Storage extends QualityItemDataCapability.Storage<IPartItemDataHandler> {
+	public static class Storage<T extends IPartItemDataHandler> extends QualityItemDataCapability.Storage<T> {
 		
 		@Override
-		public INBT writeNBT(Capability<IPartItemDataHandler> capability, IPartItemDataHandler instance,
-				Direction side) {
+		public INBT writeNBT(Capability<T> capability, T instance, Direction side) {
 			CompoundNBT tag = (CompoundNBT) super.writeNBT(capability, instance, side);
 			tag.putInt(TAG_PART_COUNT, instance.getPartCount());
 			tag.putFloat(TAG_WEIGHT, instance.getWeight());
@@ -32,8 +31,7 @@ public class PartItemDataCapability {
 		}
 		
 		@Override
-		public void readNBT(Capability<IPartItemDataHandler> capability, IPartItemDataHandler instance, Direction side,
-				INBT nbt) {
+		public void readNBT(Capability<T> capability, T instance, Direction side, INBT nbt) {
 			super.readNBT(capability, instance, side, nbt);
 			CompoundNBT tag = (CompoundNBT) nbt;
 			instance.setPartCount(tag.getInt(TAG_PART_COUNT));

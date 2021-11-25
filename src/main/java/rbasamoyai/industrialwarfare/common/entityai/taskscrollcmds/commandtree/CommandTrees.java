@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.JumpToCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.SwitchOrderCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.BlockPosArgHolder;
-import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.DayTimeArgHolder;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.StorageSideAccessArgHolder;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
@@ -29,7 +28,7 @@ public class CommandTrees {
 	
 	public static final CommandTree WAIT_FOR = 
 			CommandTree.builder(ArgHolders.WAIT_MODE_ARG_HOLDER)
-			.addTerminalNode(DayTimeArgHolder::new, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
+			.addTerminalNode(ArgHolders.DAY_TIME_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
 			.addTerminalNode(ArgHolders.TIME_COUNT_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.RELATIVE_TIME)
 			.build();
 	
@@ -37,7 +36,7 @@ public class CommandTrees {
 			CommandTree.builder(ArgHolders.JUMP_INDEX_ARG_HOLDER)
 			.beginNode(ArgHolders.BASE_JUMP_CONDITION_ARG_HOLDER, ALWAYS_TRUE)
 					.beginNode(ArgHolders.DAY_TIME_CONDITION_ARG_HOLDER, wrapper -> wrapper.getArgNum() == JumpToCommand.BaseCondition.DAY_TIME)
-							.addTerminalNode(DayTimeArgHolder::new, ALWAYS_TRUE)
+							.addTerminalNode(ArgHolders.DAY_TIME_ARG_HOLDER, ALWAYS_TRUE)
 					.endNode()
 					.beginNode(ArgHolders.FILTER_ARG_HOLDER, wrapper -> wrapper.getArgNum() == JumpToCommand.BaseCondition.HAS_ITEMS)
 							.beginNode(ArgHolders.ITEM_CONDITION_ARG_HOLDER, ALWAYS_TRUE)
@@ -61,8 +60,24 @@ public class CommandTrees {
 	public static final CommandTree WORK_AT =
 			CommandTree.builder(BlockPosArgHolder::new)
 			.beginNode(ArgHolders.WORK_MODE_ARG_HOLDER, ALWAYS_TRUE)
-					.addTerminalNode(DayTimeArgHolder::new, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
+					.addTerminalNode(ArgHolders.DAY_TIME_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
 					.addTerminalNode(ArgHolders.TIME_COUNT_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.RELATIVE_TIME)
+			.endNode()
+			.build();
+	
+	public static final CommandTree EQUIP =
+			CommandTree.builder(BlockPosArgHolder::new)
+			.beginNode(ArgHolders.EQUIP_ITEM_ARG_HOLDER, ALWAYS_TRUE)
+					.beginNode(ArgHolders.EQUIP_SLOT_ARG_HOLDER, ALWAYS_TRUE)
+							.addTerminalNode(StorageSideAccessArgHolder::new, ALWAYS_TRUE)
+					.endNode()
+			.endNode()
+			.build();
+	
+	public static final CommandTree UNEQUIP =
+			CommandTree.builder(BlockPosArgHolder::new)
+			.beginNode(ArgHolders.UNEQUIP_SLOT_ARG_HOLDER, ALWAYS_TRUE)
+					.addTerminalNode(StorageSideAccessArgHolder::new, ALWAYS_TRUE)
 			.endNode()
 			.build();
 	
@@ -70,7 +85,7 @@ public class CommandTrees {
 			CommandTree.builder(BlockPosArgHolder::new)
 			.beginNode(ArgHolders.PURSUIT_DISTANCE_HOLDER, ALWAYS_TRUE)
 					.beginNode(ArgHolders.PATROL_MODE_ARG_HOLDER, ALWAYS_TRUE)
-							.addTerminalNode(DayTimeArgHolder::new, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
+							.addTerminalNode(ArgHolders.DAY_TIME_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.DAY_TIME)
 							.addTerminalNode(ArgHolders.TIME_COUNT_ARG_HOLDER, wrapper -> WaitMode.fromId(wrapper.getArgNum()) == WaitMode.RELATIVE_TIME)
 					.endNode()
 			.endNode()

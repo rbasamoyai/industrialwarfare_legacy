@@ -32,12 +32,14 @@ public class QualityItem extends Item {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		QualityItemDataProvider provider = new QualityItemDataProvider();
-		if (nbt == null) this.defaultNBT(nbt);
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(nbt);
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
 		nbt.putFloat(QualityItemDataCapability.TAG_QUALITY, 1.0f);
 		return nbt;
 	}

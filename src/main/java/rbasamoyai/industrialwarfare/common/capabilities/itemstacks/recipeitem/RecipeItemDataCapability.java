@@ -16,20 +16,20 @@ public class RecipeItemDataCapability {
 	public static Capability<IRecipeItemDataHandler> RECIPE_ITEM_DATA_CAPABILITY = null;
 	
 	public static void register() {
-		CapabilityManager.INSTANCE.register(IRecipeItemDataHandler.class, new Storage(), RecipeItemDataHandler::new);
+		CapabilityManager.INSTANCE.register(IRecipeItemDataHandler.class, new Storage<>(), RecipeItemDataHandler::new);
 	}
 	
-	public static class Storage extends QualityItemDataCapability.Storage<IRecipeItemDataHandler> {
+	public static class Storage<T extends IRecipeItemDataHandler> extends QualityItemDataCapability.Storage<T> {
 		
 		@Override
-		public INBT writeNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance, Direction side) {
+		public INBT writeNBT(Capability<T> capability, T instance, Direction side) {
 			CompoundNBT tag = (CompoundNBT) super.writeNBT(capability, instance, side);
 			tag.putString(TAG_RECIPE_ITEM, instance.getItemId().toString());
 			return tag;
 		}
 		
 		@Override
-		public void readNBT(Capability<IRecipeItemDataHandler> capability, IRecipeItemDataHandler instance, Direction side, INBT nbt) {
+		public void readNBT(Capability<T> capability, T instance, Direction side, INBT nbt) {
 			super.readNBT(capability, instance, side, nbt);
 			CompoundNBT tag = (CompoundNBT) nbt;
 			instance.setItemId(tag.getString(TAG_RECIPE_ITEM));

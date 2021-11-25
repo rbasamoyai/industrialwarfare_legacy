@@ -13,6 +13,8 @@ public class NPCComplaintInit {
 	public static final RegistryObject<NPCComplaint> CANT_DEPOSIT_ITEM = COMPLAINTS.register("cant_deposit_item", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> CANT_GET_ITEM = COMPLAINTS.register("cant_get_item", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> CANT_OPEN = COMPLAINTS.register("cant_open", NPCComplaint::new);
+	public static final RegistryObject<NPCComplaint> CANT_UNEQUIP_ITEM = COMPLAINTS.register("cant_unequip_item", NPCComplaint::new);
+	public static final RegistryObject<NPCComplaint> CANT_WEAR_ARMOR = COMPLAINTS.register("cant_wear_armor", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> CLEAR = COMPLAINTS.register("clear", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> INVALID_WORKSTATION = COMPLAINTS.register("invalid_workstation", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> INVALID_ORDER = COMPLAINTS.register("invalid_order", NPCComplaint::new);

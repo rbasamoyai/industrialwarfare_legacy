@@ -18,7 +18,7 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
+import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
 public class JumpToCommand extends TaskScrollCommand {
 
@@ -60,11 +60,11 @@ public class JumpToCommand extends TaskScrollCommand {
 		
 		ItemStack mainhand = npc.getItemInHand(Hand.MAIN_HAND);
 		ItemStack offhand = npc.getItemInHand(Hand.OFF_HAND);
-		if (ArgUtils.filterMatches(filter, mainhand)) {
+		if (CommandUtils.filterMatches(filter, mainhand)) {
 			itemCount += mainhand.getCount();
 			hasItems = true;
 		}
-		if (ArgUtils.filterMatches(filter, offhand)) {
+		if (CommandUtils.filterMatches(filter, offhand)) {
 			itemCount += offhand.getCount();
 			hasItems = true;
 		}
@@ -73,7 +73,7 @@ public class JumpToCommand extends TaskScrollCommand {
 			IItemHandler npcInv = npc.getInventoryItemHandler();
 			for (int i = 0; i < npcInv.getSlots(); i++) {
 				ItemStack stack = npcInv.getStackInSlot(i);
-				if (!ArgUtils.filterMatches(filter, stack)) continue;
+				if (!CommandUtils.filterMatches(filter, stack)) continue;
 				hasItems = true;
 				itemCount += stack.getCount();
 			}

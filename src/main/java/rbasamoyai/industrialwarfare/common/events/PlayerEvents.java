@@ -32,6 +32,6 @@ public class PlayerEvents {
 			diplomacyData.initPlayerDiplomacyStatuses(player);
 			IndustrialWarfare.LOGGER.info("Initialized diplomacy for new player {} ({}) and updated diplomacy data", player.getGameProfile().getName(), player.getUUID());
 		}
-	}	
+	}
 	
 }

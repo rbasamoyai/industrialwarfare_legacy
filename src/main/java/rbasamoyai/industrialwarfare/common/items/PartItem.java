@@ -33,13 +33,15 @@ public class PartItem extends QualityItem {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		PartItemDataProvider provider = new PartItemDataProvider();
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(new CompoundNBT());
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	@Override
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
-		super.defaultNBT(nbt);
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
+		QualityItem.defaultNBT(nbt);
 		nbt.putFloat(PartItemDataCapability.TAG_PART_COUNT, 1);
 		nbt.putFloat(PartItemDataCapability.TAG_WEIGHT, 1);
 		return nbt;
