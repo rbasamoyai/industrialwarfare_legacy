@@ -20,6 +20,7 @@ can fight stuff.
 * A microcrafting system
 * Diplomacy
 * Simple defensive npc combat
+* Guns 🇺🇸🦅🦅🦅🇺🇸
 
 ### """planned""" features:
 * Generated structures with NPCs
@@ -30,7 +31,8 @@ can fight stuff.
 ### Currently working on (or not)
 * NPC Combat
    * NPC attack orders
-* Ranged weapons (hello, single shot rifles!)
+   * NPC drills for easy command chains
+* Weapon attachments and customization
 
 ---
 
