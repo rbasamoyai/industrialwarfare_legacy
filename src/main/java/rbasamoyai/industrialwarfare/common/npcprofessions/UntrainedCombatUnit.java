@@ -4,6 +4,7 @@ import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 
 public class UntrainedCombatUnit implements ICombatUnit {
 	
@@ -28,7 +29,7 @@ public class UntrainedCombatUnit implements ICombatUnit {
 	@Override
 	public boolean canUseRangedWeapon(NPCEntity npc, ItemStack weapon) {
 		Item weaponItem = weapon.getItem();
-		return weaponItem instanceof CrossbowItem /* TODO: gun item */;
+		return weaponItem instanceof CrossbowItem || weaponItem instanceof FirearmItem;
 	}
 	
 }

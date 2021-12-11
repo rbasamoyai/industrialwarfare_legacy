@@ -48,7 +48,7 @@ public class TaskScrollShelfContainer extends Container {
 	}
 	
 	public static IContainerProvider getServerContainerProvider(TaskScrollShelfTileEntity te, BlockPos activationPos) {
-		return (windowId, playerInv, data) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler(), Optional.of(te));
+		return (windowId, playerInv, player) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler(), Optional.of(te));
 	}
 	
 	protected TaskScrollShelfContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler handler, Optional<TaskScrollShelfTileEntity> optional) {

@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.core.init;
+package rbasamoyai.industrialwarfare.core.init.items;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
@@ -8,7 +8,6 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
-import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
@@ -16,6 +15,8 @@ import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.JobSitePointerItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ModSpawnEggItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
+import rbasamoyai.industrialwarfare.core.init.BlockInit;
+import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
 /*
@@ -43,14 +44,14 @@ public class ItemInit {
 	public static final RegistryObject<Item> ASSEMBLER_WORKSTATION = registerBlockItem(BlockInit.ASSEMBLER_WORKSTATION);
 	public static final RegistryObject<Item> TASK_SCROLL_SHELF = registerBlockItem(BlockInit.TASK_SCROLL_SHELF);
 	
-	public static final RegistryObject<Item> PART_IRON_WIRE = ITEMS.register("part_iron_wire", PartItem::new);
-	public static final RegistryObject<Item> PART_SCREW = ITEMS.register("part_screw", PartItem::new);
-	
 	public static final RegistryObject<Item> RECIPE_MANUAL = ITEMS.register("recipe_manual", RecipeItem::new);
 	
 	public static final RegistryObject<Item> TASK_SCROLL = ITEMS.register("task_scroll", TaskScrollItem::new);
 	public static final RegistryObject<Item> LABEL = ITEMS.register("label", LabelItem::new);
 	public static final RegistryObject<Item> SCHEDULE = ITEMS.register("schedule", ScheduleItem::new);
+	
+	public static final RegistryObject<Item> AMMO_GENERIC = ITEMS.register("ammo_generic",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

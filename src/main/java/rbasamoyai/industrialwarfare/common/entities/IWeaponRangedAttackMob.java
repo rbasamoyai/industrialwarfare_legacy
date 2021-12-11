@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import net.minecraft.entity.IRangedAttackMob;
+import net.minecraft.entity.LivingEntity;
 
 public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 
@@ -26,5 +27,7 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	boolean whileCycling();
 	
 	boolean canDoRangedAttack();
+	
+	LivingEntity getTarget();
 	
 }

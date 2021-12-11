@@ -23,7 +23,6 @@ import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
-import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
@@ -103,20 +102,22 @@ public class NPCTasks {
 		BlockPos pos = gpop.isPresent() ? gpop.get().pos() : npc.blockPosition();
 		
 		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(Arrays.asList());
-		for (LivingEntity e : visibleEntities) {
-			
+		for (LivingEntity e : visibleEntities) {		
 			if (onPatrol && !e.blockPosition().closerThan(pos, pursuitDistance)) continue;
 			
-			LazyOptional<INPCDataHandler> elzop = e.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY);
-			if (elzop.isPresent()) {
-				INPCDataHandler handler = elzop.resolve().get();
-				PlayerIDTag otherOwner = handler.getOwner();
+			Optional<Boolean> shouldAttackIfNpc = e.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY).map(h -> {
+				PlayerIDTag otherOwner = h.getOwner();
+				if (npcOwner.equals(otherOwner)) return false;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, otherOwner);
 				if (status != DiplomaticStatus.ALLY || /* DEBUG */ otherOwner.equals(PlayerIDTag.NO_OWNER)) {
 					// TODO: Fight given extra qualifiers
-					return Optional.of(e);
+					return true;
 				}
-				continue;
+				return false;
+			});
+			
+			if (shouldAttackIfNpc.isPresent() && shouldAttackIfNpc.get()) {
+				return Optional.of(e);
 			}
 			
 			if (e instanceof PlayerEntity) {
@@ -126,7 +127,6 @@ public class NPCTasks {
 				// TODO: stand down modifier (e.g. diplomatic meeting in game or sumfin)
 				if (status != DiplomaticStatus.ALLY) return Optional.of(e);
 			}
-
 		}
 		
 		return Optional.empty();

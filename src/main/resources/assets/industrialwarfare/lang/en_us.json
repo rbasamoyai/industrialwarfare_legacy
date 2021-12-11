@@ -1,4 +1,4 @@
-{
+{	
 	"item.industrialwarfare.ammo_111": "Shotshell (Paper)",
 	"item.industrialwarfare.ammo_112": "Intermediate Caliber Round (Paper)",
 	"item.industrialwarfare.ammo_113": "Large Caliber Round (Paper)",
@@ -11,6 +11,8 @@
 	"item.industrialwarfare.ammo_231": "Shotshell (Smokeless)",
 	"item.industrialwarfare.ammo_232": "Intermediate Caliber Round (Smokeless)",
 	"item.industrialwarfare.ammo_233": "Large Caliber Round (Smokeless)",
+	
+	"item.industrialwarfare.ammo_generic": "Generic Ammo",
 	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
@@ -37,8 +39,9 @@
 	"item.industrialwarfare.essence_weaponsmith":	"Weaponsmith Essence",
 	"item.industrialwarfare.essence_woodworker":	"Woodworker Essence",
 	
-	"item.industrialwarfare.part_iron_wire":	"Iron Wire",
-	"item.industrialwarfare.part_screw":		"Screw",
+	"item.industrialwarfare.part_bullet": "Bullet",
+	"item.industrialwarfare.part_iron_wire": "Iron Wire",
+	"item.industrialwarfare.part_screw": "Screw",
 	
 	"item.industrialwarfare.recipe_manual":	"Recipe Manual",
 	
@@ -109,6 +112,7 @@
 	
 	"item.industrialwarfare.rifle_henry":			"Henry Rifle",
 	"item.industrialwarfare.rifle_martini_henry":	"Martini-Henry",
+	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -118,15 +122,19 @@
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
 	
 	"key.industrialwarfare.category":	"Industrial Warfare",
+	"key.industrialwarfare.attachments_screen": "Customize Item Attachments",
 	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
+	"key.industrialwarfare.reload_firearm": "Reload Firearm",
 	
-	"entity.industrialwarfare.projectile_bullet": "Bullet",
+	"entity.industrialwarfare.bullet": "Bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",
 	"death.attack.industrialwarfare.bullet": "%1$s was shot by %2$s",
 	"death.attack.industrialwarfare.bullet.item": "%1$s was shot by %2$s using %3$s",
-	"death.attack.industrialwarfare.bullet.long_distance": "%1$s was shot by %2$s \u00A7a\u00A7l(%3$s \u00A7a\u00A7lblocks!)",
-	"death.attack.industrialwarfare.bullet.long_distance.item": "%1$s was shot by %2$s using %3$s \u00A7a\u00A7l(%4$s \u00A7a\u00A7lblocks!)",
+	
+	"gui.industrialwarfare.attachments_rifle": "Rifle Attachments",
+	"gui.industrialwarfare.attachments_firearm.melee_attachment": "Melee attachments",
+	"gui.industrialwarfare.attachments_firearm.optic_attachment": "Optic attachments", 
 	
 	"gui.industrialwarfare.workstation.craft":	"Craft",
 	"gui.industrialwarfare.workstation.tooltip.cannot_craft1": "Cannot craft right now -",
@@ -154,11 +162,10 @@
 	"tooltip.industrialwarfare.task_scroll.label":	"Label",
 	"tooltip.industrialwarfare.task_scroll.blank_label": "Blank label",
 	
-	"tooltip.industrialwarfare.gun.ammo":		"Ammo",
-	"tooltip.industrialwarfare.quality":		"Quality",
-	"tooltip.industrialwarfare.part.part_count":	"Part count",
-	"tooltip.industrialwarfare.part.weight":	"Weight",
-	"tooltip.industrialwarfare.recipe.item":	"Item",
+	"tooltip.industrialwarfare.quality": "Quality",
+	"tooltip.industrialwarfare.part.part_count": "Part count",
+	"tooltip.industrialwarfare.part.weight": "Weight",
+	"tooltip.industrialwarfare.recipe.item": "Item",
 	
 	"tooltip.industrialwarfare.quality.invalid":	"WHAT? HOW?",
 	"tooltip.industrialwarfare.quality.very_bad":	"Very Bad",
@@ -347,5 +354,9 @@
 	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away.",
 	
 	"profession.industrialwarfare.assembler":	"Assembler",
-	"profession.industrialwarfare.jobless":		"Jobless"
+	"profession.industrialwarfare.jobless":		"Jobless",
+	
+	"subtitle.industrialwarfare.item.rifle.cycled": "Rifle cycled",
+	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
+	"subtitle.industrialwarfare.item.rifle.reloaded": "Rifle reloaded"
 }

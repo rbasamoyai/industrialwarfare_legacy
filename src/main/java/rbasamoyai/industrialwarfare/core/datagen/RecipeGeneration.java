@@ -14,13 +14,13 @@ import net.minecraft.util.ResourceLocation;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.recipes.NormalWorkstationRecipeBuilder;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
-public class Recipes extends RecipeProvider {
+public class RecipeGeneration extends RecipeProvider {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	
-	public Recipes(DataGenerator dataGen) {
+	public RecipeGeneration(DataGenerator dataGen) {
 		super(dataGen);
 	}
 	
@@ -28,14 +28,14 @@ public class Recipes extends RecipeProvider {
 	protected void buildShapelessRecipes(Consumer<IFinishedRecipe> consumer) {
 		LOGGER.debug("Building recipes for rbasamoyai's Inudstrial Warfare mod");
 		
-		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_SCREW.get()), 4, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
-			.addIngredient(ItemInit.PART_IRON_WIRE.get(), 1)
-			.addIngredient(Items.IRON_NUGGET, 1)
-			.save(consumer, new ResourceLocation(IndustrialWarfare.MOD_ID, "part_screw"));
-		
-		NormalWorkstationRecipeBuilder.recipe(new ItemStack(ItemInit.PART_IRON_WIRE.get()), 2, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
+		NormalWorkstationRecipeBuilder.recipe(new ItemStack(PartItemInit.PART_IRON_WIRE.get()), 2, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
 			.addIngredient(Items.IRON_INGOT, 1)
 			.save(consumer, new ResourceLocation(IndustrialWarfare.MOD_ID, "part_iron_wire"));
+		
+		NormalWorkstationRecipeBuilder.recipe(new ItemStack(PartItemInit.PART_SCREW.get()), 4, 0, BlockInit.ASSEMBLER_WORKSTATION.get())
+			.addIngredient(PartItemInit.PART_IRON_WIRE.get(), 1)
+			.addIngredient(Items.IRON_NUGGET, 1)
+			.save(consumer, new ResourceLocation(IndustrialWarfare.MOD_ID, "part_screw"));
 	}
 
 }

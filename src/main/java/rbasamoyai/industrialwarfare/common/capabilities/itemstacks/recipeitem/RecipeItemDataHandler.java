@@ -3,12 +3,12 @@ package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataHandler;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
 public class RecipeItemDataHandler extends QualityItemDataHandler implements IRecipeItemDataHandler {
 	
 	// Defaulting to the iron wire id to be safe
-	private ResourceLocation itemId = ItemInit.PART_IRON_WIRE.getId();
+	private ResourceLocation itemId = PartItemInit.PART_IRON_WIRE.getId();
 
 	@Override
 	public void setItemId(Item item) {

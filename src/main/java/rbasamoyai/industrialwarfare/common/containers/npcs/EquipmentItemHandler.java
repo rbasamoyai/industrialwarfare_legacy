@@ -12,7 +12,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 /**
  * Equipment Item handler. Not meant to be serialized/deserialized, as it only is meant to provide

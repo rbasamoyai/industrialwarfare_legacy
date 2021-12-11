@@ -34,8 +34,8 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.core.config.IWConfig;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.RecipeInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class NormalWorkstationRecipe implements IRecipe<NormalWorkstationRecipeWrapper> {
 	

@@ -22,7 +22,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.itemhandlers.UninsertableItemHandler;
 import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 /*
  * Container for "normal" workstations (defined in NormalWorkstationContainer.java).
@@ -58,7 +58,7 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 	}
 	
 	public static IContainerProvider getServerContainerProvider(NormalWorkstationTileEntity te, BlockPos activationPos) {
-		return (windowId, playerInv, data) -> new NormalWorkstationContainer(windowId, playerInv, activationPos, te.getInputItemHandler(), te.getOutputItemHandler(), te.getRecipeItemHandler(), new WorkstationDataSync(te, playerInv.player), Optional.of(te));
+		return (windowId, playerInv, player) -> new NormalWorkstationContainer(windowId, playerInv, activationPos, te.getInputItemHandler(), te.getOutputItemHandler(), te.getRecipeItemHandler(), new WorkstationDataSync(te, player), Optional.of(te));
 	}
 	
 	public NormalWorkstationContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler input, IItemHandler output, IItemHandler recipe, IIntArray data, Optional<NormalWorkstationTileEntity> te) {

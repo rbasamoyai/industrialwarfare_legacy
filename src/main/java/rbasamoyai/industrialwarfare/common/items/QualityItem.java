@@ -76,6 +76,10 @@ public class QualityItem extends Item {
 	
 	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+		appendHoverTextStatic(stack, world, tooltip, flag);
+	}
+	
+	public static void appendHoverTextStatic(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_QUALITY,
 				getDataHandler(stack)
 						.map(h -> Screen.hasShiftDown()
@@ -102,7 +106,7 @@ public class QualityItem extends Item {
 		return stack;
 	}
 	
-	protected static CompoundNBT getCreativeData(ItemStack stack) {
+	public static CompoundNBT getCreativeData(ItemStack stack) {
 		CompoundNBT tag = new CompoundNBT();
 		getDataHandler(stack).ifPresent(h -> {
 			tag.putFloat(QualityItemDataCapability.TAG_QUALITY, h.getQuality());
@@ -110,7 +114,7 @@ public class QualityItem extends Item {
 		return tag;
 	}
 	
-	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
 		getDataHandler(stack).ifPresent(h -> {
 			h.setQuality(nbt.getFloat(QualityItemDataCapability.TAG_QUALITY));
 		});

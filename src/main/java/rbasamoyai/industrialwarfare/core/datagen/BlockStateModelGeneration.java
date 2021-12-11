@@ -17,11 +17,11 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.blocks.TaskScrollShelfBlock;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 
-public class BlockStates extends BlockStateProvider {
+public class BlockStateModelGeneration extends BlockStateProvider {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	
-	public BlockStates(DataGenerator gen, ExistingFileHelper exFileHelper) {
+	public BlockStateModelGeneration(DataGenerator gen, ExistingFileHelper exFileHelper) {
 		super(gen, IndustrialWarfare.MOD_ID, exFileHelper);
 	}
 

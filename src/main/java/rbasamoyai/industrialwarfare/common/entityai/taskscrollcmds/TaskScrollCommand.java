@@ -67,12 +67,13 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	public String toString() {
 		return this.getRegistryName().toString();
 	}
+	
 	private void initPostSetup() {
 		this.requiredMemories = this.requiredMemoriesSupplier.get();
 	}
 	
 	@SubscribeEvent
-	public static void onCommonSetup(FMLCommonSetupEvent event) {
+	public static void initValidCommands(FMLCommonSetupEvent event) {
 		TaskScrollCommandInit.TASK_SCROLL_COMMANDS.getEntries()
 				.stream()
 				.map(RegistryObject::get)

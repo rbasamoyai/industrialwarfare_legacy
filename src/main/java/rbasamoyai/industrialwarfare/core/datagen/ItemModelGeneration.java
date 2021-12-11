@@ -14,11 +14,11 @@ import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
-public class ItemModels extends ItemModelProvider {
+public class ItemModelGeneration extends ItemModelProvider {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	
-	public ItemModels(DataGenerator generator, ExistingFileHelper existingFileHelper) {
+	public ItemModelGeneration(DataGenerator generator, ExistingFileHelper existingFileHelper) {
 		super(generator, IndustrialWarfare.MOD_ID, existingFileHelper);
 	}
 	
@@ -39,6 +39,11 @@ public class ItemModels extends ItemModelProvider {
 		simpleBuilder("label");
 		
 		simpleBuilder("recipe_manual");
+		
+		simpleBuilder("ammo_generic", "ammo_large_metal");
+		
+		simpleBuilder("part_bullet");
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

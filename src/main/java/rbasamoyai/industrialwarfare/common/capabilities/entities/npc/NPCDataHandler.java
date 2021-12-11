@@ -3,7 +3,7 @@ package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 import net.minecraft.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class NPCDataHandler implements INPCDataHandler {
 	

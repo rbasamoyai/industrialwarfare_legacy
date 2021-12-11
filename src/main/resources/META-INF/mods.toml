@@ -1,23 +1,20 @@
 modLoader="javafml"
 loaderVersion="[36,)"
-license="All rights reserved"
+license="MIT License"
 #issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
 
 [[mods]]
 modId="industrialwarfare"
-version="0.2.0-alpha-dev-diplomacy"
+version="0.2.0-alpha-dev"
 displayName="Industrial Warfare"
 #updateJSONURL="https://change.me.example.invalid/updates.json"
 #displayURL="https://change.me.to.your.mods.homepage.example.invalid/"
 logoFile="logo.png"
 credits="Made by rbasamoyai"
 authors="rbasamoyai"
-description='''
-Industrial Warfare, a warfare mod made by rbasamoyai
-'''
+description='''Industrial Warfare, a warfare mod made by rbasamoyai'''
 
 [[dependencies.industrialwarfare]]
-    # the modid of the dependency
     modId="forge"
     mandatory=true
     versionRange="[36,)"
@@ -28,5 +25,12 @@ Industrial Warfare, a warfare mod made by rbasamoyai
     modId="minecraft"
     mandatory=true
     versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.industrialwarfare]]
+    modId="geckolib3"
+    mandatory=true
+    versionRange="[3.0.57,)"
     ordering="NONE"
     side="BOTH"

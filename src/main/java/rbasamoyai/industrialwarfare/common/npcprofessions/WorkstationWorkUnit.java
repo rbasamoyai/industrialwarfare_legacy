@@ -87,20 +87,21 @@ public class WorkstationWorkUnit implements IWorkUnit {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
 			return;
 		}
-		IWorkstationDataHandler handler = lzop.resolve().get();
-		
-		if (handler.hasWorker()) {
-			if (!handler.getWorkerUUID().equals(npc.getUUID())) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
-				return;
+		lzop.ifPresent(h -> {
+			if (h.hasWorker()) {
+				if (!h.getWorkerUUID().equals(npc.getUUID())) {
+					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
+					return;
+				}
+			} else {
+				h.setWorkerUUID(npc.getUUID());
 			}
-		} else {
-			handler.setWorkerUUID(npc.getUUID());
-		}
+			
+			if (!brain.hasMemoryValue(MemoryModuleType.LOOK_TARGET)) {
+				brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
+			}
+		});
 		
-		if (!brain.hasMemoryValue(MemoryModuleType.LOOK_TARGET)) {
-			brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
-		}
 	}
 
 }

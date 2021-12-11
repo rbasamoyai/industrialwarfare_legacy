@@ -1,14 +1,10 @@
 General TODO:
 
-p Add Recipe Systems
-
 p Add NPCs
 	- Add NPC professions
 		- Add worker professions
 		- Add warrior professions
 	- Add safeguarding to dimension switch
-
-- Add diplomacy
 
 - Add research system
 
@@ -30,7 +26,6 @@ Current TODO:
 		- Add combat tasks
 	- Add diplomacy
 		- Add known npcs
-	- Add test gun
-	- Rewrite QualityItem et al
-	  to be more component oriented
+	- gun meleeing and aiming
+	- Go back to using LazyOptional#ifPresent
 	  

@@ -22,10 +22,6 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
@@ -37,7 +33,6 @@ import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
-@Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class TaskScrollItem extends Item {
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".task_scroll.title");
@@ -45,8 +40,7 @@ public class TaskScrollItem extends Item {
 	
 	private static List<TaskScrollCommand> VALID_COMMANDS;
 	
-	@SubscribeEvent
-	public static void initValidCommands(FMLCommonSetupEvent event) {
+	public static void initValidCommands() {
 		VALID_COMMANDS = Arrays.asList(
 				TaskScrollCommandInit.MOVE_TO.get(),
 				TaskScrollCommandInit.TAKE_FROM.get(),

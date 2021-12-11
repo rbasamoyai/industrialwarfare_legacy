@@ -28,8 +28,8 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.itemhandlers.ToggleableSlotItemHandler;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 /*
  * Base NPC container class. Interfaces with the task slot and the inventory.
