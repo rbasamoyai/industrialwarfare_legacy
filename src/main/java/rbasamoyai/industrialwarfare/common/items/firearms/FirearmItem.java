@@ -152,6 +152,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
 			readCreativeData(stack, nbt.getCompound("creativeData"));
+			nbt.remove("creativeData");
+			return;
 		}
 		
 		getDataHandler(stack).ifPresent(h -> {
