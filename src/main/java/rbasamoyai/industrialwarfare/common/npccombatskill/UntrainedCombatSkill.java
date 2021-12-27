@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.npcprofessions;
+package rbasamoyai.industrialwarfare.common.npccombatskill;
 
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.Item;
@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 
-public class UntrainedCombatUnit implements ICombatUnit {
+public class UntrainedCombatSkill extends NPCCombatSkill {
 	
 	private static final float GAUSSIAN_MIDPOINT = 0.6f;
 	private static final float MAX_DEVIATION = 0.2f;

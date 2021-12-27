@@ -47,7 +47,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
 			return false;
 		}
-		if (lzop.resolve().get().getProfession().getWorkUnit().checkMemories(npc)) {
+		if (lzop.resolve().get().getProfession().checkMemories(npc)) {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 			return false;
 		}
@@ -79,7 +79,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		
 		NPCProfession profession = handler.getProfession();
 		BlockPos target = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
-		Optional<BlockPos> posOptional = profession.getWorkUnit().getWorkingArea(world, target, npc);
+		Optional<BlockPos> posOptional = profession.getWorkingArea(world, target, npc);
 		if (!posOptional.isPresent()) {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
 			return;
@@ -110,7 +110,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
 			return;
 		}
-		lzop.resolve().get().getProfession().getWorkUnit().work(world, npc, gameTime, order);
+		lzop.resolve().get().getProfession().work(world, npc, gameTime, order);
 		
 		WaitMode workMode = WaitMode.fromId(order.getWrappedArg(WORK_MODE_ARG_INDEX).getArgNum());
 		if (workMode != WaitMode.HEARD_BELL && !brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR.get())) {

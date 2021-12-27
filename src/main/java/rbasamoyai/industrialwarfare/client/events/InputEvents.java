@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.KeyBindingsInit;
 import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
@@ -75,12 +76,16 @@ public class InputEvents {
 			}
 		}
 		if (event.isUseItem()) {
-			if (event.isCancelable()
-				&& stack.getItem() instanceof FirearmItem
-				&& !FirearmItem.isMeleeing(stack)
-				&& !FirearmItem.isFinishedAction(stack)) {
-				//event.setCanceled(true);
-				//event.setSwingHand(false);
+			if (event.isCancelable()) {
+				if (stack.getItem() instanceof FirearmItem
+					&& !FirearmItem.isMeleeing(stack)
+					&& !FirearmItem.isFinishedAction(stack)) {
+					//event.setCanceled(true);
+					//event.setSwingHand(false);
+				}
+				if (stack.getItem() == ItemInit.WHISTLE.get()) {
+					event.setSwingHand(false);
+				}
 			}
 		}
 	}

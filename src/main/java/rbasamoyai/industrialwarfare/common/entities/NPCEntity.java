@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -61,10 +62,13 @@ import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
+import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCCombatSkillInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
@@ -75,12 +79,19 @@ import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
  * Base NPC entity class for rbasamoyai's Industrial Warfare.
  */
 
-public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob, IQualityModifier, IItemPredicateSearch {
+public class NPCEntity extends CreatureEntity implements
+		IWeaponRangedAttackMob,
+		IQualityModifier,
+		IHasDiplomaticOwner,
+		IItemPredicateSearch {
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
+			MemoryModuleType.ANGRY_AT,
 			MemoryModuleType.ATTACK_COOLING_DOWN,
 			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+			MemoryModuleType.CELEBRATE_LOCATION,
+			MemoryModuleType.DANCING,
 			MemoryModuleType.DOORS_TO_CLOSE,
 			MemoryModuleType.HEARD_BELL_TIME,
 			MemoryModuleType.HOME,
@@ -93,10 +104,13 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
+			MemoryModuleTypeInit.COMBAT_MODE.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
+			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
+			MemoryModuleTypeInit.IN_FORMATION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
@@ -120,10 +134,10 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 	private float timeModifier;
 	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
-		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), null, 5, true);
+		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
 	}
 	
-	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, NPCProfession profession, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
+	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, NPCProfession profession, NPCCombatSkill combatSkill, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
 		super(type, worldIn);
 		
 		this.setCustomName(new StringTextComponent("Unnamed NPC"));
@@ -132,6 +146,7 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 			h.setCanWearEquipment(canWearEquipment);
 			h.setOwner(owner == null ? PlayerIDTag.NO_OWNER : PlayerIDTag.of(owner));
 			h.setProfession(profession);
+			h.setCombatSkill(combatSkill);
 		});
 		
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
@@ -149,7 +164,8 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 				.add(Attributes.MAX_HEALTH, 20.0d)
 				.add(Attributes.MOVEMENT_SPEED, 0.1d)
 				.add(Attributes.ATTACK_DAMAGE, 2.0d)
-				.add(Attributes.ATTACK_SPEED, 4.0d);
+				.add(Attributes.ATTACK_SPEED, 4.0d)
+				.add(Attributes.FOLLOW_RANGE, 50.0d);
 	}
 	
 	public ItemStackHandler getInventoryItemHandler() {
@@ -224,7 +240,6 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 			break;
 		}
 		
-		brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), new BlockPos(0, 56, 10)));
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
 	
@@ -311,6 +326,25 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 	@Override
 	public void tick() {
 		super.tick();
+	}
+	
+	@Override
+	public boolean isGlowing() {
+		if (this.level.isClientSide) {
+			Minecraft mc = Minecraft.getInstance();
+			ItemStack stack = mc.player.getItemInHand(Hand.MAIN_HAND);
+			
+			if (stack.getItem() instanceof IHighlighterItem) {
+				return ((IHighlighterItem) stack.getItem()).shouldHighlightEntity(stack, this);
+			}
+		}
+		
+		return super.isGlowing();
+	}
+	
+	@Override
+	public PlayerIDTag getDiplomaticOwner() {
+		return this.getDataHandler().map(INPCDataHandler::getOwner).orElse(PlayerIDTag.NO_OWNER);
 	}
 	
 	/*
@@ -556,26 +590,23 @@ public class NPCEntity extends CreatureEntity implements IWeaponRangedAttackMob,
 	
 	public boolean canUseRangedWeapon(ItemStack weapon) {
 		return this.getDataHandler()
-				.map(INPCDataHandler::getProfession)
-				.map(NPCProfession::getCombatUnit)
-				.map(cu -> cu.canUseRangedWeapon(this, weapon))
+				.map(INPCDataHandler::getCombatSkill)
+				.map(cs -> cs.canUseRangedWeapon(this, weapon))
 				.orElse(false);
 	}
 	
 	private float getNextEffectiveness() {
 		this.effectiveness = this.getDataHandler()
-				.map(INPCDataHandler::getProfession)
-				.map(NPCProfession::getCombatUnit)
-				.map(cu -> cu.getEffectiveness(this))
+				.map(INPCDataHandler::getCombatSkill)
+				.map(cs -> cs.getEffectiveness(this))
 				.orElse(this.getRandom().nextFloat());
 		return this.effectiveness;
 	}
 	
 	private float getNextTimeModifier() {
 		this.timeModifier = this.getDataHandler()
-				.map(INPCDataHandler::getProfession)
-				.map(NPCProfession::getCombatUnit)
-				.map(cu -> cu.getTimeModifier(this))
+				.map(INPCDataHandler::getCombatSkill)
+				.map(cs -> cs.getTimeModifier(this))
 				.orElse(this.getRandom().nextFloat());
 		return this.timeModifier;
 	}

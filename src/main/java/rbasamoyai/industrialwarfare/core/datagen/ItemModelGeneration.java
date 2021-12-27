@@ -44,6 +44,8 @@ public class ItemModelGeneration extends ItemModelProvider {
 		
 		simpleBuilder("part_bullet");
 		
+		simpleBuilder("whistle");
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

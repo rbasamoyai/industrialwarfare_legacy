@@ -27,16 +27,16 @@ import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
-public class WorkstationWorkUnit implements IWorkUnit {
+public class WorkstationProfession extends NPCProfession {
 
 	private final Supplier<ImmutableMap<MemoryModuleType<?>, MemoryModuleStatus>> memoryChecks;
 	private final Set<Block> workstations;
 	
-	public WorkstationWorkUnit(Block workstation) {
+	public WorkstationProfession(Block workstation) {
 		this(ImmutableSet.of(workstation));
 	}
 	
-	public WorkstationWorkUnit(Set<Block> workstations) {
+	public WorkstationProfession(Set<Block> workstations) {
 		this.memoryChecks = () -> ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED

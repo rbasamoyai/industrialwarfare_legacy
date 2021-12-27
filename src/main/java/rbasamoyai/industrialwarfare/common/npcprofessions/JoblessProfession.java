@@ -7,7 +7,7 @@ import net.minecraft.world.World;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
-public class JoblessWorkUnit implements IWorkUnit {
+public class JoblessProfession extends NPCProfession {
 
 	@Override
 	public boolean checkMemories(NPCEntity npc) {

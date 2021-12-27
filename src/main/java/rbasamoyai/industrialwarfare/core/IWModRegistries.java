@@ -12,6 +12,7 @@ import net.minecraftforge.registries.RegistryBuilder;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
+import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 
 /**
@@ -23,6 +24,7 @@ import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 @EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWModRegistries {
 	
+	public static IForgeRegistry<NPCCombatSkill> NPC_COMBAT_SKILLS = null;
 	public static IForgeRegistry<NPCComplaint> NPC_COMPLAINTS = null;
 	public static IForgeRegistry<NPCProfession> NPC_PROFESSIONS = null;
 	public static IForgeRegistry<TaskScrollCommand> TASK_SCROLL_COMMANDS = null;
@@ -30,6 +32,14 @@ public class IWModRegistries {
 	@SubscribeEvent
 	public static void buildModRegistries(RegistryEvent.NewRegistry event) {
 		IndustrialWarfare.LOGGER.info("Starting registry building for IndustrialWarfare by rbasamoyai");
+		
+		NPC_COMBAT_SKILLS = new RegistryBuilder<NPCCombatSkill>()
+				.setName(KEY_NPC_COMBAT_SKILLS.location())
+				.setMaxID(MAX_ID)
+				.setType(NPCCombatSkill.class)
+				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "untrained"))
+				.allowModification()
+				.create();
 		
 		NPC_COMPLAINTS = new RegistryBuilder<NPCComplaint>()
 				.setName(KEY_NPC_COMPLAINTS.location())
@@ -58,6 +68,7 @@ public class IWModRegistries {
 		IndustrialWarfare.LOGGER.info("Finished registry building for Industrial Warfare by rbasamoyai");
 	}
 	
+	private static final RegistryKey<Registry<NPCCombatSkill>> KEY_NPC_COMBAT_SKILLS = key("npc_combat_skills");
 	private static final RegistryKey<Registry<NPCComplaint>> KEY_NPC_COMPLAINTS = key("npc_complaints");
 	private static final RegistryKey<Registry<NPCProfession>> KEY_NPC_PROFESSIONS = key("npc_professions");
 	private static final RegistryKey<Registry<TaskScrollCommand>> KEY_TASK_COMMANDS = key("task_commands");

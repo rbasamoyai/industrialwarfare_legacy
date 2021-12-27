@@ -27,7 +27,7 @@ public class FirearmInit {
 							.headshotMultiplier(3.0f)
 							.spread(0.1f)
 							.hipfireSpread(5.0f)
-							.muzzleVelocity(5.0f)
+							.muzzleVelocity(7.5f)
 							.horizontalRecoil(e -> 5.0f * (float) e.getRandom().nextGaussian())
 							.verticalRecoil(e -> 8.0f + 2.0f * e.getRandom().nextFloat())
 							.cooldownTime(10)

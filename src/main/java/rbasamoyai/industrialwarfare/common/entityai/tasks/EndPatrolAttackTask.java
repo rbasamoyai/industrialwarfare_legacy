@@ -14,21 +14,19 @@ import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class EndAttackWithPatrolTask extends Task<LivingEntity> {
+public class EndPatrolAttackTask extends Task<LivingEntity> {
 
-	public EndAttackWithPatrolTask() {
+	public EndPatrolAttackTask() {
 		super(ImmutableMap.of(
 				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleTypeInit.CACHED_POS.get(), MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.ON_PATROL.get(), MemoryModuleStatus.REGISTERED));
+				MemoryModuleTypeInit.ON_PATROL.get(), MemoryModuleStatus.VALUE_PRESENT));
 	}
 	
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, LivingEntity entity) {
 		Brain<?> brain = entity.getBrain();
 		LivingEntity target = brain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
-		if (target.isDeadOrDying()) return true;
-		
 		Optional<GlobalPos> gpop = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get());
 		BlockPos pos;
 		if (gpop.isPresent()) {
@@ -38,8 +36,7 @@ public class EndAttackWithPatrolTask extends Task<LivingEntity> {
 			brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(world.dimension(), pos));
 		}
 		
-		Optional<Integer> pursuitDistance = brain.getMemory(MemoryModuleTypeInit.ON_PATROL.get());
-		return pursuitDistance.isPresent() ? !target.blockPosition().closerThan(pos, pursuitDistance.get()) : true;
+		return !target.blockPosition().closerThan(pos, brain.getMemory(MemoryModuleTypeInit.ON_PATROL.get()).get());
 	}
 	
 	@Override

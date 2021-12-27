@@ -67,6 +67,7 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.HAMMER),
 					getItemStack(ItemInit.WAND),
+					getItemStack(ItemInit.WHISTLE),
 					getItemStack(ItemInit.CURED_FLESH),
 					getItemStack(ItemInit.BODY_PART),
 					getItemStack(ItemInit.MAKESHIFT_BRAIN),

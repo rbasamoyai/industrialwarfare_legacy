@@ -21,10 +21,13 @@ Current TODO:
 	- Add professions
 		- Rewrite work component
 		  to allow for other
-		  kinds of workw
+		  kinds of work
 		- Add combat tasks
 	- Add diplomacy
 		- Add known npcs
 	- gun meleeing
+	- Formation movement
+		- Navigator
+		- 
 	- Go back to using LazyOptional#ifPresent
 	  

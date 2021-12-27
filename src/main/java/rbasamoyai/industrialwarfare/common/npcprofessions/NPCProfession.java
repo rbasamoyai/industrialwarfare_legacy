@@ -1,26 +1,19 @@
 package rbasamoyai.industrialwarfare.common.npcprofessions;
 
-import java.util.Objects;
+import java.util.Optional;
 
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.registries.ForgeRegistryEntry;
+import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
-public class NPCProfession extends ForgeRegistryEntry<NPCProfession> {
-
-	private final IWorkUnit workUnit;
-	private final ICombatUnit combatUnit;
+public abstract class NPCProfession extends ForgeRegistryEntry<NPCProfession> {
 	
-	public NPCProfession(IWorkUnit workUnit, ICombatUnit combatUnit) {
-		Objects.requireNonNull(workUnit);
-		Objects.requireNonNull(combatUnit);
-		this.workUnit = workUnit;
-		this.combatUnit = combatUnit;
-	}
+	public abstract boolean checkMemories(NPCEntity npc);
 	
-	public static NPCProfession untrainedCombat(IWorkUnit workUnit) {
-		return new NPCProfession(workUnit, new UntrainedCombatUnit());
-	}
+	public abstract Optional<BlockPos> getWorkingArea(World world, BlockPos pos, NPCEntity npc);
 	
-	public IWorkUnit getWorkUnit() { return this.workUnit; }
-	public ICombatUnit getCombatUnit() { return this.combatUnit; }
+	public abstract void work(World world, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
 }

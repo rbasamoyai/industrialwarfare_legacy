@@ -10,6 +10,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
+import rbasamoyai.industrialwarfare.common.items.WhistleItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.JobSitePointerItem;
@@ -29,6 +30,7 @@ public class ItemInit {
 	
 	public static final RegistryObject<Item> HAMMER = ITEMS.register("hammer", ItemInit::toolItem);
 	public static final RegistryObject<Item> WAND = ITEMS.register("wand", ItemInit::toolItem);
+	public static final RegistryObject<Item> WHISTLE = ITEMS.register("whistle", WhistleItem::new);
 	
 	public static final RegistryObject<Item> JOB_SITE_POINTER = ITEMS.register("job_site_pointer", JobSitePointerItem::new);
 	public static final RegistryObject<Item> COMPLAINT_REMOVER = ITEMS.register("complaint_remover", ComplaintRemoverItem::new);

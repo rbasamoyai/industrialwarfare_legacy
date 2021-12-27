@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
@@ -25,6 +26,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
@@ -291,7 +293,12 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
-		return oldStack.getItem() != newStack.getItem();
+		return slotChanged;
+	}
+	
+	@Override
+	public boolean canAttackBlock(BlockState state, World level, BlockPos pos, PlayerEntity player) {
+		return false; // TODO: maybe trowel melee?
 	}
 	
 	protected boolean canMelee(ItemStack firearm, LivingEntity shooter) {
