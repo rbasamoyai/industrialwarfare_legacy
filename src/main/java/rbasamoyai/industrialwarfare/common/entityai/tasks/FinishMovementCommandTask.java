@@ -24,7 +24,8 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 				memoryType, MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT));
+				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT,
+				MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED));
 		this.memoryType = memoryType;
 	}
 	
@@ -51,6 +52,7 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 		Brain<?> brain = entity.getBrain();
 		brain.eraseMemory(this.memoryType);
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
+		brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
 	}
 	
 	private boolean checkMemories(Brain<?> brain) {

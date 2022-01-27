@@ -29,11 +29,13 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -114,6 +116,8 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		ServerWorld slevel = (ServerWorld) player.level;
 		
 		BlockPos pos = useContext.getClickedPos();
+		Vector3d precisePos = useContext.getClickLocation();
+		boolean shouldBePrecise = useContext.getClickedFace() == Direction.UP;
 		ItemStack stack = useContext.getItemInHand();
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
@@ -139,6 +143,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			if (!checkMemoryForCombat(brain)) continue;
 			brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
 			brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(unit.level.dimension(), pos));
+			if (shouldBePrecise) brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
 			brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
 			brain.setMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), true);
 			brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), groupUuid);
@@ -199,6 +204,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			Brain<?> brain = leUnit.getBrain();
 			if (checkMemoryForCombat(brain)) {
 				brain.eraseMemory(MemoryModuleType.MEETING_POINT);
+				brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
 				brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
 				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
 				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
@@ -220,7 +226,8 @@ public class WhistleItem extends Item implements IHighlighterItem {
 					MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 					MemoryModuleTypeInit.COMBAT_MODE.get(),
 					MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
-					MemoryModuleTypeInit.IN_COMMAND_GROUP.get()
+					MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
+					MemoryModuleTypeInit.PRECISE_POS.get()
 					);
 		}
 		

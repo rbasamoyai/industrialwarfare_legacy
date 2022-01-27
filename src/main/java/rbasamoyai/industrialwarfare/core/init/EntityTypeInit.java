@@ -3,7 +3,6 @@ package rbasamoyai.industrialwarfare.core.init;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
@@ -14,7 +13,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.debugitems.ModSpawnEggItem;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class EntityTypeInit {
@@ -32,11 +30,6 @@ public class EntityTypeInit {
 					.sized(0.25f, 0.25f)
 					.clientTrackingRange(4)
 					.build(makeId("bullet").toString()));
-	
-	@SubscribeEvent
-	public static void registerSpawnEggs(RegistryEvent.Register<EntityType<?>> event) {
-		ModSpawnEggItem.registerSpawnEggs();
-	}
 	
 	@SubscribeEvent
 	public static void addEntityAttributes(EntityAttributeCreationEvent event) {

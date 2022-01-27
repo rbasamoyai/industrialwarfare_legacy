@@ -18,16 +18,9 @@ p Add NPCs
 - D O C U M E N T A T I O N
 
 Current TODO:
-	- Add professions
-		- Rewrite work component
-		  to allow for other
-		  kinds of work
-		- Add combat tasks
-	- Add diplomacy
-		- Add known npcs
-	- gun meleeing
-	- Formation movement
-		- Navigator
-		- 
-	- Go back to using LazyOptional#ifPresent
+	- Formations
+		- Formation creator
+		- Forming up
+		- Pathing for the formation
+		- Formation movement
 	  

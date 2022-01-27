@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.core.init.items;
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,7 +15,6 @@ import rbasamoyai.industrialwarfare.common.items.WhistleItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.JobSitePointerItem;
-import rbasamoyai.industrialwarfare.common.items.debugitems.ModSpawnEggItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
@@ -36,7 +36,7 @@ public class ItemInit {
 	public static final RegistryObject<Item> COMPLAINT_REMOVER = ITEMS.register("complaint_remover", ComplaintRemoverItem::new);
 	public static final RegistryObject<Item> DEBUG_OWNER = ITEMS.register("debug_owner", DebugOwnerItem::new);
 	public static final RegistryObject<Item> NPC_SPAWN_EGG = ITEMS.register("npc_spawn_egg", () ->
-			new ModSpawnEggItem(EntityTypeInit.NPC, 0x0000afaf, 0x00c69680, new Item.Properties().tab(IWItemGroups.TAB_DEBUG)));
+			new ForgeSpawnEggItem(EntityTypeInit.NPC, 0x0000afaf, 0x00c69680, new Item.Properties().tab(IWItemGroups.TAB_DEBUG)));
 	
 	public static final RegistryObject<Item> CURED_FLESH = ITEMS.register("cured_flesh", ItemInit::generalGenericItem);
 	public static final RegistryObject<Item> BODY_PART = ITEMS.register("body_part", ItemInit::generalGenericItem);

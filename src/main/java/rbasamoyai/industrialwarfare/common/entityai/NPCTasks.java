@@ -37,9 +37,10 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTas
 import rbasamoyai.industrialwarfare.common.entityai.tasks.FinishMovementCommandTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetNoCooldownTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class NPCTasks {
@@ -48,7 +49,8 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
-				Pair.of(0, new WalkToTargetNoCooldownTask()),
+				Pair.of(0, new WalkToTargetSpecialTask()),
+				Pair.of(0, new PreciseWalkToPositionTask(2.5f, 1.0d, 0.05d)),
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),

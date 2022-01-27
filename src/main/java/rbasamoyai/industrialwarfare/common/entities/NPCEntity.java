@@ -110,9 +110,10 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
-			MemoryModuleTypeInit.IN_FORMATION.get(),
+			MemoryModuleTypeInit.IN_FORMATION_WITH.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
+			MemoryModuleTypeInit.PRECISE_POS.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
@@ -152,7 +153,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
 		this.equipmentItemHandler = new EquipmentItemHandler(this);
 		
-		((GroundPathNavigator) this.getNavigation()).setCanOpenDoors(true);
+		((GroundPathNavigator) this.navigation).setCanOpenDoors(true);
 		
 		this.getNextEffectiveness();
 		
@@ -188,7 +189,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.inventoryItemHandler.setSize(newSize);
 	}
 	
-	/**
+	/*
 	 * AI METHODS
 	 */
 	
@@ -252,8 +253,6 @@ public class NPCEntity extends CreatureEntity implements
 			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get()), this.blockPosition()); 
 			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
 		}
-		
-		this.tickInventory();
 		
 		super.customServerAiStep();
 	}
@@ -326,6 +325,9 @@ public class NPCEntity extends CreatureEntity implements
 	@Override
 	public void tick() {
 		super.tick();
+		if (!this.level.isClientSide) {
+			this.tickInventory();
+		}
 	}
 	
 	@Override

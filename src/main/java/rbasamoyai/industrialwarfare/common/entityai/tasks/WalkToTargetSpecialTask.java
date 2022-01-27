@@ -7,7 +7,7 @@ import net.minecraft.entity.ai.brain.memory.WalkTarget;
 import net.minecraft.entity.ai.brain.task.WalkToTargetTask;
 import net.minecraft.world.server.ServerWorld;
 
-public class WalkToTargetNoCooldownTask extends WalkToTargetTask {
+public class WalkToTargetSpecialTask extends WalkToTargetTask {
 
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld level, MobEntity entity) {

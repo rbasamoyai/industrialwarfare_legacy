@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.entities.renderers.BulletRenderer;
+import rbasamoyai.industrialwarfare.client.entities.renderers.NothingRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
@@ -40,7 +40,7 @@ public class ClientEvents {
 		ScreenManager.register(ContainerInit.TASK_SCROLL.get(), TaskScrollScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
 		
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), BulletRenderer::new);
+		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), NothingRenderer::new);
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);
 		
 		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);

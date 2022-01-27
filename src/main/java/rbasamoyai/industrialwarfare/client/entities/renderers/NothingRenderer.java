@@ -3,26 +3,26 @@ package rbasamoyai.industrialwarfare.client.entities.renderers;
 import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
 
-public class BulletRenderer extends EntityRenderer<BulletEntity> {
+public class NothingRenderer<T extends Entity> extends EntityRenderer<T> {
 
 	// Not to point to an actual texture file, the entity will be invisible
-	public static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/entity/bullet.png");
+	public static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/entity/invalid.png");
 	
-	public BulletRenderer(EntityRendererManager manager) {
+	public NothingRenderer(EntityRendererManager manager) {
 		super(manager);
 	}
 	
 	@Override
-	public ResourceLocation getTextureLocation(BulletEntity entity) {
+	public ResourceLocation getTextureLocation(T entity) {
 		return TEXTURE_LOCATION;
 	}
 	
 	@Override
-	public boolean shouldRender(BulletEntity entity, ClippingHelper helper, double p_225626_3_, double p_225626_5_, double p_225626_7_) {
+	public boolean shouldRender(T entity, ClippingHelper helper, double distX, double distY, double distZ) {
 		return false;
 	}
 	
