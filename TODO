@@ -6,6 +6,8 @@ p Add NPCs
 		- Add warrior professions
 	- Add safeguarding to dimension switch
 
+- Formation creator and custom formations
+
 - Add research system
 
 - Add Weapons
@@ -19,8 +21,15 @@ p Add NPCs
 
 Current TODO:
 	- Formations
-		- Formation creator
+		- Dynamic formations
 		- Forming up
+			- PersonnelFormation
+			- MultiFormation
+			- Improved forming up
 		- Pathing for the formation
 		- Formation movement
+			- Reverse formation
+		- Formation actions
+	
+	- Combat Units
 	  

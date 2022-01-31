@@ -1,14 +1,15 @@
 package rbasamoyai.industrialwarfare.client.events;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Effect;
+import net.minecraft.util.Hand;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.FOVUpdateEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
@@ -22,6 +23,7 @@ import rbasamoyai.industrialwarfare.client.items.renderers.IRendersPlayerArms;
 import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
 import rbasamoyai.industrialwarfare.common.items.IFovModifier;
 import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
+import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class RenderEvents {
@@ -69,6 +71,21 @@ public class RenderEvents {
 		Item item = stack.getItem();
 		float fovModifier = item instanceof IFovModifier ? ((IFovModifier) item).getFovModifier(stack) : 1.0f;
 		event.setNewfov(event.getFov() * fovModifier);
+	}
+	
+	@SubscribeEvent
+	public static void onRenderEntity(RenderLivingEvent.Post<LivingEntity, EntityModel<LivingEntity>> event) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		
+		LivingEntity e = event.getEntity();
+		IRenderTypeBuffer buf = event.getBuffers();
+		
+		ItemStack stack = mc.player.getItemInHand(Hand.MAIN_HAND);
+		
+		if (stack.getItem() instanceof IHighlighterItem && ((IHighlighterItem) stack.getItem()).shouldHighlightEntity(stack, e)) {
+			((IHighlighterItem) stack.getItem()).renderHighlight(e, stack, event.getMatrixStack(), buf);
+		}
 	}
 	
 }

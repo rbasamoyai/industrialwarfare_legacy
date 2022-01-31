@@ -42,6 +42,7 @@ public class ClientEvents {
 		
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), NothingRenderer::new);
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);
+		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.FORMATION_LEADER.get(), NothingRenderer::new);
 		
 		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);
 	}

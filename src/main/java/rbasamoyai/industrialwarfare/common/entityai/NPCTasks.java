@@ -19,6 +19,7 @@ import net.minecraft.entity.ai.brain.task.InteractWithDoorTask;
 import net.minecraft.entity.ai.brain.task.LookAtEntityTask;
 import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.brain.task.MoveToTargetTask;
+import net.minecraft.entity.ai.brain.task.MultiTask;
 import net.minecraft.entity.ai.brain.task.SwimTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
@@ -41,6 +42,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionT
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class NPCTasks {
@@ -50,7 +52,7 @@ public class NPCTasks {
 				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new PreciseWalkToPositionTask(2.5f, 1.0d, 0.05d)),
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d)),
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),
@@ -60,7 +62,7 @@ public class NPCTasks {
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getIdlePackage() {
 		return ImmutableList.of(
-				Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.MEETING_POINT, 2.5f, 1, 100)),
+				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
 				Pair.of(1, new LookAtEntityTask(4.0f))//,
 				//Pair.of(2, new WalkTowardsLookTargetTask(2.5f, 2))
 				);
@@ -74,12 +76,12 @@ public class NPCTasks {
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {
-		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.HOME, 2.5f, 1, 100)));
+		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.HOME, 3.0f, 1, 100)));
 	}
 	
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getFightPackage() {
 		return ImmutableList.of(
-				Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.MEETING_POINT, 2.5f, 1, 100)),
+				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
 				Pair.of(1, new MoveToTargetTask(3.0f)),
 				Pair.of(1, new ExtendedShootTargetTask<>()),
 				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),

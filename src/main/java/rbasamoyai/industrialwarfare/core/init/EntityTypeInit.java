@@ -12,6 +12,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
@@ -31,9 +32,17 @@ public class EntityTypeInit {
 					.clientTrackingRange(4)
 					.build(makeId("bullet").toString()));
 	
+	public static final RegistryObject<EntityType<FormationLeaderEntity>> FORMATION_LEADER = ENTITY_TYPES.register("formation_leader",
+			() -> EntityType.Builder.<FormationLeaderEntity>of(FormationLeaderEntity::new, EntityClassification.MISC)
+					.sized(0.6f, 1.8f)
+					.setTrackingRange(8)
+					.noSummon()
+					.build(makeId("formation_leader").toString()));
+	
 	@SubscribeEvent
 	public static void addEntityAttributes(EntityAttributeCreationEvent event) {
 		event.put(EntityTypeInit.NPC.get(), NPCEntity.setAttributes().build());
+		event.put(EntityTypeInit.FORMATION_LEADER.get(), FormationLeaderEntity.setAttributes().build());
 	}
 	
 	private static ResourceLocation makeId(String id) {

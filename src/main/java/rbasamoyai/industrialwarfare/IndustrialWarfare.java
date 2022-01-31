@@ -19,6 +19,7 @@ import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
@@ -50,6 +51,7 @@ public class IndustrialWarfare {
 		NPCComplaintInit.COMPLAINTS.register(modEventBus);
 		NPCProfessionInit.PROFESSIONS.register(modEventBus);
 		TaskScrollCommandInit.TASK_SCROLL_COMMANDS.register(modEventBus);
+		UnitFormationTypeInit.UNIT_FORMATION_TYPES.register(modEventBus);
 		
 		ModLoadingContext.get().registerConfig(Type.SERVER, IWConfig.SPEC, "industrialwarfare-server.toml");
 		

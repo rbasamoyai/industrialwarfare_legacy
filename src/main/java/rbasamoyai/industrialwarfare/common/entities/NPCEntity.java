@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -62,7 +61,7 @@ import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
-import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
+import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
@@ -83,7 +82,8 @@ public class NPCEntity extends CreatureEntity implements
 		IWeaponRangedAttackMob,
 		IQualityModifier,
 		IHasDiplomaticOwner,
-		IItemPredicateSearch {
+		IItemPredicateSearch,
+		IMovesInFormation {
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,
@@ -110,7 +110,6 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
-			MemoryModuleTypeInit.IN_FORMATION_WITH.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
@@ -272,6 +271,20 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	/*
+	 * FORMATION METHODS
+	 */
+	
+	@Override
+	public int getFormationRank() {
+		return 0;
+	}
+	
+	@Override
+	public boolean isSpecialUnit() {
+		return false;
+	}
+	
+	/*
 	 * INTERFACING METHODS
 	 */
 	
@@ -328,20 +341,6 @@ public class NPCEntity extends CreatureEntity implements
 		if (!this.level.isClientSide) {
 			this.tickInventory();
 		}
-	}
-	
-	@Override
-	public boolean isGlowing() {
-		if (this.level.isClientSide) {
-			Minecraft mc = Minecraft.getInstance();
-			ItemStack stack = mc.player.getItemInHand(Hand.MAIN_HAND);
-			
-			if (stack.getItem() instanceof IHighlighterItem) {
-				return ((IHighlighterItem) stack.getItem()).shouldHighlightEntity(stack, this);
-			}
-		}
-		
-		return super.isGlowing();
 	}
 	
 	@Override

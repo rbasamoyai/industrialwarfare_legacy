@@ -31,7 +31,6 @@ public class MemoryModuleTypeInit {
 	public static final RegistryObject<MemoryModuleType<Integer>> CURRENT_ORDER_INDEX = MEMORY_MODULE_TYPES.register("current_order_index", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> EXECUTING_INSTRUCTION = MEMORY_MODULE_TYPES.register("executing_instruction", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<UUID>> IN_COMMAND_GROUP = MEMORY_MODULE_TYPES.register("in_command_group", () -> new MemoryModuleType<>(Optional.of(UUIDCodec.CODEC)));
-	public static final RegistryObject<MemoryModuleType<UUID>> IN_FORMATION_WITH = MEMORY_MODULE_TYPES.register("in_formation", () -> new MemoryModuleType<>(Optional.of(UUIDCodec.CODEC)));
 	public static final RegistryObject<MemoryModuleType<Integer>> JUMP_TO = MEMORY_MODULE_TYPES.register("jump_to", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> ON_PATROL = MEMORY_MODULE_TYPES.register("on_patrol", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
 	public static final RegistryObject<MemoryModuleType<Vector3d>> PRECISE_POS = MEMORY_MODULE_TYPES.register("precise_pos", () -> new MemoryModuleType<>(Optional.of(PrecisePosCodec.CODEC)));
