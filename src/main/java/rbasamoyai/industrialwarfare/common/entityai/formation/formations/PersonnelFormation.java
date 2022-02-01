@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import net.minecraft.entity.CreatureEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.world.World;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
@@ -47,8 +48,13 @@ public class PersonnelFormation extends UnitFormation {
 	}
 	
 	@Override
-	public UnitFormationType getType() {
+	public UnitFormationType<?> getType() {
 		return null;
+	}
+	
+	@Override
+	protected void loadEntityData(CompoundNBT nbt) {
+		
 	}
 	
 	public static class PersonnelPoint {

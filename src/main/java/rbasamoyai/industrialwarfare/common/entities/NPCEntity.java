@@ -165,7 +165,7 @@ public class NPCEntity extends CreatureEntity implements
 				.add(Attributes.MOVEMENT_SPEED, 0.1d)
 				.add(Attributes.ATTACK_DAMAGE, 2.0d)
 				.add(Attributes.ATTACK_SPEED, 4.0d)
-				.add(Attributes.FOLLOW_RANGE, 50.0d);
+				.add(Attributes.FOLLOW_RANGE, 100.0d);
 	}
 	
 	public ItemStackHandler getInventoryItemHandler() {

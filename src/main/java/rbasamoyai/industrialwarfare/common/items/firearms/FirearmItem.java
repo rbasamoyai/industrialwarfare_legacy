@@ -367,7 +367,9 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	protected <P extends IAnimatable> void instructionListener(CustomInstructionKeyframeEvent<P> event) {
-		this.parse(event.instructions);
+		String castedInstructions = (String)(Object) event.instructions;
+		List<String> instructions = Arrays.asList(castedInstructions.split(" ", 0));
+		this.parse(instructions);
 	}
 	
 	private void parse(List<String> instructions) {

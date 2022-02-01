@@ -30,6 +30,7 @@ public class EntityTypeInit {
 			() -> EntityType.Builder.<BulletEntity>of(BulletEntity::new, EntityClassification.MISC)
 					.sized(0.25f, 0.25f)
 					.clientTrackingRange(4)
+					.updateInterval(1)
 					.build(makeId("bullet").toString()));
 	
 	public static final RegistryObject<EntityType<FormationLeaderEntity>> FORMATION_LEADER = ENTITY_TYPES.register("formation_leader",

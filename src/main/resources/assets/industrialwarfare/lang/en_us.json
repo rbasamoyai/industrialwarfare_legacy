@@ -327,6 +327,7 @@
 	"gui.industrialwarfare.text.not_owned_by_you":		"You do not own this NPC!",
 	"gui.industrialwarfare.text.removed_complaints":	"Removed %1$s's complaint (was %2$s)",
 	"gui.industrialwarfare.text.cannot_select_full": "Cannot select more than %1$s units!",
+	"gui.industrialwarfare.text.stopped_units": "Stopped units",
 	"gui.industrialwarfare.text.combat_mode.attack": "Stance: Attack",
 	"gui.industrialwarfare.text.combat_mode.defend": "Stance: Defend",
 	"gui.industrialwarfare.text.combat_mode.stand_ground": "Stance: Stand Ground",

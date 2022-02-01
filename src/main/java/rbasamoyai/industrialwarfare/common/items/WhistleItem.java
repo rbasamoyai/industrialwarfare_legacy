@@ -7,13 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
@@ -34,6 +32,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
@@ -62,7 +61,7 @@ import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
-import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
@@ -83,6 +82,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 	private static final int MAX_SELECTABLE_UNITS = 64;
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
 	private static final ITextComponent CANNOT_SELECT_FULL = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "cannot_select_full", MAX_SELECTABLE_UNITS).withStyle(TextFormatting.RED);
+	private static final ITextComponent STOPPED_UNITS = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "stopped_units");
 	private static final String COMBAT_MODE_KEY = TRANSLATION_TEXT_KEY + "combat_mode.";
 	
 	private static final AttributeModifier REACH_MODIFIER = new AttributeModifier(UUID.fromString("c31ab93e-802d-435c-b386-84610ebcfd74"), "Reach modifier", 16, AttributeModifier.Operation.ADDITION);
@@ -96,35 +96,39 @@ public class WhistleItem extends Item implements IHighlighterItem {
 	@Override
 	public ActionResult<ItemStack> use(World level, PlayerEntity player, Hand hand) {
 		ItemStack stack = player.getItemInHand(hand);
-		if (level.isClientSide) return ActionResult.pass(stack);
+		if (level.isClientSide) {
+			player.playSound(SoundEvents.ANVIL_PLACE, 1.0f, 1.0f);
+			return ActionResult.pass(stack);
+		}
 		ServerWorld slevel = (ServerWorld) level;
 		
 		CompoundNBT nbt = stack.getOrCreateTag();
-		if (CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE)) != CombatMode.DONT_ATTACK) return ActionResult.consume(stack);
-		
-		ListNBT unitList = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
-		
-		boolean flag = false;
-		
 		PlayerIDTag owner = PlayerIDTag.of(player);
-		for (int i = 0; i < unitList.size(); ++i) {
-			UUID unitUuid = NBTUtil.loadUUID(unitList.get(i));
-			Entity e = slevel.getEntity(unitUuid);
+		ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		for (INBT tag : selectedUnits) {
+			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
 			if (!isValidUnit(e, owner)) continue;
-			NPCEntity unit = (NPCEntity) e;
+			CreatureEntity unit = (CreatureEntity) e;
 			
 			Brain<?> brain = unit.getBrain();
-			
-			if (checkMemoryForAction(brain)) {
+			if (checkMemoryForMovement(brain)) {
+				brain.eraseMemory(MemoryModuleType.MEETING_POINT);
+				brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+			}
+			if (brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
 				brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
-				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.NO_ACTIVITY);
-				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), CombatMode.DONT_ATTACK);
-				brain.setActiveActivityIfPossible(Activity.IDLE);
-				flag = true;
 			}
 		}
 		
-		return flag ? ActionResult.consume(stack) : ActionResult.pass(stack);
+		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		for (INBT tag : controlledLeaders) {
+			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
+			if (e != null) e.kill();
+		}
+		
+		player.displayClientMessage(STOPPED_UNITS, true);
+		
+		return ActionResult.consume(stack);
 	}
 	
 	@Override
@@ -133,7 +137,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		World level = useContext.getLevel();
 		if (level.isClientSide) {
 			player.playSound(SoundEvents.WOOL_PLACE, 1.0f, 0.0f);
-			return ActionResultType.PASS;
+			return ActionResultType.SUCCESS;
 		}
 		ServerWorld slevel = (ServerWorld) level;
 		
@@ -150,7 +154,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			UUID unitUuid = NBTUtil.loadUUID(selectedUnitsUUIDs.get(i));
 			Entity e = slevel.getEntity(unitUuid);
 			if (!isValidUnit(e, owner)) continue;
-			selectedUnits.add((NPCEntity) e);
+			selectedUnits.add((CreatureEntity) e);
 		}
 		List<List<CreatureEntity>> spatialClusters = (new UnitClusterFinder(3, 5.0f)).findClusters(selectedUnits);
 		if (spatialClusters.isEmpty()) return ActionResultType.FAIL;
@@ -167,9 +171,8 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		Function<Integer, UnitFormation> formationSupplier = getFormationProvider(stack, slevel);
 		
 		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
-		for (int i = 0; i < controlledLeaders.size(); ++i) {
-			UUID uuid = UUIDCodec.uuidFromIntArray(controlledLeaders.getIntArray(i));
-			Entity e = slevel.getEntity(uuid);
+		for (INBT tag : controlledLeaders) {
+			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
 			if (e != null) e.kill();
 		}
 		
@@ -274,7 +277,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 	
 	@Override
 	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
-		if (!entity.isAlive()) return ActionResultType.FAIL;
+		if (entity.isDeadOrDying()) return ActionResultType.FAIL;
 		if (player.level.isClientSide) {
 			player.playSound(SoundEvents.NOTE_BLOCK_SNARE, 1.0f, 0.0f);
 			return ActionResultType.SUCCESS;
@@ -285,44 +288,44 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		if (!nbt.contains(TAG_SELECTED_UNITS, Constants.NBT.TAG_LIST)) {
 			nbt.put(TAG_SELECTED_UNITS, new ListNBT());
 		}
-		ListNBT unitList = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
 		
 		PlayerIDTag owner = PlayerIDTag.of(player);
 		if (isValidUnit(entity, owner)) {
 			UUID uuid = entity.getUUID();
-			for (int i = 0; i < unitList.size(); ++i) {
-				UUID uuid1 = NBTUtil.loadUUID(unitList.get(i));
-				if (!uuid.equals(uuid1)) continue;
-				unitList.remove(i);
+			for (int i = 0; i < selectedUnits.size(); ++i) {
+				if (!uuid.equals(NBTUtil.loadUUID(selectedUnits.get(i)))) continue;
+				selectedUnits.remove(i);
 				return ActionResultType.CONSUME;
 			}
-			
-			if (unitList.size() >= MAX_SELECTABLE_UNITS) {
+			if (selectedUnits.size() >= MAX_SELECTABLE_UNITS) {
 				player.displayClientMessage(CANNOT_SELECT_FULL, true);
 				return ActionResultType.FAIL;
 			}
-			
-			unitList.add(NBTUtil.createUUID(uuid));
+			selectedUnits.add(NBTUtil.createUUID(uuid));
 			return ActionResultType.CONSUME;
 		}
 		
 		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
-		if (unitList.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.PASS;
+		if (selectedUnits.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.PASS;
 		
-		if (entity instanceof NPCEntity && ((NPCEntity) entity).getDataHandler().map(h -> {
-				DiplomacySaveData diploSaveData = DiplomacySaveData.get(slevel);
-				return diploSaveData.getDiplomaticStatus(owner, h.getOwner()) == DiplomaticStatus.ALLY;
-			}).orElse(false)) return ActionResultType.PASS;
+		// Unlike passive targeting, directly targeting a unit will not take
+		// anything into consideration other than if they are an ally.
+		if (entity instanceof IHasDiplomaticOwner) {
+			PlayerIDTag targetOwner = ((IHasDiplomaticOwner) entity).getDiplomaticOwner();
+			if (owner.equals(targetOwner)) return ActionResultType.PASS;
+			DiplomacySaveData saveData = DiplomacySaveData.get(slevel);
+			DiplomaticStatus status = saveData.getDiplomaticStatus(owner, targetOwner);
+			if (status == DiplomaticStatus.ALLY) return ActionResultType.PASS;
+		}
 		
 		boolean flag = false;
-		for (int i = 0; i < unitList.size(); ++i) {
-			Entity unit = slevel.getEntity(NBTUtil.loadUUID(unitList.get(i)));
-			if (!isValidUnit(unit, owner)) continue;
-			LivingEntity leUnit = (LivingEntity) unit;
-			Brain<?> brain = leUnit.getBrain();
-			if (checkMemoryForAction(brain)) {
-				brain.eraseMemory(MemoryModuleType.MEETING_POINT);
-				brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+		for (INBT tag : selectedUnits) {
+			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
+			if (!isValidUnit(e, owner)) continue;
+			CreatureEntity unit = (CreatureEntity) e;
+			Brain<?> brain = unit.getBrain();
+			if (checkMemoryForAction(brain) && brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
 				brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
 				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
 				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
@@ -331,33 +334,15 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			}
 		}
 		
-		return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
-	}
-	
-	private static Set<MemoryModuleType<?>> CHECK_FOR = null;
-	
-	private static boolean checkMemoryForAction(Brain<?> brain) {
-		if (CHECK_FOR == null) {
-			CHECK_FOR = ImmutableSet.of(
-					MemoryModuleType.ATTACK_TARGET,
-					MemoryModuleType.MEETING_POINT,
-					MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
-					MemoryModuleTypeInit.COMBAT_MODE.get(),
-					MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
-					MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
-					MemoryModuleTypeInit.PRECISE_POS.get()
-					);
+		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		for (INBT tag : controlledLeaders) {
+			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
+			if (!(e instanceof FormationLeaderEntity)) continue;
+			FormationLeaderEntity leader = (FormationLeaderEntity) e;
+			leader.setState(UnitFormation.State.BROKEN);
 		}
 		
-		for (MemoryModuleType<?> memory : CHECK_FOR) {
-			if (!brain.checkMemory(memory, MemoryModuleStatus.REGISTERED)) return false;
-		}
-		return true;
-	}
-	
-	private static boolean checkMemoryForMovement(Brain<?> brain) {
-		return brain.checkMemory(MemoryModuleType.MEETING_POINT, MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED);
+		return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
 	}
 	
 	@Override
@@ -368,16 +353,29 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			}
 			return true;
 		}
-		
+		ServerWorld slevel = (ServerWorld) entity.level;		
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
 		if (entity instanceof PlayerEntity) {
 			PlayerEntity player = (PlayerEntity) entity;
+			PlayerIDTag ownerTag = PlayerIDTag.of(player);
 			if (player.isCrouching()) {
 				nbt.remove(TAG_SELECTED_UNITS);
 			} else {
 				CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE)).next();
 				nbt.putInt(TAG_CURRENT_MODE, mode.getId());
+				
+				ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+				for (INBT tag : selectedUnits) {
+					UUID uuid = NBTUtil.loadUUID(tag);
+					Entity e = slevel.getEntity(uuid);
+					if (!isValidUnit(e, ownerTag)) continue;
+					CreatureEntity unit = (CreatureEntity) e;
+					Brain<?> brain = unit.getBrain();
+					if (!checkMemoryForAction(brain)) continue;
+					brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
+				}
+
 				player.getCooldowns().addCooldown(this, 10);
 				player.displayClientMessage(new TranslationTextComponent(COMBAT_MODE_KEY + mode.toString()), true);
 			}
@@ -394,17 +392,17 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		int t = nbt.getInt(TAG_TICKS_TO_UPDATE);
 		if (++t >= 20) {
 			t = 0;
-			ListNBT unitList = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
-			List<Integer> removeIndices = new ArrayList<>(unitList.size());
+			ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+			List<Integer> removeIndices = new ArrayList<>(selectedUnits.size());
 			PlayerIDTag owner = new PlayerIDTag(entity.getUUID(), true);
-			for (int i = 0; i < unitList.size(); ++i) {
-				Entity unit = slevel.getEntity(NBTUtil.loadUUID(unitList.get(i)));
+			for (int i = 0; i < selectedUnits.size(); ++i) {
+				Entity unit = slevel.getEntity(NBTUtil.loadUUID(selectedUnits.get(i)));
 				if (!isValidUnit(unit, owner)) {
 					removeIndices.add(i);
 				}
 			}
 			for (int i = removeIndices.size() - 1; i >= 0; --i) {
-				unitList.remove(removeIndices.get(i).intValue());
+				selectedUnits.remove(removeIndices.get(i).intValue());
 			}
 		}
 		nbt.putInt(TAG_TICKS_TO_UPDATE, t);
@@ -421,9 +419,19 @@ public class WhistleItem extends Item implements IHighlighterItem {
 	}
 	
 	private static boolean isValidUnit(Entity entity, PlayerIDTag owner) {
-		if (entity == null || !(entity instanceof NPCEntity)) return false;
-		NPCEntity npc = (NPCEntity) entity;
-		return npc.isAlive() && npc.getDataHandler().map(h -> h.getOwner().equals(owner)).orElse(false);
+		if (entity == null || !(entity instanceof IHasDiplomaticOwner || entity instanceof CreatureEntity)) return false;
+		IHasDiplomaticOwner ownedEntity = (IHasDiplomaticOwner) entity;
+		return entity.isAlive() && ownedEntity.getDiplomaticOwner().equals(owner);
+	}
+	
+	private static boolean checkMemoryForAction(Brain<?> brain) {
+		return brain.checkMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED);
+	}
+	
+	private static boolean checkMemoryForMovement(Brain<?> brain) {
+		return brain.checkMemory(MemoryModuleType.MEETING_POINT, MemoryModuleStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED);
 	}
 	
 	@Override

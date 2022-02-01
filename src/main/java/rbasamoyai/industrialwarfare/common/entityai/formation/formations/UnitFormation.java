@@ -22,6 +22,9 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected final World level;
 	protected State formationState = State.BROKEN;
 	
+	private boolean loadDataOnNextTick = false;
+	private CompoundNBT dataToDeserialize;
+	
 	public UnitFormation(UnitFormationType<?> type, World level) {
 		this.type = type;
 		this.level = level;
@@ -30,14 +33,25 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public void setState(State formationState) { this.formationState = formationState; } 
 	public State getState() { return this.formationState; }
 	
-	public abstract boolean addEntity(CreatureEntity entity);	
-	public abstract void tick(FormationLeaderEntity leader);
+	public abstract boolean addEntity(CreatureEntity entity);
 	public abstract void executeGroupAction(int group, Consumer<CreatureEntity> action);
 	public abstract float getWidth();
 	public abstract float getDepth();
 	
+	protected abstract void tick(FormationLeaderEntity leader);
+	protected abstract void loadEntityData(CompoundNBT nbt);
+	
 	public UnitFormationType<?> getType() {
 		return this.type;
+	}
+	
+	public final void doTick(FormationLeaderEntity leader) {
+		if (this.loadDataOnNextTick) {
+			this.loadEntityData(this.dataToDeserialize);
+			this.loadDataOnNextTick = false;
+			this.dataToDeserialize = new CompoundNBT();
+		}
+		this.tick(leader);
 	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
@@ -64,6 +78,8 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
 		this.formationState = State.fromId(nbt.getInt(TAG_STATE));
+		this.loadDataOnNextTick = true;
+		this.dataToDeserialize = nbt;
 	}
 	
 	public static enum State {

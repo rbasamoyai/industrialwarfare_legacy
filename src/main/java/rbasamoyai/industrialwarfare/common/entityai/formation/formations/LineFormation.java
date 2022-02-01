@@ -65,7 +65,7 @@ public class LineFormation extends UnitFormation {
 	private static final float RAD_TO_DEG = (float) Math.PI / 180.0f;
 
 	@Override
-	public void tick(FormationLeaderEntity leader) {
+	protected void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN || leader == null || leader.level.isClientSide) return;
 		
 		this.moveUpUnits();
@@ -76,7 +76,7 @@ public class LineFormation extends UnitFormation {
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		Vector3d startPoint = leader.position().subtract(leaderForward).subtract(leaderRight.scale((float) this.width * 0.5f));
+		Vector3d startPoint = leader.position().subtract(leaderForward).subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
 		
 		for (int rank = 0; rank < this.depth; ++rank) {
 			for (int file = 0; file < this.width; ++file) {
@@ -101,14 +101,14 @@ public class LineFormation extends UnitFormation {
 					brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
 					finishedForming = false;
 				} else if (this.formationState == State.FORMED) {
+					Brain<?> brain = unit.getBrain();
 					Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
 					if (!unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
 						Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
 						if (possiblePos == null) continue;
-						Brain<?> brain = unit.getBrain();
 						brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
 						brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-					} else if (stopped) { // TODO: no action as well
+					} else if (stopped && !brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) { // TODO: no action as well
 						unit.yRot = leader.yRot;
 						unit.yHeadRot = leader.yRot;
 					}
@@ -191,7 +191,10 @@ public class LineFormation extends UnitFormation {
 		this.formationRank = nbt.getInt(TAG_FORMATION_RANK);
 		
 		this.lines = new FormationEntityWrapper<?>[this.depth][this.width];
-		
+	}
+	
+	@Override
+	protected void loadEntityData(CompoundNBT nbt) {
 		if (this.level.isClientSide) return;
 		ServerWorld slevel = (ServerWorld) this.level;
 		

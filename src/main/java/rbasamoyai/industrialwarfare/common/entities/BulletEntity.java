@@ -49,7 +49,7 @@ public class BulletEntity extends ThrowableEntity {
 	}
 	
 	@Override
-	protected void defineSynchedData() {
+	protected void defineSynchedData() {	
 	}
 	
 	@Override
@@ -94,14 +94,14 @@ public class BulletEntity extends ThrowableEntity {
 	}
 	
 	@Override
-	protected void addAdditionalSaveData(CompoundNBT tag) {
+	public void addAdditionalSaveData(CompoundNBT tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putFloat(TAG_DAMAGE, this.damage);
 		tag.putFloat("headshotMultiplier", this.headshotMultiplier);
 	}
 	
 	@Override
-	protected void readAdditionalSaveData(CompoundNBT tag) {
+	public void readAdditionalSaveData(CompoundNBT tag) {
 		this.damage = tag.getFloat(TAG_DAMAGE);
 		this.headshotMultiplier = tag.getFloat("headshotMultiplier");
 		super.readAdditionalSaveData(tag);

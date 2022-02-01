@@ -24,8 +24,6 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
@@ -39,7 +37,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayT
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class FormationLeaderEntity extends CreatureEntity {
+public class FormationLeaderEntity extends CreatureEntity implements IProjectilePassThrough {
 
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
@@ -61,6 +59,7 @@ public class FormationLeaderEntity extends CreatureEntity {
 		super(type, level);
 		this.formation = formation;
 		this.setPersistenceRequired();
+		this.setInvulnerable(true);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -118,7 +117,7 @@ public class FormationLeaderEntity extends CreatureEntity {
 			this.level.addParticle(new RedstoneParticleData(0.0f, 1.0f, 0.0f, 1.0f), this.getX(), this.getY() + this.getBbHeight() + 0.25d, this.getZ(), 0.0d, 0.0d, 0.0d);
 			this.level.addParticle(new RedstoneParticleData(1.0f, 0.0f, 0.0f, 1.0f), this.getX() - Math.sin(Math.toRadians(this.yRot)), this.getY() + this.getBbHeight() + 0.25d, this.getZ() + Math.cos(Math.toRadians(this.yRot)), 0.0d, 0.0d, 0.0d);
 		} else {
-			this.formation.tick(this);
+			this.formation.doTick(this);
 		}
 	}
 	
@@ -172,6 +171,7 @@ public class FormationLeaderEntity extends CreatureEntity {
 	@Override protected SoundEvent getSwimSound() { return null; }
 	@Override protected SoundEvent getHurtSound(DamageSource source) { return null; }
 	@Override public boolean canBeAffected(EffectInstance effect) { return false; }
+	@Override public void knockback(float a, double b, double c) {}
 	@Override public boolean canSpawnSprintParticle() { return false; }
 	@Override public boolean isInvulnerable() { return true; }
 	@Override protected void tickDeath() { this.remove(false); }
