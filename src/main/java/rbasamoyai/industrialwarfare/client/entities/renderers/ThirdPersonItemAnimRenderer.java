@@ -69,7 +69,9 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		stpr.renderOverBone(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 		
 		String name = bone.getName();
-		float boneAlpha = this.hiddenBones.contains(name) ? 0.0f : stpr.getBoneAlpha(itemStack, entity, bone, alpha);
+		bone.setHidden(this.hiddenBones.contains(name));
+		
+		float boneAlpha = stpr.getBoneAlpha(itemStack, this.entity, bone, alpha);
 		if (this.queuedBoneMovements.containsKey(name)) {
 			Vector3f pos = this.queuedBoneMovements.get(name);
 			bone.setPositionX(pos.x());
