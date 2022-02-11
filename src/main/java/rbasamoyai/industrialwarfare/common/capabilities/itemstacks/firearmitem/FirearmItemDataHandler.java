@@ -15,11 +15,15 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	protected int time;
 	
 	protected boolean cycled;
+	protected boolean fired;
 	protected boolean meleeing = false;
 	protected boolean aiming;
 	
 	@Override public void setCycled(boolean cycled) { this.cycled = cycled; }
 	@Override public boolean isCycled() { return this.cycled; }
+	
+	@Override public void setFired(boolean fired) { this.fired = fired; }
+	@Override public boolean isFired() { return this.fired; }
 	
 	@Override public void setMelee(boolean melee) { this.meleeing = melee; }
 	@Override public boolean isMeleeing() { return this.meleeing; }	

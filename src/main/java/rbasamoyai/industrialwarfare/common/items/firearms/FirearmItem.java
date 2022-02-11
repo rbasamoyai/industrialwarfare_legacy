@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -25,9 +25,11 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -35,11 +37,14 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
+import rbasamoyai.industrialwarfare.client.events.RenderEvents;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
+import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemDataProvider;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.IQualityModifier;
+import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
 import rbasamoyai.industrialwarfare.common.items.IFovModifier;
 import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
@@ -48,14 +53,8 @@ import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
-import software.bernie.geckolib3.core.event.ParticleKeyFrameEvent;
 import software.bernie.geckolib3.core.event.SoundKeyframeEvent;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import software.bernie.geckolib3.network.GeckoLibNetwork;
 import software.bernie.geckolib3.network.ISyncable;
@@ -68,7 +67,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		IHideCrosshair,
 		IItemWithAttachments,
 		IAnimatable,
-		ISyncable {
+		ISyncable,
+		ISpecialThirdPersonRender {
 	
 	protected final boolean needsCycle;
 	protected final int cooldownTime;
@@ -181,15 +181,13 @@ public abstract class FirearmItem extends ShootableItem implements
 		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isFinishedAction() || h.isMeleeing()) return;
 			
-			if (h.hasAmmo()) {
-				if (h.isCycled()) {
-					this.shoot(stack, entity);
-					stack.hurtAndBreak(1, entity, e -> {
-						e.broadcastBreakEvent(entity.swingingArm);
-					});
-				} else if (!h.isAiming()) {
-					this.startCycle(stack, entity);
-				}
+			if (h.hasAmmo() && (!this.needsCycle || h.isCycled())) {
+				this.shoot(stack, entity);
+				stack.hurtAndBreak(1, entity, e -> {
+					e.broadcastBreakEvent(entity.swingingArm);
+				});
+			} else if (!h.isCycled() && !h.isAiming()) {
+				this.startCycle(stack, entity);
 			} else if (this.getAllSupportedProjectiles().test(entity.getProjectile(stack)) && !h.isFull() && !h.isAiming()) {
 				this.startReload(stack, entity);
 			}
@@ -238,11 +236,17 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+		if (!(entity instanceof LivingEntity)) return;
+		LivingEntity shooter = (LivingEntity) entity;
+
+		if (selected) {
+			shooter.yBodyRotO = shooter.yBodyRot;
+			shooter.yBodyRot = shooter.yHeadRot;
+		}
+		
 		if (world.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
-		
-		if (!(entity instanceof LivingEntity)) return;
-		
+			
 		getDataHandler(stack).ifPresent(h -> {
 			if (!selected) {
 				// No time modified as an IQualityModifier entity could return a different time modifier each call
@@ -253,7 +257,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			if (!h.isFinishedAction()) {
 				h.countdownAction();
-				if (h.isFinishedAction()) this.onActionComplete(stack, (LivingEntity) entity);
+				if (h.isFinishedAction()) this.onActionComplete(stack, shooter);
 			}
 		});
 	}
@@ -264,6 +268,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			case NOTHING: this.doNothing(firearm, shooter); break;
 			case CYCLING: this.endCycle(firearm, shooter); break;
 			case RELOADING: this.reload(firearm, shooter); break;
+			case START_RELOADING: this.actuallyStartReloading(firearm, shooter); break;
 			case TOGGLE_MELEE: this.endToggleMelee(firearm, shooter);
 			}
 		});
@@ -273,15 +278,19 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void reload(ItemStack firearm, LivingEntity shooter);
 	
+	/** For starting repeated reload animations (e.g. tube loading) */
+	protected void actuallyStartReloading(ItemStack firearm, LivingEntity shooter) {}
+	
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {}
 	
 	public static void tryReloadFirearm(ItemStack firearm, LivingEntity shooter) {
 		if (shooter.level.isClientSide) return;
-		Item firearmItem = firearm.getItem();
-		if (!(firearmItem instanceof FirearmItem)) return;
+		Item item = firearm.getItem();
+		if (!(item instanceof FirearmItem)) return;
+		FirearmItem firearmItem = (FirearmItem) item;
 		
 		getDataHandler(firearm).ifPresent(h -> {
-			if (h.isFinishedAction() && !h.isFull()) ((FirearmItem) firearmItem).startReload(firearm, shooter);
+			if (h.isFinishedAction() && !h.isFull()) firearmItem.startReload(firearm, shooter);
 		});
 	}
 	
@@ -319,7 +328,8 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public float getFovModifier(ItemStack stack) {
-		return isAiming(stack) ? this.fovModifier : 1.0f;
+		//return isAiming(stack) ? this.fovModifier : 1.0f;
+		return 1.0f;
 	}
 	
 	@Override
@@ -330,22 +340,11 @@ public abstract class FirearmItem extends ShootableItem implements
 	@Override
 	public void transformMatrixStack(ItemStack itemStack, PlayerEntity player, MatrixStack matrixStack) {
 		matrixStack.scale(1.0f, 1.0f, 0.5f);
-		matrixStack.translate(-4.46f / 16.0f, 1.125f / 16.0f, 0.0f);
 	}
 	
-	/* Animation methods */
-	
-	private <P extends Item & IAnimatable> PlayState predicate(AnimationEvent<P> event) {
-		List<ItemStack> stacks = event.getExtraDataOfType(ItemStack.class);
-		if (stacks != null && stacks.size() > 0) {
-			ItemStackTileEntityRenderer ister = stacks.get(0).getItem().getItemStackTileEntityRenderer();
-			if (ister instanceof FirearmRenderer && ((FirearmRenderer) ister).getCurrentTransform() == TransformType.GUI) {
-				return PlayState.STOP;
-			}
-		}
-		
-		return PlayState.CONTINUE;
-	}
+	/*
+	 * ANIMATION METHODS
+	 */
 	
 	protected <P extends IAnimatable> void soundListener(SoundKeyframeEvent<P> event) {
 		Minecraft mc = Minecraft.getInstance();
@@ -354,44 +353,46 @@ public abstract class FirearmItem extends ShootableItem implements
 		mc.player.playSound(sound, 1.0f, 1.0f);
 	}
 	
-	protected <P extends IAnimatable> void particleListener(ParticleKeyFrameEvent<P> event) {
-		/* QUICKFIX - Error with CustomInstructionKeyframeEvent */
+	protected <P extends IAnimatable> void customInstructionListener(CustomInstructionKeyframeEvent<P> event) {
+		List<String> instructions = Arrays.stream(event.instructions.split(";")).filter(s -> s.length() > 0).collect(Collectors.toList());
+		List<List<String>> instructionTokens =
+				instructions
+				.stream()
+				.map(s -> Arrays.asList(s.split(" ")).stream().filter(tk -> tk.length() > 0).collect(Collectors.toList()))
+				.filter(tks -> !tks.isEmpty())
+				.collect(Collectors.toList());
+		
+		if (instructionTokens.isEmpty()) return;
+		
 		ItemStackTileEntityRenderer ister = this.getItemStackTileEntityRenderer();
 		if (!(ister instanceof FirearmRenderer)) return;
 		FirearmRenderer imrister = (FirearmRenderer) ister;
 		
-		if (event.effect.equals("hide_bullet")) {
-			imrister.hideBullet(Boolean.valueOf(event.locator));
-		}
-		/* QUICKFIX END */
-	}
-	
-	protected <P extends IAnimatable> void instructionListener(CustomInstructionKeyframeEvent<P> event) {
-		String castedInstructions = (String)(Object) event.instructions;
-		List<String> instructions = Arrays.asList(castedInstructions.split(" ", 0));
-		this.parse(instructions);
-	}
-	
-	private void parse(List<String> instructions) {
-		ItemStackTileEntityRenderer ister = this.getItemStackTileEntityRenderer();
-		if (!(ister instanceof FirearmRenderer)) return;
-		FirearmRenderer renderer = (FirearmRenderer) ister;
-		
-		if (instructions.size() == 2) {
-			if (instructions.get(0).equals("hide_bullet")) {
-				renderer.hideBullet(Boolean.valueOf(instructions.get(1)));
+		for (List<String> tokens : instructionTokens) {
+			String firstTok = tokens.get(0);
+			if (firstTok.equals("set_hidden")) {
+				String boneName = tokens.get(1);
+				boolean hidden = Boolean.valueOf(tokens.get(2));
+				imrister.setBoneVisibility(boneName, hidden);
+			} else if (firstTok.equals("move")) {
+				String boneName = tokens.get(1);
+				float x = Float.valueOf(tokens.get(2));
+				float y = Float.valueOf(tokens.get(3));
+				float z = Float.valueOf(tokens.get(4));
+				imrister.moveBone(boneName, x, y, z);
 			}
 		}
 	}
 	
-	@Override
-	public void registerControllers(AnimationData data) {
-		AnimationController<?> controller = new AnimationController<>(this, "controller", 1, this::predicate);
-		controller.registerSoundListener(this::soundListener);
-		controller.registerParticleListener(this::particleListener);
-		//controller.registerCustomInstructionListener(this::instructionListener); TODO: uncomment when issue fixed
-		controller.setAnimation(new AnimationBuilder().addAnimation("idle", true));
-		data.addAnimationController(controller);
+	protected <P extends IAnimatable> void thirdPersonSoundListener(SoundKeyframeEvent<P> event) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getEntity();
+		LivingEntity entity = RenderEvents.ENTITY_CACHE.get(animEntity.getUUID());
+		if (entity == null) return;
+		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
+		Vector3d entityPos = entity.position();
+		entity.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, 1.0f, 1.0f, true);
 	}
 
 	@Override
@@ -399,7 +400,9 @@ public abstract class FirearmItem extends ShootableItem implements
 		return this.factory;
 	}
 	
-	/* Static query methods */
+	/*
+	 * STATIC QUERY METHODS
+	 */
 	
 	public static boolean isMeleeing(ItemStack stack) {
 		return getDataHandler(stack).map(IFirearmItemDataHandler::isMeleeing).orElse(false);
@@ -411,6 +414,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	public static boolean isCycled(ItemStack stack) {
 		return getDataHandler(stack).map(IFirearmItemDataHandler::isCycled).orElse(false);
+	}
+	
+	public static boolean isFired(ItemStack stack) {
+		return getDataHandler(stack).map(IFirearmItemDataHandler::isFired).orElse(false);
 	}
 	
 	public static boolean isAiming(ItemStack stack) {
@@ -426,9 +433,11 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	protected static int getTimeModifiedByEntity(LivingEntity entity, int baseTime) {
-		return entity instanceof IQualityModifier
-				? MathHelper.ceil(((IQualityModifier) entity).getTimeModifier() * (float) baseTime)
-				: baseTime;
+		return MathHelper.ceil(getTimeModifier(entity) * (float) baseTime);
+	}
+	
+	protected static float getTimeModifier(LivingEntity entity) {
+		return entity instanceof IQualityModifier ? ((IQualityModifier) entity).getTimeModifier() : 1.0f;
 	}
 	
 	/* Creative mode methods to get around issue where capability data is lost */
@@ -465,7 +474,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		public int reloadStartTime;
 		public int reloadTime;
 		public float baseDamage;
-		public float fovModifier;
+		public float fovModifier = 1.0f;
 		public float headshotMultiplier;
 		public float hipfireSpread;
 		public float muzzleVelocity;
@@ -569,7 +578,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		NOTHING(0),
 		CYCLING(1),
 		RELOADING(2),
-		TOGGLE_MELEE(3);
+		START_RELOADING(3),
+		TOGGLE_MELEE(4);
 		
 		private static final ActionType[] BY_ID = Arrays.stream(values()).sorted(Comparator.comparingInt(ActionType::getId)).toArray(sz -> new ActionType[sz]);
 		

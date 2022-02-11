@@ -55,9 +55,9 @@ public class TaskScrollShelfTileEntityRenderer extends TileEntityRenderer<TaskSc
 		Direction d = state.getValue(TaskScrollShelfBlock.HORIZONTAL_FACING);
 		float f = d.toYRot() + (d.getAxis() == Direction.Axis.X ? 0.0f : 180.0f);
 		
-		stack.translate(0.5d, 0.5d, 0.5d);
-		stack.mulPose(Vector3f.YP.rotationDegrees(f));
-		stack.translate(-0.5d, -0.5d, -0.5d);
+		stack.translate(1.0d, 1.0d, 1.0d);
+		stack.mulPose(Vector3f.YN.rotationDegrees(f));
+		stack.translate(-1.0d, -1.0d, -1.0d);
 		
 		for (int i = 0; i < handler.getSlots(); i++) {
 			ItemStack slotItem = handler.getStackInSlot(i);

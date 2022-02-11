@@ -55,7 +55,6 @@ public class ClientEvents {
 		event.addSprite(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/recipe_manual_icon"));
 		
 		event.addSprite(new ResourceLocation(IndustrialWarfare.MOD_ID, "entity/task_scroll"));
-
 	}
 	
 }

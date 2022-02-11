@@ -32,5 +32,10 @@ Current TODO:
 		- Formation actions
 	
 	- Combat Units
-	- Unit animations
-	  
+	- Firearm animations
+		- Render layers properly
+		- Pose rendering
+			- Crouching
+			- Swimming/proning
+		- Maybe try a crack at fixing
+		the chained anims problem?

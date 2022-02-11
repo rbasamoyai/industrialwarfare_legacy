@@ -16,6 +16,7 @@ public class FirearmItemDataCapability {
 	public static final String TAG_AIMING = "aiming";
 	public static final String TAG_ATTACHMENTS = "attachments";
 	public static final String TAG_CYCLED = "cycled";
+	public static final String TAG_FIRED = "fired";
 	public static final String TAG_MAGAZINE_SIZE = "magazineSize";
 	public static final String TAG_MAGAZINE = "magazine";
 	public static final String TAG_MELEEING = "meleeing";
@@ -36,6 +37,7 @@ public class FirearmItemDataCapability {
 			tag.putBoolean(TAG_AIMING, instance.isAiming());
 			tag.put(TAG_ATTACHMENTS, instance.serializeAttachments());
 			tag.putBoolean(TAG_CYCLED, instance.isCycled());
+			tag.putBoolean(TAG_FIRED, instance.isFired());
 			tag.putInt(TAG_MAGAZINE_SIZE, instance.getMagazineSize());
 			tag.put(TAG_MAGAZINE, instance.serializeAmmo());
 			tag.putBoolean(TAG_MELEEING, instance.isMeleeing());
@@ -50,9 +52,13 @@ public class FirearmItemDataCapability {
 			instance.setAiming(tag.getBoolean(TAG_AIMING));
 			instance.deserializeAttachments(tag.getCompound(TAG_ATTACHMENTS));
 			instance.setCycled(tag.getBoolean(TAG_CYCLED));
+			instance.setFired(tag.getBoolean(TAG_FIRED));
 			instance.setMagazineSize(tag.getInt(TAG_MAGAZINE_SIZE));
 			instance.deserializeAmmo(tag.getCompound(TAG_MAGAZINE));
 			instance.setMelee(tag.getBoolean(TAG_MELEEING));
+			if (instance.getAction() == ActionType.NOTHING && instance.isFinishedAction()) {
+				instance.setAction(ActionType.NOTHING, 1);
+			}
 		}
 	}
 	

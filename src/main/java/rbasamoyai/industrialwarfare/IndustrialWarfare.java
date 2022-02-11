@@ -23,7 +23,6 @@ import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
-import software.bernie.example.GeckoLibMod;
 import software.bernie.geckolib3.GeckoLib;
 
 @Mod(IndustrialWarfare.MOD_ID)
@@ -55,7 +54,6 @@ public class IndustrialWarfare {
 		
 		ModLoadingContext.get().registerConfig(Type.SERVER, IWConfig.SPEC, "industrialwarfare-server.toml");
 		
-		GeckoLibMod.DISABLE_IN_DEV = true;
 		GeckoLib.initialize();
 	}
 	

@@ -12,6 +12,9 @@ public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 	void setCycled(boolean cycled);
 	boolean isCycled();
 	
+	void setFired(boolean fired);
+	boolean isFired();
+	
 	void setMelee(boolean melee);
 	boolean isMeleeing();
 	

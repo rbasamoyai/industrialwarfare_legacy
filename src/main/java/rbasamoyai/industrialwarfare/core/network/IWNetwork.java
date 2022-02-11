@@ -9,6 +9,7 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.CQueueEntityAnimMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
@@ -21,7 +22,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActi
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.6.0";
+	public static final String NETWORK_VERSION = "0.7.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -41,7 +42,9 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SDiplomaticStatusChangeSync.class, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::encode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::decode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.SReloadingFirearm.class, FirearmActionMessages.SReloadingFirearm::encode, FirearmActionMessages.SReloadingFirearm::decode, FirearmActionMessages.SReloadingFirearm::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CApplyRecoil.class, FirearmActionMessages.CApplyRecoil::encode, FirearmActionMessages.CApplyRecoil::decode, FirearmActionMessages.CApplyRecoil::handle);
+		CHANNEL.registerMessage(id++, FirearmActionMessages.CNotifyHeadshot.class, FirearmActionMessages.CNotifyHeadshot::encode, FirearmActionMessages.CNotifyHeadshot::decode, FirearmActionMessages.CNotifyHeadshot::handle);
 		CHANNEL.registerMessage(id++, SOpenAttachmentsScreen.class, SOpenAttachmentsScreen::encode, SOpenAttachmentsScreen::decode, SOpenAttachmentsScreen::handle);
+		CHANNEL.registerMessage(id++, CQueueEntityAnimMessage.class, CQueueEntityAnimMessage::encode, CQueueEntityAnimMessage::decode, CQueueEntityAnimMessage::handle);
 	}
 	
 	@SubscribeEvent

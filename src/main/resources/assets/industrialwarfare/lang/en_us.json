@@ -112,7 +112,7 @@
 	"entity.industrialwarfare.npc.ordermaster":	"Ordermaster",
 	
 	"item.industrialwarfare.rifle_henry":			"Henry Rifle",
-	"item.industrialwarfare.rifle_martini_henry":	"Martini-Henry",
+	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
@@ -363,7 +363,6 @@
 	"profession.industrialwarfare.assembler":	"Assembler",
 	"profession.industrialwarfare.jobless":		"Jobless",
 	
-	"subtitle.industrialwarfare.item.rifle.cycled": "Rifle cycled",
-	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
-	"subtitle.industrialwarfare.item.rifle.reloaded": "Rifle reloaded"
+	"subtitle.industrialwarfare.item.heavy_rifle.fired": "Heavy rifle fired",
+	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired"
 }

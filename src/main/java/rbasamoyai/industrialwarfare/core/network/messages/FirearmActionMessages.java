@@ -56,4 +56,18 @@ public class FirearmActionMessages {
 		}
 	}
 	
+	public static class CNotifyHeadshot {
+		public CNotifyHeadshot() {}		
+		public static void encode(CNotifyHeadshot msg, PacketBuffer buf) {}
+		public static CNotifyHeadshot decode(PacketBuffer buf) { return new CNotifyHeadshot(); }
+		
+		public static void handle(CNotifyHeadshot msg, Supplier<NetworkEvent.Context> contextSupplier) {
+			NetworkEvent.Context context = contextSupplier.get();
+			context.enqueueWork(() -> {
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FirearmActionCHandlers.handleCNotifyHeadshot(msg, contextSupplier));
+			});
+			context.setPacketHandled(true);
+		}
+	}
+	
 }

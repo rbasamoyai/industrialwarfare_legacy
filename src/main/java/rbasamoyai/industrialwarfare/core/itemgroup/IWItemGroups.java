@@ -151,7 +151,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1)
+					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1),
+					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1)
 					));
 		}
 		

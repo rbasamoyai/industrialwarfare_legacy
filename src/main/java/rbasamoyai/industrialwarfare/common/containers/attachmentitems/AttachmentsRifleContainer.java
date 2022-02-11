@@ -1,6 +1,5 @@
 package rbasamoyai.industrialwarfare.common.containers.attachmentitems;
 
-import net.minecraft.entity.IRendersAsItem;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;

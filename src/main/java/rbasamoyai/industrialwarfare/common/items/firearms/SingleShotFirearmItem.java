@@ -1,32 +1,22 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import java.util.function.Predicate;
-
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.PacketDistributor;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
-import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
-public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmItem {
-	
-	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
-	
-	public InternalMagazineRifleItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int magazineSize, Predicate<ItemStack> speedloaderPredicate) {
-		super(itemProperties, firearmProperties, magazineSize, speedloaderPredicate);
+public abstract class SingleShotFirearmItem extends FirearmItem {
+
+	public SingleShotFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties) {
+		super(itemProperties, firearmProperties.needsCycle(false), SingleShotDataHandler::new);
 	}
 	
 	@Override
@@ -60,47 +50,73 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 				IWNetwork.CHANNEL.send(target, msg);
 			}
 			
-			if (this.needsCycle) h.setCycled(false);
 			h.setFired(true);
 			h.setAction(ActionType.NOTHING, this.cooldownTime);
 		});
 	}
-	
-	@Override
-	public boolean canCustomize(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isFinishedAction).orElse(false);
+
+	@Override 
+	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAction(ActionType.NOTHING, 1);
+		});
 	}
-	
-	@Override
-	public INamedContainerProvider getAttachmentsContainerProvider(ItemStack stack) {
-		IContainerProvider provider = AttachmentsRifleContainer.getServerContainerProvider(stack);
-		return new SimpleNamedContainerProvider(provider, TITLE);
-	}
-	
+
 	@Override
 	protected void startReload(ItemStack firearm, LivingEntity shooter) {
 		if (isAiming(firearm)) return;
-		super.startReload(firearm, shooter);
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAction(ActionType.START_RELOADING, getTimeModifiedByEntity(shooter, this.reloadTime));
+		});
 	}
 	
 	@Override
-	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
-		if (this.needsCycle) {
-			super.startCycle(firearm, shooter);
-		}
+	protected void actuallyStartReloading(ItemStack firearm, LivingEntity shooter) {
+		this.reload(firearm, shooter);
+	}
+
+	@Override
+	protected void startAiming(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAiming(true);
+			h.setAction(ActionType.NOTHING, 10);
+		});
 	}
 	
 	@Override
-	public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
-		if (entity.level.isClientSide) return true;
-		if (isMeleeing(stack)) return false;
-		if (!isFinishedAction(stack)) return true;
-		return super.onEntitySwing(stack, entity);
+	protected void stopAiming(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAiming(false);
+			h.setAction(ActionType.NOTHING, 10);
+		});
 	}
-	
+
 	@Override
-	public boolean shouldHideCrosshair(ItemStack stack) {
-		return true;
+	protected void endCycle(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAction(ActionType.NOTHING, 1);
+		});
+	}
+
+	@Override
+	protected void reload(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			ItemStack ammo = shooter.getProjectile(firearm);
+			if (ammo.isEmpty() || h.isFull()) {
+				h.setAction(ActionType.NOTHING, 1);
+				return;
+			}
+			
+			if (shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+				ammo = ammo.copy();
+			}
+			ammo = ammo.split(1);
+			
+			if (super.getAllSupportedProjectiles().test(ammo)) {
+				h.insertAmmo(ammo);
+			}
+			h.setAction(ActionType.NOTHING, 1);
+		});
 	}
 
 }

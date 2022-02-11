@@ -6,22 +6,23 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ThrowableEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.util.IndirectEntityDamageSource;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.fml.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 
 public class BulletEntity extends ThrowableEntity {
 
@@ -64,9 +65,11 @@ public class BulletEntity extends ThrowableEntity {
 		float damage = this.damage;
 		if (MathHelper.abs((float)(this.getEyeY() - hit.getEyeY())) < 0.2f) {
 			damage *= this.headshotMultiplier;
-			Entity owner = this.getOwner();
-			if (owner instanceof PlayerEntity) {
-				owner.level.playSound(null, owner.blockPosition(), SoundEvents.ARROW_HIT_PLAYER, SoundCategory.MASTER, 1.0f, 1.0f);
+			if (!this.level.isClientSide) {
+				Entity owner = this.getOwner();
+				if (owner instanceof ServerPlayerEntity) {
+					IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) owner), new FirearmActionMessages.CNotifyHeadshot());
+				}
 			}
 		}
 		hit.hurt(new IndirectEntityDamageSource(DAMAGE_SOURCE_KEY, this, this.getOwner()), damage);
