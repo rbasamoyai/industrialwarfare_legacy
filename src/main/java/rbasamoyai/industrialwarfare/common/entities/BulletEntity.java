@@ -83,17 +83,21 @@ public class BulletEntity extends ThrowableEntity {
 		BlockState blockstate = this.level.getBlockState(pos);
 		Block block = blockstate.getBlock();
 		
+		boolean shouldRemove = true;
+		
 		if (block == Blocks.TNT) {
 			Entity owner = this.getOwner();
 			blockstate.catchFire(this.level, pos, result.getDirection(), owner instanceof LivingEntity ? (LivingEntity) owner : null);
 			this.level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 		} else if (block.is(IWBlockTags.SHATTERABLE)) {
 			this.level.destroyBlock(pos, false);
+			shouldRemove = false;
 		} else if (block == Blocks.MELON) {
 			this.level.destroyBlock(pos, true);
+			shouldRemove = false;
 		}
 		
-		this.remove();
+		if (shouldRemove) this.remove();
 	}
 	
 	@Override

@@ -31,7 +31,6 @@ public class IWModRegistries {
 	public static IForgeRegistry<TaskScrollCommand> TASK_SCROLL_COMMANDS = null;
 	public static IForgeRegistry<UnitFormationType<?>> UNIT_FORMATION_TYPES = null;
 	
-	@SuppressWarnings("unchecked")
 	@SubscribeEvent
 	public static void buildModRegistries(RegistryEvent.NewRegistry event) {
 		IndustrialWarfare.LOGGER.info("Starting registry building for IndustrialWarfare by rbasamoyai");
@@ -71,7 +70,7 @@ public class IWModRegistries {
 		UNIT_FORMATION_TYPES = new RegistryBuilder<UnitFormationType<?>>()
 				.setName(KEY_UNIT_FORMATION_TYPES.location())
 				.setMaxID(MAX_ID)
-				.setType((Class<UnitFormationType<?>>)(Class<?>) UnitFormationType.class) // This is unholy, probably
+				.setType(UnitFormationType.CLASS_GENERIC) // This is unholy, probably
 				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "line"))
 				.allowModification()
 				.create();
