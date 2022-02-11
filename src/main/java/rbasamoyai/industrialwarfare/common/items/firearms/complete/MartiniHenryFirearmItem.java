@@ -38,6 +38,7 @@ import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.SingleShotFirearmItem;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
+import rbasamoyai.industrialwarfare.utils.AnimBroadcastUtils;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -92,8 +93,8 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			boolean isAiming = isAiming(firearm);
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_AIMING : ANIM_HIP_AIMING);
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", isAiming ? "ads_aiming" : "hip_aiming", true, 1.0f);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_AIMING : ANIM_HIP_AIMING);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", isAiming ? "ads_aiming" : "hip_aiming", true, 1.0f);
 		}
 	}
 	
@@ -102,12 +103,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			boolean isAiming = isAiming(firearm);
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>(isAiming ? "ads_firing" : "hip_firing", false));
 			upperBody.add(new Tuple<>(isAiming ? "ads_aiming" : "hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -117,12 +118,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		super.startReload(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			boolean fired = isFired(firearm);
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_EXTRACT : ANIM_RELOAD);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_EXTRACT : ANIM_RELOAD);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>(fired ? "reload_extract" : "reload", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -130,12 +131,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_start", false));
 			upperBody.add(new Tuple<>("ads_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -143,12 +144,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_stop", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	

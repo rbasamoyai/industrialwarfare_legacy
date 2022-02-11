@@ -33,6 +33,7 @@ import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
+import rbasamoyai.industrialwarfare.utils.AnimBroadcastUtils;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -84,7 +85,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		if (!shooter.level.isClientSide) {
 			boolean isAiming = isAiming(firearm);
 			int fpsAnim = isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING;
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, fpsAnim);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fpsAnim);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			if (isAiming) {
@@ -94,7 +95,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				upperBody.add(new Tuple<>("hip_firing", false));
 				upperBody.add(new Tuple<>("hip_aiming", true));
 			}
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -103,11 +104,11 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			if (isAiming(firearm)) {
-				AnimUtils.syncItemStackAnim(firearm, shooter, this, ANIM_ADS_AIMING);
-				AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "ads_aiming", true, 1.0f);
+				AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_ADS_AIMING);
+				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "ads_aiming", true, 1.0f);
 			} else {
-				AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
-				AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "hip_aiming", true, 1.0f);
+				AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "hip_aiming", true, 1.0f);
 			}
 		}
 	}
@@ -117,12 +118,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		if (isAiming(firearm)) return;
 		super.startReload(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_RELOAD_START);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_RELOAD_START);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("reload_start", false));
 			upperBody.add(new Tuple<>("reload_hold", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 
@@ -130,12 +131,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void midReload(ItemStack firearm, LivingEntity shooter) {
 		super.midReload(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_RELOAD);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_RELOAD);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("reload", false));
 			upperBody.add(new Tuple<>("reload_hold", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -144,7 +145,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		super.endReload(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			boolean fired = isFired(firearm);
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_END_EXTRACT : ANIM_RELOAD_END);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_END_EXTRACT : ANIM_RELOAD_END);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			if (fired) {
@@ -153,7 +154,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				upperBody.add(new Tuple<>("reload_end", false));
 			}
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -161,12 +162,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
 		super.startCycle(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_CYCLING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_CYCLING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("hip_cycling", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -174,12 +175,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_start", false));
 			upperBody.add(new Tuple<>("ads_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);			
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);			
 		}
 	}
 	
@@ -187,12 +188,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_stop", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
