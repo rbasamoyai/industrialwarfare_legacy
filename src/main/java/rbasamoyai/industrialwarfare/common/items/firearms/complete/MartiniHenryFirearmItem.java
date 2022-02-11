@@ -121,8 +121,8 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>(fired ? "reload_extract" : "reload", false));
-			upperBody.add(new Tuple<>("reload_hold", true));
-			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", fired ? "reload_extract" : "reload", false, getTimeModifier(shooter));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
 		}
 	}
 	
@@ -161,6 +161,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		AnimationController<?> controller = new AnimationController<>(this, "controller", 1, this::firstPersonPredicate);
 		controller.registerSoundListener(this::soundListener);
 		controller.registerCustomInstructionListener(this::customInstructionListener);
+		controller.registerParticleListener(this::particleListener);
 		controller.markNeedsReload();
 		data.addAnimationController(controller);
 	}
@@ -303,6 +304,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 				this::upperBodyPredicate);
 		upperBody.registerSoundListener(this::thirdPersonSoundListener);
 		upperBody.registerCustomInstructionListener(this::thirdPersonCustomInstructionListener);
+		upperBody.registerParticleListener(this::particleListener);
 		
 		List<AnimationController<ThirdPersonItemAnimEntity>> controllers = new ArrayList<>();
 		controllers.add(upperBody);

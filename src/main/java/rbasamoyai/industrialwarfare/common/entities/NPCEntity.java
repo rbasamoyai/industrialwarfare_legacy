@@ -62,6 +62,8 @@ import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask.Status;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
@@ -526,15 +528,18 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public boolean cycleOrReload() {
+	public ExtendedShootTargetTask.Status getNextStatus() {
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
-			return FirearmItem.getDataHandler(weapon).map(IFirearmItemDataHandler::hasAmmo).orElse(false);
+			if (FirearmItem.getDataHandler(weapon).map(IFirearmItemDataHandler::hasAmmo).orElse(false)) {
+				return ((FirearmItem) weaponItem).needsCycle(weapon) ? Status.CYCLING : Status.READY_TO_FIRE;
+			}
+			return Status.RELOADING;
 		}
 			
-		return false;
+		return Status.RELOADING;
 	}
 	
 	@Override

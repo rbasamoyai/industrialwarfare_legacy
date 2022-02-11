@@ -205,6 +205,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		AnimationController<?> controller = new AnimationController<>(this, "controller", 1, this::firstPersonPredicate);
 		controller.registerSoundListener(this::soundListener);
 		controller.registerCustomInstructionListener(this::customInstructionListener);
+		controller.registerParticleListener(this::particleListener);
 		controller.markNeedsReload();
 		data.addAnimationController(controller);
 	}
@@ -368,6 +369,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				this::upperBodyPredicate);
 		upperBody.registerSoundListener(this::thirdPersonSoundListener);
 		upperBody.registerCustomInstructionListener(this::thirdPersonCustomInstructionListener);
+		upperBody.registerParticleListener(this::particleListener);
 		
 		List<AnimationController<ThirdPersonItemAnimEntity>> controllers = new ArrayList<>();
 		controllers.add(upperBody);

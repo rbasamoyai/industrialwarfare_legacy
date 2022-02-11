@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.common.entities;
 
 import net.minecraft.entity.IRangedAttackMob;
 import net.minecraft.entity.LivingEntity;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
 
 public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 
@@ -17,7 +18,7 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	/**
 	 * @return true if mob should cycle weapon, false if should reload
 	 */
-	boolean cycleOrReload();
+	ExtendedShootTargetTask.Status getNextStatus();
 	
 	void startCycling();
 	

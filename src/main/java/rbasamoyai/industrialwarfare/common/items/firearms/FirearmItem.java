@@ -54,6 +54,7 @@ import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
+import software.bernie.geckolib3.core.event.ParticleKeyFrameEvent;
 import software.bernie.geckolib3.core.event.SoundKeyframeEvent;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import software.bernie.geckolib3.network.GeckoLibNetwork;
@@ -186,7 +187,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				stack.hurtAndBreak(1, entity, e -> {
 					e.broadcastBreakEvent(entity.swingingArm);
 				});
-			} else if (!h.isCycled() && !h.isAiming()) {
+			} else if (this.needsCycle && !h.isCycled() && !h.isAiming()) {
 				this.startCycle(stack, entity);
 			} else if (this.getAllSupportedProjectiles().test(entity.getProjectile(stack)) && !h.isFull() && !h.isAiming()) {
 				this.startReload(stack, entity);
@@ -273,6 +274,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			}
 		});
 	}
+	
+	public boolean needsCycle(ItemStack stack) { return this.needsCycle; }
 	
 	protected abstract void endCycle(ItemStack firearm, LivingEntity shooter);
 	
@@ -382,6 +385,9 @@ public abstract class FirearmItem extends ShootableItem implements
 				imrister.moveBone(boneName, x, y, z);
 			}
 		}
+	}
+	
+	protected <P extends IAnimatable> void particleListener(ParticleKeyFrameEvent<P> event) {
 	}
 	
 	protected <P extends IAnimatable> void thirdPersonSoundListener(SoundKeyframeEvent<P> event) {

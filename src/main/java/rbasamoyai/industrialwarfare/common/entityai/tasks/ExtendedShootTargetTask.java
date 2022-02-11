@@ -69,8 +69,12 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			shooter.performRangedAttack(target, 0.0f);
 			this.status = Status.FIRED;
 		} else if (this.status == Status.FIRED) {
-			this.status = shooter.cycleOrReload() ? Status.CYCLING : Status.UNLOADED;
-			if (this.status == Status.CYCLING) shooter.startCycling();
+			this.status = shooter.getNextStatus();
+			switch (this.status) {
+			case CYCLING: shooter.startCycling(); break;
+			case RELOADING: shooter.startReloading(); break;
+			default: break;
+			}
 		} else if (this.status == Status.CYCLING) {
 			if (shooter.whileCycling()) return;
 			this.attackDelay = shooter.getRangedAttackDelay();
