@@ -20,19 +20,22 @@ can fight stuff.
 * A microcrafting system
 * Diplomacy
 * Simple defensive npc combat
-* Guns 🇺🇸🦅🦅🦅🇺🇸
+* Guns 🇺🇸🦅🦅🦅🇺🇸 with animations, powered by GeckoLib
+* Rudimentary formation movement
 
 ### """planned""" features:
 * Generated structures with NPCs
 * Research trees
 * Some ores
-* Weapons
+* More weapons
+* Weapon attachments
 
 ### Currently working on (or not)
 * NPC Combat
+   * Smarter attack and formation movement
    * NPC attack orders
    * NPC drills for easy command chains
-* Weapon attachments and customization
+* Third person weapon animation
 
 ---
 
