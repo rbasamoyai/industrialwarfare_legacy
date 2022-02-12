@@ -182,6 +182,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isFinishedAction() || h.isMeleeing()) return;
 			
+			ItemStack ammo = entity.getProjectile(stack);
+			
 			if (h.hasAmmo() && (!this.needsCycle || h.isCycled())) {
 				this.shoot(stack, entity);
 				stack.hurtAndBreak(1, entity, e -> {
@@ -189,7 +191,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				});
 			} else if (this.needsCycle && !h.isCycled() && !h.isAiming()) {
 				this.startCycle(stack, entity);
-			} else if (this.getAllSupportedProjectiles().test(entity.getProjectile(stack)) && !h.isFull() && !h.isAiming()) {
+			} else if (!ammo.isEmpty() && this.getAllSupportedProjectiles().test(ammo) && !h.isFull() && !h.isAiming()) {
 				this.startReload(stack, entity);
 			}
 		});
@@ -292,6 +294,9 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (!(item instanceof FirearmItem)) return;
 		FirearmItem firearmItem = (FirearmItem) item;
 		
+		
+		ItemStack ammo = shooter.getProjectile(firearm);
+		if (ammo.isEmpty() || !firearmItem.getAllSupportedProjectiles().test(ammo)) return;
 		getDataHandler(firearm).ifPresent(h -> {
 			if (h.isFinishedAction() && !h.isFull()) firearmItem.startReload(firearm, shooter);
 		});

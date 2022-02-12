@@ -101,7 +101,7 @@ public class RenderEvents {
 		
 		ItemStack mainhand = entity.getMainHandItem();
 		Item mainhandItem = mainhand.getItem();
-		if (mainhandItem instanceof ISpecialThirdPersonRender) {
+		if (mainhandItem instanceof ISpecialThirdPersonRender && (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isSpectator())) {
 			ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) mainhandItem;
 			if (!stpr.shouldSpecialRender(mainhand, entity)) return;
 			

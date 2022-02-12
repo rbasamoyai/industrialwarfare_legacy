@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
 import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
@@ -23,8 +21,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -49,7 +45,6 @@ import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.util.GeckoLibUtil;
-import software.bernie.geckolib3.util.RenderUtils;
 
 public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 
@@ -339,100 +334,14 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = renderer.getModel();
-		ResourceLocation textureLoc = renderer.getTextureLocation(entity);
+		ResourceLocation loc = renderer.getTextureLocation(entity);
 		
 		ThirdPersonItemAnimRenderer animRenderer = RenderEvents.RENDERER_CACHE.get(entity.getUUID());
-		boolean lockedLimbs = animRenderer.areLimbsLocked();
+		boolean flag = animRenderer.areLimbsLocked();
 		
 		if (model instanceof PlayerModel<?>) {
 			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			
-			IVertexBuilder skinBuffer = bufferIn.getBuffer(RenderType.entitySolid(textureLoc));
-			IVertexBuilder clothesBuffer = bufferIn.getBuffer(RenderType.entityTranslucent(textureLoc));
-			
-			stack.pushPose();
-			
-			RenderUtils.translate(bone, stack);
-			RenderUtils.moveToPivot(bone, stack);
-			RenderUtils.rotate(bone, stack);
-			stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
-			RenderUtils.scale(bone, stack);
-			RenderUtils.moveBackFromPivot(bone, stack);
-			
-			String name = bone.getName();
-			
-			if (name.equals("body")) {
-				pmodel.body.visible = true;
-				pmodel.jacket.visible = true;
-				
-				AnimUtils.renderPartOverBone(pmodel.body, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				AnimUtils.renderPartOverBone(pmodel.jacket, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				pmodel.body.visible = false;
-				pmodel.jacket.visible = false;
-			}
-			
-			if (name.equals("arm_left")) {
-				pmodel.leftArm.visible = true;
-				pmodel.leftSleeve.visible = true;
-				
-				/*
-				if (!lockedLimbs) {
-					stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-					stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-					
-					RenderUtils.moveToPivot(bone, stack);
-					stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-					RenderUtils.moveBackFromPivot(bone, stack);
-				}*/
-				stack.translate(-0.0625f, 0.0f, 0.0f);
-				
-				AnimUtils.renderPartOverBone(pmodel.leftArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				AnimUtils.renderPartOverBone(pmodel.leftSleeve, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				pmodel.leftArm.visible = false;
-				pmodel.leftSleeve.visible = false;
-			}
-			
-			if (name.equals("arm_right")) {
-				pmodel.rightArm.visible = true;
-				pmodel.rightSleeve.visible = true;
-				
-				/*
-				if (!lockedLimbs) {
-					stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-					stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-					
-					RenderUtils.moveToPivot(bone, stack);
-					stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-					RenderUtils.moveBackFromPivot(bone, stack);
-				}*/
-				stack.translate(0.0625f, 0.0f, 0.0f);
-				
-				AnimUtils.renderPartOverBone(pmodel.rightArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				AnimUtils.renderPartOverBone(pmodel.rightSleeve, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				pmodel.rightArm.visible = false;
-				pmodel.rightSleeve.visible = false;
-			}
-			
-			if (name.equals("head")) {
-				pmodel.head.visible = true;
-				pmodel.hat.visible = true;
-				
-				if (!lockedLimbs) {
-					stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-					stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-					
-					RenderUtils.moveToPivot(bone, stack);
-					stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-					RenderUtils.moveBackFromPivot(bone, stack);
-				}
-					
-				AnimUtils.renderPartOverBone(pmodel.head, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				AnimUtils.renderPartOverBone(pmodel.hat, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-				pmodel.head.visible = false;
-				pmodel.hat.visible = false;
-			}
-			
-			stack.popPose();
+			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 		}
 	}
 
