@@ -27,7 +27,7 @@ public class WorkstationBlock extends Block {
 
 	public static final AbstractBlock.Properties WORKSTATION_METAL	= AbstractBlock.Properties.of(Material.METAL, MaterialColor.METAL).harvestTool(ToolType.PICKAXE).strength(5f, 6f).harvestLevel(2).sound(SoundType.METAL).requiresCorrectToolForDrops();
 	public static final AbstractBlock.Properties WORKSTATION_STONE	= AbstractBlock.Properties.of(Material.STONE, MaterialColor.STONE).harvestTool(ToolType.PICKAXE).strength(3.5f, 3.5f).harvestLevel(1).sound(SoundType.STONE).requiresCorrectToolForDrops();
-	public static final AbstractBlock.Properties WORKSTATION_WOOD	= AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD);
+	public static final AbstractBlock.Properties WORKSTATION_WOOD	= AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2.5f, 2.5f).sound(SoundType.WOOD);
 	
 	public WorkstationBlock(AbstractBlock.Properties properties) {
 		super(properties);

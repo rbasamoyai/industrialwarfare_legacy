@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 
 import net.minecraft.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 
 public interface INPCDataHandler {
@@ -14,6 +15,9 @@ public interface INPCDataHandler {
 	
 	public void setProfession(NPCProfession profession);
 	public NPCProfession getProfession();
+	
+	public void setCombatSkill(NPCCombatSkill skill);
+	public NPCCombatSkill getCombatSkill();
 	
 	public void setCanWearEquipment(boolean canWearEquipment);
 	public boolean canWearEquipment();

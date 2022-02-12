@@ -22,7 +22,7 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 	
-	private static final String TOOLTIP_TRANSLATION_KEY = "gui." + IndustrialWarfare.MOD_ID + ".task_scroll.tooltip.selector.block_pos";
+	private static final String TOOLTIP_TRANSLATION_KEY = "selector.tooltip." + IndustrialWarfare.MOD_ID + ".block_pos";
 	
 	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
 	private static final IFormattableTextComponent TOOLTIP_OLD_POS = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + ".old_position");

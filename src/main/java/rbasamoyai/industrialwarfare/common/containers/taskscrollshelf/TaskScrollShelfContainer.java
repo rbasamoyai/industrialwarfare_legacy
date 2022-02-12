@@ -48,7 +48,7 @@ public class TaskScrollShelfContainer extends Container {
 	}
 	
 	public static IContainerProvider getServerContainerProvider(TaskScrollShelfTileEntity te, BlockPos activationPos) {
-		return (windowId, playerInv, data) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler(), Optional.of(te));
+		return (windowId, playerInv, player) -> new TaskScrollShelfContainer(windowId, playerInv, activationPos, te.getItemHandler(), Optional.of(te));
 	}
 	
 	protected TaskScrollShelfContainer(int windowId, PlayerInventory playerInv, BlockPos activationPos, IItemHandler handler, Optional<TaskScrollShelfTileEntity> optional) {
@@ -96,7 +96,7 @@ public class TaskScrollShelfContainer extends Container {
 			slotCopy = slotStack.copy();
 			
 			if (index < INVENTORY_INDEX_START) { // Move to player inventory
-				if (this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
+				if (!this.moveItemStackTo(slotStack, INVENTORY_INDEX_START, INVENTORY_INDEX_START + INVENTORY_SLOT_COUNT, true)) {
 					return ItemStack.EMPTY;
 				}
 			} else { // Move to tile entity inventory

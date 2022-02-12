@@ -1,4 +1,4 @@
-{
+{	
 	"item.industrialwarfare.ammo_111": "Shotshell (Paper)",
 	"item.industrialwarfare.ammo_112": "Intermediate Caliber Round (Paper)",
 	"item.industrialwarfare.ammo_113": "Large Caliber Round (Paper)",
@@ -12,8 +12,11 @@
 	"item.industrialwarfare.ammo_232": "Intermediate Caliber Round (Smokeless)",
 	"item.industrialwarfare.ammo_233": "Large Caliber Round (Smokeless)",
 	
+	"item.industrialwarfare.ammo_generic": "Generic Ammo",
+	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
+	"item.industrialwarfare.whistle": "Whistle",
 	
 	"item.industrialwarfare.cured_flesh":		"Cured Flesh",
 	"item.industrialwarfare.body_part":			"Body Part",
@@ -37,8 +40,9 @@
 	"item.industrialwarfare.essence_weaponsmith":	"Weaponsmith Essence",
 	"item.industrialwarfare.essence_woodworker":	"Woodworker Essence",
 	
-	"item.industrialwarfare.part_iron_wire":	"Iron Wire",
-	"item.industrialwarfare.part_screw":		"Screw",
+	"item.industrialwarfare.part_bullet": "Bullet",
+	"item.industrialwarfare.part_iron_wire": "Iron Wire",
+	"item.industrialwarfare.part_screw": "Screw",
 	
 	"item.industrialwarfare.recipe_manual":	"Recipe Manual",
 	
@@ -108,7 +112,8 @@
 	"entity.industrialwarfare.npc.ordermaster":	"Ordermaster",
 	
 	"item.industrialwarfare.rifle_henry":			"Henry Rifle",
-	"item.industrialwarfare.rifle_martini_henry":	"Martini-Henry",
+	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
+	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -118,15 +123,19 @@
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
 	
 	"key.industrialwarfare.category":	"Industrial Warfare",
+	"key.industrialwarfare.attachments_screen": "Customize Item Attachments",
 	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
+	"key.industrialwarfare.reload_firearm": "Reload Firearm",
 	
-	"entity.industrialwarfare.projectile_bullet": "Bullet",
+	"entity.industrialwarfare.bullet": "Bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",
 	"death.attack.industrialwarfare.bullet": "%1$s was shot by %2$s",
 	"death.attack.industrialwarfare.bullet.item": "%1$s was shot by %2$s using %3$s",
-	"death.attack.industrialwarfare.bullet.long_distance": "%1$s was shot by %2$s \u00A7a\u00A7l(%3$s \u00A7a\u00A7lblocks!)",
-	"death.attack.industrialwarfare.bullet.long_distance.item": "%1$s was shot by %2$s using %3$s \u00A7a\u00A7l(%4$s \u00A7a\u00A7lblocks!)",
+	
+	"gui.industrialwarfare.attachments_rifle": "Rifle Attachments",
+	"gui.industrialwarfare.attachments_firearm.melee_attachment": "Melee attachments",
+	"gui.industrialwarfare.attachments_firearm.optic_attachment": "Optic attachments", 
 	
 	"gui.industrialwarfare.workstation.craft":	"Craft",
 	"gui.industrialwarfare.workstation.tooltip.cannot_craft1": "Cannot craft right now -",
@@ -154,11 +163,10 @@
 	"tooltip.industrialwarfare.task_scroll.label":	"Label",
 	"tooltip.industrialwarfare.task_scroll.blank_label": "Blank label",
 	
-	"tooltip.industrialwarfare.gun.ammo":		"Ammo",
-	"tooltip.industrialwarfare.quality":		"Quality",
-	"tooltip.industrialwarfare.part.part_count":	"Part count",
-	"tooltip.industrialwarfare.part.weight":	"Weight",
-	"tooltip.industrialwarfare.recipe.item":	"Item",
+	"tooltip.industrialwarfare.quality": "Quality",
+	"tooltip.industrialwarfare.part.part_count": "Part count",
+	"tooltip.industrialwarfare.part.weight": "Weight",
+	"tooltip.industrialwarfare.recipe.item": "Item",
 	
 	"tooltip.industrialwarfare.quality.invalid":	"WHAT? HOW?",
 	"tooltip.industrialwarfare.quality.very_bad":	"Very Bad",
@@ -186,6 +194,8 @@
 	
 	"selector.tooltip.industrialwarfare.command": "What command do you want to execute?",
 	
+	"selector.tooltip.industrialwarfare.shift_modifier": "(Hold down Shift to scroll by %1$s)",
+	
 	"selector.tooltip.industrialwarfare.block_pos": "Where do you want to execute this command?",
 	"selector.tooltip.industrialwarfare.block_pos.old_position":		"(Old position)",
 	"selector.tooltip.industrialwarfare.block_pos.standing_at":		"(Your position)",
@@ -206,17 +216,19 @@
 	"selector.tooltip.industrialwarfare.wait_mode.day_time":	"Day time (NPC waits until given time of day)",
 	"selector.tooltip.industrialwarfare.wait_mode.relative_time":	"Relative time (NPC waits for given time)",
 	"selector.tooltip.industrialwarfare.wait_mode.bell":	"Bell (NPC waits until it hears a bell nearby)",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.day_time":	"Day time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.relative_time":	"Relative time",
-	"gui.industrialwarfare.task_scroll.selector.wait_mode.bell":	"Bell",
+	"selector.title.industrialwarfare.wait_mode.day_time":	"Day time",
+	"selector.title.industrialwarfare.wait_mode.relative_time":	"Relative time",
+	"selector.title.industrialwarfare.wait_mode.bell":	"Bell",
 	
-	"selector.tooltip.industrialwarfare.work_mode":			"Until when do you want the NPC to work for?",
+	"selector.tooltip.industrialwarfare.work_mode": "Until when do you want the NPC to work for?",
+	"selector.tooltip.industrialwarfare.patrol_mode": "Until when do you want the NPC to patrol for?",
 	
 	"selector.tooltip.industrialwarfare.day_time":		"What time?",
-	"gui.industrialwarfare.task_scroll.selector.day_time.time_format":	"%1$s:%2$s",
+	"selector.tooltip.industrialwarfare.day_time.shift_modifier": "(Hold down Shift to scroll by the minute)",
+	"selector.title.industrialwarfare.day_time.time_format":	"%1$s:%2$s",
 	
 	"selector.tooltip.industrialwarfare.time_count":		"How long?",
-	"gui.industrialwarfare.task_scroll.selector.time_count.time_format":	"%1$ss",
+	"selector.title.industrialwarfare.time_count.time_format":	"%1$ss",
 	
 	"selector.tooltip.industrialwarfare.jump_index":	"What index do you want to jump to?",
 	
@@ -262,6 +274,34 @@
 	"selector.title.industrialwarfare.pos_mode.job_site":	"At job shelf",
 	"selector.title.industrialwarfare.pos_mode.pos":	"At position",
 	
+	"selector.tooltip.industrialwarfare.equip_slot": "What slot should the NPC equip the item?",
+	"selector.tooltip.industrialwarfare.equip_slot.mainhand": "In its main hand",
+	"selector.tooltip.industrialwarfare.equip_slot.offhand": "In its offhand",
+	"selector.tooltip.industrialwarfare.equip_slot.feet": "On its feet",
+	"selector.tooltip.industrialwarfare.equip_slot.legs": "On its legs",
+	"selector.tooltip.industrialwarfare.equip_slot.chest": "On its chest",
+	"selector.tooltip.industrialwarfare.equip_slot.head": "On its head",
+	"selector.title.industrialwarfare.equip_slot.mainhand": "Main hand",
+	"selector.title.industrialwarfare.equip_slot.offhand": "Offhand",
+	"selector.title.industrialwarfare.equip_slot.feet": "Feet",
+	"selector.title.industrialwarfare.equip_slot.legs": "Legs",
+	"selector.title.industrialwarfare.equip_slot.chest": "Chest",
+	"selector.title.industrialwarfare.equip_slot.head": "Head",
+	
+	"selector.tooltip.industrialwarfare.unequip_slot": "What slot should the NPC unequip?",
+	"selector.tooltip.industrialwarfare.unequip_slot.mainhand": "Its main hand",
+	"selector.tooltip.industrialwarfare.unequip_slot.offhand": "Its offhand",
+	"selector.tooltip.industrialwarfare.unequip_slot.feet": "Its feet",
+	"selector.tooltip.industrialwarfare.unequip_slot.legs": "Its legs",
+	"selector.tooltip.industrialwarfare.unequip_slot.chest": "Its chest",
+	"selector.tooltip.industrialwarfare.unequip_slot.head": "Its head",
+	"selector.title.industrialwarfare.unequip_slot.mainhand": "Main hand",
+	"selector.title.industrialwarfare.unequip_slot.offhand": "Offhand",
+	"selector.title.industrialwarfare.unequip_slot.feet": "Feet",
+	"selector.title.industrialwarfare.unequip_slot.legs": "Legs",
+	"selector.title.industrialwarfare.unequip_slot.chest": "Chest",
+	"selector.title.industrialwarfare.unequip_slot.head": "Head",
+	
 	"selector.tooltip.industrialwarfare.pursuit":	"How far should the NPC pursue its target?",
 	
 	"gui.industrialwarfare.diplomacy": "Diplomacy",
@@ -286,6 +326,12 @@
 	"gui.industrialwarfare.text.set_job_site":			"Set %1$s's job site to %2$s",
 	"gui.industrialwarfare.text.not_owned_by_you":		"You do not own this NPC!",
 	"gui.industrialwarfare.text.removed_complaints":	"Removed %1$s's complaint (was %2$s)",
+	"gui.industrialwarfare.text.cannot_select_full": "Cannot select more than %1$s units!",
+	"gui.industrialwarfare.text.stopped_units": "Stopped units",
+	"gui.industrialwarfare.text.combat_mode.attack": "Stance: Attack",
+	"gui.industrialwarfare.text.combat_mode.defend": "Stance: Defend",
+	"gui.industrialwarfare.text.combat_mode.stand_ground": "Stance: Stand Ground",
+	"gui.industrialwarfare.text.combat_mode.dont_attack": "Stance: Don't Attack/Stop Attack",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",
@@ -294,13 +340,18 @@
 	"command.industrialwarfare.jump_to":	"Jump to",
 	"command.industrialwarfare.work_at":	"Work at",
 	"command.industrialwarfare.switch_order":	"Switch order",
+	"command.industrialwarfare.equip": "Equip",
+	"command.industrialwarfare.unequip": "Unequip",
+	"command.industrialwarfare.patrol":		"Patrol",
 	
-	"command.industrialwarfare.args.filter":	"Filter",
+	"command.industrialwarfare.args.equip_item": "Equip Item",
+	"command.industrialwarfare.args.filter": "Filter",
 	
 	"complaint.industrialwarfare.cant_access":		"I can't access this place.",
 	"complaint.industrialwarfare.cant_deposit_item":	"I can't deposit something here.",
 	"complaint.industrialwarfare.cant_get_item":	"I can't get something here.",
 	"complaint.industrialwarfare.cant_open":		"I can't open the storage here.",
+	"complaint.industrialwarfare.cant_wear_armor": "I can't wear armor.",
 	"complaint.industrialwarfare.clear":			"Fine day, isn't it?",
 	"complaint.industrialwarfare.invalid_workstation":	"I can't work there.",
 	"complaint.industrialwarfare.invalid_order":	"I can't read this order.",
@@ -310,5 +361,8 @@
 	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away.",
 	
 	"profession.industrialwarfare.assembler":	"Assembler",
-	"profession.industrialwarfare.jobless":		"Jobless"
+	"profession.industrialwarfare.jobless":		"Jobless",
+	
+	"subtitle.industrialwarfare.item.heavy_rifle.fired": "Heavy rifle fired",
+	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired"
 }

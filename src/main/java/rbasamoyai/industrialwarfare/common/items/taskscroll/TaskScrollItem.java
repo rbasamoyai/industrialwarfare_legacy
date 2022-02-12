@@ -3,7 +3,6 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
@@ -39,17 +38,22 @@ public class TaskScrollItem extends Item {
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".task_scroll.title");
 	private static final IFormattableTextComponent TOOLTIP_LABEL = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".task_scroll.label");
 	
-	private static final Supplier<List<TaskScrollCommand>> VALID_COMMANDS = () -> {
-		return Arrays.asList(
+	private static List<TaskScrollCommand> VALID_COMMANDS;
+	
+	public static void initValidCommands() {
+		VALID_COMMANDS = Arrays.asList(
 				TaskScrollCommandInit.MOVE_TO.get(),
 				TaskScrollCommandInit.TAKE_FROM.get(),
 				TaskScrollCommandInit.DEPOSIT_AT.get(),
 				TaskScrollCommandInit.WAIT_FOR.get(),
 				TaskScrollCommandInit.JUMP_TO.get(),
 				TaskScrollCommandInit.WORK_AT.get(),
-				TaskScrollCommandInit.SWITCH_ORDER.get()
+				TaskScrollCommandInit.SWITCH_ORDER.get(),
+				TaskScrollCommandInit.EQUIP.get(),
+				TaskScrollCommandInit.UNEQUIP.get(),
+				TaskScrollCommandInit.PATROL.get()
 				);
-	};
+	}
 	
 	public TaskScrollItem() {
 		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).stacksTo(1));
@@ -91,10 +95,6 @@ public class TaskScrollItem extends Item {
 			});
 		}
 	}
-	
-	public List<TaskScrollCommand> getValidCommands() {
-		return VALID_COMMANDS.get();
-	}
 
 	@Override
 	public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
@@ -109,16 +109,16 @@ public class TaskScrollItem extends Item {
 			
 			ItemStack labelItem = optional.map(ITaskScrollDataHandler::getLabel).orElse(ItemStack.EMPTY);
 			
-			IContainerProvider provider = TaskScrollContainer.getServerContainerProvider(handItem, this.getValidCommands(), stackIndex, hand);
+			IContainerProvider provider = TaskScrollContainer.getServerContainerProvider(handItem, VALID_COMMANDS, stackIndex, hand);
 			INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, TITLE);
 			
 			NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
 				buf
 						.writeVarInt(stackIndex)
 						.writeVarInt(maxOrderCount)
-						.writeVarInt(this.getValidCommands().size());
+						.writeVarInt(VALID_COMMANDS.size());
 				
-				this.getValidCommands().forEach(cmd -> buf.writeResourceLocation(cmd.getRegistryName()));
+				VALID_COMMANDS.forEach(cmd -> buf.writeResourceLocation(cmd.getRegistryName()));
 				buf.writeBoolean(hand == Hand.MAIN_HAND);
 				
 				buf.writeVarInt(orderList.size());

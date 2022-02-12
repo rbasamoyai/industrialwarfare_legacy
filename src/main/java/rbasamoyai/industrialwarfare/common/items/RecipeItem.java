@@ -20,7 +20,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem.IRecipeItemDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem.RecipeItemDataCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem.RecipeItemDataProvider;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
@@ -35,13 +35,15 @@ public class RecipeItem extends QualityItem {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		RecipeItemDataProvider provider = new RecipeItemDataProvider();
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(new CompoundNBT());
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	@Override
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
-		super.defaultNBT(nbt);
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
+		QualityItem.defaultNBT(nbt);
 		nbt.putString(RecipeItemDataCapability.TAG_RECIPE_ITEM, "");
 		return nbt;
 	}
@@ -106,13 +108,15 @@ public class RecipeItem extends QualityItem {
 		return setQualityValues(new ItemStack(ItemInit.RECIPE_MANUAL.get()), recipeItem, quality);
 	}
 	
+	/* Creative mode methods to get around issue where capability data is lost */
+	
 	public static ItemStack creativeStack(Item item, float quality) {
 		ItemStack stack = stackOf(item, quality);
 		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
 		return stack;
 	}
 	
-	protected static CompoundNBT getCreativeData(ItemStack stack) {
+	public static CompoundNBT getCreativeData(ItemStack stack) {
 		CompoundNBT tag = QualityItem.getCreativeData(stack);
 		getDataHandler(stack).ifPresent(h -> {
 			tag.putString(RecipeItemDataCapability.TAG_RECIPE_ITEM, h.getItemId().toString());
@@ -120,7 +124,7 @@ public class RecipeItem extends QualityItem {
 		return tag;
 	}
 	
-	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
 		QualityItem.readCreativeData(stack, nbt);
 		getDataHandler(stack).ifPresent(h -> {
 			h.setItemId(nbt.getString(RecipeItemDataCapability.TAG_RECIPE_ITEM));

@@ -1,14 +1,12 @@
 General TODO:
 
-p Add Recipe Systems
-
 p Add NPCs
 	- Add NPC professions
 		- Add worker professions
 		- Add warrior professions
 	- Add safeguarding to dimension switch
 
-- Add diplomacy
+- Formation creator and custom formations
 
 - Add research system
 
@@ -22,17 +20,20 @@ p Add NPCs
 - D O C U M E N T A T I O N
 
 Current TODO:
-	- Add attack commands
-		- Add equip command
-		- Add unequip command
-		- Add patrol command
-	- Add professions
-		- Rewrite work component
-		  to allow for other
-		  kinds of work
-		- Add combat component
-		- Add combat tasks
-	- Add diplomacy
-		- Add diplomacy savedata
-		- Add diplomacy screen
-		- Add known npcs
+	- Formations
+		- Dynamic formations
+		- Forming up
+			- PersonnelFormation
+			- MultiFormation
+			- Improved forming up
+		- Pathing for the formation
+		- Formation movement
+			- Reverse formation
+		- Formation actions
+	
+	- Combat Units
+	- Firearm animations
+		- Render layers properly
+		- Pose rendering
+			- Crouching
+			- Swimming/proning

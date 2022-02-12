@@ -19,6 +19,7 @@ public class NPCDataCapability {
 	private static final String TAG_FIRST_OWNER = "firstOwner";
 	private static final String TAG_CURRENT_OWNER = "currentOwner";
 	private static final String TAG_PROFESSION = "profession";
+	private static final String TAG_COMBAT_SKILL = "combatSkill";
 	private static final String TAG_CAN_WEAR_EQUIPMENT = "canWearEquipment";
 	private static final String TAG_KNOWN_RECIPE = "knownRecipe";
 	private static final String TAG_SKILL = "currentRecipeSkill";
@@ -37,6 +38,7 @@ public class NPCDataCapability {
 		public INBT writeNBT(Capability<INPCDataHandler> capability, INPCDataHandler instance, Direction side) {
 			CompoundNBT tag = new CompoundNBT();
 			tag.putBoolean(TAG_CAN_WEAR_EQUIPMENT, instance.canWearEquipment());
+			tag.putString(TAG_COMBAT_SKILL, instance.getCombatSkill().getRegistryName().toString());
 			tag.putString(TAG_PROFESSION, instance.getProfession().getRegistryName().toString());
 			tag.put(TAG_FIRST_OWNER, instance.getFirstOwner().serializeNBT());
 			tag.put(TAG_CURRENT_OWNER, instance.getOwner().serializeNBT());
@@ -51,6 +53,7 @@ public class NPCDataCapability {
 				INBT nbt) {
 			CompoundNBT tag = (CompoundNBT) nbt;
 			instance.setCanWearEquipment(tag.getBoolean(TAG_CAN_WEAR_EQUIPMENT));
+			instance.setCombatSkill(IWModRegistries.NPC_COMBAT_SKILLS.getValue(new ResourceLocation(tag.getString(TAG_COMBAT_SKILL))));
 			instance.setProfession(IWModRegistries.NPC_PROFESSIONS.getValue(new ResourceLocation(tag.getString(TAG_PROFESSION))));
 			instance.setFirstOwner(PlayerIDTag.fromNBT(tag.getCompound(TAG_FIRST_OWNER)));
 			instance.setOwner(PlayerIDTag.fromNBT(tag.getCompound(TAG_CURRENT_OWNER)));

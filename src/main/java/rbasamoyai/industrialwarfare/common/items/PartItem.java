@@ -33,13 +33,15 @@ public class PartItem extends QualityItem {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		PartItemDataProvider provider = new PartItemDataProvider();
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(new CompoundNBT());
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	@Override
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
-		super.defaultNBT(nbt);
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
+		QualityItem.defaultNBT(nbt);
 		nbt.putFloat(PartItemDataCapability.TAG_PART_COUNT, 1);
 		nbt.putFloat(PartItemDataCapability.TAG_WEIGHT, 1);
 		return nbt;
@@ -53,7 +55,8 @@ public class PartItem extends QualityItem {
 	public CompoundNBT getShareTag(ItemStack stack) {
 		CompoundNBT tag = stack.getOrCreateTag();
 		getDataHandler(stack).ifPresent(h -> {
-			tag.put("item_cap", PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.writeNBT(h, null));
+			if (PartItemDataCapability.PART_ITEM_DATA_CAPABILITY != null)
+				tag.put("item_cap", PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.writeNBT(h, null));
 		});
 		return tag;
 	}
@@ -71,13 +74,18 @@ public class PartItem extends QualityItem {
 		}
 		
 		getDataHandler(stack).ifPresent(h -> {
-			PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+			if (PartItemDataCapability.PART_ITEM_DATA_CAPABILITY != null)
+				PartItemDataCapability.PART_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
 		});
 	}
 	
 	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		super.appendHoverText(stack, world, tooltip, flag);
+		appendHoverTextStatic(stack, world, tooltip, flag);
+	}
+	
+	public static void appendHoverTextStatic(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		LazyOptional<IPartItemDataHandler> optional = getDataHandler(stack);
 		
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_PART_COUNT,
@@ -90,6 +98,7 @@ public class PartItem extends QualityItem {
 						.map(h -> (IFormattableTextComponent) new StringTextComponent(TooltipUtils.formatFloat(h.getWeight())))
 						.orElse(TooltipUtils.NOT_AVAILABLE))
 		);
+
 	}
 
 	public static ItemStack setQualityValues(ItemStack stack, float quality, int partCount, float weight) {
@@ -105,13 +114,15 @@ public class PartItem extends QualityItem {
 		return setQualityValues(new ItemStack(item), quality, partCount, weight);
 	}
 	
+	/* Creative mode methods to get around issue where capability data is lost */
+	
 	public static ItemStack creativeStack(Item item, float quality, int partCount, float weight) {
-		ItemStack stack = stackOf(item, quality);
+		ItemStack stack = stackOf(item, quality, partCount, weight);
 		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
 		return stack;
 	}
 	
-	protected static CompoundNBT getCreativeData(ItemStack stack) {
+	public static CompoundNBT getCreativeData(ItemStack stack) {
 		CompoundNBT tag = QualityItem.getCreativeData(stack);
 		getDataHandler(stack).ifPresent(h -> {
 			tag.putInt(PartItemDataCapability.TAG_PART_COUNT, h.getPartCount());
@@ -120,7 +131,7 @@ public class PartItem extends QualityItem {
 		return tag;
 	}
 	
-	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
 		QualityItem.readCreativeData(stack, nbt);
 		getDataHandler(stack).ifPresent(h -> {
 			h.setPartCount(nbt.getInt(PartItemDataCapability.TAG_PART_COUNT));

@@ -16,7 +16,7 @@ public class QualityItemDataCapability {
 	public static Capability<IQualityItemDataHandler> QUALITY_ITEM_DATA_CAPABILITY = null;
 	
 	public static void register() {
-		CapabilityManager.INSTANCE.register(IQualityItemDataHandler.class, new Storage<IQualityItemDataHandler>(), QualityItemDataHandler::new);
+		CapabilityManager.INSTANCE.register(IQualityItemDataHandler.class, new Storage<>(), QualityItemDataHandler::new);
 	}
 	
 	public static class Storage<T extends IQualityItemDataHandler> implements IStorage<T> {

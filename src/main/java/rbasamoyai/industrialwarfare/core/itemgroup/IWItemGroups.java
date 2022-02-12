@@ -10,7 +10,10 @@ import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.RegistryObject;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
 /**
  * Item groups for rbasamoyai's Industrial Warfare mod.
@@ -64,13 +67,15 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.HAMMER),
 					getItemStack(ItemInit.WAND),
+					getItemStack(ItemInit.WHISTLE),
 					getItemStack(ItemInit.CURED_FLESH),
 					getItemStack(ItemInit.BODY_PART),
 					getItemStack(ItemInit.MAKESHIFT_BRAIN),
 					getItemStack(ItemInit.MAKESHIFT_HEAD),
 					getItemStack(ItemInit.TASK_SCROLL),
 					getItemStack(ItemInit.LABEL),
-					getItemStack(ItemInit.SCHEDULE)
+					getItemStack(ItemInit.SCHEDULE),
+					getItemStack(ItemInit.AMMO_GENERIC)
 					));
 		}
 		
@@ -115,14 +120,15 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					PartItem.creativeStack(ItemInit.PART_IRON_WIRE.get(), 1.0f, 1, 1.0f),
-					PartItem.creativeStack(ItemInit.PART_SCREW.get(), 1.0f, 1, 1.0f)
+					PartItem.creativeStack(PartItemInit.PART_BULLET.get(), 1.0f, 1, 1.0f),
+					PartItem.creativeStack(PartItemInit.PART_IRON_WIRE.get(), 1.0f, 1, 1.0f),
+					PartItem.creativeStack(PartItemInit.PART_SCREW.get(), 1.0f, 1, 1.0f)
 					));
 		}
 			
 		@Override
 		public ItemStack makeIcon() {
-			return getItemStack(ItemInit.PART_SCREW.get());
+			return getItemStack(PartItemInit.PART_SCREW.get());
 		}		
 	};
 	
@@ -130,8 +136,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					RecipeItem.creativeStack(ItemInit.PART_IRON_WIRE.get(), 1.0f),
-					RecipeItem.creativeStack(ItemInit.PART_SCREW.get(), 1.0f)
+					RecipeItem.creativeStack(PartItemInit.PART_IRON_WIRE.get(), 1.0f),
+					RecipeItem.creativeStack(PartItemInit.PART_SCREW.get(), 1.0f)
 					));
 		}
 		
@@ -145,7 +151,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					
+					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1),
+					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1)
 					));
 		}
 		

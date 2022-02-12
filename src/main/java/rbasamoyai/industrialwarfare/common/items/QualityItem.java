@@ -32,12 +32,14 @@ public class QualityItem extends Item {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		QualityItemDataProvider provider = new QualityItemDataProvider();
-		if (nbt == null) this.defaultNBT(nbt);
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		CompoundNBT tag = nbt;
+		if (nbt == null) tag = defaultNBT(nbt);
+		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
+		provider.deserializeNBT(tag);
 		return provider;
 	}
 	
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
+	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
 		nbt.putFloat(QualityItemDataCapability.TAG_QUALITY, 1.0f);
 		return nbt;
 	}
@@ -74,6 +76,10 @@ public class QualityItem extends Item {
 	
 	@Override
 	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+		appendHoverTextStatic(stack, world, tooltip, flag);
+	}
+	
+	public static void appendHoverTextStatic(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_QUALITY,
 				getDataHandler(stack)
 						.map(h -> Screen.hasShiftDown()
@@ -100,7 +106,7 @@ public class QualityItem extends Item {
 		return stack;
 	}
 	
-	protected static CompoundNBT getCreativeData(ItemStack stack) {
+	public static CompoundNBT getCreativeData(ItemStack stack) {
 		CompoundNBT tag = new CompoundNBT();
 		getDataHandler(stack).ifPresent(h -> {
 			tag.putFloat(QualityItemDataCapability.TAG_QUALITY, h.getQuality());
@@ -108,7 +114,7 @@ public class QualityItem extends Item {
 		return tag;
 	}
 	
-	protected static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
 		getDataHandler(stack).ifPresent(h -> {
 			h.setQuality(nbt.getFloat(QualityItemDataCapability.TAG_QUALITY));
 		});

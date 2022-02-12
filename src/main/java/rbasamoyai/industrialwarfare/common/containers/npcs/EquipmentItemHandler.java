@@ -12,7 +12,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
-import rbasamoyai.industrialwarfare.core.init.ItemInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 /**
  * Equipment Item handler. Not meant to be serialized/deserialized, as it only is meant to provide
@@ -106,7 +106,7 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		
 		ListNBT handItems = nbt.getList("HandItems", Constants.NBT.TAG_COMPOUND);
 		for (int i = 0; i < handItems.size(); i++) {
-			this.setStackInSlot(4 + i, ItemStack.of(handItems.getCompound(i)));
+			this.setStackInSlot(5 - i, ItemStack.of(handItems.getCompound(i)));
 		}
 	}
 	

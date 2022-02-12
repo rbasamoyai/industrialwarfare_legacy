@@ -9,6 +9,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
@@ -18,6 +19,9 @@ public class ContainerInit {
 	
 	public static final DeferredRegister<ContainerType<?>> CONTAINER_TYPES = DeferredRegister.create(ForgeRegistries.CONTAINERS, IndustrialWarfare.MOD_ID);
 
+	public static final RegistryObject<ContainerType<AttachmentsRifleContainer>> ATTACHMENTS_RIFLE = CONTAINER_TYPES.register("attachments_rifle",
+			() -> IForgeContainerType.create(AttachmentsRifleContainer::getClientContainer));
+	
 	public static final RegistryObject<ContainerType<DiplomacyContainer>> DIPLOMACY = CONTAINER_TYPES.register("diplomacy",
 			() -> IForgeContainerType.create(DiplomacyContainer::getClientContainer));
 	

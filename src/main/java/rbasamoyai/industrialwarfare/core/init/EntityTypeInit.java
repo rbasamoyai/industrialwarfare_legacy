@@ -3,7 +3,7 @@ package rbasamoyai.industrialwarfare.core.init;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
@@ -11,8 +11,9 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.debugitems.ModSpawnEggItem;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class EntityTypeInit {
@@ -25,9 +26,24 @@ public class EntityTypeInit {
 					.setTrackingRange(8)
 					.build(makeId("npc").toString()));
 	
+	public static final RegistryObject<EntityType<BulletEntity>> BULLET = ENTITY_TYPES.register("bullet",
+			() -> EntityType.Builder.<BulletEntity>of(BulletEntity::new, EntityClassification.MISC)
+					.sized(0.25f, 0.25f)
+					.clientTrackingRange(4)
+					.updateInterval(1)
+					.build(makeId("bullet").toString()));
+	
+	public static final RegistryObject<EntityType<FormationLeaderEntity>> FORMATION_LEADER = ENTITY_TYPES.register("formation_leader",
+			() -> EntityType.Builder.<FormationLeaderEntity>of(FormationLeaderEntity::new, EntityClassification.MISC)
+					.sized(0.6f, 1.8f)
+					.setTrackingRange(8)
+					.noSummon()
+					.build(makeId("formation_leader").toString()));
+	
 	@SubscribeEvent
-	public static void registerSpawnEggs(RegistryEvent.Register<EntityType<?>> event) {
-		ModSpawnEggItem.registerSpawnEggs();
+	public static void addEntityAttributes(EntityAttributeCreationEvent event) {
+		event.put(EntityTypeInit.NPC.get(), NPCEntity.setAttributes().build());
+		event.put(EntityTypeInit.FORMATION_LEADER.get(), FormationLeaderEntity.setAttributes().build());
 	}
 	
 	private static ResourceLocation makeId(String id) {

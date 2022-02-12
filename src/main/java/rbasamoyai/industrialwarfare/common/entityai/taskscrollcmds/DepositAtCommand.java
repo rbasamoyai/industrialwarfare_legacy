@@ -20,7 +20,6 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.C
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
-import rbasamoyai.industrialwarfare.utils.ArgUtils;
 import rbasamoyai.industrialwarfare.utils.CommandUtils;
 
 public class DepositAtCommand extends TaskScrollCommand {
@@ -80,7 +79,7 @@ public class DepositAtCommand extends TaskScrollCommand {
 		
 		ItemStackHandler npcInv = npc.getInventoryItemHandler();
 		for (int i = 0; i < npcInv.getSlots(); i++) {
-			if (!ArgUtils.filterMatches(filter, npcInv.getStackInSlot(i))) continue;
+			if (!CommandUtils.filterMatches(filter, npcInv.getStackInSlot(i))) continue;
 			
 			ItemStack depositItem = npcInv.extractItem(i, flag ? npcInv.getSlotLimit(i) : count, false);
 			for (int j = 0; j < blockInv.getSlots(); j++) {
