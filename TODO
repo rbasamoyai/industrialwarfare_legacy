@@ -1,39 +1,7 @@
-General TODO:
-
-p Add NPCs
-	- Add NPC professions
-		- Add worker professions
-		- Add warrior professions
-	- Add safeguarding to dimension switch
-
-- Formation creator and custom formations
-
-- Add research system
-
-- Add Weapons
-
-- Add all the normal workstation
-  npcs, blocks, etc.
-
-- Refactoring?
-
-- D O C U M E N T A T I O N
-
 Current TODO:
-	- Formations
-		- Dynamic formations
-		- Forming up
-			- PersonnelFormation
-			- MultiFormation
-			- Improved forming up
-		- Pathing for the formation
-		- Formation movement
-			- Reverse formation
-		- Formation actions
-	
-	- Combat Units
-	- Firearm animations
-		- Render layers properly
-		- Pose rendering
-			- Crouching
-			- Swimming/proning
+- Firearm animations
+	- Rotating around arm
+	- Pose rendering
+		- Crouching
+		- Swimming/proning
+	- Render layers properly

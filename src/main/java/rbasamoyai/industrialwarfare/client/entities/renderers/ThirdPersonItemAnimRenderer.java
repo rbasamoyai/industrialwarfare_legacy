@@ -62,11 +62,14 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	
 	@Override
 	public void renderRecursively(GeoBone bone, MatrixStack stack, IVertexBuilder bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
+		stack.pushPose();
+		
 		ItemStack itemStack = this.entity.getItemInHand(this.currentAnimEntity.getHand());
 		Item item = itemStack.getItem();
+		
 		if (!(item instanceof ISpecialThirdPersonRender)) return;
 		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
-		stpr.renderOverBone(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		stpr.onRenderRecursively(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 		
 		String name = bone.getName();
 		bone.setHidden(this.hiddenBones.contains(name));
@@ -80,6 +83,7 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		}
 		
 		super.renderRecursively(bone, stack, this.currentBuffer.getBuffer(this.renderType), packedLightIn, packedOverlayIn, red, green, blue, boneAlpha);
+		stack.popPose();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -140,5 +144,7 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 			}
 		}
 	}
+	
+	@Override public boolean shouldShowName(Entity entity) { return false; }
 	
 }

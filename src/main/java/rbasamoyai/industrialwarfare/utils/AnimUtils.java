@@ -80,8 +80,15 @@ public class AnimUtils {
 			float red, float green, float blue, float alpha) {
 		IVertexBuilder skinBuffer = bufferIn.getBuffer(RenderType.entitySolid(textureLoc));
 		IVertexBuilder clothesBuffer = bufferIn.getBuffer(RenderType.entityTranslucent(textureLoc));
+		String name = bone.getName();
 		
 		stack.pushPose();
+		
+		if (!lockedLimbs && !name.equals("body")) {
+			RenderUtils.moveToPivot(bone, stack);
+			stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
+			RenderUtils.moveBackFromPivot(bone, stack);
+		}
 		
 		RenderUtils.translate(bone, stack);
 		RenderUtils.moveToPivot(bone, stack);
@@ -90,11 +97,11 @@ public class AnimUtils {
 		RenderUtils.scale(bone, stack);
 		RenderUtils.moveBackFromPivot(bone, stack);
 		
-		String name = bone.getName();
-		
 		if (name.equals("body")) {
 			model.body.visible = true;
 			model.jacket.visible = true;
+			
+			stack.translate(0.0f, -0.75f, 0.0f);
 			
 			AnimUtils.renderPartOverBone(model.body, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
 			AnimUtils.renderPartOverBone(model.jacket, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
@@ -106,15 +113,6 @@ public class AnimUtils {
 			model.leftArm.visible = true;
 			model.leftSleeve.visible = true;
 			
-			/*
-			if (!lockedLimbs) {
-				stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-				stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-				
-				RenderUtils.moveToPivot(bone, stack);
-				stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-				RenderUtils.moveBackFromPivot(bone, stack);
-			}*/
 			stack.translate(-0.0625f, 0.0f, 0.0f);
 			
 			AnimUtils.renderPartOverBone(model.leftArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
@@ -127,15 +125,7 @@ public class AnimUtils {
 			model.rightArm.visible = true;
 			model.rightSleeve.visible = true;
 			
-			/*
-			if (!lockedLimbs) {
-				stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-				stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-				
-				RenderUtils.moveToPivot(bone, stack);
-				stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-				RenderUtils.moveBackFromPivot(bone, stack);
-			}*/
+			
 			stack.translate(0.0625f, 0.0f, 0.0f);
 			
 			AnimUtils.renderPartOverBone(model.rightArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
@@ -148,15 +138,15 @@ public class AnimUtils {
 			model.head.visible = true;
 			model.hat.visible = true;
 			
-			if (!lockedLimbs) {
+			/*if (!lockedLimbs) {
 				stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
 				stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
 				
 				RenderUtils.moveToPivot(bone, stack);
 				stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
 				RenderUtils.moveBackFromPivot(bone, stack);
-			}
-				
+			}*/
+			
 			AnimUtils.renderPartOverBone(model.head, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
 			AnimUtils.renderPartOverBone(model.hat, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
 			model.head.visible = false;

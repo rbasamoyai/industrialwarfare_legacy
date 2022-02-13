@@ -1,5 +1,6 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +13,12 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.LivingRenderer;
+import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
+import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
+import net.minecraft.client.renderer.entity.model.EntityModel;
+import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -30,6 +37,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -37,6 +45,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
@@ -52,11 +61,17 @@ import rbasamoyai.industrialwarfare.common.items.IItemWithAttachments;
 import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
+import rbasamoyai.industrialwarfare.utils.AnimUtils;
 import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
 import software.bernie.geckolib3.core.event.ParticleKeyFrameEvent;
 import software.bernie.geckolib3.core.event.SoundKeyframeEvent;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.network.GeckoLibNetwork;
 import software.bernie.geckolib3.network.ISyncable;
 import software.bernie.geckolib3.util.GeckoLibUtil;
@@ -409,6 +424,127 @@ public abstract class FirearmItem extends ShootableItem implements
 	@Override
 	public AnimationFactory getFactory() {
 		return this.factory;
+	}
+	
+	/*
+	 * THIRD-PERSON RENDERING METHODS
+	 */
+	
+	@Override
+	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
+		Minecraft mc = Minecraft.getInstance();
+		
+		@SuppressWarnings("unchecked")
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		EntityModel<?> model = renderer.getModel();
+		
+		if (model instanceof PlayerModel) {
+			PlayerModel<?> pmodel = (PlayerModel<?>) model;
+			pmodel.setAllVisible(false);
+			pmodel.leftLeg.visible = true;
+			pmodel.leftPants.visible = true;
+			pmodel.rightLeg.visible = true;
+			pmodel.rightPants.visible = true;
+			
+			if (entity.isCrouching()) {
+				
+			} else if (entity.isVisuallySwimming()) {
+				
+			} else {
+				//pmodel.setupAnim(entity, packedLightIn, packedLightIn, entityYaw, partialTicks, packedLightIn);
+			}
+			
+			stack.scale(0.9375f, 0.9375f, 0.9375f);
+			stack.translate(0.0f, -0.01f, 0.0f);
+		}
+		
+		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
+		AnimUtils.hideLayers(BipedArmorLayer.class, renderer);
+	}
+
+	@Override
+	public void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
+		Minecraft mc = Minecraft.getInstance();
+		@SuppressWarnings("unchecked")
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		EntityModel<?> model = renderer.getModel();
+		
+		if (model instanceof PlayerModel) {
+			PlayerModel<?> pmodel = (PlayerModel<?>) model;
+			pmodel.setAllVisible(true);
+		}
+		
+		AnimUtils.restoreLayers(renderer);
+	}
+	
+	@Override
+	public List<AnimationController<ThirdPersonItemAnimEntity>> getAnimationControlllers(ItemStack stack,
+			LivingEntity entity) {
+		AnimationController<ThirdPersonItemAnimEntity> upperBody = new AnimationController<>(
+				new ThirdPersonItemAnimEntity(entity.getUUID(), Hand.MAIN_HAND), "upper_body", 1,
+				this::upperBodyPredicate);
+		upperBody.registerSoundListener(this::thirdPersonSoundListener);
+		upperBody.registerCustomInstructionListener(this::thirdPersonCustomInstructionListener);
+		upperBody.registerParticleListener(this::particleListener);
+		
+		List<AnimationController<ThirdPersonItemAnimEntity>> controllers = new ArrayList<>();
+		controllers.add(upperBody);
+		return controllers;
+	}
+	
+	private <E extends IAnimatable> PlayState upperBodyPredicate(AnimationEvent<E> event) {
+		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getAnimatable();
+		AnimationController<?> controller = event.getController();
+		
+		AnimationBuilder builder = animEntity.popAndGetAnim(controller.getName());
+		if (builder != null) {
+			controller.markNeedsReload();
+			controller.setAnimation(builder);
+			controller.setAnimationSpeed(animEntity.getSpeed());
+		}
+		
+		return PlayState.CONTINUE;
+	}
+	
+	private <E extends IAnimatable> void thirdPersonCustomInstructionListener(CustomInstructionKeyframeEvent<E> event) {
+		ThirdPersonItemAnimRenderer.parse(event);
+	}
+
+	@Override
+	public void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue,
+			float alpha) {
+		Minecraft mc = Minecraft.getInstance();
+		@SuppressWarnings("unchecked")
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		EntityModel<?> model = renderer.getModel();
+		ResourceLocation loc = renderer.getTextureLocation(entity);
+		
+		ThirdPersonItemAnimRenderer animRenderer = RenderEvents.RENDERER_CACHE.get(entity.getUUID());
+		boolean flag = animRenderer == null ? false : animRenderer.areLimbsLocked();
+		
+		if (model instanceof PlayerModel<?>) {
+			PlayerModel<?> pmodel = (PlayerModel<?>) model;
+			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+			
+			String name = bone.getName();
+			if (!flag && name.equals("firearm")) {
+				stack.translate(0.0f, 1.375f, 0.0f);
+				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
+				stack.translate(0.0f, -1.375f, 0.0f);
+			}
+		}
+	}
+	
+	@Override
+	public float getBoneAlpha(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha) {
+		String name = bone.getName();
+		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head") ? 0.0f : 1.0f;
 	}
 	
 	/*

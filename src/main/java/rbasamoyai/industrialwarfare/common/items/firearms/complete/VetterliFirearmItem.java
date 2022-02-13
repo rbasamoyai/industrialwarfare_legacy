@@ -3,42 +3,26 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.LivingRenderer;
-import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
-import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
-import net.minecraft.client.renderer.entity.model.EntityModel;
-import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
-import rbasamoyai.industrialwarfare.client.events.RenderEvents;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.AnimBroadcastUtils;
-import rbasamoyai.industrialwarfare.utils.AnimUtils;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
 public class VetterliFirearmItem extends InternalMagazineRifleItem {
@@ -290,49 +274,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
 		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
-	}
-
-	@Override
-	public boolean onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
-		Minecraft mc = Minecraft.getInstance();
-		
-		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
-		
-		if (model instanceof PlayerModel) {
-			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			pmodel.setAllVisible(false);
-			pmodel.leftLeg.visible = true;
-			pmodel.leftPants.visible = true;
-			pmodel.rightLeg.visible = true;
-			pmodel.rightPants.visible = true;
-		}
-		
-		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
-		AnimUtils.hideLayers(BipedArmorLayer.class, renderer);
-		
-		return false;
-	}
-
-	@Override
-	public void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
-		Minecraft mc = Minecraft.getInstance();
-		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
-		
-		if (model instanceof PlayerModel) {
-			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			pmodel.setAllVisible(true);
-		}
-		
-		AnimUtils.restoreLayers(renderer);
-	}
+	}	
 
 	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/vetterli_t.animation.json");
 	@Override
@@ -354,66 +296,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 
 	@Override
 	public AnimationBuilder getDefaultAnimation(ItemStack stack, LivingEntity entity, AnimationController<?> controller) {
-		return (new AnimationBuilder()).addAnimation("port_arms", true);
-	}
-
-	@Override
-	public List<AnimationController<ThirdPersonItemAnimEntity>> getAnimationControlllers(ItemStack stack,
-			LivingEntity entity) {
-		AnimationController<ThirdPersonItemAnimEntity> upperBody = new AnimationController<>(
-				new ThirdPersonItemAnimEntity(entity.getUUID(), Hand.MAIN_HAND), "upper_body", 1,
-				this::upperBodyPredicate);
-		upperBody.registerSoundListener(this::thirdPersonSoundListener);
-		upperBody.registerCustomInstructionListener(this::thirdPersonCustomInstructionListener);
-		upperBody.registerParticleListener(this::particleListener);
-		
-		List<AnimationController<ThirdPersonItemAnimEntity>> controllers = new ArrayList<>();
-		controllers.add(upperBody);
-		return controllers;
-	}
-	
-	private <E extends IAnimatable> PlayState upperBodyPredicate(AnimationEvent<E> event) {
-		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getAnimatable();
-		AnimationController<?> controller = event.getController();
-		
-		AnimationBuilder builder = animEntity.popAndGetAnim(controller.getName());
-		if (builder != null) {
-			controller.markNeedsReload();
-			controller.setAnimation(builder);
-			controller.setAnimationSpeed(animEntity.getSpeed());
-		}
-		
-		return PlayState.CONTINUE;
-	}
-	
-	private <E extends IAnimatable> void thirdPersonCustomInstructionListener(CustomInstructionKeyframeEvent<E> event) {
-		ThirdPersonItemAnimRenderer.parse(event);
-	}
-
-	@Override
-	public void renderOverBone(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue,
-			float alpha) {
-		Minecraft mc = Minecraft.getInstance();
-		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
-		ResourceLocation loc = renderer.getTextureLocation(entity);
-		
-		ThirdPersonItemAnimRenderer animRenderer = RenderEvents.RENDERER_CACHE.get(entity.getUUID());
-		boolean flag = animRenderer.areLimbsLocked();
-		
-		if (model instanceof PlayerModel<?>) {
-			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
-		}
-	}
-	
-	@Override
-	public float getBoneAlpha(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha) {
-		String name = bone.getName();
-		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head") ? 0.0f : 1.0f;
+		return (new AnimationBuilder()).addAnimation("hip_aiming", true);
 	}
 	
 }
