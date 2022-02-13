@@ -533,7 +533,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 			
 			String name = bone.getName();
-			if (!flag && name.equals("firearm")) {
+			if (!flag && (name.equals("firearm") || name.equals("cartridge"))) {
 				stack.translate(0.0f, 1.375f, 0.0f);
 				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
 				stack.translate(0.0f, -1.375f, 0.0f);

@@ -174,7 +174,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; lock_limbs false"
 			}
 		},
 		"ads_aiming_stop": {
@@ -435,7 +435,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; lock_limbs false"
 			}
 		},
 		"hip_firing": {
@@ -777,7 +777,7 @@
 				"0.0": "set_hidden cartridge true; lock_limbs true",
 				"1.0": "set_hidden cartridge false; set_hidden bullet false",
 				"1.6667": "set_hidden cartridge true",
-				"2.5": "lock_limbs false;"
+				"2.5": "lock_limbs false"
 			}
 		},
 		"reload_extract": {
@@ -1167,8 +1167,7 @@
 						}
 					}
 				}
-			},
-			"timeline": {}
+			}
 		}
 	},
 	"geckolib_format_version": 2
