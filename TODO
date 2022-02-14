@@ -1,6 +1,6 @@
 Current TODO:
 - Firearm animations
 	- Pose rendering
-		- Crouching
-		- Swimming/proning
+		- Proning
+		- Swimming
 	- Render layers properly

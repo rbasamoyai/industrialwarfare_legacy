@@ -10,15 +10,19 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
 import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -75,6 +79,7 @@ import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.network.GeckoLibNetwork;
 import software.bernie.geckolib3.network.ISyncable;
 import software.bernie.geckolib3.util.GeckoLibUtil;
+import software.bernie.geckolib3.util.RenderUtils;
 
 public abstract class FirearmItem extends ShootableItem implements
 		ISimultaneousUseAndAttack,
@@ -439,25 +444,76 @@ public abstract class FirearmItem extends ShootableItem implements
 		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = renderer.getModel();
+		ResourceLocation loc = renderer.getTextureLocation(entity);
+		int packedOverlay = OverlayTexture.NO_OVERLAY; //LivingRenderer.getOverlayCoords(entity, 0.0f);
 		
-		if (model instanceof PlayerModel) {
-			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			pmodel.setAllVisible(false);
-			pmodel.leftLeg.visible = true;
-			pmodel.leftPants.visible = true;
-			pmodel.rightLeg.visible = true;
-			pmodel.rightPants.visible = true;
+		boolean falling = entity.getFallFlyingTicks() > 4;
+		float animSpeed = MathHelper.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
+		if (animSpeed > 1.0f) animSpeed = 1.0f;
+		float animPos = entity.animationPosition - entity.animationSpeed * (1.0f - partialTicks);
+		if (entity.isBaby()) animPos *= 3.0f;
+		
+		float bodyYaw = MathHelper.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
+		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
+		
+		if (model instanceof BipedModel) {
+			BipedModel<?> bmodel = (BipedModel<?>) model;
 			
-			if (entity.isCrouching()) {
-				
-			} else if (entity.isVisuallySwimming()) {
-				
-			} else {
-				//pmodel.setupAnim(entity, packedLightIn, packedLightIn, entityYaw, partialTicks, packedLightIn);
+			// Adapted from BipedModel#setupAnim
+			float fallRestriction = 1.0f;
+			if (falling) {
+				fallRestriction = (float) entity.getDeltaMovement().lengthSqr() / 0.2f;
+				fallRestriction = fallRestriction * fallRestriction * fallRestriction;
 			}
+			if (fallRestriction < 1.0f) fallRestriction = 1.0f;
+			
+			bmodel.leftLeg.y = 12.0f;
+			bmodel.leftLeg.xRot = MathHelper.cos(animPos * 0.6662f + (float) Math.PI) * 1.4f * animSpeed / fallRestriction;
+			bmodel.leftLeg.yRot = 0.0f;
+			bmodel.leftLeg.zRot = 0.0f;
+			
+			bmodel.rightLeg.y = 12.0f;
+			bmodel.rightLeg.xRot = MathHelper.cos(animPos * 0.6662f) * 1.4f * animSpeed / fallRestriction;
+			bmodel.rightLeg.yRot = 0.0f;
+			bmodel.rightLeg.zRot = 0.0f;
 			
 			stack.scale(0.9375f, 0.9375f, 0.9375f);
+			
+			if (bmodel.crouching && isStill) {
+				bmodel.leftLeg.z -= 8.0f;
+				bmodel.leftLeg.xRot = 0.0f;
+				
+				bmodel.rightLeg.z -= 4.0f;
+				bmodel.rightLeg.xRot = 0.5f;
+			}
+			
+			IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+			
+			stack.pushPose();
+			stack.scale(1.0f, -1.0f, -1.0f);
+			stack.translate(0.0d, (double) -1.501f, 0.0d);
+			stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
+			
+			bmodel.leftLeg.render(stack, builder, packedLightIn, packedOverlay);
+			bmodel.rightLeg.render(stack, builder, packedLightIn, packedOverlay);
+			
+			if (bmodel instanceof PlayerModel) {
+				PlayerModel<?> pmodel = (PlayerModel<?>) bmodel;
+				pmodel.leftPants.copyFrom(pmodel.leftLeg);
+				pmodel.rightPants.copyFrom(pmodel.rightLeg);
+				pmodel.leftPants.render(stack, builder, packedLightIn, packedOverlay);
+				pmodel.rightPants.render(stack, builder, packedLightIn, packedOverlay);
+			}
+			
+			stack.popPose();
+			
+			if (bmodel.crouching) {
+				stack.translate(0.0f, -0.25f, 0.0f);
+			}
+			
 			stack.translate(0.0f, -0.01f, 0.0f);
+			
+			bmodel.setAllVisible(false);
 		}
 		
 		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
@@ -530,9 +586,25 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		if (model instanceof PlayerModel<?>) {
 			PlayerModel<?> pmodel = (PlayerModel<?>) model;
-			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 			
 			String name = bone.getName();
+			
+			boolean isSneaking = pmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
+			if (isSneaking) {
+				if (name.equals("body")) {
+					RenderUtils.moveToPivot(bone, stack);
+					stack.mulPose(Vector3f.XN.rotation(0.5f));
+					RenderUtils.moveBackFromPivot(bone, stack);
+					stack.translate(0.0f, -0.0625f, 0.375f);
+				} else if (bone.parent != null && bone.parent.name.equals("body")) {
+					RenderUtils.moveToPivot(bone, stack);
+					stack.mulPose(Vector3f.XP.rotation(0.5f));
+					RenderUtils.moveBackFromPivot(bone, stack);
+				}
+			}
+						
+			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+			
 			if (!flag && (name.equals("firearm") || name.equals("cartridge"))) {
 				stack.translate(0.0f, 1.375f, 0.0f);
 				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));

@@ -78,8 +78,7 @@ public class AnimUtils {
 			IRenderTypeBuffer bufferIn,
 			int packedLightIn, int packedOverlayIn,
 			float red, float green, float blue, float alpha) {
-		IVertexBuilder skinBuffer = bufferIn.getBuffer(RenderType.entitySolid(textureLoc));
-		IVertexBuilder clothesBuffer = bufferIn.getBuffer(RenderType.entityTranslucent(textureLoc));
+		IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(textureLoc));
 		String name = bone.getName();
 		
 		stack.pushPose();
@@ -97,60 +96,41 @@ public class AnimUtils {
 		RenderUtils.scale(bone, stack);
 		RenderUtils.moveBackFromPivot(bone, stack);
 		
+		ModelRenderer part = null;
+		ModelRenderer clothes = null;
+		
 		if (name.equals("body")) {
-			model.body.visible = true;
-			model.jacket.visible = true;
-			
+			part = model.body;
+			clothes = model.jacket;
 			stack.translate(0.0f, -0.75f, 0.0f);
-			
-			AnimUtils.renderPartOverBone(model.body, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			AnimUtils.renderPartOverBone(model.jacket, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			model.body.visible = false;
-			model.jacket.visible = false;
 		}
 		
 		if (name.equals("arm_left")) {
-			model.leftArm.visible = true;
-			model.leftSleeve.visible = true;
-			
+			part = model.leftArm;
+			clothes = model.leftSleeve;
 			stack.translate(-0.0625f, 0.0f, 0.0f);
-			
-			AnimUtils.renderPartOverBone(model.leftArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			AnimUtils.renderPartOverBone(model.leftSleeve, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			model.leftArm.visible = false;
-			model.leftSleeve.visible = false;
 		}
 		
 		if (name.equals("arm_right")) {
-			model.rightArm.visible = true;
-			model.rightSleeve.visible = true;
-			
-			
+			part = model.rightArm;
+			clothes = model.rightSleeve;
 			stack.translate(0.0625f, 0.0f, 0.0f);
-			
-			AnimUtils.renderPartOverBone(model.rightArm, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			AnimUtils.renderPartOverBone(model.rightSleeve, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			model.rightArm.visible = false;
-			model.rightSleeve.visible = false;
 		}
 		
 		if (name.equals("head")) {
-			model.head.visible = true;
-			model.hat.visible = true;
-			
-			/*if (!lockedLimbs) {
-				stack.mulPose(Vector3f.YN.rotationDegrees(MathHelper.lerp(partialTicks, entity.yBodyRotO, entity.yBodyRot)));
-				stack.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yHeadRotO, entity.yHeadRot)));
-				
-				RenderUtils.moveToPivot(bone, stack);
-				stack.mulPose(Vector3f.XP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot)));
-				RenderUtils.moveBackFromPivot(bone, stack);
-			}*/
-			
-			AnimUtils.renderPartOverBone(model.head, bone, stack, skinBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			AnimUtils.renderPartOverBone(model.hat, bone, stack, clothesBuffer, packedLightIn, 1.0f, packedOverlayIn);
-			model.head.visible = false;
-			model.hat.visible = false;
+			part = model.head;
+			clothes = model.hat;
+		}
+		
+		if (part != null) {
+			part.visible = true;
+			AnimUtils.renderPartOverBone(part, bone, stack, builder, packedLightIn, 1.0f, packedOverlayIn);
+			part.visible = false;
+		}
+		if (clothes != null) {
+			clothes.visible = true;
+			AnimUtils.renderPartOverBone(clothes, bone, stack, builder, packedLightIn, 1.0f, packedOverlayIn);
+			clothes.visible = false;
 		}
 		
 		stack.popPose();

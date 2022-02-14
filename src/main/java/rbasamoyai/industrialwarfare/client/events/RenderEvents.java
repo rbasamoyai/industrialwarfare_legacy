@@ -125,8 +125,6 @@ public class RenderEvents {
 				GeoReplacedEntityRenderer.registerReplacedEntity(animEntity.getClass(), animRenderer);
 			}
 			
-			if (!event.isCancelable()) return;
-			
 			float lerpYaw = MathHelper.lerp(partialTick, entity.yRotO, entity.yRot);
 			matrixStack.pushPose();
 			stpr.onPreRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
