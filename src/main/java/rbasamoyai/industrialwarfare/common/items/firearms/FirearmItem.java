@@ -459,7 +459,6 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (model instanceof BipedModel) {
 			BipedModel<?> bmodel = (BipedModel<?>) model;
 			
-			// Adapted from BipedModel#setupAnim
 			float fallRestriction = 1.0f;
 			if (falling) {
 				fallRestriction = (float) entity.getDeltaMovement().lengthSqr() / 0.2f;
@@ -477,8 +476,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			bmodel.rightLeg.yRot = 0.0f;
 			bmodel.rightLeg.zRot = 0.0f;
 			
-			stack.scale(0.9375f, 0.9375f, 0.9375f);
-			
 			if (bmodel.crouching && isStill) {
 				bmodel.leftLeg.z -= 8.0f;
 				bmodel.leftLeg.xRot = 0.0f;
@@ -487,11 +484,29 @@ public abstract class FirearmItem extends ShootableItem implements
 				bmodel.rightLeg.xRot = 0.5f;
 			}
 			
+			if (bmodel.swimAmount > 0.0f) {
+				bmodel.leftLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.leftLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F + (float)Math.PI));
+				bmodel.rightLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.rightLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F));
+				float swimRot = entity.isInWater() ? -90.0f - entity.xRot : -90.0f;
+				float swimRotL = MathHelper.lerp(bmodel.swimAmount, 0.0f, swimRot);
+				
+				stack.translate(0.0f, entity.isInWater() ? 0.3125f : 0.125f, 0.0f);
+				
+				stack.mulPose(Vector3f.XN.rotationDegrees(swimRotL));
+				stack.mulPose(Vector3f.ZP.rotationDegrees(bodyYaw));
+				stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
+				
+				stack.translate(0.0f, -1.0f, 0.0f);
+			}
+			
+			stack.scale(0.9375f, 0.9375f, 0.9375f);
+			
 			IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
 			
 			stack.pushPose();
 			stack.scale(1.0f, -1.0f, -1.0f);
 			stack.translate(0.0d, (double) -1.501f, 0.0d);
+			
 			stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 			
 			bmodel.leftLeg.render(stack, builder, packedLightIn, packedOverlay);
@@ -590,22 +605,42 @@ public abstract class FirearmItem extends ShootableItem implements
 			String name = bone.getName();
 			
 			boolean isSneaking = pmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
+			boolean isBody = name.equals("body");
+			boolean isBodyChild = bone.parent != null && bone.parent.name.equals("body");
+			boolean isFreeBone = name.equals("firearm") || name.equals("cartridge");
+			
 			if (isSneaking) {
-				if (name.equals("body")) {
+				if (isBody) {
 					RenderUtils.moveToPivot(bone, stack);
 					stack.mulPose(Vector3f.XN.rotation(0.5f));
 					RenderUtils.moveBackFromPivot(bone, stack);
 					stack.translate(0.0f, -0.0625f, 0.375f);
-				} else if (bone.parent != null && bone.parent.name.equals("body")) {
+				} else if (isBodyChild) {
 					RenderUtils.moveToPivot(bone, stack);
 					stack.mulPose(Vector3f.XP.rotation(0.5f));
 					RenderUtils.moveBackFromPivot(bone, stack);
 				}
 			}
+			
+			if (entity.isVisuallySwimming()) {
+				if (isBody) {
+					RenderUtils.moveToPivot(bone, stack);
+					RenderUtils.moveBackFromPivot(bone, stack);
+					stack.translate(0.0f, -0.0625f, 0.0f);
+				} else if (isBodyChild) {
+					RenderUtils.moveToPivot(bone, stack);
+					stack.mulPose(Vector3f.XP.rotationDegrees(90.0f));
+					RenderUtils.moveBackFromPivot(bone, stack);
+				} else if (isFreeBone) {
+					stack.translate(0.0f, 1.375f, 0.0f);
+					stack.mulPose(Vector3f.XP.rotationDegrees(90.0f));
+					stack.translate(0.0f, -1.375f, 0.0f);
+				}
+			}
 						
 			AnimUtils.renderOverPlayerModel(item, entity, partialTicks, bone, pmodel, loc, flag, stack, bufferIn, packedLightIn, packedOverlayIn, red, green, blue, alpha);
 			
-			if (!flag && (name.equals("firearm") || name.equals("cartridge"))) {
+			if (!flag && isFreeBone) {
 				stack.translate(0.0f, 1.375f, 0.0f);
 				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
 				stack.translate(0.0f, -1.375f, 0.0f);

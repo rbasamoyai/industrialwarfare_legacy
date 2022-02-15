@@ -1,6 +1,10 @@
 Current TODO:
 - Firearm animations
 	- Pose rendering
-		- Proning
-		- Swimming
+		- Elytra
 	- Render layers properly
+		- Armor
+		- Elytra
+	- Add proning control
+	- Maybe add prone/swim/elytra
+	  anims?
