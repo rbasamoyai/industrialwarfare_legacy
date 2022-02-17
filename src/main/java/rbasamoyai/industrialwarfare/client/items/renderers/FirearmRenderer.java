@@ -144,7 +144,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public Integer getUniqueID(FirearmItem animatable) {
-		if (this.transformType == TransformType.GUI) {
+		if (this.transformType == TransformType.GUI || this.transformType == TransformType.GROUND) {
 			return -1;
 		}
 		return super.getUniqueID(animatable);

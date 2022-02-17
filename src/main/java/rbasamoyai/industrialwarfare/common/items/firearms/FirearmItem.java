@@ -377,7 +377,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
-		mc.player.playSound(sound, 1.0f, 1.0f);
+		mc.player.playSound(sound, 16.0f, 1.0f);
 	}
 	
 	protected <P extends IAnimatable> void customInstructionListener(CustomInstructionKeyframeEvent<P> event) {
@@ -422,7 +422,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (entity == null) return;
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
 		Vector3d entityPos = entity.position();
-		float volume = mc.player == entity ? 4.0f : 1.0f;
+		float volume = mc.player == entity ? 16.0f : 1.0f;
 		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, false);
 	}
 
@@ -486,7 +486,25 @@ public abstract class FirearmItem extends ShootableItem implements
 				bmodel.rightLeg.xRot = 0.5f;
 			}
 			
-			if (bmodel.swimAmount > 0.0f) {
+			if (entity.isFallFlying()) {
+				float ffTicks = (float) entity.getFallFlyingTicks() + partialTicks;
+				float progress = MathHelper.clamp(ffTicks * ffTicks * 0.01f, 0.0f, 1.0f);
+				
+				if (!entity.isAutoSpinAttack()) {
+					stack.mulPose(Vector3f.XN.rotationDegrees(progress * (-90.0f - entity.xRot)));
+				}
+				
+				Vector3d view = entity.getViewVector(partialTicks);
+				Vector3d vel = entity.getDeltaMovement();
+				double viewHDSq = Entity.getHorizontalDistanceSqr(view);
+				double velHDSq = Entity.getHorizontalDistanceSqr(vel);
+				if (viewHDSq > 0.0f && velHDSq > 0.0f) {
+					double dist = (vel.x * view.x + vel.z * view.z) / Math.sqrt(viewHDSq * velHDSq);
+					double cross = vel.x * view.z - vel.z * view.x;
+					stack.mulPose(Vector3f.YP.rotation((float)(Math.signum(cross) * Math.acos(dist))));
+				}
+				
+			} else if (bmodel.swimAmount > 0.0f) {
 				bmodel.leftLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.leftLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F + (float)Math.PI));
 				bmodel.rightLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.rightLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F));
 				float swimRot = entity.isInWater() ? -90.0f - entity.xRot : -90.0f;
@@ -504,6 +522,14 @@ public abstract class FirearmItem extends ShootableItem implements
 			IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
 			
 			stack.pushPose();
+			
+			if (entity.deathTime > 0) {
+				float deathRot = ((float) entity.deathTime + partialTicks - 1.0f) * 0.08f; // / 20.0f * 1.6f
+				deathRot = MathHelper.sqrt(deathRot);
+				if (deathRot > 1.0f) deathRot = 1.0f;
+				stack.mulPose(Vector3f.ZN.rotationDegrees(deathRot * 90.0f));				
+			}
+			
 			stack.scale(1.0f, -1.0f, -1.0f);
 			stack.translate(0.0d, (double) -1.501f, 0.0d);
 			
@@ -516,6 +542,8 @@ public abstract class FirearmItem extends ShootableItem implements
 				pmodel.rightPants.copyFrom(pmodel.rightLeg);
 				pmodel.leftPants.render(stack, builder, packedLightIn, packedOverlay);
 				pmodel.rightPants.render(stack, builder, packedLightIn, packedOverlay);
+				
+				//TODO: cloak
 			}
 			
 			stack.popPose();
@@ -622,7 +650,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				}
 			}
 			
-			if (entity.isVisuallySwimming()) {
+			if (entity.isVisuallySwimming() || entity.isFallFlying()) {
 				if (isBody) {
 					stack.translate(0.0f, -0.0625f, 0.0f);
 				} else if (isBodyChild) {
