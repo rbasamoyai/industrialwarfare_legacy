@@ -125,6 +125,7 @@
 	"key.industrialwarfare.category":	"Industrial Warfare",
 	"key.industrialwarfare.attachments_screen": "Customize Item Attachments",
 	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
+	"key.industrialwarfare.prone": "Prone",
 	"key.industrialwarfare.reload_firearm": "Reload Firearm",
 	
 	"entity.industrialwarfare.bullet": "Bullet",

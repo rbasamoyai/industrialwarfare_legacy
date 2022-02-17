@@ -8,9 +8,12 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.model.EntityModel;
+import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -94,10 +97,21 @@ public class RenderEvents {
 		Minecraft mc = Minecraft.getInstance();
 		LivingEntity entity = event.getEntity();
 		
+		LivingRenderer<?, ?> renderer = event.getRenderer();
+		EntityModel<?> model = renderer.getModel();
+		
 		float partialTick = event.getPartialRenderTick();
 		MatrixStack matrixStack = event.getMatrixStack();
 		IRenderTypeBuffer buffers = event.getBuffers();
 		int packedLight = event.getLight();
+		
+		if (entity instanceof PlayerEntity && model instanceof PlayerModel) {
+			Pose forced = ((PlayerEntity) entity).getForcedPose();
+			if (forced != null && forced != Pose.CROUCHING && entity.isCrouching()) {
+				((PlayerModel<?>) model).crouching = false;
+				matrixStack.translate(0.0f, 0.125f, 0.0f);
+			}
+		}
 		
 		ItemStack mainhand = entity.getMainHandItem();
 		Item mainhandItem = mainhand.getItem();

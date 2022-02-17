@@ -22,7 +22,6 @@ import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -423,7 +422,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (entity == null) return;
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
 		Vector3d entityPos = entity.position();
-		entity.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, 1.0f, 1.0f, true);
+		float volume = mc.player == entity ? 4.0f : 1.0f;
+		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, false);
 	}
 
 	@Override
@@ -445,7 +445,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = renderer.getModel();
 		ResourceLocation loc = renderer.getTextureLocation(entity);
-		int packedOverlay = OverlayTexture.NO_OVERLAY; //LivingRenderer.getOverlayCoords(entity, 0.0f);
+		int packedOverlay = LivingRenderer.getOverlayCoords(entity, 0.0f);
 		
 		boolean falling = entity.getFallFlyingTicks() > 4;
 		float animSpeed = MathHelper.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
@@ -455,6 +455,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		float bodyYaw = MathHelper.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
 		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
+		
+		stack.mulPose(Vector3f.YN.rotationDegrees(bodyYaw));
 		
 		if (model instanceof BipedModel) {
 			BipedModel<?> bmodel = (BipedModel<?>) model;
@@ -490,13 +492,11 @@ public abstract class FirearmItem extends ShootableItem implements
 				float swimRot = entity.isInWater() ? -90.0f - entity.xRot : -90.0f;
 				float swimRotL = MathHelper.lerp(bmodel.swimAmount, 0.0f, swimRot);
 				
-				stack.translate(0.0f, entity.isInWater() ? 0.3125f : 0.125f, 0.0f);
+				if (entity.isVisuallySwimming()) stack.translate(0.0f, entity.isInWater() ? 0.3125f : 0.125f, 0.0f);
 				
 				stack.mulPose(Vector3f.XN.rotationDegrees(swimRotL));
-				stack.mulPose(Vector3f.ZP.rotationDegrees(bodyYaw));
-				stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 				
-				stack.translate(0.0f, -1.0f, 0.0f);
+				if (entity.isVisuallySwimming()) stack.translate(0.0f, -1.0f, 0.0f);
 			}
 			
 			stack.scale(0.9375f, 0.9375f, 0.9375f);
@@ -506,8 +506,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			stack.pushPose();
 			stack.scale(1.0f, -1.0f, -1.0f);
 			stack.translate(0.0d, (double) -1.501f, 0.0d);
-			
-			stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 			
 			bmodel.leftLeg.render(stack, builder, packedLightIn, packedOverlay);
 			bmodel.rightLeg.render(stack, builder, packedLightIn, packedOverlay);
@@ -530,6 +528,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			bmodel.setAllVisible(false);
 		}
+		
+		stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 		
 		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
 		AnimUtils.hideLayers(BipedArmorLayer.class, renderer);
@@ -624,8 +624,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			if (entity.isVisuallySwimming()) {
 				if (isBody) {
-					RenderUtils.moveToPivot(bone, stack);
-					RenderUtils.moveBackFromPivot(bone, stack);
 					stack.translate(0.0f, -0.0625f, 0.0f);
 				} else if (isBodyChild) {
 					RenderUtils.moveToPivot(bone, stack);

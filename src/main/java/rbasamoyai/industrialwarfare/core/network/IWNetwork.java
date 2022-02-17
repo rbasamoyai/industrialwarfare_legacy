@@ -16,13 +16,14 @@ import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SOpenAttachmentsScreen;
+import rbasamoyai.industrialwarfare.core.network.messages.SSetProneMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActionMessage;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.7.0";
+	public static final String NETWORK_VERSION = "0.8.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -45,6 +46,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CNotifyHeadshot.class, FirearmActionMessages.CNotifyHeadshot::encode, FirearmActionMessages.CNotifyHeadshot::decode, FirearmActionMessages.CNotifyHeadshot::handle);
 		CHANNEL.registerMessage(id++, SOpenAttachmentsScreen.class, SOpenAttachmentsScreen::encode, SOpenAttachmentsScreen::decode, SOpenAttachmentsScreen::handle);
 		CHANNEL.registerMessage(id++, CQueueEntityAnimMessage.class, CQueueEntityAnimMessage::encode, CQueueEntityAnimMessage::decode, CQueueEntityAnimMessage::handle);
+		CHANNEL.registerMessage(id++, SSetProneMessage.class, SSetProneMessage::encode, SSetProneMessage::decode, SSetProneMessage::handle);
 	}
 	
 	@SubscribeEvent

@@ -2,7 +2,9 @@ package rbasamoyai.industrialwarfare.client;
 
 import java.awt.event.KeyEvent;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.settings.ToggleableKeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.settings.KeyConflictContext;
@@ -22,12 +24,17 @@ public class KeyBindingsInit {
 	
 	public static KeyBinding ATTACHMENTS_SCREEN = new KeyBinding(KEY_ROOT + ".attachments_screen", KeyEvent.VK_C, CATEGORY);
 	public static KeyBinding DIPLOMACY_SCREEN = new KeyBinding(KEY_ROOT + ".diplomacy_screen", KeyConflictContext.IN_GAME, KeyModifier.ALT, InputMappings.Type.KEYSYM, KeyEvent.VK_1, CATEGORY);
+	public static KeyBinding PRONE = new ToggleableKeyBinding(KEY_ROOT + ".prone", KeyEvent.VK_Z, CATEGORY, () -> {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.options.toggleCrouch;
+	});
 	public static KeyBinding RELOAD_FIREARM = new KeyBinding(KEY_ROOT + ".reload_firearm", KeyEvent.VK_R, CATEGORY);
 	
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		ClientRegistry.registerKeyBinding(ATTACHMENTS_SCREEN);
 		ClientRegistry.registerKeyBinding(DIPLOMACY_SCREEN);
+		ClientRegistry.registerKeyBinding(PRONE);
 		ClientRegistry.registerKeyBinding(RELOAD_FIREARM);
 	}
 	
