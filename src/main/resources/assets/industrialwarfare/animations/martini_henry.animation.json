@@ -379,7 +379,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": ["set_hidden cartridge true", ""]
 			}
 		},
 		"hip_firing": {
@@ -654,13 +654,15 @@
 							"vector": [0, 0, 0]
 						},
 						"0.4167": {
-							"vector": [-17.5, 0, 0]
+							"vector": [-17.5, 0, 0],
+							"easing": "easeInQuad"
 						},
 						"2.0833": {
 							"vector": [-17.5, 0, 0]
 						},
 						"2.25": {
-							"vector": [0, 0, 0]
+							"vector": [0, 0, 0],
+							"easing": "easeOutQuad"
 						}
 					}
 				},
@@ -670,13 +672,15 @@
 							"vector": [0, 0, 0]
 						},
 						"0.3333": {
-							"vector": [17.5, 0, 0]
+							"vector": [17.5, 0, 0],
+							"easing": "easeInSine"
 						},
 						"2.1667": {
 							"vector": [17.5, 0, 0]
 						},
 						"2.25": {
-							"vector": [0, 0, 0]
+							"vector": [0, 0, 0],
+							"easing": "easeOutQuad"
 						}
 					},
 					"position": {
@@ -689,7 +693,7 @@
 					"effect": "industrialwarfare:item.firearms.lever_open"
 				},
 				"1.4583": {
-					"effect": "minecraft:block.stone_button.click_on"
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
 				},
 				"2.125": {
 					"effect": "industrialwarfare:item.firearms.lever_close"
@@ -967,7 +971,7 @@
 					"effect": "industrialwarfare:item.firearms.lever_open"
 				},
 				"1.4583": {
-					"effect": "minecraft:block.stone_button.click_on"
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
 				},
 				"2.125": {
 					"effect": "industrialwarfare:item.firearms.lever_close"

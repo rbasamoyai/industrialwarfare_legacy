@@ -940,7 +940,7 @@
 			},
 			"sound_effects": {
 				"0.7917": {
-					"effect": "minecraft:block.stone_button.click_on"
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
 				}
 			},
 			"timeline": {

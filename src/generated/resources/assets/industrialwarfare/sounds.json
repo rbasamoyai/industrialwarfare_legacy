@@ -3,25 +3,21 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/rifle/cycle_end1",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_end1",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_end2",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_end2",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       }
     ]
   },
@@ -29,25 +25,21 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/rifle/cycle_start1",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_start1",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_start2",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/rifle/cycle_start2",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       }
     ]
   },
@@ -56,20 +48,20 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/rifle/fired",
-        "volume": 2.0,
+        "volume": 1.5,
         "pitch": 0.8,
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       },
       {
         "name": "industrialwarfare:firearms/rifle/fired",
-        "volume": 2.0,
+        "volume": 1.5,
         "pitch": 0.9,
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       },
       {
         "name": "industrialwarfare:firearms/rifle/fired",
-        "volume": 2.0,
-        "attenuation_distance": 32
+        "volume": 1.5,
+        "attenuation_distance": 64
       }
     ]
   },
@@ -78,20 +70,20 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
-        "volume": 2.5,
+        "volume": 1.5,
         "pitch": 0.8,
-        "attenuation_distance": 40
+        "attenuation_distance": 80
       },
       {
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
-        "volume": 2.5,
+        "volume": 1.5,
         "pitch": 0.9,
-        "attenuation_distance": 40
+        "attenuation_distance": 80
       },
       {
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
-        "volume": 2.5,
-        "attenuation_distance": 40
+        "volume": 1.5,
+        "attenuation_distance": 80
       }
     ]
   },
@@ -99,20 +91,17 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/lever_action_open",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/lever_action_open",
-        "volume": 0.25,
         "pitch": 0.95,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/lever_action_open",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       }
     ]
   },
@@ -120,20 +109,35 @@
     "sounds": [
       {
         "name": "industrialwarfare:firearms/lever_action_close",
-        "volume": 0.25,
         "pitch": 0.9,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/lever_action_close",
-        "volume": 0.25,
         "pitch": 0.95,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
       },
       {
         "name": "industrialwarfare:firearms/lever_action_close",
-        "volume": 0.25,
-        "attenuation_distance": 1
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "item.firearms.insert_ammo": {
+    "sounds": [
+      {
+        "name": "random/click",
+        "pitch": 0.97,
+        "attenuation_distance": 4
+      },
+      {
+        "name": "random/click",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "random/click",
+        "pitch": 1.03,
+        "attenuation_distance": 4
       }
     ]
   }

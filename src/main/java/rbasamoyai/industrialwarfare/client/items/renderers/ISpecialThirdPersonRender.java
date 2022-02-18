@@ -18,10 +18,14 @@ public interface ISpecialThirdPersonRender {
 
 	boolean shouldSpecialRender(ItemStack stack, LivingEntity entity);
 	
-	boolean onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn);
-	void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn);
+	default void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+	
+	default void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+	
+	default void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
 	
 	ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity);
 	ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity);
@@ -31,7 +35,7 @@ public interface ISpecialThirdPersonRender {
 	
 	List<AnimationController<ThirdPersonItemAnimEntity>> getAnimationControlllers(ItemStack stack, LivingEntity entity);
 	
-	void renderOverBone(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack, IRenderTypeBuffer bufferIn,
+	void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack, IRenderTypeBuffer bufferIn,
 			int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha);
 	
 	float getBoneAlpha(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha);

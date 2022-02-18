@@ -129,12 +129,12 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 			
 			if (name.equals("arm_left")) {
 				stack.translate(-1.0f * SCALE_RECIPROCAL, 2.0f * SCALE_RECIPROCAL, 0.0f);
-				AnimUtils.renderPartOverBone(model.leftArm, bone, stack, armBuilder, packedLightIn, armsAlpha, OverlayTexture.NO_OVERLAY);
-				AnimUtils.renderPartOverBone(model.leftSleeve, bone, stack, sleeveBuilder, packedLightIn, armsAlpha, OverlayTexture.NO_OVERLAY);
+				AnimUtils.renderPartOverBone(model.leftArm, bone, stack, armBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, armsAlpha);
+				AnimUtils.renderPartOverBone(model.leftSleeve, bone, stack, sleeveBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, armsAlpha);
 			} else if (name.equals("arm_right")) {
 				stack.translate(1.0f * SCALE_RECIPROCAL, 2.0f * SCALE_RECIPROCAL, 0.0f);
-				AnimUtils.renderPartOverBone(model.rightArm, bone, stack, armBuilder, packedLightIn, armsAlpha, OverlayTexture.NO_OVERLAY);
-				AnimUtils.renderPartOverBone(model.rightSleeve, bone, stack, sleeveBuilder, packedLightIn, armsAlpha, OverlayTexture.NO_OVERLAY);
+				AnimUtils.renderPartOverBone(model.rightArm, bone, stack, armBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, armsAlpha);
+				AnimUtils.renderPartOverBone(model.rightSleeve, bone, stack, sleeveBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, armsAlpha);
 			}
 			
 			stack.popPose();
@@ -144,7 +144,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public Integer getUniqueID(FirearmItem animatable) {
-		if (this.transformType == TransformType.GUI) {
+		if (this.transformType == TransformType.GUI || this.transformType == TransformType.GROUND) {
 			return -1;
 		}
 		return super.getUniqueID(animatable);
