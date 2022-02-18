@@ -141,8 +141,11 @@ public class RenderEvents {
 			
 			float lerpYaw = MathHelper.lerp(partialTick, entity.yRotO, entity.yRot);
 			matrixStack.pushPose();
+			
 			stpr.onPreRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
 			animRenderer.render(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onJustAfterRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
+			
 			matrixStack.popPose();
 		}
 	}

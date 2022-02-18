@@ -18,10 +18,14 @@ public interface ISpecialThirdPersonRender {
 
 	boolean shouldSpecialRender(ItemStack stack, LivingEntity entity);
 	
-	void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn);
-	void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn);
+	default void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+	
+	default void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+	
+	default void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
+			IRenderTypeBuffer bufferIn, int packedLightIn) {}
 	
 	ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity);
 	ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity);
