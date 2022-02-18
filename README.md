@@ -35,7 +35,6 @@ can fight stuff.
    * Smarter attack and formation movement
    * NPC attack orders
    * NPC drills for easy command chains
-* Third person weapon animation
 
 ---
 
