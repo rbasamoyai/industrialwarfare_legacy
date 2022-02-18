@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
+import net.minecraft.client.renderer.entity.layers.ElytraLayer;
 import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.entity.model.EntityModel;
@@ -527,8 +528,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.scale(0.9375f, 0.9375f, 0.9375f);
 			
-			IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
-			
 			stack.pushPose();
 			
 			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
@@ -544,88 +543,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			stack.scale(1.0f, -1.0f, -1.0f);
 			stack.translate(0.0d, (double) -1.501f, 0.0d);
 			
-			float skinAlpha = entity.isInvisible() ? entity == mc.player ? 0.15f : 0.0f : 1.0f; 
-			
-			List<ModelRenderer> legs = new ArrayList<>();
-			legs.add(bmodel.leftLeg);
-			legs.add(bmodel.rightLeg);
-			
-			if (bmodel instanceof PlayerModel) {
-				PlayerModel<?> pmodel = (PlayerModel<?>) bmodel;
-				pmodel.leftPants.copyFrom(pmodel.leftLeg);
-				pmodel.rightPants.copyFrom(pmodel.rightLeg);
-				legs.add(pmodel.leftPants);
-				legs.add(pmodel.rightPants);
-			}
-			
-			legs.forEach(p -> p.render(stack, builder, packedLightIn, packedOverlay, 1.0f, 1.0f, 1.0f, skinAlpha));
-			
-			if (armor != null) {
-				armor.innerModel.setAllVisible(true);
-				armor.outerModel.setAllVisible(true);
-				
-				ItemStack leggings = entity.getItemBySlot(EquipmentSlotType.LEGS);
-				Item leggingsItem = leggings.getItem();
-				if (leggingsItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, leggings.hasFoil());
-					
-					armor.innerModel.body.copyFrom(bmodel.body);
-					armor.innerModel.leftLeg.copyFrom(bmodel.leftLeg);
-					armor.innerModel.rightLeg.copyFrom(bmodel.rightLeg);
-					
-					List<ModelRenderer> parts = new ArrayList<>();
-					parts.add(armor.innerModel.body);
-					parts.add(armor.innerModel.leftLeg);
-					parts.add(armor.innerModel.rightLeg);
-					
-					if (leggingsItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) leggingsItem).getColor(leggings);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
-						
-						parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, leggings.hasFoil());
-						
-						parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
-					} else {
-						parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
-					}
-				}
-				
-				ItemStack boots = entity.getItemBySlot(EquipmentSlotType.FEET);
-				Item bootsItem = boots.getItem();
-				if (bootsItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, boots.hasFoil());
-					
-					armor.outerModel.leftLeg.copyFrom(bmodel.leftLeg);
-					armor.outerModel.rightLeg.copyFrom(bmodel.rightLeg);
-					
-					List<ModelRenderer> parts = new ArrayList<>();
-					parts.add(armor.outerModel.leftLeg);
-					parts.add(armor.outerModel.rightLeg);
-					
-					if (bootsItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) bootsItem).getColor(boots);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
-						
-						parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, boots.hasFoil());
-						
-						parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
-					} else {
-						parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
-					}
-				}
-			}
+			this.renderLegs(entity, stack, bufferIn, bmodel, armor, partialTicks, packedLightIn, packedOverlay, loc);
 			
 			if (entity instanceof AbstractClientPlayerEntity) {
 				AbstractClientPlayerEntity client = (AbstractClientPlayerEntity) entity;
@@ -634,6 +552,12 @@ public abstract class FirearmItem extends ShootableItem implements
 					layer.render(stack, bufferIn, packedLightIn, client, -1.0f, -1.0f, partialTicks, bob, -1.0f, -1.0f);
 				}
 			}
+			
+			List<ElytraLayer> elytras = AnimUtils.getLayers(ElytraLayer.class, renderer);
+			for (ElytraLayer layer : elytras) {
+				layer.render(stack, bufferIn, packedLightIn, entity, -1.0f, -1.0f, partialTicks, bob, -1.0f, -1.0f);
+			}
+			
 			
 			stack.popPose();
 			
@@ -651,6 +575,97 @@ public abstract class FirearmItem extends ShootableItem implements
 		stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 	}
 	
+	@SuppressWarnings("rawtypes")
+	protected void renderLegs(LivingEntity entity, MatrixStack stack, IRenderTypeBuffer bufferIn, BipedModel<?> bmodel,
+			BipedArmorLayer armor, float partialTicks, int packedLightIn, int packedOverlayIn, ResourceLocation loc) {
+		Minecraft mc = Minecraft.getInstance();
+		
+		List<ModelRenderer> legs = new ArrayList<>();
+		legs.add(bmodel.leftLeg);
+		legs.add(bmodel.rightLeg);
+		
+		if (bmodel instanceof PlayerModel) {
+			PlayerModel<?> pmodel = (PlayerModel<?>) bmodel;
+			pmodel.leftPants.copyFrom(pmodel.leftLeg);
+			pmodel.rightPants.copyFrom(pmodel.rightLeg);
+			legs.add(pmodel.leftPants);
+			legs.add(pmodel.rightPants);
+		}
+		
+		float skinAlpha = entity.isInvisible() ? entity == mc.player ? 0.15f : 0.0f : 1.0f;
+		
+		IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+		
+		legs.forEach(p -> p.render(stack, builder, packedLightIn, packedOverlayIn, 1.0f, 1.0f, 1.0f, skinAlpha));
+		
+		if (armor != null) {
+			armor.innerModel.setAllVisible(true);
+			armor.outerModel.setAllVisible(true);
+			
+			ItemStack leggings = entity.getItemBySlot(EquipmentSlotType.LEGS);
+			Item leggingsItem = leggings.getItem();
+			if (leggingsItem instanceof ArmorItem) {
+				ResourceLocation armorLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, null);
+				IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, leggings.hasFoil());
+				
+				armor.innerModel.body.copyFrom(bmodel.body);
+				armor.innerModel.leftLeg.copyFrom(bmodel.leftLeg);
+				armor.innerModel.rightLeg.copyFrom(bmodel.rightLeg);
+				
+				List<ModelRenderer> parts = new ArrayList<>();
+				parts.add(armor.innerModel.body);
+				parts.add(armor.innerModel.leftLeg);
+				parts.add(armor.innerModel.rightLeg);
+				
+				if (leggingsItem instanceof IDyeableArmorItem) {
+					int color = ((IDyeableArmorItem) leggingsItem).getColor(leggings);
+					float r = (float)(color >> 16 & 255) / 255.0F;
+					float g = (float)(color >> 8 & 255) / 255.0F;
+					float b = (float)(color & 255) / 255.0F;
+					
+					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
+					
+					ResourceLocation overlayLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, "overlay");
+					IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, leggings.hasFoil());
+					
+					parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
+				} else {
+					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
+				}
+			}
+			
+			ItemStack boots = entity.getItemBySlot(EquipmentSlotType.FEET);
+			Item bootsItem = boots.getItem();
+			if (bootsItem instanceof ArmorItem) {
+				ResourceLocation armorLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, null);
+				IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, boots.hasFoil());
+				
+				armor.outerModel.leftLeg.copyFrom(bmodel.leftLeg);
+				armor.outerModel.rightLeg.copyFrom(bmodel.rightLeg);
+				
+				List<ModelRenderer> parts = new ArrayList<>();
+				parts.add(armor.outerModel.leftLeg);
+				parts.add(armor.outerModel.rightLeg);
+				
+				if (bootsItem instanceof IDyeableArmorItem) {
+					int color = ((IDyeableArmorItem) bootsItem).getColor(boots);
+					float r = (float)(color >> 16 & 255) / 255.0F;
+					float g = (float)(color >> 8 & 255) / 255.0F;
+					float b = (float)(color & 255) / 255.0F;
+					
+					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
+					
+					ResourceLocation overlayLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, "overlay");
+					IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, boots.hasFoil());
+					
+					parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
+				} else {
+					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
 			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
@@ -661,6 +676,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		
 		AnimUtils.hideLayers(CapeLayer.class, renderer);
+		AnimUtils.hideLayers(ElytraLayer.class, renderer);
 		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
 		AnimUtils.hideLayers(BipedArmorLayer.class, renderer);
 	}
@@ -744,8 +760,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			boolean isBodyChild = bone.parent != null && bone.parent.name.equals("body");
 			boolean isFreeBone = name.equals("firearm") || name.equals("cartridge");
 			
-			stack.pushPose();
-			
 			if (isSneaking) {
 				if (isBody) {
 					RenderUtils.moveToPivot(bone, stack);
@@ -772,6 +786,8 @@ public abstract class FirearmItem extends ShootableItem implements
 					stack.translate(0.0f, -1.375f, 0.0f);
 				}
 			}
+			
+			stack.pushPose();
 			
 			if (!lockedLimbs && !isBody) {
 				RenderUtils.moveToPivot(bone, stack);
