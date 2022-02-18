@@ -83,7 +83,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"ads_aiming_start": {
@@ -221,7 +221,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"ads_firing": {
@@ -297,7 +297,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"hip_aiming": {
@@ -456,7 +456,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"reload": {

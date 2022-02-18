@@ -113,15 +113,15 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 		add(loc("item.firearms.insert_ammo"), SoundDefinition.definition()
 				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
 						.volume(1.0f)
-						.pitch(0.9f)
-						.attenuationDistance(4))
-				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
-						.volume(1.0f)
-						.pitch(0.95f)
+						.pitch(0.97f)
 						.attenuationDistance(4))
 				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
 						.volume(1.0f)
 						.pitch(1.0f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.03f)
 						.attenuationDistance(4)));
 		
 	}

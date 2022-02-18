@@ -127,16 +127,16 @@
     "sounds": [
       {
         "name": "random/click",
-        "pitch": 0.9,
+        "pitch": 0.97,
         "attenuation_distance": 4
       },
       {
         "name": "random/click",
-        "pitch": 0.95,
         "attenuation_distance": 4
       },
       {
         "name": "random/click",
+        "pitch": 1.03,
         "attenuation_distance": 4
       }
     ]
