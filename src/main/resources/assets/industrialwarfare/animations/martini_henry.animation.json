@@ -379,7 +379,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"hip_firing": {

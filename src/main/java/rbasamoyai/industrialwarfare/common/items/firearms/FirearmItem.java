@@ -460,8 +460,9 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (entity.isBaby()) animPos *= 3.0f;
 		
 		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
+		float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);		
 		
-		stack.mulPose(Vector3f.YP.rotationDegrees(entityYaw));
+		stack.mulPose(Vector3f.YN.rotationDegrees(headYaw));
 		
 		if (model instanceof BipedModel) {
 			BipedModel<?> bmodel = (BipedModel<?>) model;
@@ -526,9 +527,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.pushPose();
 			
-			float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-			stack.mulPose(Vector3f.YN.rotationDegrees(entityYaw + headYaw));
-			
 			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
 			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
@@ -568,6 +566,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			bmodel.setAllVisible(false);
 		}
+		
+		stack.mulPose(Vector3f.YP.rotationDegrees(headYaw + entityYaw));
 	}
 	
 	@SuppressWarnings("rawtypes")
