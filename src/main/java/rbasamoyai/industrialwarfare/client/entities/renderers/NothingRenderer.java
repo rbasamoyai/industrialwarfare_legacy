@@ -23,7 +23,7 @@ public class NothingRenderer<T extends Entity> extends EntityRenderer<T> {
 	
 	@Override
 	public boolean shouldRender(T entity, ClippingHelper helper, double distX, double distY, double distZ) {
-		return false;
+		return true;
 	}
 	
 }

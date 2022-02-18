@@ -767,7 +767,7 @@
 					"effect": "industrialwarfare:item.firearms.lever_open"
 				},
 				"1.4583": {
-					"effect": "minecraft:block.stone_button.click_on"
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
 				},
 				"2.125": {
 					"effect": "industrialwarfare:item.firearms.lever_close"
@@ -1094,7 +1094,7 @@
 					"effect": "industrialwarfare:item.firearms.lever_open"
 				},
 				"1.4583": {
-					"effect": "minecraft:block.stone_button.click_on"
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
 				},
 				"2.125": {
 					"effect": "industrialwarfare:item.firearms.lever_close"

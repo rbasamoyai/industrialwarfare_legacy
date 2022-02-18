@@ -269,10 +269,6 @@ public abstract class FirearmItem extends ShootableItem implements
 	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
-
-		if (selected) {
-			shooter.yBodyRot = shooter.yHeadRot;
-		}
 		
 		if (world.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
@@ -465,7 +461,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
 		
-		stack.mulPose(Vector3f.YN.rotationDegrees(entityYaw));
+		stack.mulPose(Vector3f.YP.rotationDegrees(entityYaw));
 		
 		if (model instanceof BipedModel) {
 			BipedModel<?> bmodel = (BipedModel<?>) model;
@@ -530,6 +526,9 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.pushPose();
 			
+			float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
+			stack.mulPose(Vector3f.YN.rotationDegrees(entityYaw + headYaw));
+			
 			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
 			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
@@ -569,10 +568,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			bmodel.setAllVisible(false);
 		}
-		
-		float bodyYaw = MathHelper.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
-		
-		stack.mulPose(Vector3f.YP.rotationDegrees(bodyYaw));
 	}
 	
 	@SuppressWarnings("rawtypes")

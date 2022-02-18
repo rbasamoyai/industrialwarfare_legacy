@@ -1,6 +1,8 @@
 package rbasamoyai.industrialwarfare.client.events;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.event.TickEvent.RenderTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -139,12 +142,15 @@ public class RenderEvents {
 				GeoReplacedEntityRenderer.registerReplacedEntity(animEntity.getClass(), animRenderer);
 			}
 			
-			float lerpYaw = MathHelper.lerp(partialTick, entity.yRotO, entity.yRot);
+			float headYaw = MathHelper.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+			float bodyYaw = MathHelper.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+			float dYaw = bodyYaw - headYaw;
+			
 			matrixStack.pushPose();
 			
-			stpr.onPreRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
-			animRenderer.render(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
-			stpr.onJustAfterRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onPreRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
+			animRenderer.render(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onJustAfterRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
 			
 			matrixStack.popPose();
 		}
@@ -194,6 +200,20 @@ public class RenderEvents {
 		ENTITY_CACHE.clear();
 		ANIM_ENTITY_CACHE.clear();
 		RENDERER_CACHE.clear();
+	}
+	
+	@SuppressWarnings("deprecation")
+	@SubscribeEvent
+	public static void onRenderTick(RenderTickEvent event) {
+		List<UUID> toRemove = new ArrayList<>();
+		ENTITY_CACHE.forEach((uuid, entity) -> {
+			if (entity == null || entity.removed) toRemove.add(uuid);
+		});
+		for (UUID uuid : toRemove) {
+			ENTITY_CACHE.remove(uuid);
+			ANIM_ENTITY_CACHE.remove(uuid);
+			RENDERER_CACHE.remove(uuid);
+		}
 	}
 	
 }

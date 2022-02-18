@@ -55,32 +55,32 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 		add(loc("item.rifle.fired"), SoundDefinition.definition()
 				.subtitle("subtitle.industrialwarfare.item.rifle.fired")
 				.with(Sound.sound(loc("firearms/rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.0f)
+						.volume(1.5f)
 						.pitch(0.8f)
-						.attenuationDistance(32))
+						.attenuationDistance(64))
 				.with(Sound.sound(loc("firearms/rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.0f)
+						.volume(1.5f)
 						.pitch(0.9f)
-						.attenuationDistance(32))
+						.attenuationDistance(64))
 				.with(Sound.sound(loc("firearms/rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.0f)
+						.volume(1.5f)
 						.pitch(1.0f)
-						.attenuationDistance(32)));
+						.attenuationDistance(64)));
 		
 		add(loc("item.heavy_rifle.fired"), SoundDefinition.definition()
 				.subtitle("subtitle.industrialwarfare.item.heavy_rifle.fired")
 				.with(Sound.sound(loc("firearms/heavy_rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.5f)
+						.volume(1.5f)
 						.pitch(0.8f)
-						.attenuationDistance(40))
+						.attenuationDistance(80))
 				.with(Sound.sound(loc("firearms/heavy_rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.5f)
+						.volume(1.5f)
 						.pitch(0.9f)
-						.attenuationDistance(40))
+						.attenuationDistance(80))
 				.with(Sound.sound(loc("firearms/heavy_rifle/fired"), SoundDefinition.SoundType.SOUND)
-						.volume(2.5f)
+						.volume(1.5f)
 						.pitch(1.0f)
-						.attenuationDistance(40)));
+						.attenuationDistance(80)));
 
 		add(loc("item.firearms.lever_open"), SoundDefinition.definition()
 				.with(Sound.sound(loc("firearms/lever_action_open"), SoundDefinition.SoundType.SOUND)
@@ -110,10 +110,28 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.pitch(1.0f)
 						.attenuationDistance(4)));
 
+		add(loc("item.firearms.insert_ammo"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(0.9f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(0.95f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:random/click"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.0f)
+						.attenuationDistance(4)));
+		
 	}
 	
 	private ResourceLocation loc(String id) {
-		return new ResourceLocation(IndustrialWarfare.MOD_ID, id);
+		return innerLoc(IndustrialWarfare.MOD_ID + ":" + id);
+	}
+	
+	private ResourceLocation innerLoc(String id) {
+		return new ResourceLocation(id);
 	}
 	
 	@Override
