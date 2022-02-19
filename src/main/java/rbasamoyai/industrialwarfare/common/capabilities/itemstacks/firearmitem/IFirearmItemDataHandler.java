@@ -9,6 +9,9 @@ import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType
 
 public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 
+	void setSelected(boolean selected);
+	boolean isSelected();
+	
 	void setCycled(boolean cycled);
 	boolean isCycled();
 	

@@ -348,16 +348,18 @@ public class WhistleItem extends Item implements IHighlighterItem {
 	@Override
 	public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
 		if (entity.level.isClientSide) {
-			if (entity instanceof PlayerEntity) {
+			if (entity instanceof PlayerEntity && !((PlayerEntity) entity).getCooldowns().isOnCooldown(this)) {
 				((PlayerEntity) entity).playSound(SoundEvents.NOTE_BLOCK_BASS, 1.0f, 0.0f);
 			}
 			return true;
 		}
-		ServerWorld slevel = (ServerWorld) entity.level;		
+		ServerWorld slevel = (ServerWorld) entity.level;
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
 		if (entity instanceof PlayerEntity) {
 			PlayerEntity player = (PlayerEntity) entity;
+			if (player.getCooldowns().isOnCooldown(this)) return true;
+			
 			PlayerIDTag ownerTag = PlayerIDTag.of(player);
 			if (player.isCrouching()) {
 				nbt.remove(TAG_SELECTED_UNITS);

@@ -13,7 +13,7 @@ import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 
 public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMob> extends Task<E> {
 
-	private int attackDelay;
+	private int delay;
 	private Status status = Status.UNLOADED;
 	
 	public ExtendedShootTargetTask() {
@@ -31,7 +31,7 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 	
 	@Override
 	protected void start(ServerWorld world, E shooter, long gameTime) {
-		this.status = Status.UNLOADED;
+		this.status = shooter.getNextStatus();
 	}
 	
 	@Override
@@ -48,9 +48,7 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 	
 	@Override
 	protected void stop(ServerWorld world, E shooter, long gameTime) {
-		if (shooter.isUsingItem()) {
-			shooter.stopUsingItem();
-		}
+		shooter.stopRangedAttack();
 	}
 	
 	private void attackTarget(E shooter, LivingEntity target) {
@@ -61,14 +59,18 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			this.status = Status.RELOADING;
 		} else if (this.status == Status.RELOADING) {
 			if (shooter.whileReloading()) return;
-			this.attackDelay = shooter.getRangedAttackDelay(); 
+			this.delay = shooter.getRangedAttackDelay(); 
 			this.status = Status.READY_TO_FIRE;
 		} else if (this.status == Status.READY_TO_FIRE) {
-			--this.attackDelay;
-			if (this.attackDelay > 0) return;
+			--this.delay;
+			shooter.whileWaitingToAttack();
+			if (this.delay > 0) return;
+			
 			shooter.performRangedAttack(target, 0.0f);
 			this.status = Status.FIRED;
 		} else if (this.status == Status.FIRED) {
+			if (shooter.whileCoolingDown()) return;
+			
 			this.status = shooter.getNextStatus();
 			switch (this.status) {
 			case CYCLING: shooter.startCycling(); break;
@@ -77,7 +79,7 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			}
 		} else if (this.status == Status.CYCLING) {
 			if (shooter.whileCycling()) return;
-			this.attackDelay = shooter.getRangedAttackDelay();
+			this.delay = shooter.getRangedAttackDelay();
 			this.status = Status.READY_TO_FIRE;
 		}
 	}

@@ -261,9 +261,9 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
 	
-	protected abstract void startAiming(ItemStack firearm, LivingEntity shooter);
+	public abstract void startAiming(ItemStack firearm, LivingEntity shooter);
 	
-	protected abstract void stopAiming(ItemStack firearm, LivingEntity shooter);
+	public abstract void stopAiming(ItemStack firearm, LivingEntity shooter);
 	
 	@Override
 	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
@@ -272,12 +272,18 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		if (world.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
-			
+		
 		getDataHandler(stack).ifPresent(h -> {
+			if (!h.isSelected() && selected) {
+				this.onSelect(stack, shooter);
+			}
+			h.setSelected(selected);
+			
 			if (!selected) {
 				// No time modified as an IQualityModifier entity could return a different time modifier each call
 				h.setAction(ActionType.NOTHING, this.drawTime);
 				h.setAiming(false);
+				h.setMelee(false);
 				return;
 			}
 			
@@ -311,12 +317,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {}
 	
+	protected void onSelect(ItemStack firearm, LivingEntity shooter) {}
+	
 	public static void tryReloadFirearm(ItemStack firearm, LivingEntity shooter) {
 		if (shooter.level.isClientSide) return;
 		Item item = firearm.getItem();
 		if (!(item instanceof FirearmItem)) return;
 		FirearmItem firearmItem = (FirearmItem) item;
-		
 		
 		ItemStack ammo = shooter.getProjectile(firearm);
 		if (ammo.isEmpty() || !firearmItem.getAllSupportedProjectiles().test(ammo)) return;
@@ -427,7 +434,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
 		Vector3d entityPos = entity.position();
 		float volume = mc.player == entity ? 16.0f : 1.0f;
-		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, false);
+		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, true);
 	}
 
 	@Override
@@ -711,6 +718,14 @@ public abstract class FirearmItem extends ShootableItem implements
 	private <E extends IAnimatable> PlayState upperBodyPredicate(AnimationEvent<E> event) {
 		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getAnimatable();
 		AnimationController<?> controller = event.getController();
+		
+		if (controller.getCurrentAnimation() == null) {
+			LivingEntity entity = RenderEvents.ENTITY_CACHE.get(animEntity.getUUID());
+			if (entity != null) {
+				controller.markNeedsReload();
+				controller.setAnimation(this.getDefaultAnimation(entity.getMainHandItem(), entity, controller));
+			}
+		}
 		
 		AnimationBuilder builder = animEntity.popAndGetAnim(controller.getName());
 		if (builder != null) {

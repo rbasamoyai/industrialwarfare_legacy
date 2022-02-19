@@ -425,8 +425,10 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextEffectiveness();
 		this.getNextTimeModifier();
 		
-		if (weaponItem instanceof BowItem || weaponItem instanceof CrossbowItem || weaponItem instanceof FirearmItem) {
+		if (weaponItem instanceof BowItem || weaponItem instanceof CrossbowItem) {
 			this.startUsingItem(Hand.MAIN_HAND);
+		} else if (weaponItem instanceof FirearmItem) {
+			FirearmItem.tryReloadFirearm(weapon, this);
 		}
 		
 	}
@@ -450,7 +452,10 @@ public class NPCEntity extends CreatureEntity implements
 		}
 		
 		if (weaponItem instanceof FirearmItem) {
-			return FirearmItem.getDataHandler(weapon).map(h -> h.getAction() == FirearmItem.ActionType.RELOADING && !h.isFinishedAction()).orElse(false);
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				FirearmItem.ActionType action = h.getAction();
+				return (action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING || action == FirearmItem.ActionType.CYCLING) && !h.isFinishedAction();
+			}).orElse(false);
 		}
 		
 		return false;
@@ -459,6 +464,19 @@ public class NPCEntity extends CreatureEntity implements
 	@Override
 	public int getRangedAttackDelay() {
 		return MathHelper.ceil(60.0f * this.timeModifier);
+	}
+	
+	@Override
+	public void whileWaitingToAttack() {
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		if (weaponItem instanceof FirearmItem) {
+			// TODO: aiming skill qualifier
+			if (!FirearmItem.isAiming(weapon)) {
+				((FirearmItem) weaponItem).startAiming(weapon, this);
+			}
+		}
 	}
 	
 	@Override
@@ -543,6 +561,23 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
+	public boolean whileCoolingDown() {
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		if (weaponItem instanceof FirearmItem) {
+			if (FirearmItem.isFinishedAction(weapon)) {
+				if (FirearmItem.isAiming(weapon)) {
+					((FirearmItem) weaponItem).stopAiming(weapon, this);
+				} else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	@Override
 	public void startCycling() {
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
@@ -582,6 +617,20 @@ public class NPCEntity extends CreatureEntity implements
 	public LivingEntity getTarget() {
 		Brain<?> brain = this.getBrain();
 		return brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) ? brain.getMemory(MemoryModuleType.ATTACK_TARGET).get() : null;
+	}
+	
+	@Override
+	public void stopRangedAttack() {
+		if (this.isUsingItem()) {
+			this.stopUsingItem();
+		}
+		
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		if (weaponItem instanceof FirearmItem) {
+			((FirearmItem) weaponItem).stopAiming(weapon, this);
+		}
 	}
 	
 	@Override

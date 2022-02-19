@@ -9,10 +9,12 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Util;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
 import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
@@ -54,6 +56,19 @@ public class ThirdPersonItemAnimEntity implements IAnimatable {
 	
 	public void queueAnim(String controller, AnimationBuilder builder) { this.queuedAnims.put(controller, builder); }
 	public AnimationBuilder popAndGetAnim(String controller) { return this.queuedAnims.remove(controller); }
+	
+	public AnimationController<?> getController(String name) {
+		ThirdPersonItemAnimRenderer renderer = RenderEvents.RENDERER_CACHE.get(this.uuid);
+		if (renderer == null) return null;
+		
+		@SuppressWarnings("unchecked")
+		int id = renderer.getUniqueID(this);
+		
+		@SuppressWarnings("rawtypes")
+		HashMap<String, AnimationController> controllers = this.factory.getOrCreateAnimationData(id).getAnimationControllers();
+		
+		return controllers.get(name);
+	}
 	
 	public void setSpeed(float speed) { this.animSpeed = speed; }
 	public float getSpeed() { return this.animSpeed; }

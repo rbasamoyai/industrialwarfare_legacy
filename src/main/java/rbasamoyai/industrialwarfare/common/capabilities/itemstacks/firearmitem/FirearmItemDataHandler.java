@@ -14,10 +14,14 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	protected FirearmItem.ActionType action;
 	protected int time;
 	
+	protected boolean selected = false;
 	protected boolean cycled;
 	protected boolean fired;
 	protected boolean meleeing = false;
 	protected boolean aiming;
+	
+	@Override public void setSelected(boolean selected) { this.selected = selected; }
+	@Override public boolean isSelected() { return this.selected; }
 	
 	@Override public void setCycled(boolean cycled) { this.cycled = cycled; }
 	@Override public boolean isCycled() { return this.cycled; }

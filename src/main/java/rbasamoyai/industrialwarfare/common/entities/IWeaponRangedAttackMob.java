@@ -15,10 +15,17 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	
 	int getRangedAttackDelay();
 	
+	void whileWaitingToAttack();
+	
 	/**
 	 * @return true if mob should cycle weapon, false if should reload
 	 */
 	ExtendedShootTargetTask.Status getNextStatus();
+	
+	/**
+	 * @return false when done cooling down, true otherwise
+	 */
+	boolean whileCoolingDown();
 	
 	void startCycling();
 	
@@ -30,5 +37,7 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	boolean canDoRangedAttack();
 	
 	LivingEntity getTarget();
+	
+	void stopRangedAttack();
 	
 }

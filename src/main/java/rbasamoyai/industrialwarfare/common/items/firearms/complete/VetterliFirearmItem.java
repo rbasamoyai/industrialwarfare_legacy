@@ -8,12 +8,14 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
+import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.AnimBroadcastUtils;
@@ -62,6 +64,8 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			shooter.level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEventInit.RIFLE_FIRED.get(), SoundCategory.MASTER, 4.0f, 1.0f);
+			
 			boolean isAiming = isAiming(firearm);
 			int fpsAnim = isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING;
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fpsAnim);
@@ -75,6 +79,15 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				upperBody.add(new Tuple<>("hip_aiming", true));
 			}
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+		}
+	}
+	
+	@Override
+	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
+		super.onSelect(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_SELECT_FIREARM);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "select_firearm", true, 1.0f);
 		}
 	}
 	
@@ -151,7 +164,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	}
 	
 	@Override
-	protected void startAiming(ItemStack firearm, LivingEntity shooter) {
+	public void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
@@ -164,7 +177,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	}
 	
 	@Override
-	protected void stopAiming(ItemStack firearm, LivingEntity shooter) {
+	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
@@ -207,6 +220,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public static final int ANIM_ADS_AIMING_END = 10;
 	public static final int ANIM_ADS_FIRING = 11;
 	public static final int ANIM_RELOAD_END_EXTRACT = 12;
+	public static final int ANIM_SELECT_FIREARM = 13;
 	
 	@Override
 	public void onAnimationSync(int id, int state) {
@@ -260,6 +274,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			builder
 			.addAnimation("reload_end_extract", false)
 			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_SELECT_FIREARM:
+			builder
+			.addAnimation("select_firearm", false)
+			.addAnimation("hip_aiming", true);
+			break;
 		}
 		
 		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
@@ -296,7 +316,9 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 
 	@Override
 	public AnimationBuilder getDefaultAnimation(ItemStack stack, LivingEntity entity, AnimationController<?> controller) {
-		return (new AnimationBuilder()).addAnimation("hip_aiming", true);
+		return (new AnimationBuilder())
+				.addAnimation("select_firearm", false)
+				.addAnimation("hip_aiming", true);
 	}
 	
 }
