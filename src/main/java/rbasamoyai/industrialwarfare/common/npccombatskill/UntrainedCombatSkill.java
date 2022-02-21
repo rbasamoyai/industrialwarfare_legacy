@@ -1,6 +1,5 @@
 package rbasamoyai.industrialwarfare.common.npccombatskill;
 
-import net.minecraft.item.BowItem;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -30,7 +29,7 @@ public class UntrainedCombatSkill extends NPCCombatSkill {
 	@Override
 	public boolean canUseRangedWeapon(NPCEntity npc, ItemStack weapon) {
 		Item weaponItem = weapon.getItem();
-		return weaponItem instanceof CrossbowItem || weaponItem instanceof FirearmItem || weaponItem instanceof BowItem;
+		return weaponItem instanceof CrossbowItem || weaponItem instanceof FirearmItem;
 	}
 	
 }

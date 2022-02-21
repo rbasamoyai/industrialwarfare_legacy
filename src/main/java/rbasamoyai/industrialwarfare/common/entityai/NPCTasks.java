@@ -90,6 +90,7 @@ public class NPCTasks {
 				Pair.of(2, new EndDiplomacyAttackTask<>()),
 				Pair.of(2, new EndPatrolAttackTask()),
 				Pair.of(3, new AttackTargetTask(20)),
+				//Pair.of(3, new )
 				Pair.of(4, new ReturnToWorkIfPatrollingTask())
 				);
 	}
@@ -160,7 +161,7 @@ public class NPCTasks {
 			if (targetBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && targetBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() == npc) {
 				return Optional.of(e);
 			}
-			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc) {
+			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc) { // TODO: make sure that the targeting is attacking
 				return Optional.of(e);
 			}
 			
@@ -172,6 +173,22 @@ public class NPCTasks {
 				if (status == DiplomaticStatus.ENEMY || status != DiplomaticStatus.ALLY && isViableNonEnemyTarget(e)) {
 					return Optional.of(e);
 				}
+			}
+		}
+		
+		// Assisting nearby allies with their attack targets
+		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.LIVING_ENTITIES).orElse(Arrays.asList());
+		for (LivingEntity e : nearbyEntities) {
+			if (!(e instanceof IHasDiplomaticOwner)) continue;
+			PlayerIDTag otherOwner = ((IHasDiplomaticOwner) e).getDiplomaticOwner();
+			if (!npcOwner.equals(otherOwner) && saveData.getDiplomaticStatus(npcOwner, otherOwner) != DiplomaticStatus.ALLY) continue;
+			Brain<?> allyBrain = e.getBrain();
+			if (allyBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) {
+				return allyBrain.getMemory(MemoryModuleType.ATTACK_TARGET);
+			}
+			if (e instanceof MobEntity) {
+				LivingEntity mobTarget = ((MobEntity) e).getTarget();
+				if (mobTarget != null) return Optional.of(mobTarget);
 			}
 		}
 		

@@ -33,7 +33,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.IntArrayNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.ActionResult;
@@ -42,7 +41,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.UUIDCodec;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -193,19 +191,17 @@ public class WhistleItem extends Item implements IHighlighterItem {
 					formationsByRank.put(formationRank, Util.make(new ArrayList<>(), list -> list.add(new Tuple<>(entityList, formation))));
 				}
 				List<Tuple<List<CreatureEntity>, UnitFormation>> formations = formationsByRank.get(formationRank);
-				Tuple<List<CreatureEntity>, UnitFormation> topFormation = formations.get(formations.size() - 1); 
+				Tuple<List<CreatureEntity>, UnitFormation> topFormation = formations.get(formations.size() - 1);
+				
 				if (topFormation.getB().addEntity(unit)) {
 					topFormation.getA().add(unit);
 				} else {
-					List<CreatureEntity> entityList = new ArrayList<>();
 					UnitFormation formation = formationSupplier.apply(formationRank);
-					formations.add(new Tuple<>(entityList, formation));
-					Tuple<List<CreatureEntity>, UnitFormation> newFormation = formations.get(formations.size() - 1);
-					if (newFormation.getB().addEntity(unit)) {
-						newFormation.getA().add(unit);
+					if (formation.addEntity(unit)) {
+						List<CreatureEntity> entityList = Util.make(new ArrayList<>(), list -> list.add(unit));
+						formations.add(new Tuple<>(entityList, formation));
 					} else {
 						// This really should not happen
-						formations.remove(formations.size() - 1);
 						assignToLooseUnits(unit, looseUnitsUUID, useContext);
 					}
 				}
@@ -220,11 +216,13 @@ public class WhistleItem extends Item implements IHighlighterItem {
 					.collect(Collectors.toList());
 			
 			//List<FormationLeaderEntity> leaders =
+			
+			// Spawning leaders
 			sortedFormations
 			.stream()
 			.forEach(f -> {
 				List<CreatureEntity> formationUnits = f.getA();
-				if (selectedUnits.isEmpty()) return;
+				if (formationUnits.isEmpty()) return;
 				FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), slevel, f.getB());
 				
 				Brain<?> leaderBrain = leader.getBrain();
@@ -246,7 +244,6 @@ public class WhistleItem extends Item implements IHighlighterItem {
 						closestToCentroid = unit;
 					}
 				}
-				if (closestToCentroid == null) return;
 				Vector3d pos = closestToCentroid.position();
 				
 				leader.setPos(pos.x, pos.y, pos.z);
@@ -254,7 +251,14 @@ public class WhistleItem extends Item implements IHighlighterItem {
 				leader.setState(UnitFormation.State.FORMING);
 				
 				slevel.addFreshEntity(leader);
-				controlledLeaders.add(new IntArrayNBT(UUIDCodec.uuidToIntArray(leader.getUUID())));
+				UUID leaderUUID = leader.getUUID();
+				controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
+				
+				formationUnits
+				.stream()
+				.map(CreatureEntity::getBrain)
+				.filter(b -> b.checkMemory(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.REGISTERED))
+				.forEach(b -> b.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID));
 			});
 		}
 		
@@ -317,7 +321,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			if (owner.equals(targetOwner)) return ActionResultType.PASS;
 			DiplomacySaveData saveData = DiplomacySaveData.get(slevel);
 			DiplomaticStatus status = saveData.getDiplomaticStatus(owner, targetOwner);
-			if (status == DiplomaticStatus.ALLY) return ActionResultType.PASS;
+			if (status == DiplomaticStatus.ALLY) return ActionResultType.CONSUME;
 		}
 		
 		for (INBT tag : selectedUnits) {

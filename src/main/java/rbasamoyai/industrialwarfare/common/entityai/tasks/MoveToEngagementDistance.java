@@ -27,7 +27,7 @@ public class MoveToEngagementDistance extends Task<LivingEntity> {
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld level, LivingEntity entity) {
 		LivingEntity target = this.getAttackTarget(entity);
-		return target != null && target.isAlive() && !target.position().closerThan(entity.position(), this.distance);
+		return target != null && target.isAlive();
 	}
 	
 	@Override
@@ -38,7 +38,7 @@ public class MoveToEngagementDistance extends Task<LivingEntity> {
 	
 	@Override
 	protected boolean canStillUse(ServerWorld level, LivingEntity entity, long gameTime) {
-		return this.checkExtraStartConditions(level, entity);
+		return this.checkExtraStartConditions(level, entity) && !this.getAttackTarget(entity).position().closerThan(entity.position(), this.distance);
 	}
 	
 	@Override

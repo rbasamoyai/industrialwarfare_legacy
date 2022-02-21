@@ -24,6 +24,7 @@ import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
+import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -111,8 +112,12 @@ public class LineFormation extends UnitFormation {
 				
 				Brain<?> unitBrain = unit.getBrain();
 				
-				if (engagementFlag && unitBrain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
+				if (engagementFlag
+					&& unitBrain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
+					&& unitBrain.checkMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.REGISTERED)
+					&& unitBrain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)) {
 					// Engagement
+					
 					if (!(unit instanceof IWeaponRangedAttackMob)
 						|| rank == 0
 							&& ((IWeaponRangedAttackMob) unit).canDoRangedAttack()
@@ -122,6 +127,7 @@ public class LineFormation extends UnitFormation {
 						if (!(unit instanceof IWeaponRangedAttackMob)) this.lines[rank][file] = null;
 						
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
+						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
 						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
 						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
 					}

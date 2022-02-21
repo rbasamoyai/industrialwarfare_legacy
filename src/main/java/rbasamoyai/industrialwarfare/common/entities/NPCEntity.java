@@ -112,6 +112,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
+			MemoryModuleTypeInit.IN_FORMATION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),

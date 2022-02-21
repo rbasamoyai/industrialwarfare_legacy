@@ -28,7 +28,7 @@ public class EntityTypeInit {
 	
 	public static final RegistryObject<EntityType<BulletEntity>> BULLET = ENTITY_TYPES.register("bullet",
 			() -> EntityType.Builder.<BulletEntity>of(BulletEntity::new, EntityClassification.MISC)
-					.sized(0.25f, 0.25f)
+					.sized(0.125f, 0.125f)
 					.clientTrackingRange(4)
 					.updateInterval(1)
 					.build(makeId("bullet").toString()));

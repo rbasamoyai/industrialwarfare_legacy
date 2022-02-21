@@ -1,7 +1,8 @@
 Current TODO:
 - Work on formations
     - Better formation attacking
-    	- Keeping ranged fighters in formation
+    	- Making ranged shots not
+    	hit allies in formation
     - Joining up with formations
     - Other formation types
     - Improved forming up

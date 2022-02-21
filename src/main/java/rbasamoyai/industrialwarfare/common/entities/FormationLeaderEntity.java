@@ -96,7 +96,7 @@ public class FormationLeaderEntity extends CreatureEntity {
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
 				Pair.of(0, new PreciseWalkToPositionTask(2.0f, 1.5d, 0.125d)),
-				Pair.of(1, new MoveToEngagementDistance(12))
+				Pair.of(1, new MoveToEngagementDistance(14))
 				);
 	}
 	
