@@ -135,6 +135,8 @@ public class NPCEntity extends CreatureEntity implements
 	private float effectiveness;
 	private float timeModifier;
 	
+	protected int rangedAttackDelay;
+	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
 		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
 	}
@@ -454,7 +456,14 @@ public class NPCEntity extends CreatureEntity implements
 		if (weaponItem instanceof FirearmItem) {
 			return FirearmItem.getDataHandler(weapon).map(h -> {
 				FirearmItem.ActionType action = h.getAction();
-				return (action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING || action == FirearmItem.ActionType.CYCLING) && !h.isFinishedAction();
+				
+				boolean reloading = action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING;
+				if (!h.hasAmmo() && !reloading) {
+					FirearmItem.tryReloadFirearm(weapon, this);
+					return true;
+				}
+				
+				return (reloading || action == FirearmItem.ActionType.CYCLING) && !h.isFinishedAction();
 			}).orElse(false);
 		}
 		
@@ -462,21 +471,30 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public int getRangedAttackDelay() {
-		return MathHelper.ceil(60.0f * this.timeModifier);
-	}
-	
-	@Override
-	public void whileWaitingToAttack() {
+	public boolean whileWaitingToAttack() {
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
 			// TODO: aiming skill qualifier
-			if (!FirearmItem.isAiming(weapon)) {
-				((FirearmItem) weaponItem).startAiming(weapon, this);
+			if (this.canAim()) {
+				if (!FirearmItem.isAiming(weapon)) {
+					((FirearmItem) weaponItem).startAiming(weapon, this);
+				}
 			}
+			if (!FirearmItem.isFinishedAction(weapon)) {
+				this.rangedAttackDelay = MathHelper.ceil(30.0f * this.timeModifier);
+			}
+		} else if (this.rangedAttackDelay <= 0) {
+			this.rangedAttackDelay = MathHelper.ceil(60.0f * this.timeModifier);
 		}
+		
+		--this.rangedAttackDelay;
+		return this.rangedAttackDelay > 0;
+	}
+	
+	private boolean canAim() {
+		return true;
 	}
 	
 	@Override
@@ -510,7 +528,7 @@ public class NPCEntity extends CreatureEntity implements
 	 */
 	private void shootUsingBow(LivingEntity target) {
 		ItemStack bow = this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem));
-		ItemStack projectile = this.getProjectile(bow);
+		ItemStack projectile = this.getProjectile(bow).split(1);
 		AbstractArrowEntity arrow = ProjectileHelper.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
 		Item mainhandItem = this.getMainHandItem().getItem();
 		if (mainhandItem instanceof BowItem) {
@@ -550,6 +568,10 @@ public class NPCEntity extends CreatureEntity implements
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
+		if (weaponItem instanceof CrossbowItem) {
+			return CrossbowItem.isCharged(weapon) && CrossbowItem.containsChargedProjectile(weapon, weaponItem) ? Status.READY_TO_FIRE : Status.UNLOADED;
+		}
+		
 		if (weaponItem instanceof FirearmItem) {
 			if (FirearmItem.getDataHandler(weapon).map(IFirearmItemDataHandler::hasAmmo).orElse(false)) {
 				return ((FirearmItem) weaponItem).needsCycle(weapon) ? Status.CYCLING : Status.READY_TO_FIRE;
@@ -573,8 +595,10 @@ public class NPCEntity extends CreatureEntity implements
 					return false;
 				}
 			}
+			return true;
 		}
-		return true;
+		
+		return false;
 	}
 	
 	@Override
@@ -596,7 +620,16 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
-			return FirearmItem.getDataHandler(weapon).map(h -> h.getAction() == FirearmItem.ActionType.CYCLING && !h.isFinishedAction()).orElse(false);
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				FirearmItem.ActionType action = h.getAction();
+				
+				if (!h.isCycled() && action != FirearmItem.ActionType.CYCLING) {
+					this.swing(Hand.MAIN_HAND);
+					return true;
+				}
+				
+				return action == FirearmItem.ActionType.CYCLING && !h.isFinishedAction();
+			}).orElse(false);
 		}
 		
 		return false;

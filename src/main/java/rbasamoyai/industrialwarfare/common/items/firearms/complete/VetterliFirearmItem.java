@@ -44,7 +44,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.muzzleVelocity(7.5f)
 							.horizontalRecoil(e -> 1.0f * (float) e.getRandom().nextGaussian())
 							.verticalRecoil(e -> 4.0f + 1.0f * e.getRandom().nextFloat())
-							.cooldownTime(10)
+							.cooldownTime(20)
 							.cycleTime(30)
 							.drawTime(20)
 							.reloadStartTime(30)
@@ -78,7 +78,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				upperBody.add(new Tuple<>("hip_firing", false));
 				upperBody.add(new Tuple<>("hip_aiming", true));
 			}
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 	
@@ -115,7 +115,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("reload_start", false));
 			upperBody.add(new Tuple<>("reload_hold", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 
@@ -128,7 +128,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("reload", false));
 			upperBody.add(new Tuple<>("reload_hold", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 	
@@ -146,7 +146,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 				upperBody.add(new Tuple<>("reload_end", false));
 			}
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 	
@@ -159,7 +159,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("hip_cycling", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 	

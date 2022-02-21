@@ -13,9 +13,7 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	 */
 	boolean whileReloading();
 	
-	int getRangedAttackDelay();
-	
-	void whileWaitingToAttack();
+	boolean whileWaitingToAttack();
 	
 	/**
 	 * @return true if mob should cycle weapon, false if should reload

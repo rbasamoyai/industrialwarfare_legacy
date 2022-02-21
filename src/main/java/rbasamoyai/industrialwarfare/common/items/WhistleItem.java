@@ -308,7 +308,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 		}
 		
 		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
-		if (selectedUnits.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.PASS;
+		if (selectedUnits.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.CONSUME;
 		
 		// Unlike passive targeting, directly targeting a unit will not take
 		// anything into consideration other than if they are an ally.
@@ -320,7 +320,6 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			if (status == DiplomaticStatus.ALLY) return ActionResultType.PASS;
 		}
 		
-		boolean flag = false;
 		for (INBT tag : selectedUnits) {
 			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
 			if (!isValidUnit(e, owner)) continue;
@@ -335,7 +334,6 @@ public class WhistleItem extends Item implements IHighlighterItem {
 				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
 				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
 				brain.setActiveActivityIfPossible(Activity.FIGHT);
-				flag = true;
 			}
 		}
 		
@@ -360,11 +358,10 @@ public class WhistleItem extends Item implements IHighlighterItem {
 				if (brain.hasMemoryValue(MemoryModuleTypeInit.PRECISE_POS.get())) {
 					brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
 				}
-				flag = true;
 			}
 		}
 		
-		return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
+		return ActionResultType.CONSUME;
 	}
 	
 	@Override

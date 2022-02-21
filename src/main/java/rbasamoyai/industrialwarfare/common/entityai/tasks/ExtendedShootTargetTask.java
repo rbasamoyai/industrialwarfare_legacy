@@ -13,7 +13,6 @@ import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 
 public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMob> extends Task<E> {
 
-	private int delay;
 	private Status status = Status.UNLOADED;
 	
 	public ExtendedShootTargetTask() {
@@ -59,12 +58,9 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			this.status = Status.RELOADING;
 		} else if (this.status == Status.RELOADING) {
 			if (shooter.whileReloading()) return;
-			this.delay = shooter.getRangedAttackDelay(); 
 			this.status = Status.READY_TO_FIRE;
 		} else if (this.status == Status.READY_TO_FIRE) {
-			--this.delay;
-			shooter.whileWaitingToAttack();
-			if (this.delay > 0) return;
+			if (shooter.whileWaitingToAttack()) return;
 			
 			shooter.performRangedAttack(target, 0.0f);
 			this.status = Status.FIRED;
@@ -79,7 +75,6 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			}
 		} else if (this.status == Status.CYCLING) {
 			if (shooter.whileCycling()) return;
-			this.delay = shooter.getRangedAttackDelay();
 			this.status = Status.READY_TO_FIRE;
 		}
 	}

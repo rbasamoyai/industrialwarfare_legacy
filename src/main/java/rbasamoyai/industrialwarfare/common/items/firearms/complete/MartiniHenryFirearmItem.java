@@ -49,7 +49,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 							.muzzleVelocity(6.0f)
 							.horizontalRecoil(e -> 1.5f * (float) e.getRandom().nextGaussian())
 							.verticalRecoil(e -> 6.0f + 2.0f * e.getRandom().nextFloat())
-							.cooldownTime(10)
+							.cooldownTime(20)
 							.drawTime(20)
 							.reloadTime(50)
 							.projectileRange(100));
@@ -114,7 +114,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>(fired ? "reload_extract" : "reload", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
 	
