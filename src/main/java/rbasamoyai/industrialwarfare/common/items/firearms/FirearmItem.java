@@ -231,7 +231,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		ItemStack stack = player.getItemInHand(hand);
 		if (hand != Hand.MAIN_HAND) return ActionResult.pass(stack);
 		if (getDataHandler(stack).map(h -> {
-			return !h.isFinishedAction() && h.getAction() != ActionType.NOTHING || h.isMeleeing();
+			return !h.isFinishedAction() || h.isMeleeing();
 		}).orElse(false)) {
 			return ActionResult.fail(stack);
 		}

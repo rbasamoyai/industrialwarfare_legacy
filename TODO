@@ -1,6 +1,7 @@
 Current TODO:
-- Some animations
-- Fix NPC aiming
 - Work on formations
+    - Better formation attacking
+    	- Keeping ranged fighters in formation
+    - Joining up with formations
     - Other formation types
-    - Smarter formations
+    - Improved forming up

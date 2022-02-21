@@ -31,19 +31,23 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.State;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistance;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class FormationLeaderEntity extends CreatureEntity implements IProjectilePassThrough {
+public class FormationLeaderEntity extends CreatureEntity {
 
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
+			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
+			MemoryModuleTypeInit.COMBAT_MODE.get(),
+			MemoryModuleTypeInit.ENGAGING_COMPLETED.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get()
 			);
 	
@@ -91,7 +95,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
-				Pair.of(0, new PreciseWalkToPositionTask(2.0f, 1.5d, 0.125d))
+				Pair.of(0, new PreciseWalkToPositionTask(2.0f, 1.5d, 0.125d)),
+				Pair.of(1, new MoveToEngagementDistance(12))
 				);
 	}
 	
@@ -159,7 +164,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	}
 	
 	public void setState(UnitFormation.State state) {
-		this.formation.setState(state);
+		this.formation.setState(state);	
 	}
 	
 	/* "Decreaturefying" the formation leader */
@@ -175,5 +180,6 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	@Override public boolean canSpawnSprintParticle() { return false; }
 	@Override public boolean isInvulnerable() { return true; }
 	@Override protected void tickDeath() { this.remove(false); }
+	@Override public boolean isPickable() { return false; }
 	
 }

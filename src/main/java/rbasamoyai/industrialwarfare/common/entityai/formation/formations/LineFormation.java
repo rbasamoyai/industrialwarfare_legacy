@@ -6,8 +6,12 @@ import javax.annotation.Nullable;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.BrainUtil;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +22,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
+import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
+import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -69,14 +75,26 @@ public class LineFormation extends UnitFormation {
 		if (this.formationState == null || this.formationState == State.BROKEN || leader == null || leader.level.isClientSide) return;
 		
 		this.moveUpUnits();
-		this.moveUpUnits();
 
-		boolean finishedForming = this.formationState == State.FORMING;
-		boolean stopped = leader.getDeltaMovement().length() < 8.0e-2d;
+		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064; // 0.08^2
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		Vector3d startPoint = leader.position().subtract(leaderForward).subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
+		
+		Brain<?> leaderBrain = leader.getBrain();
+		
+		boolean engagementFlag =
+				leaderBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)
+				&& leaderBrain.hasMemoryValue(MemoryModuleTypeInit.ENGAGING_COMPLETED.get())
+				&& leaderBrain.getMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get()).get();
+		
+		CombatMode combatMode = leaderBrain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
+		
+		LivingEntity target = engagementFlag ? leaderBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() : null;
+		engagementFlag &= target != null && target.isAlive() && combatMode != CombatMode.DONT_ATTACK;
+		
+		boolean finishedForming = this.formationState == State.FORMING && !engagementFlag;
 		
 		for (int rank = 0; rank < this.depth; ++rank) {
 			for (int file = 0; file < this.width; ++file) {
@@ -91,26 +109,45 @@ public class LineFormation extends UnitFormation {
 					continue;
 				}
 				
-				if (this.formationState == State.FORMING) {
-					// Move to layout spot
-					Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
-					Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-					if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
-					Brain<?> brain = unit.getBrain();
-					brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
-					brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-					finishedForming = false;
-				} else if (this.formationState == State.FORMED) {
-					Brain<?> brain = unit.getBrain();
-					Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
-					if (!unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+				Brain<?> unitBrain = unit.getBrain();
+				
+				if (engagementFlag && unitBrain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
+					// Engagement
+					if (!(unit instanceof IWeaponRangedAttackMob)
+						|| rank == 0
+							&& ((IWeaponRangedAttackMob) unit).canDoRangedAttack()
+							&& BrainUtil.canSee(unit, target)
+							&& BrainUtil.isWithinAttackRange(unit, target, 0)) {
+						
+						if (!(unit instanceof IWeaponRangedAttackMob)) this.lines[rank][file] = null;
+						
+						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
+						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
+						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
+					}
+				} else {
+					// Movement
+					if (this.formationState == State.FORMING) {
+						// Move to layout spot
+						Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
 						Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-						if (possiblePos == null) continue;
+						if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
+						Brain<?> brain = unit.getBrain();
 						brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
 						brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-					} else if (stopped && !brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) { // TODO: no action as well
-						unit.yRot = leader.yRot;
-						unit.yHeadRot = leader.yRot;
+						finishedForming = false;
+					} else if (this.formationState == State.FORMED) {
+						// Keep moving to layout spot
+						Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
+						if (!unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+							Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+							if (possiblePos == null) continue;
+							unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
+							unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
+						} else if (stopped && !unitBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) { // TODO: no action as well
+							unit.yRot = leader.yRot;
+							unit.yHeadRot = leader.yRot;
+						}
 					}
 				}
 			}

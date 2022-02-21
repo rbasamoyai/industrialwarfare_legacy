@@ -175,6 +175,7 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
 			if (e != null) e.kill();
 		}
+		controlledLeaders.clear();
 		
 		for (List<CreatureEntity> cluster : spatialClusters) {
 			Map<Integer, List<Tuple<List<CreatureEntity>, UnitFormation>>> formationsByRank = new HashMap<>();
@@ -325,7 +326,11 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			if (!isValidUnit(e, owner)) continue;
 			CreatureEntity unit = (CreatureEntity) e;
 			Brain<?> brain = unit.getBrain();
-			if (checkMemoryForAction(brain) && brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
+			
+			if (checkMemoryForAction(brain)
+				&& brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
+				&& brain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) {
+				
 				brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
 				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
 				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
@@ -339,7 +344,24 @@ public class WhistleItem extends Item implements IHighlighterItem {
 			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
 			if (!(e instanceof FormationLeaderEntity)) continue;
 			FormationLeaderEntity leader = (FormationLeaderEntity) e;
-			leader.setState(UnitFormation.State.BROKEN);
+			Brain<?> brain = leader.getBrain();
+			
+			if (brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
+				&& brain.checkMemory(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
+				&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)) {
+				brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
+				brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
+				
+				if (brain.hasMemoryValue(MemoryModuleType.MEETING_POINT)) {
+					brain.eraseMemory(MemoryModuleType.MEETING_POINT);
+				}
+				
+				if (brain.hasMemoryValue(MemoryModuleTypeInit.PRECISE_POS.get())) {
+					brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+				}
+				flag = true;
+			}
 		}
 		
 		return flag ? ActionResultType.CONSUME : ActionResultType.PASS;

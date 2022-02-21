@@ -33,6 +33,7 @@ import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndDiplomacyAttackTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndPatrolAttackTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.EndWhistleAttackTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.FinishMovementCommandTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
@@ -85,6 +86,7 @@ public class NPCTasks {
 				Pair.of(1, new ExtendedShootTargetTask<>()),
 				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(2, new EndAttackTask(0, (e1, e2) -> false)),
+				Pair.of(2, new EndWhistleAttackTask()),
 				Pair.of(2, new EndDiplomacyAttackTask<>()),
 				Pair.of(2, new EndPatrolAttackTask()),
 				Pair.of(3, new AttackTargetTask(20)),
