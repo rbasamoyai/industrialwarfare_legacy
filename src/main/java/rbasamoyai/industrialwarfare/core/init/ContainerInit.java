@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.common.containers.attachmentitems.Attachment
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
+import rbasamoyai.industrialwarfare.common.containers.whistle.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.containers.workstations.NormalWorkstationContainer;
 
 public class ContainerInit {
@@ -42,5 +43,8 @@ public class ContainerInit {
 	
 	public static final RegistryObject<ContainerType<TaskScrollShelfContainer>> TASK_SCROLL_SHELF = CONTAINER_TYPES.register("task_scroll_shelf",
 			() -> IForgeContainerType.create(TaskScrollShelfContainer::getClientContainer));
+	
+	public static final RegistryObject<ContainerType<WhistleContainer>> WHISTLE = CONTAINER_TYPES.register("whistle",
+			() -> IForgeContainerType.create(WhistleContainer::getClientContainer));
 	
 }

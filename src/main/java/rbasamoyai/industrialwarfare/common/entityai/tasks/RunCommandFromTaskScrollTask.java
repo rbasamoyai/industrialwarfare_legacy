@@ -14,7 +14,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -39,7 +39,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc) {
 		Brain<NPCEntity> brain = npc.getBrain();
-		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.WORKING
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != ActivityStatus.WORKING
 				|| brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
 				|| CommandUtils.hasComplaint(npc)) {
 			return false;
@@ -93,7 +93,7 @@ public class RunCommandFromTaskScrollTask extends Task<NPCEntity> {
 	protected boolean canStillUse(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		return brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() == NPCActivityStatus.WORKING
+		return brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() == ActivityStatus.WORKING
 				&& brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)
 				&& !CommandUtils.hasComplaint(npc)
 				&& brain.hasMemoryValue(MemoryModuleTypeInit.CURRENT_ORDER.get())

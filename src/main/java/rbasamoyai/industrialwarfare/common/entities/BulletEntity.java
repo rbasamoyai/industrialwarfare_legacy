@@ -1,5 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
+import java.util.UUID;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -65,19 +67,31 @@ public class BulletEntity extends ThrowableEntity {
 		super.tick();
 	}
 	
-	private static final int FORMATION_DISTANCE = 5;
+	private static final int HIT_NULL_DISTANCE = 5;
 	
 	@Override
 	protected boolean canHitEntity(Entity entity) {
 		Entity owner = this.getOwner();
 		
-		if (owner != null && owner instanceof LivingEntity && entity instanceof LivingEntity) {
+		if (owner != null && owner instanceof LivingEntity && owner.position().closerThan(entity.position(), HIT_NULL_DISTANCE)) {
 			Brain<?> ownerBrain = ((LivingEntity) owner).getBrain();
-			Brain<?> hitBrain = ((LivingEntity) entity).getBrain();
-			if (ownerBrain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
-				&& hitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
-				&& owner.position().closerThan(entity.position(), FORMATION_DISTANCE)) {
-				return false;
+			if (ownerBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) {
+				UUID ownerCommandGroup = ownerBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
+				if (entity instanceof LivingEntity) {
+					Brain<?> hitBrain = ((LivingEntity) entity).getBrain();
+					if (hitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
+						&& hitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(ownerCommandGroup)) {
+						return false;
+					}
+				}
+				Entity controller = entity.getControllingPassenger();
+				if (controller != null && controller instanceof LivingEntity) {
+					Brain<?> controllerBrain = ((LivingEntity) controller).getBrain();
+					if (controllerBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
+						&& controllerBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(ownerCommandGroup)) {
+						return false;
+					}
+				}
 			}
 		}
 		return super.canHitEntity(entity);

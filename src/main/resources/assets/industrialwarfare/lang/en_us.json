@@ -123,7 +123,7 @@
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
 	
 	"key.industrialwarfare.category":	"Industrial Warfare",
-	"key.industrialwarfare.attachments_screen": "Customize Item Attachments",
+	"key.industrialwarfare.item_screen": "Open Item Screen If Possible",
 	"key.industrialwarfare.diplomacy_screen": "Open/Close Diplomacy Screen",
 	"key.industrialwarfare.prone": "Prone",
 	"key.industrialwarfare.reload_firearm": "Reload Firearm",
@@ -137,6 +137,8 @@
 	"gui.industrialwarfare.attachments_rifle": "Rifle Attachments",
 	"gui.industrialwarfare.attachments_firearm.melee_attachment": "Melee attachments",
 	"gui.industrialwarfare.attachments_firearm.optic_attachment": "Optic attachments", 
+	
+	"gui.industrialwarfare.whistle_tab": "Whistle Commands",
 	
 	"gui.industrialwarfare.workstation.craft":	"Craft",
 	"gui.industrialwarfare.workstation.tooltip.cannot_craft1": "Cannot craft right now -",

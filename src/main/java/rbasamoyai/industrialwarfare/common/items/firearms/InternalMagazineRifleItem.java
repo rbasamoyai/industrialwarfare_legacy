@@ -67,12 +67,12 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 	}
 	
 	@Override
-	public boolean canCustomize(ItemStack stack) {
+	public boolean canOpen(ItemStack stack) {
 		return getDataHandler(stack).map(IFirearmItemDataHandler::isFinishedAction).orElse(false);
 	}
 	
 	@Override
-	public INamedContainerProvider getAttachmentsContainerProvider(ItemStack stack) {
+	public INamedContainerProvider getItemContainerProvider(ItemStack stack) {
 		IContainerProvider provider = AttachmentsRifleContainer.getServerContainerProvider(stack);
 		return new SimpleNamedContainerProvider(provider, TITLE);
 	}

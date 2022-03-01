@@ -9,7 +9,7 @@ import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class ReturnToWorkIfPatrollingTask extends Task<NPCEntity> {
@@ -26,7 +26,7 @@ public class ReturnToWorkIfPatrollingTask extends Task<NPCEntity> {
 	protected void start(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.WORKING);
+		brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.WORKING);
 		brain.setActiveActivityIfPossible(Activity.WORK);
 		
 		brain.eraseMemory(MemoryModuleTypeInit.ON_PATROL.get());

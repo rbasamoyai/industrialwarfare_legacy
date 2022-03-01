@@ -1,5 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -7,9 +8,8 @@ import javax.annotation.Nullable;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.BrainUtil;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
@@ -23,8 +23,8 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -32,11 +32,13 @@ import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class LineFormation extends UnitFormation {
 	
-	private static final double CLOSE_ENOUGH = 0.1d; 
+	private static final double CLOSE_ENOUGH = 0.1d;
 	
 	private int formationRank;
 	private int width;
 	private int depth;
+	
+	private int currentRank = 0;
 	
 	private FormationEntityWrapper<?>[][] lines;
 	
@@ -52,7 +54,7 @@ public class LineFormation extends UnitFormation {
 	public boolean addEntity(CreatureEntity entity) {
 		if (!UnitFormation.checkMemoriesForMovement(entity) || !(entity instanceof IMovesInFormation)) return false;
 		IMovesInFormation unit = (IMovesInFormation) entity;
-		if (unit.isSpecialUnit() || unit.getFormationRank() != this.formationRank) return false;
+		if (!unit.isLowLevelUnit() || unit.getFormationRank() != this.formationRank) return false;
 		if (this.insertEntityAtBack(entity)) return true;
 		this.moveUpUnits();
 		return this.insertEntityAtBack(entity);
@@ -85,6 +87,10 @@ public class LineFormation extends UnitFormation {
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
+		if (!leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
+		UUID commandGroup = leaderBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
+		UUID leaderUUID = leader.getUUID();
+		
 		boolean engagementFlag =
 				leaderBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)
 				&& leaderBrain.hasMemoryValue(MemoryModuleTypeInit.ENGAGING_COMPLETED.get())
@@ -96,6 +102,22 @@ public class LineFormation extends UnitFormation {
 		engagementFlag &= target != null && target.isAlive() && combatMode != CombatMode.DONT_ATTACK;
 		
 		boolean finishedForming = this.formationState == State.FORMING && !engagementFlag;
+		
+		if (leader.tickCount % 160 == 0 && engagementFlag) {
+			++this.currentRank;
+			if (this.currentRank == this.depth) this.currentRank = 0;
+			for (int file = 0; file < this.width; ++file) {
+				FormationEntityWrapper<?> wrapper = this.lines[this.currentRank][file];
+				if (UnitFormation.isSlotEmpty(wrapper)) {
+					this.lines[this.currentRank][file] = null;
+					continue;
+				}
+				Brain<?> unitBrain = wrapper.getEntity().getBrain();
+				if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
+					unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+				}
+			}
+		}
 		
 		for (int rank = 0; rank < this.depth; ++rank) {
 			for (int file = 0; file < this.width; ++file) {
@@ -112,50 +134,51 @@ public class LineFormation extends UnitFormation {
 				
 				Brain<?> unitBrain = unit.getBrain();
 				
-				if (engagementFlag
-					&& unitBrain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
-					&& unitBrain.checkMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.REGISTERED)
-					&& unitBrain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)) {
+				if (!UnitFormation.checkMemoriesForSameGroup(commandGroup, unit)) {
+					this.lines[rank][file] = null;
+					continue;
+				}
+				
+				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID);
+				
+				Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
+				
+				if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
 					// Engagement
-					
-					if (!(unit instanceof IWeaponRangedAttackMob)
-						|| rank == 0
-							&& ((IWeaponRangedAttackMob) unit).canDoRangedAttack()
-							&& BrainUtil.canSee(unit, target)
-							&& BrainUtil.isWithinAttackRange(unit, target, 0)) {
-						
-						if (!(unit instanceof IWeaponRangedAttackMob)) this.lines[rank][file] = null;
-						
+					if (!(unit instanceof IWeaponRangedAttackMob)) {
+						unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
-						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
+						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
 						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
 						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
+						continue; // Ignore position movement
 					}
-				} else {
-					// Movement
-					if (this.formationState == State.FORMING) {
-						// Move to layout spot
-						Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
-						Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-						if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
-						Brain<?> brain = unit.getBrain();
-						brain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
-						brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-						finishedForming = false;
-					} else if (this.formationState == State.FORMED) {
-						// Keep moving to layout spot
-						Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
-						if (!unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
-							Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-							if (possiblePos == null) continue;
-							unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
-							unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-						} else if (stopped && !unitBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) { // TODO: no action as well
-							unit.yRot = leader.yRot;
-							unit.yHeadRot = leader.yRot;
-						}
+					
+					if (rank == this.currentRank && UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target)) {
+						unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
+						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
+						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
+						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
+						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
+						unit.setPose(Pose.STANDING);
+					} else if (!unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
+						unit.setPose(Pose.CROUCHING);
 					}
+				} else if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+					// Stop and stay oriented if not attacking
+					unit.yRot = leader.yRot;
+					unit.yHeadRot = leader.yRot;
+					continue;
 				}
+				
+				if (!engagementFlag) {
+					unit.setPose(Pose.STANDING);
+				}
+				// Position movement
+				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+				if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
+				unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
+				unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
 			}
 		}
 		
@@ -187,7 +210,7 @@ public class LineFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void executeGroupAction(int group, Consumer<CreatureEntity> action) {
+	public void consumeGroupAction(int group, Consumer<CreatureEntity> action) {
 		
 	}
 	

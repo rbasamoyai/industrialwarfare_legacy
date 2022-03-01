@@ -21,7 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
@@ -77,7 +77,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 			return false;
 		}
 
-		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.WORKING) {
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != ActivityStatus.WORKING) {
 			return false;
 		}
 		if (brain.getMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get()).orElse(false)) return false;		
@@ -156,7 +156,7 @@ public class LeaveWorkTask extends Task<NPCEntity> {
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		
-		brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.NO_ACTIVITY);
+		brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.NO_ACTIVITY);
 		
 		brain.eraseMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get());
 		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());

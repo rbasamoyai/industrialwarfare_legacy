@@ -1,8 +1,16 @@
 Current TODO:
+- Add whistle GUI
+	- Add command icons
+	- Give buttons actions
+	- Add formation buttons
+
 - Work on formations
-    - Better formation attacking
-    	- Making ranged shots not
-    	hit allies in formation
-    - Joining up with formations
+	- Keep ranged attackers
+	formed up
+	- Improved forming up
+		- Merging smaller formations
+		if possible
     - Other formation types
-    - Improved forming up
+    	- ColumnFormation
+    	- PointFormation
+    - Formation type selection

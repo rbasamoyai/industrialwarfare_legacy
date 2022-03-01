@@ -14,6 +14,7 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
@@ -59,7 +60,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.I
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
@@ -106,11 +107,13 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
+			MemoryModuleTypeInit.CAN_ATTACK.get(),
 			MemoryModuleTypeInit.COMBAT_MODE.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
+			MemoryModuleTypeInit.FINISHED_ATTACKING.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
 			MemoryModuleTypeInit.IN_FORMATION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
@@ -224,9 +227,9 @@ public class NPCEntity extends CreatureEntity implements
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
 		
-		NPCActivityStatus status;
+		ActivityStatus status;
 		if (!brain.hasMemoryValue(MemoryModuleTypeInit.ACTIVITY_STATUS.get())) {
-			status = NPCActivityStatus.NO_ACTIVITY;
+			status = ActivityStatus.NO_ACTIVITY;
 			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), status);
 		} else {
 			status = brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get();
@@ -285,8 +288,8 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public boolean isSpecialUnit() {
-		return false;
+	public boolean isLowLevelUnit() {
+		return true;
 	}
 	
 	/*
@@ -433,7 +436,6 @@ public class NPCEntity extends CreatureEntity implements
 		} else if (weaponItem instanceof FirearmItem) {
 			FirearmItem.tryReloadFirearm(weapon, this);
 		}
-		
 	}
 	
 	@Override
@@ -461,6 +463,7 @@ public class NPCEntity extends CreatureEntity implements
 				boolean reloading = action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING;
 				if (!h.hasAmmo() && !reloading) {
 					FirearmItem.tryReloadFirearm(weapon, this);
+					this.setPose(Pose.CROUCHING);
 					return true;
 				}
 				
@@ -476,7 +479,13 @@ public class NPCEntity extends CreatureEntity implements
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
+		Brain<?> brain = this.getBrain();
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
+			return true;
+		}
+		
 		if (weaponItem instanceof FirearmItem) {
+			this.setPose(Pose.STANDING);
 			// TODO: aiming skill qualifier
 			if (this.canAim()) {
 				if (!FirearmItem.isAiming(weapon)) {
@@ -517,6 +526,10 @@ public class NPCEntity extends CreatureEntity implements
 			CrossbowItem.setCharged(weapon, false);
 		} else if (weaponItem instanceof FirearmItem) {
 			this.shootUsingFirearm(target);
+			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
+				this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+			}
 		}
 		
 	}

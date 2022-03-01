@@ -26,6 +26,7 @@ public class MoveToEngagementDistance extends Task<LivingEntity> {
 	
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld level, LivingEntity entity) {
+		if (!entity.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) return false;
 		LivingEntity target = this.getAttackTarget(entity);
 		return target != null && target.isAlive();
 	}

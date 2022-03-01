@@ -57,11 +57,11 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
-	@Override public boolean canCustomize(ItemStack stack) { return false; }
+	@Override public boolean canOpen(ItemStack stack) { return false; }
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	@Override 
-	public INamedContainerProvider getAttachmentsContainerProvider(ItemStack stack) {
+	public INamedContainerProvider getItemContainerProvider(ItemStack stack) {
 		return new SimpleNamedContainerProvider(AttachmentsRifleContainer.getServerContainerProvider(stack), TITLE);
 	}
 	

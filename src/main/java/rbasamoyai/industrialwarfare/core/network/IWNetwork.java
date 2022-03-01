@@ -15,15 +15,16 @@ import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
-import rbasamoyai.industrialwarfare.core.network.messages.SOpenAttachmentsScreen;
+import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
 import rbasamoyai.industrialwarfare.core.network.messages.SSetProneMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActionMessage;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.8.0";
+	public static final String NETWORK_VERSION = "0.9.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -44,9 +45,11 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, FirearmActionMessages.SReloadingFirearm.class, FirearmActionMessages.SReloadingFirearm::encode, FirearmActionMessages.SReloadingFirearm::decode, FirearmActionMessages.SReloadingFirearm::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CApplyRecoil.class, FirearmActionMessages.CApplyRecoil::encode, FirearmActionMessages.CApplyRecoil::decode, FirearmActionMessages.CApplyRecoil::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CNotifyHeadshot.class, FirearmActionMessages.CNotifyHeadshot::encode, FirearmActionMessages.CNotifyHeadshot::decode, FirearmActionMessages.CNotifyHeadshot::handle);
-		CHANNEL.registerMessage(id++, SOpenAttachmentsScreen.class, SOpenAttachmentsScreen::encode, SOpenAttachmentsScreen::decode, SOpenAttachmentsScreen::handle);
+		CHANNEL.registerMessage(id++, SOpenItemScreen.class, SOpenItemScreen::encode, SOpenItemScreen::decode, SOpenItemScreen::handle);
 		CHANNEL.registerMessage(id++, CQueueEntityAnimMessage.class, CQueueEntityAnimMessage::encode, CQueueEntityAnimMessage::decode, CQueueEntityAnimMessage::handle);
 		CHANNEL.registerMessage(id++, SSetProneMessage.class, SSetProneMessage::encode, SSetProneMessage::decode, SSetProneMessage::handle);
+		CHANNEL.registerMessage(id++, WhistleScreenMessages.SWhistleScreenSync.class, WhistleScreenMessages.SWhistleScreenSync::encode, WhistleScreenMessages.SWhistleScreenSync::decode, WhistleScreenMessages.SWhistleScreenSync::handle);
+		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAction.class, WhistleScreenMessages.SStopAction::encode, WhistleScreenMessages.SStopAction::decode, WhistleScreenMessages.SStopAction::handle);
 	}
 	
 	@SubscribeEvent

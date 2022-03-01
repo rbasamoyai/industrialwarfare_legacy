@@ -1,10 +1,13 @@
 package rbasamoyai.industrialwarfare.core.init;
 
+import java.util.HashMap;
+
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.formations.PointFormation;
 
 public class UnitFormationTypeInit {
 
@@ -12,5 +15,8 @@ public class UnitFormationTypeInit {
 	
 	public static final RegistryObject<UnitFormationType<LineFormation>> LINE = UNIT_FORMATION_TYPES.register("line",
 			() -> new UnitFormationType<>(level -> new LineFormation(level, -1, 0, 0)));
+	
+	public static final RegistryObject<UnitFormationType<PointFormation>> POINTS = UNIT_FORMATION_TYPES.register("points",
+			() -> new UnitFormationType<>(level -> new PointFormation(level, new HashMap<>())));
 	
 }

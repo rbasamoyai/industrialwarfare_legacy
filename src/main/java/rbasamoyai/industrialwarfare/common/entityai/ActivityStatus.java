@@ -7,19 +7,19 @@ import java.util.stream.Collectors;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 
-public enum NPCActivityStatus {
+public enum ActivityStatus {
 	
 	NO_ACTIVITY("no_activity"),
 	WORKING("working"),
 	FIGHTING("fighting");
 	
-	public static final Codec<NPCActivityStatus> CODEC = Codec.STRING.comapFlatMap(NPCActivityStatus::read, NPCActivityStatus::toString).stable();
+	public static final Codec<ActivityStatus> CODEC = Codec.STRING.comapFlatMap(ActivityStatus::read, ActivityStatus::toString).stable();
 	
-	private static final Map<String, NPCActivityStatus> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(NPCActivityStatus::toString, npcas -> npcas));
+	private static final Map<String, ActivityStatus> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(ActivityStatus::toString, npcas -> npcas));
 	
 	private final String name;
 	
-	private NPCActivityStatus(String name) {
+	private ActivityStatus(String name) {
 		this.name = name;
 	}
 	
@@ -28,7 +28,7 @@ public enum NPCActivityStatus {
 		return this.name;
 	}
 	
-	private static DataResult<NPCActivityStatus> read(String name) {
+	private static DataResult<ActivityStatus> read(String name) {
 		try {
 			return DataResult.success(BY_NAME.get(name));
 		} catch (Exception e) {

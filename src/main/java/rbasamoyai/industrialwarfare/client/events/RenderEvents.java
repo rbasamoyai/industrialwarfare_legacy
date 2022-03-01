@@ -41,6 +41,7 @@ import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
 import rbasamoyai.industrialwarfare.common.items.IFovModifier;
 import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
 import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
+import rbasamoyai.industrialwarfare.common.items.IRenderOverlay;
 import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
@@ -71,17 +72,37 @@ public class RenderEvents {
 	}
 	
 	@SubscribeEvent
-	public static void onRenderOverlay(RenderGameOverlayEvent.Pre event) {
+	public static void onRenderOverlayPre(RenderGameOverlayEvent.Pre event) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 		
+		ElementType type = event.getType();
+		
 		ItemStack weaponStack = mc.player.getMainHandItem();
 		Item item = weaponStack.getItem();
-		if (event.isCancelable()
-			&& event.getType() == ElementType.CROSSHAIRS
-			&& item instanceof IHideCrosshair
-			&& ((IHideCrosshair) item).shouldHideCrosshair(weaponStack)) {
-			event.setCanceled(true);
+		if (event.isCancelable()) {
+			if (type == ElementType.CROSSHAIRS
+				&& item instanceof IHideCrosshair
+				&& ((IHideCrosshair) item).shouldHideCrosshair(weaponStack)) {
+				event.setCanceled(true);
+			}
+		}
+	}
+	
+	@SubscribeEvent
+	public static void onRenderOverlayPost(RenderGameOverlayEvent.Post event) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		
+		ElementType type = event.getType();
+		
+		ItemStack itemStack = mc.player.getMainHandItem();
+		Item item = itemStack.getItem();
+		
+		if (type == ElementType.HOTBAR) {
+			if (item instanceof IRenderOverlay && mc.screen == null && !mc.options.hideGui) {
+				((IRenderOverlay) item).renderOverlay(event.getMatrixStack(), event.getPartialTicks());
+			}
 		}
 	}
 	

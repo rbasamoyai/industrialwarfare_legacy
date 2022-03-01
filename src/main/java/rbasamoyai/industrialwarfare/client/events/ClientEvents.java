@@ -15,6 +15,7 @@ import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NothingRenderer;
 import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
+import rbasamoyai.industrialwarfare.client.screen.WhistleScreen;
 import rbasamoyai.industrialwarfare.client.screen.attachmentitems.AttachmentsRifleScreen;
 import rbasamoyai.industrialwarfare.client.screen.diplomacy.DiplomacyScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
@@ -39,6 +40,7 @@ public class ClientEvents {
 		ScreenManager.register(ContainerInit.SCHEDULE.get(), EditScheduleScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL.get(), TaskScrollScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
+		ScreenManager.register(ContainerInit.WHISTLE.get(), WhistleScreen::new);
 		
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), NothingRenderer::new);
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);

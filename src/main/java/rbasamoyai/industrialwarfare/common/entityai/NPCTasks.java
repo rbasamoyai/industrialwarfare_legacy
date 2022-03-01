@@ -37,6 +37,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.EndWhistleAttackTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.FinishMovementCommandTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.JoinNearbyFormationTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
@@ -56,6 +57,7 @@ public class NPCTasks {
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),
+				Pair.of(1, new JoinNearbyFormationTask()),
 				Pair.of(2, new FinishMovementCommandTask(MemoryModuleType.MEETING_POINT))
 				);
 	}
@@ -90,7 +92,6 @@ public class NPCTasks {
 				Pair.of(2, new EndDiplomacyAttackTask<>()),
 				Pair.of(2, new EndPatrolAttackTask()),
 				Pair.of(3, new AttackTargetTask(20)),
-				//Pair.of(3, new )
 				Pair.of(4, new ReturnToWorkIfPatrollingTask())
 				);
 	}
@@ -103,6 +104,12 @@ public class NPCTasks {
 		Brain<?> brain = npc.getBrain();
 		CombatMode mode = brain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
 		if (mode == CombatMode.DONT_ATTACK) return true;
+		
+		// Targets will be assigned in formation code
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
+			&& (!brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get()) || brain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get()))) {
+			return false;
+		}
 		
 		if (!brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) return true;
 		LivingEntity target = brain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
@@ -129,8 +136,6 @@ public class NPCTasks {
 	
 	private static Optional<? extends LivingEntity> findNearestValidAttackTarget(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		CombatMode mode = brain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
-		if (mode == CombatMode.DONT_ATTACK) return Optional.empty();
 
 		PlayerIDTag npcOwner = npc.getDiplomaticOwner();
 		DiplomacySaveData saveData = DiplomacySaveData.get(npc.level);
@@ -184,11 +189,16 @@ public class NPCTasks {
 			if (!npcOwner.equals(otherOwner) && saveData.getDiplomaticStatus(npcOwner, otherOwner) != DiplomaticStatus.ALLY) continue;
 			Brain<?> allyBrain = e.getBrain();
 			if (allyBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) {
-				return allyBrain.getMemory(MemoryModuleType.ATTACK_TARGET);
+				LivingEntity target = allyBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
+				if (BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
+					return Optional.of(target);
+				}
 			}
 			if (e instanceof MobEntity) {
-				LivingEntity mobTarget = ((MobEntity) e).getTarget();
-				if (mobTarget != null) return Optional.of(mobTarget);
+				LivingEntity target = ((MobEntity) e).getTarget();
+				if (target != null && BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
+					return Optional.of(target);
+				}
 			}
 		}
 		

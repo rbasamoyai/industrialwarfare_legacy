@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -27,6 +28,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
@@ -38,7 +40,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayT
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class FormationLeaderEntity extends CreatureEntity {
+public class FormationLeaderEntity extends CreatureEntity implements IMovesInFormation {
 
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_TARGET,
@@ -48,6 +50,7 @@ public class FormationLeaderEntity extends CreatureEntity {
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.COMBAT_MODE.get(),
 			MemoryModuleTypeInit.ENGAGING_COMPLETED.get(),
+			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get()
 			);
 	
@@ -126,6 +129,10 @@ public class FormationLeaderEntity extends CreatureEntity {
 		}
 	}
 	
+	public void consumeGroupAction(int group, Consumer<CreatureEntity> action) {
+		this.formation.consumeGroupAction(group, action);
+	}
+	
 	public void setOwner(PlayerIDTag owner) { this.owner = owner; }
 	public PlayerIDTag getOwner() { return this.owner; }
 	
@@ -167,7 +174,19 @@ public class FormationLeaderEntity extends CreatureEntity {
 		this.formation.setState(state);	
 	}
 	
-	/* "Decreaturefying" the formation leader */
+	@Override
+	public int getFormationRank() {
+		return 0xF000BAAA; // FUBAR
+	}
+	
+	@Override
+	public boolean isLowLevelUnit() {
+		return false;
+	}
+	
+	/*
+	 * "Decreaturefying" the formation leader
+	 */
 	
 	@Override protected void pushEntities() {}
 	@Override public boolean isPushable() { return false; }
