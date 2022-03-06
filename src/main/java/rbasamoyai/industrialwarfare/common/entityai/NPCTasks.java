@@ -1,5 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.BrainUtil;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.task.AttackTargetTask;
 import net.minecraft.entity.ai.brain.task.EndAttackTask;
 import net.minecraft.entity.ai.brain.task.ForgetAttackTargetTask;
@@ -40,8 +42,11 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.JoinNearbyFormationTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.PrepareForShootingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.StartSelfDefenseTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.StopSelfDefenseTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -65,7 +70,8 @@ public class NPCTasks {
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getIdlePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
-				Pair.of(1, new LookAtEntityTask(4.0f))//,
+				Pair.of(1, new LookAtEntityTask(4.0f)),
+				Pair.of(2, new StartSelfDefenseTask<>())
 				//Pair.of(2, new WalkTowardsLookTargetTask(2.5f, 2))
 				);
 	}
@@ -85,14 +91,16 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
 				Pair.of(1, new MoveToTargetTask(3.0f)),
-				Pair.of(1, new ExtendedShootTargetTask<>()),
-				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
-				Pair.of(2, new EndAttackTask(0, (e1, e2) -> false)),
-				Pair.of(2, new EndWhistleAttackTask()),
-				Pair.of(2, new EndDiplomacyAttackTask<>()),
-				Pair.of(2, new EndPatrolAttackTask()),
-				Pair.of(3, new AttackTargetTask(20)),
-				Pair.of(4, new ReturnToWorkIfPatrollingTask())
+				Pair.of(1, new PrepareForShootingTask<>()),
+				Pair.of(2, new ExtendedShootTargetTask<>()),
+				Pair.of(2, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
+				Pair.of(3, new EndAttackTask(0, (e1, e2) -> false)),
+				Pair.of(3, new EndWhistleAttackTask()),
+				Pair.of(3, new EndDiplomacyAttackTask<>()),
+				Pair.of(3, new EndPatrolAttackTask()),
+				Pair.of(4, new AttackTargetTask(20)),
+				Pair.of(5, new ReturnToWorkIfPatrollingTask()),
+				Pair.of(5, new StopSelfDefenseTask(Activity.IDLE))
 				);
 	}
 	
@@ -102,8 +110,12 @@ public class NPCTasks {
 	
 	private static boolean canFindNewTarget(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.DEFENDING_SELF.get())) return false;
+		
 		CombatMode mode = brain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
-		if (mode == CombatMode.DONT_ATTACK) return true;
+		if (mode == CombatMode.DONT_ATTACK) {
+			return false;
+		}
 		
 		// Targets will be assigned in formation code
 		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
@@ -113,10 +125,14 @@ public class NPCTasks {
 		
 		if (!brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) return true;
 		LivingEntity target = brain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
+		if (target instanceof PlayerEntity && (((PlayerEntity) target).isCreative() || ((PlayerEntity) target).isSpectator())) {
+			return true;
+		}
+		
 		if (target instanceof IHasDiplomaticOwner) {
 			PlayerIDTag npcOwner = npc.getDiplomaticOwner();
 			PlayerIDTag otherOwner = ((IHasDiplomaticOwner) target).getDiplomaticOwner();
-			if (npcOwner.equals(otherOwner)) return true;
+			if (npcOwner.equals(otherOwner)) return !npc.hasOwner();
 			DiplomacySaveData saveData = DiplomacySaveData.get(npc.level);
 			if (saveData.getDiplomaticStatus(npcOwner, otherOwner) == DiplomaticStatus.ALLY) return true;
 		}
@@ -149,7 +165,7 @@ public class NPCTasks {
 		Optional<GlobalPos> gpop = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get());
 		BlockPos pos = gpop.isPresent() && gpop.get().dimension() == npc.level.dimension() ? gpop.get().pos() : npc.blockPosition();
 		
-		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(Arrays.asList());
+		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(new ArrayList<>());
 		for (LivingEntity e : visibleEntities) {		
 			if (!e.blockPosition().closerThan(pos, pursuitDistance)) continue;
 			
@@ -166,11 +182,11 @@ public class NPCTasks {
 			if (targetBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && targetBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() == npc) {
 				return Optional.of(e);
 			}
-			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc) { // TODO: make sure that the targeting is attacking
+			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc) {
 				return Optional.of(e);
 			}
 			
-			if (e instanceof PlayerEntity) {
+			if (e instanceof PlayerEntity && ((PlayerEntity) e).isCreative()) {
 				PlayerIDTag otherPlayerTag = PlayerIDTag.of((PlayerEntity) e);
 				if (npcOwner.equals(otherPlayerTag)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((PlayerEntity) e));

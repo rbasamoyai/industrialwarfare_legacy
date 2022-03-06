@@ -4,6 +4,12 @@ Current TODO:
 	- Give buttons actions
 	- Add formation buttons
 
+- Rewrite attacking?
+	- Rewrite finding attack targets
+	- Solve case of attack range
+	- "Target entity" for smarter firing
+	- Volley firing?
+
 - Work on formations
 	- Keep ranged attackers
 	formed up
@@ -12,5 +18,3 @@ Current TODO:
 		if possible
     - Other formation types
     	- ColumnFormation
-    	- PointFormation
-    - Formation type selection

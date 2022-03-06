@@ -10,10 +10,11 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
+import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob.ShootingStatus;
 
 public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMob> extends Task<E> {
 
-	private Status status = Status.UNLOADED;
+	private ShootingStatus status = ShootingStatus.UNLOADED;
 	
 	public ExtendedShootTargetTask() {
 		super(ImmutableMap.of(
@@ -53,18 +54,18 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 	private void attackTarget(E shooter, LivingEntity target) {
 		if (!shooter.canDoRangedAttack()) return;
 		
-		if (this.status == Status.UNLOADED) {
+		if (this.status == ShootingStatus.UNLOADED) {
 			shooter.startReloading();
-			this.status = Status.RELOADING;
-		} else if (this.status == Status.RELOADING) {
+			this.status = ShootingStatus.RELOADING;
+		} else if (this.status == ShootingStatus.RELOADING) {
 			if (shooter.whileReloading()) return;
-			this.status = Status.READY_TO_FIRE;
-		} else if (this.status == Status.READY_TO_FIRE) {
+			this.status = ShootingStatus.READY_TO_FIRE;
+		} else if (this.status == ShootingStatus.READY_TO_FIRE) {
 			if (shooter.whileWaitingToAttack()) return;
 			
 			shooter.performRangedAttack(target, 0.0f);
-			this.status = Status.FIRED;
-		} else if (this.status == Status.FIRED) {
+			this.status = ShootingStatus.FIRED;
+		} else if (this.status == ShootingStatus.FIRED) {
 			if (shooter.whileCoolingDown()) return;
 			
 			this.status = shooter.getNextStatus();
@@ -73,22 +74,14 @@ public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMo
 			case RELOADING: shooter.startReloading(); break;
 			default: break;
 			}
-		} else if (this.status == Status.CYCLING) {
+		} else if (this.status == ShootingStatus.CYCLING) {
 			if (shooter.whileCycling()) return;
-			this.status = Status.READY_TO_FIRE;
+			this.status = ShootingStatus.READY_TO_FIRE;
 		}
 	}
 	
 	private static LivingEntity getAttackTarget(LivingEntity attacker) {
 		return attacker.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).get();
-	}
-	
-	public static enum Status {
-		UNLOADED,
-		RELOADING,
-		READY_TO_FIRE,
-		FIRED,
-		CYCLING
 	}
 	
 }

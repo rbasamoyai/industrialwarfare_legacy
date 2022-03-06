@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -8,10 +9,12 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
 import net.minecraft.entity.CreatureEntity;
+import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Pose;
@@ -56,17 +59,15 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask.Status;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType;
 import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -87,6 +88,14 @@ public class NPCEntity extends CreatureEntity implements
 		IHasDiplomaticOwner,
 		IItemPredicateSearch,
 		IMovesInFormation {
+	
+	/** Taken from {@link net.minecraft.entity.player.PlayerEntity#POSES}. */
+	private static final Map<Pose, EntitySize> POSES = ImmutableMap.<Pose, EntitySize>builder()
+			.put(Pose.FALL_FLYING, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.SWIMMING, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.SPIN_ATTACK, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F))
+			.put(Pose.DYING, EntitySize.fixed(0.2F, 0.2F)).build();
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,
@@ -112,6 +121,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.COMPLAINT.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
+			MemoryModuleTypeInit.DEFENDING_SELF.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.FINISHED_ATTACKING.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
@@ -120,6 +130,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
+			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
 	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(
@@ -278,13 +289,19 @@ public class NPCEntity extends CreatureEntity implements
 		}
 	}
 	
+	@Override
+	public EntitySize getDimensions(Pose pose) {
+		return POSES.containsKey(pose) ? POSES.get(pose) : super.getDimensions(pose);
+	}
+	
 	/*
 	 * FORMATION METHODS
 	 */
 	
 	@Override
 	public int getFormationRank() {
-		return 0;
+		boolean isRanged = this.canUseRangedWeapon(this.getMainHandItem());
+		return isRanged ? 1 : 0;
 	}
 	
 	@Override
@@ -463,7 +480,6 @@ public class NPCEntity extends CreatureEntity implements
 				boolean reloading = action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING;
 				if (!h.hasAmmo() && !reloading) {
 					FirearmItem.tryReloadFirearm(weapon, this);
-					this.setPose(Pose.CROUCHING);
 					return true;
 				}
 				
@@ -485,7 +501,6 @@ public class NPCEntity extends CreatureEntity implements
 		}
 		
 		if (weaponItem instanceof FirearmItem) {
-			this.setPose(Pose.STANDING);
 			// TODO: aiming skill qualifier
 			if (this.canAim()) {
 				if (!FirearmItem.isAiming(weapon)) {
@@ -578,22 +593,37 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public ExtendedShootTargetTask.Status getNextStatus() {
+	public IWeaponRangedAttackMob.ShootingStatus getNextStatus() {
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
+		boolean hasAttackTarget = this.brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET);
+		
+		if (weaponItem instanceof BowItem && !hasAttackTarget) return ShootingStatus.READY_TO_FIRE;
+		
 		if (weaponItem instanceof CrossbowItem) {
-			return CrossbowItem.isCharged(weapon) && CrossbowItem.containsChargedProjectile(weapon, weaponItem) ? Status.READY_TO_FIRE : Status.UNLOADED;
+			return CrossbowItem.isCharged(weapon) && CrossbowItem.containsChargedProjectile(weapon, weaponItem) ? ShootingStatus.READY_TO_FIRE : ShootingStatus.UNLOADED;
 		}
 		
 		if (weaponItem instanceof FirearmItem) {
-			if (FirearmItem.getDataHandler(weapon).map(IFirearmItemDataHandler::hasAmmo).orElse(false)) {
-				return ((FirearmItem) weaponItem).needsCycle(weapon) ? Status.CYCLING : Status.READY_TO_FIRE;
-			}
-			return Status.RELOADING;
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				ActionType action = h.getAction();
+				switch (action) {
+				case START_RELOADING: return ShootingStatus.RELOADING;
+				case RELOADING: return ShootingStatus.RELOADING;
+				case CYCLING: return ShootingStatus.CYCLING;
+				case NOTHING:
+					if (!h.isFinishedAction() && h.isFired()) return ShootingStatus.FIRED;
+					if (h.hasAmmo()) {
+						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
+					}
+					return ShootingStatus.RELOADING;
+				default: return ShootingStatus.FIRED;
+				}
+			}).orElse(ShootingStatus.FIRED);
 		}
 			
-		return Status.RELOADING;
+		return ShootingStatus.RELOADING;
 	}
 	
 	@Override
@@ -677,6 +707,13 @@ public class NPCEntity extends CreatureEntity implements
 		
 		if (weaponItem instanceof FirearmItem) {
 			((FirearmItem) weaponItem).stopAiming(weapon, this);
+		}
+		
+		IWeaponRangedAttackMob.ShootingStatus status = this.getNextStatus();
+		switch (status) {
+		case CYCLING: this.startCycling(); break;
+		case RELOADING: this.startReloading(); break;
+		default: break;
 		}
 	}
 	
