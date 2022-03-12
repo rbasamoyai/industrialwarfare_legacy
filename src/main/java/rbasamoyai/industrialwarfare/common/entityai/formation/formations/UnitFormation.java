@@ -1,7 +1,9 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -23,15 +25,13 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 
 	private final UnitFormationType<?> type;
-	protected final World level;
 	protected State formationState = State.BROKEN;
 	
 	private boolean loadDataOnNextTick = false;
 	private CompoundNBT dataToDeserialize;
 	
-	public UnitFormation(UnitFormationType<?> type, World level) {
+	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
-		this.level = level;
 	}
 	
 	public void setState(State formationState) { this.formationState = formationState; } 
@@ -43,7 +43,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public abstract float getDepth();
 	
 	protected abstract void tick(FormationLeaderEntity leader);
-	protected abstract void loadEntityData(CompoundNBT nbt);
+	protected abstract void loadEntityData(CompoundNBT nbt, World level);
 	
 	public UnitFormationType<?> getType() {
 		return this.type;
@@ -51,12 +51,20 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	public final void doTick(FormationLeaderEntity leader) {
 		if (this.loadDataOnNextTick) {
-			this.loadEntityData(this.dataToDeserialize);
+			this.loadEntityData(this.dataToDeserialize, leader.level);
 			this.loadDataOnNextTick = false;
 			this.dataToDeserialize = new CompoundNBT();
 		}
 		this.tick(leader);
 	}
+	
+	public List<UnitFormation> getInnerFormations() {
+		return new ArrayList<>();
+	}
+	
+	public abstract int getLeaderRank();
+	
+	public void killInnerFormationLeaders() {}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
 		if (wrapper == null) return true;
@@ -123,6 +131,21 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		public int getId() { return this.id; }
 		public static State fromId(int id) {
 			return 0 <= id && id < BY_ID.length ? BY_ID[id] : BROKEN;
+		}
+	}
+
+	public static class Point {
+		public final int x;
+		public final int z;
+		
+		public Point(int x, int z) {
+			this.x = x;
+			this.z = z;
+		}
+		
+		@Override
+		public int hashCode() {
+			return this.x ^ (this.z << 16 | this.z >> 16);
 		}
 	}
 	

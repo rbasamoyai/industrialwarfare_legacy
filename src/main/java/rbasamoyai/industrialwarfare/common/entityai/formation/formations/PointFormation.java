@@ -1,6 +1,8 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -8,43 +10,73 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.CreatureEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
-import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class PointFormation extends UnitFormation {
 
+	public static final int RANK = 0xF00BA002; // FUBAR #002
+	
 	private static final double CLOSE_ENOUGH = 0.1d;
 	
-	private Map<Point, Integer> positions;
-	private Map<Point, FormationEntityWrapper<?>> units = new HashMap<>();
+	private Map<UnitFormation.Point, Integer> positions;
+	private Map<UnitFormation.Point, FormationEntityWrapper<?>> units = new HashMap<>();
+	private List<UnitFormation> innerFormations;
 	
-	public PointFormation(World level, Map<Point, Integer> positions) {
-		super(null, level);
+	public PointFormation(Map<UnitFormation.Point, Integer> positions, List<UnitFormation> innerFormations) {
+		super(UnitFormationTypeInit.POINTS.get());
 		this.positions = positions;
+		this.innerFormations = innerFormations;
+	}
+	
+	@Override
+	public List<UnitFormation> getInnerFormations() {
+		return this.innerFormations;
+	}
+	
+	@Override
+	public void killInnerFormationLeaders() {
+		this.units.values()
+		.stream()
+		.map(FormationEntityWrapper::getEntity)
+		.filter(e -> e instanceof FormationLeaderEntity)
+		.forEach(Entity::kill);
 	}
 	
 	@Override
 	public boolean addEntity(CreatureEntity entity) {
 		if (!UnitFormation.checkMemoriesForMovement(entity) || !(entity instanceof IMovesInFormation)) return false;
-		for (Point p : this.positions.keySet()) {
-			if (!this.units.containsKey(p)) {
+		IMovesInFormation unit = (IMovesInFormation) entity;
+		int rank = unit.getFormationRank();
+		
+		for (UnitFormation.Point p : this.positions.keySet()) {
+			if (this.units.containsKey(p)) {
+				CreatureEntity occupier = this.units.get(p).getEntity();
+				if (occupier instanceof FormationLeaderEntity && ((FormationLeaderEntity) occupier).addEntity(entity)) {
+					return true;
+				}
+			} else if (this.positions.get(p).intValue() == rank) {
 				this.units.put(p, new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) entity));
 				return true;
 			}
@@ -56,6 +88,7 @@ public class PointFormation extends UnitFormation {
 	
 	@Override
 	public void tick(FormationLeaderEntity leader) {
+		if (this.formationState == null || this.formationState == State.BROKEN || leader == null) return;
 		
 		boolean finishedForming = this.formationState == State.FORMING;
 		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064; // 0.08^2
@@ -65,7 +98,7 @@ public class PointFormation extends UnitFormation {
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
-		if (leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
+		if (!leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
 		UUID commandGroup = leaderBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
 		UUID leaderUUID = leader.getUUID();
 		
@@ -79,7 +112,7 @@ public class PointFormation extends UnitFormation {
 		LivingEntity target = engagementFlag ? leaderBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() : null;
 		engagementFlag &= target != null && target.isAlive() && combatMode != CombatMode.DONT_ATTACK;
 		
-		for (Point p : this.positions.keySet()) {
+		for (UnitFormation.Point p : this.positions.keySet()) {
 			if (!this.units.containsKey(p)) continue;
 
 			FormationEntityWrapper<?> wrapper = this.units.get(p);
@@ -102,7 +135,7 @@ public class PointFormation extends UnitFormation {
 			
 			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID);
 			
-			Vector3d precisePos = leader.position().subtract(leaderForward.scale(p.z)).add(leaderRight.scale(p.x)).add(0.0d, unit.getY() - leader.getY(), 0.0d);
+			Vector3d precisePos = leader.position().add(leaderForward.scale(p.z)).add(leaderRight.scale(p.x)).add(0.0d, unit.getY() - leader.getY(), 0.0d);
 			
 			if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
 				// Engagement
@@ -122,24 +155,28 @@ public class PointFormation extends UnitFormation {
 					unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
 					unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
 				}
-			} else {
-				if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
-					// Stop and stay oriented
-					unit.yRot = leader.yRot;
-					unit.yHeadRot = leader.yRot;
-				} else {
-					// Move to position
-					Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-					if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
-					unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
-					unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-				}
+			} else if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+				// Stop and stay oriented
+				unit.yRot = leader.yRot;
+				unit.yHeadRot = leader.yRot;
+				continue;
 			}
+			
+			// Move to position
+			Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+			if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
+			unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
+			unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
 		}
 		
 		if (finishedForming) {
 			this.formationState = State.FORMED;
 		}
+	}
+	
+	@Override
+	public int getLeaderRank() {
+		return RANK;
 	}
 	
 	private static final double[] Y_CHECKS = new double[] {0.0d, 1.0d, -1.0d};
@@ -155,7 +192,7 @@ public class PointFormation extends UnitFormation {
 
 	@Override
 	public void consumeGroupAction(int group, Consumer<CreatureEntity> action) {
-
+		
 	}
 
 	@Override
@@ -168,40 +205,78 @@ public class PointFormation extends UnitFormation {
 		return 0;
 	}
 	
-	@Override
-	public UnitFormationType<?> getType() {
-		return null;
-	}
-	
-	@Override
-	protected void loadEntityData(CompoundNBT nbt) {
-		
-	}
+	private static final String TAG_POINTS = "points";
+	private static final String TAG_X = "x";
+	private static final String TAG_Z = "z";
+	private static final String TAG_RANK = "rank";
+	private static final String TAG_UUID = "uuid";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
-		CompoundNBT tag = super.serializeNBT();
+		CompoundNBT nbt = super.serializeNBT();
 		
-		return tag;
+		ListNBT points = new ListNBT();
+		for (Map.Entry<UnitFormation.Point, Integer> entry : this.positions.entrySet()) {
+			UnitFormation.Point point = entry.getKey();
+			
+			CompoundNBT pointTag = new CompoundNBT();
+			pointTag.putInt(TAG_X, point.x);
+			pointTag.putInt(TAG_Z, point.z);
+			pointTag.putInt(TAG_RANK, entry.getValue());
+			if (this.units.containsKey(point)) {
+				FormationEntityWrapper<?> wrapper = this.units.get(point);
+				if (!isSlotEmpty(wrapper)) pointTag.putUUID(TAG_UUID, wrapper.getEntity().getUUID());
+			}
+			
+			points.add(pointTag);
+		}
+		nbt.put(TAG_POINTS, points);
+		
+		return nbt;
 	}
 	
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		super.deserializeNBT(nbt);
+	protected void loadEntityData(CompoundNBT nbt, World level) {
+		if (level.isClientSide) return;
+		ServerWorld slevel = (ServerWorld) level;
+		
+		ListNBT points = nbt.getList(TAG_POINTS, Constants.NBT.TAG_COMPOUND);
+		this.positions.clear();
+		this.units.clear();
+		for (int i = 0; i < points.size(); ++i) {
+			CompoundNBT pointTag = points.getCompound(i);
+			
+			int x = pointTag.getInt(TAG_X);
+			int z = pointTag.getInt(TAG_Z);
+			UnitFormation.Point point = new UnitFormation.Point(x, z);			
+			int rank = pointTag.getInt(TAG_RANK);
+			
+			this.positions.put(point, rank);
+			
+			if (!pointTag.contains(TAG_UUID)) continue;
+			Entity unit = slevel.getEntity(pointTag.getUUID(TAG_UUID));
+			if (!(unit instanceof CreatureEntity && unit instanceof IMovesInFormation)) continue;
+			this.units.put(point, new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) unit));
+		}
 	}
 	
-	public static class Point {
-		public final int x;
-		public final int z;
+	public static class Builder {
+		private final Map<UnitFormation.Point, Integer> positions = new HashMap<>();
+		private final List<UnitFormation> innerFormations = new ArrayList<>();
 		
-		public Point(int x, int z) {
-			this.x = x;
-			this.z = z;
+		public Builder addRegularPoint(UnitFormation.Point point, int rank) {
+			this.positions.put(point, rank);
+			return this;
 		}
 		
-		@Override
-		public int hashCode() {
-			return this.x ^ (this.z << 16 | this.z >> 16);
+		public Builder addFormationPoint(UnitFormation.Point point, UnitFormation formation) {
+			this.positions.put(point, formation.getLeaderRank());
+			this.innerFormations.add(formation);
+			return this;
+		}
+		
+		public PointFormation build() {
+			return new PointFormation(this.positions, this.innerFormations);
 		}
 	}
 

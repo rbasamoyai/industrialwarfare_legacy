@@ -32,7 +32,6 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.State;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistance;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
@@ -59,7 +58,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private PlayerIDTag owner;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
-		this(type, level, new LineFormation(level, -1, 0, 0));
+		this(type, level, new LineFormation(-1, 0, 0));
 	}
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
@@ -97,9 +96,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private static ImmutableList<Pair<Integer, ? extends Task<? super FormationLeaderEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
-				Pair.of(0, new PreciseWalkToPositionTask(2.0f, 1.5d, 0.125d)),
-				Pair.of(1, new MoveToEngagementDistance(14))
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d)),
+				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
+				Pair.of(2, new MoveToEngagementDistance(14))
 				);
 	}
 	
@@ -112,9 +111,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	@Override
 	protected void customServerAiStep() {
 		Brain<FormationLeaderEntity> brain = this.getBrain();
-		if (this.formation.getState() == State.FORMED) {
-			brain.tick((ServerWorld) this.level, this);
-		}
+		brain.tick((ServerWorld) this.level, this);
 		super.customServerAiStep();
 	}
 	
@@ -158,7 +155,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		super.readAdditionalSaveData(nbt);
 		CompoundNBT formationData = nbt.getCompound(TAG_FORMATION);
 		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
-		this.formation = type.getFormation(this.level);
+		this.formation = type.getFormation();
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
 	}
 	
@@ -176,12 +173,18 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	@Override
 	public int getFormationRank() {
-		return 0xF000BAAA; // FUBAR
+		return this.formation == null ? -1 : this.formation.getLeaderRank();
 	}
 	
 	@Override
 	public boolean isLowLevelUnit() {
 		return false;
+	}
+	
+	@Override
+	public void kill() {
+		super.kill();
+		this.formation.killInnerFormationLeaders();
 	}
 	
 	/*

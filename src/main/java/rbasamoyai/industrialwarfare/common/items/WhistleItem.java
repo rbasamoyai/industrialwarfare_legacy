@@ -1,16 +1,10 @@
 package rbasamoyai.industrialwarfare.common.items;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -51,8 +45,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
-import net.minecraft.util.Tuple;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -77,7 +69,9 @@ import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitClusterFinder;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.formations.PointFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.Point;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -151,7 +145,7 @@ public class WhistleItem extends Item implements
 		if (!nbt.contains(TAG_COMMAND_GROUP)) {
 			nbt.putUUID(TAG_COMMAND_GROUP, MathHelper.createInsecureUUID(RNG));
 		}
-		UUID commandGroupUUID = nbt.getUUID(TAG_COMMAND_GROUP);
+		UUID commandGroup = nbt.getUUID(TAG_COMMAND_GROUP);
 		
 		// Set new position
 		for (INBT t : controlledLeaders) {
@@ -162,7 +156,7 @@ public class WhistleItem extends Item implements
 			Brain<?> leaderBrain = leader.getBrain();
 			leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
 			if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
-			leaderBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroupUUID);
+			leaderBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			leaderBrain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
 			leaderBrain.eraseMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
 		}
@@ -186,22 +180,46 @@ public class WhistleItem extends Item implements
 			}
 			
 			if (!unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
-				|| !unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(commandGroupUUID)
+				|| !unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(commandGroup)
 				|| !unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
 				unitsToCluster.add(unit);
 			}
 			
-			unitBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroupUUID);
+			unitBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 		}
 		
 		List<List<CreatureEntity>> spatialClusters = (new UnitClusterFinder(3, 5.0f)).findClusters(unitsToCluster);
 		if (spatialClusters.isEmpty()) return ActionResultType.FAIL;
 		looseUnits.addAll(spatialClusters.remove(spatialClusters.size() - 1));
 		
-		Function<Integer, UnitFormation> formationSupplier = getFormationProvider(stack, slevel);
-		
 		for (List<CreatureEntity> cluster : spatialClusters) {
-			Map<Integer, List<Tuple<List<CreatureEntity>, UnitFormation>>> formationsByRank = new HashMap<>();
+			if (cluster.isEmpty()) continue;
+			
+			Vector3d centroid =
+					cluster
+					.stream()
+					.map(Entity::position)
+					.reduce((a, b) -> a.add(b))
+					.map(v -> v.scale(1.0d / (double) cluster.size()))
+					.get();
+			
+			CreatureEntity closestToCentroid = null;
+			for (CreatureEntity unit : cluster) {
+				if (closestToCentroid == null || centroid.distanceToSqr(unit.position()) < centroid.distanceToSqr(closestToCentroid.position())) {
+					closestToCentroid = unit;
+				}
+			}
+			Vector3d pos = closestToCentroid.position();
+			float facing = (float) -MathHelper.wrapDegrees(Math.toDegrees(MathHelper.atan2(precisePos.x - pos.x, precisePos.z - pos.z)));
+			
+			FormationLeaderEntity leader = this.spawnInnerFormationLeaders(slevel, pos, facing, this.getNewFormation(stack, 0), commandGroup, owner);
+			Brain<?> leaderBrain = leader.getBrain();
+			leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
+			if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
+			UUID leaderUUID = leader.getUUID();
+			controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
+			// TODO: unit class map
+			
 			// Making low-level formations
 			for (CreatureEntity unit : cluster) {
 				if (!(unit instanceof IMovesInFormation)) {
@@ -210,87 +228,29 @@ public class WhistleItem extends Item implements
 				}
 				IMovesInFormation formationUnit = (IMovesInFormation) unit;
 				int formationRank = formationUnit.getFormationRank();
-				if (!formationsByRank.containsKey(formationRank)) {
-					List<CreatureEntity> entityList = Util.make(new ArrayList<>(), list -> list.add(unit));
-					UnitFormation formation = formationSupplier.apply(formationRank);
-					formationsByRank.put(formationRank, Util.make(new ArrayList<>(), list -> list.add(new Tuple<>(entityList, formation))));
-				}
-				List<Tuple<List<CreatureEntity>, UnitFormation>> formations = formationsByRank.get(formationRank);
-				Tuple<List<CreatureEntity>, UnitFormation> topFormation = formations.get(formations.size() - 1);
 				
-				if (topFormation.getB().addEntity(unit)) {
-					topFormation.getA().add(unit);
-				} else {
-					UnitFormation formation = formationSupplier.apply(formationRank);
-					if (formation.addEntity(unit)) {
-						List<CreatureEntity> entityList = Util.make(new ArrayList<>(), list -> list.add(unit));
-						formations.add(new Tuple<>(entityList, formation));
-					} else {
-						// This really should not happen
+				if (!leader.addEntity(unit)) {
+					FormationLeaderEntity restore = leader;
+					leader = this.spawnInnerFormationLeaders(slevel, pos, facing, this.getNewFormation(stack, 0), commandGroup, owner);
+					if (!leader.addEntity(unit)) { // Should not happen under any circumstances
+						leader.remove();
+						leader = restore;
 						looseUnits.add(unit);
+					} else {
+						leaderBrain = leader.getBrain();
+						leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
+						if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
+						leaderUUID = leader.getUUID();
+						controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
 					}
 				}
 			}
-			// TODO: top-level formation formation
-			List<Tuple<List<CreatureEntity>, UnitFormation>> sortedFormations =
-					formationsByRank.entrySet()
-					.stream()
-					.sorted(Comparator.comparingInt(Entry::getKey))
-					.map(Entry::getValue)
-					.flatMap(List::stream)
-					.collect(Collectors.toList());
-			
-			//List<FormationLeaderEntity> leaders =
-			
-			// Spawning leaders
-			sortedFormations
-			.stream()
-			.forEach(f -> {
-				List<CreatureEntity> formationUnits = f.getA();
-				if (formationUnits.isEmpty()) return;
-				FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), slevel, f.getB());
-				
-				Brain<?> leaderBrain = leader.getBrain();
-				leader.setOwner(owner);
-				leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-				leaderBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroupUUID);
-				if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
-				
-				Vector3d centroid =
-						formationUnits
-						.stream()
-						.map(Entity::position)
-						.reduce((a, b) -> a.add(b))
-						.map(v -> v.scale(1.0d / (double) formationUnits.size()))
-						.get();
-				
-				CreatureEntity closestToCentroid = null;
-				for (CreatureEntity unit : formationUnits) {
-					if (closestToCentroid == null || centroid.distanceToSqr(unit.position()) < centroid.distanceToSqr(closestToCentroid.position())) {
-						closestToCentroid = unit;
-					}
-				}
-				Vector3d pos = closestToCentroid.position();
-				
-				leader.setPos(pos.x, pos.y, pos.z);
-				leader.yRot = (float) -MathHelper.wrapDegrees(Math.toDegrees(MathHelper.atan2(precisePos.x - pos.x, precisePos.z - pos.z)));
-				leader.setState(UnitFormation.State.FORMING);
-				
-				slevel.addFreshEntity(leader);
-				UUID leaderUUID = leader.getUUID();
-				controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
-				
-				formationUnits
-				.stream()
-				.map(CreatureEntity::getBrain)
-				.filter(b -> b.checkMemory(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.REGISTERED))
-				.forEach(b -> b.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID));
-			});
 		}
 		
 		for (CreatureEntity unit : looseUnits) {
 			Brain<?> brain = unit.getBrain();
 			if (!checkMemoryForMovement(brain)) continue;
+			brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
 			if (shouldBePrecise) brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
 		}
@@ -300,9 +260,32 @@ public class WhistleItem extends Item implements
 		return ActionResultType.CONSUME;
 	}
 	
-	private Function<Integer, UnitFormation> getFormationProvider(ItemStack stack, World level) {
-		// TODO: more complex formation supplier
-		return rank -> new LineFormation(level, rank, 10, 3);
+	private FormationLeaderEntity spawnFormationLeader(World level, Vector3d pos, float facing, UnitFormation formation) {
+		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, formation);
+		leader.setPos(pos.x, pos.y, pos.z);
+		leader.yRot = facing;
+		leader.setState(UnitFormation.State.FORMED);
+		level.addFreshEntity(leader);
+		return leader;
+	}
+	
+	private FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UnitFormation topFormation, UUID commandGroup, PlayerIDTag owner) {
+		FormationLeaderEntity leader = this.spawnFormationLeader(level, pos, facing, topFormation);
+		leader.setOwner(owner);
+		Brain<?> brain = leader.getBrain();
+		brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
+		
+		for (UnitFormation innerFormation : topFormation.getInnerFormations()) {
+			leader.addEntity(this.spawnInnerFormationLeaders(level, pos, facing, innerFormation, commandGroup, owner));
+		}
+		return leader;
+	}
+	
+	private UnitFormation getNewFormation(ItemStack stack, int rank) {
+		return new PointFormation.Builder()
+				.addRegularPoint(new Point(0, 0), 0)
+				.addFormationPoint(new Point(0, -2), new LineFormation(0, 10, 3))
+				.build();
 	}
 	
 	@Override
@@ -426,7 +409,7 @@ public class WhistleItem extends Item implements
 	
 	@Override
 	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
-		if (level.isClientSide || entity instanceof PlayerEntity) return;
+		if (level.isClientSide || !(entity instanceof PlayerEntity)) return;
 		ServerWorld slevel = (ServerWorld) level;
 		
 		CompoundNBT nbt = stack.getOrCreateTag();
@@ -500,7 +483,7 @@ public class WhistleItem extends Item implements
 		removeIndices.clear();
 		for (int i = 0; i < controlledLeaders.size(); ++i) {
 			Entity leader = level.getEntity(NBTUtil.loadUUID(controlledLeaders.get(i)));
-			if (!isValidUnit(leader, owner)) {
+			if (!isValidLeader(leader)) {
 				removeIndices.add(i);
 			}
 		}
@@ -554,6 +537,8 @@ public class WhistleItem extends Item implements
 		player.getCooldowns().addCooldown(this, 10);
 		player.displayClientMessage(new TranslationTextComponent(COMBAT_MODE_KEY + mode.toString()), true);
 	}
+	
+	//private void formUpEntities
 	
 	@Override
 	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {

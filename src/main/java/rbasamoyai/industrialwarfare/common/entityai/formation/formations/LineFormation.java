@@ -32,6 +32,8 @@ import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class LineFormation extends UnitFormation {
 	
+	public static final int RANK = 0xF00BA000; // FUBAR #000
+	
 	private static final double CLOSE_ENOUGH = 0.1d;
 	
 	private int formationRank;
@@ -42,8 +44,8 @@ public class LineFormation extends UnitFormation {
 	
 	private FormationEntityWrapper<?>[][] lines;
 	
-	public LineFormation(World level, int formationRank, int width, int depth) {
-		super(UnitFormationTypeInit.LINE.get(), level);
+	public LineFormation(int formationRank, int width, int depth) {
+		super(UnitFormationTypeInit.LINE.get());
 		this.formationRank = formationRank;
 		this.width = width;
 		this.depth = depth;
@@ -75,7 +77,7 @@ public class LineFormation extends UnitFormation {
 
 	@Override
 	protected void tick(FormationLeaderEntity leader) {
-		if (this.formationState == null || this.formationState == State.BROKEN || leader == null || leader.level.isClientSide) return;
+		if (this.formationState == null || this.formationState == State.BROKEN || leader == null) return;
 		
 		this.moveUpUnits();
 
@@ -83,7 +85,7 @@ public class LineFormation extends UnitFormation {
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		Vector3d startPoint = leader.position().subtract(leaderForward).subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
+		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
@@ -102,22 +104,6 @@ public class LineFormation extends UnitFormation {
 		engagementFlag &= target != null && target.isAlive() && combatMode != CombatMode.DONT_ATTACK;
 		
 		boolean finishedForming = this.formationState == State.FORMING && !engagementFlag;
-		
-		if (leader.tickCount % 160 == 0 && engagementFlag) {
-			++this.currentRank;
-			if (this.currentRank == this.depth) this.currentRank = 0;
-			for (int file = 0; file < this.width; ++file) {
-				FormationEntityWrapper<?> wrapper = this.lines[this.currentRank][file];
-				if (UnitFormation.isSlotEmpty(wrapper)) {
-					this.lines[this.currentRank][file] = null;
-					continue;
-				}
-				Brain<?> unitBrain = wrapper.getEntity().getBrain();
-				if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
-					unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
-				}
-			}
-		}
 		
 		for (int rank = 0; rank < this.depth; ++rank) {
 			for (int file = 0; file < this.width; ++file) {
@@ -177,14 +163,19 @@ public class LineFormation extends UnitFormation {
 				// Position movement
 				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
 				if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
-				unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(this.level.dimension(), (new BlockPos(possiblePos)).below()));
 				unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
+				unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
 			}
 		}
 		
 		if (finishedForming) {
 			this.formationState = State.FORMED;
 		}
+	}
+	
+	@Override 
+	public int getLeaderRank() {
+		return RANK;
 	}
 	
 	private static final double[] Y_CHECKS = new double[] {0.0d, 1.0d, -1.0d};
@@ -260,9 +251,9 @@ public class LineFormation extends UnitFormation {
 	}
 	
 	@Override
-	protected void loadEntityData(CompoundNBT nbt) {
-		if (this.level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) this.level;
+	protected void loadEntityData(CompoundNBT nbt, World level) {
+		if (level.isClientSide) return;
+		ServerWorld slevel = (ServerWorld) level;
 		
 		ListNBT units = nbt.getList(TAG_UNITS, Constants.NBT.TAG_COMPOUND);
 		for (int i = 0; i < units.size(); ++i) {

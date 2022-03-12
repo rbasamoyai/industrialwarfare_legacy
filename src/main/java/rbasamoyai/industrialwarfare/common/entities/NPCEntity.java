@@ -300,8 +300,11 @@ public class NPCEntity extends CreatureEntity implements
 	
 	@Override
 	public int getFormationRank() {
+		NPCCombatSkill skill = this.getDataHandler().map(INPCDataHandler::getCombatSkill).orElse(NPCCombatSkillInit.UNTRAINED.get());
+		if (skill == NPCCombatSkillInit.UNTRAINED.get()) return 0;
+		
 		boolean isRanged = this.canUseRangedWeapon(this.getMainHandItem());
-		return isRanged ? 1 : 0;
+		return isRanged ? 0 : 0;
 	}
 	
 	@Override
