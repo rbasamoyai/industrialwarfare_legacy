@@ -1,34 +1,46 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.entity.CreatureEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.BrainUtil;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.INBTSerializable;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
+import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 
+	protected static final float RAD_TO_DEG = (float) Math.PI / 180.0f;
+	protected static final double CLOSE_ENOUGH = 0.1d;
+	protected static final double ORIENTATION_CALC_DIST = 1.0d;
+	
 	private final UnitFormationType<?> type;
 	protected State formationState = State.BROKEN;
 	
 	private boolean loadDataOnNextTick = false;
 	private CompoundNBT dataToDeserialize;
+	
+	protected CreatureEntity follower;
 	
 	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
@@ -37,13 +49,12 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public void setState(State formationState) { this.formationState = formationState; } 
 	public State getState() { return this.formationState; }
 	
-	public abstract boolean addEntity(CreatureEntity entity);
-	public abstract void consumeGroupAction(int group, Consumer<CreatureEntity> action);
-	public abstract float getWidth();
-	public abstract float getDepth();
+	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
 	
 	protected abstract void tick(FormationLeaderEntity leader);
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
+	
+	public void setFollower(CreatureEntity entity) { this.follower = entity; }
 	
 	public UnitFormationType<?> getType() {
 		return this.type;
@@ -51,6 +62,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	public final void doTick(FormationLeaderEntity leader) {
 		if (this.loadDataOnNextTick) {
+			this.loadFollowerData(dataToDeserialize, leader.level);
 			this.loadEntityData(this.dataToDeserialize, leader.level);
 			this.loadDataOnNextTick = false;
 			this.dataToDeserialize = new CompoundNBT();
@@ -58,13 +70,39 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		this.tick(leader);
 	}
 	
-	public List<UnitFormation> getInnerFormations() {
-		return new ArrayList<>();
+	public abstract float scoreOrientationAngle(float angle, World level, CreatureEntity leader);
+	
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
+		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, this);
+		leader.setPos(pos.x, pos.y, pos.z);
+		leader.yRot = facing;
+		leader.setState(UnitFormation.State.FORMED);
+		leader.setOwner(owner);
+		leader.getBrain().setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
+		
+		level.addFreshEntity(leader);
+		
+		return leader;
 	}
 	
-	public abstract int getLeaderRank();
+	private static final double[] Y_CHECKS = new double[] {0.0d, 1.0d, -1.0d};
 	
-	public void killInnerFormationLeaders() {}
+	@Nullable
+	protected Vector3d tryFindingNewPosition(CreatureEntity unit, Vector3d precisePos) {
+		for (double y : Y_CHECKS) {
+			Vector3d newPos = precisePos.add(0.0d, y, 0.0d);
+			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)) return newPos;
+		}
+		return null;
+	}
+	
+	public int getLeaderRank() {
+		return this.type.getFormationRank();
+	}
+	
+	public void killInnerFormationLeaders() {
+		if (this.follower != null) this.follower.kill();
+	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
 		if (wrapper == null) return true;
@@ -100,11 +138,15 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	private static final String TAG_STATE = "state";
+	private static final String TAG_FOLLOWER = "follower";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
 		CompoundNBT nbt = new CompoundNBT();
 		nbt.putInt(TAG_STATE, this.formationState.getId());
+		if (this.follower != null) {
+			nbt.putUUID(TAG_FOLLOWER, this.follower.getUUID());
+		}
 		return nbt;
 	}
 	
@@ -113,6 +155,17 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		this.formationState = State.fromId(nbt.getInt(TAG_STATE));
 		this.loadDataOnNextTick = true;
 		this.dataToDeserialize = nbt;
+	}
+	
+	protected void loadFollowerData(CompoundNBT nbt, World level) {
+		if (level.isClientSide) return;
+		ServerWorld slevel = (ServerWorld) level;
+		
+		if (nbt.hasUUID(TAG_FOLLOWER)) {
+			Entity e = slevel.getEntity(nbt.getUUID(TAG_FOLLOWER));
+			if (!(e instanceof CreatureEntity)) return;
+			this.setFollower((CreatureEntity) e);
+		}
 	}
 	
 	public static enum State {

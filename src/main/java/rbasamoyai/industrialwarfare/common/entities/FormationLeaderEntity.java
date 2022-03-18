@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -30,7 +29,6 @@ import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistance;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
@@ -38,6 +36,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTas
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class FormationLeaderEntity extends CreatureEntity implements IMovesInFormation {
 
@@ -58,7 +57,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private PlayerIDTag owner;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
-		this(type, level, new LineFormation(-1, 0, 0));
+		this(type, level, UnitFormationTypeInit.LINE.get().getFormation());
 	}
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
@@ -126,10 +125,6 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		}
 	}
 	
-	public void consumeGroupAction(int group, Consumer<CreatureEntity> action) {
-		this.formation.consumeGroupAction(group, action);
-	}
-	
 	public void setOwner(PlayerIDTag owner) { this.owner = owner; }
 	public PlayerIDTag getOwner() { return this.owner; }
 	
@@ -163,12 +158,24 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	 * FORMATION METHODS
 	 */
 	
-	public boolean addEntity(CreatureEntity entity) {
+	public UnitFormation getFormation() {
+		return this.formation;
+	}
+	
+	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
 		return this.formation.addEntity(entity);
+	}
+	
+	public void setFollower(CreatureEntity entity) {
+		this.formation.setFollower(entity);
 	}
 	
 	public void setState(UnitFormation.State state) {
 		this.formation.setState(state);	
+	}
+	
+	public float scoreOrientationAngle(float angle) {
+		return this.formation.scoreOrientationAngle(angle, this.level, this);
 	}
 	
 	@Override

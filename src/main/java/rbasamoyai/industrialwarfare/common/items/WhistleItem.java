@@ -68,13 +68,10 @@ import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitClusterFinder;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.PointFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.Point;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
-import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
 public class WhistleItem extends Item implements
@@ -90,7 +87,7 @@ public class WhistleItem extends Item implements
 	public static final String TAG_FORMATION_TYPE = "formationType";
 	public static final String TAG_DIRTY = "dirty";
 	
-	private static final int MAX_SELECTABLE_UNITS = 64;
+	private static final int MAX_SELECTABLE_UNITS = 128;
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
 	private static final ITextComponent CANNOT_SELECT_FULL = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "cannot_select_full", MAX_SELECTABLE_UNITS).withStyle(TextFormatting.RED);
 	private static final ITextComponent STOPPED_UNITS = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "stopped_units");
@@ -203,19 +200,18 @@ public class WhistleItem extends Item implements
 					.map(v -> v.scale(1.0d / (double) cluster.size()))
 					.get();
 			
-			CreatureEntity closestToCentroid = null;
-			for (CreatureEntity unit : cluster) {
-				if (closestToCentroid == null || centroid.distanceToSqr(unit.position()) < centroid.distanceToSqr(closestToCentroid.position())) {
-					closestToCentroid = unit;
-				}
-			}
-			Vector3d pos = closestToCentroid.position();
+			Vector3d pos =
+					cluster
+					.stream()
+					.map(Entity::position)
+					.reduce((a, b) -> centroid.distanceToSqr(a) < centroid.distanceToSqr(b) ? a : b)
+					.get();
+			
 			float facing = (float) -MathHelper.wrapDegrees(Math.toDegrees(MathHelper.atan2(precisePos.x - pos.x, precisePos.z - pos.z)));
 			
-			FormationLeaderEntity leader = this.spawnInnerFormationLeaders(slevel, pos, facing, this.getNewFormation(stack, 0), commandGroup, owner);
+			FormationLeaderEntity leader = this.getNewFormation(stack, 0).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
 			Brain<?> leaderBrain = leader.getBrain();
 			leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-			if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
 			UUID leaderUUID = leader.getUUID();
 			controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
 			// TODO: unit class map
@@ -229,19 +225,15 @@ public class WhistleItem extends Item implements
 				IMovesInFormation formationUnit = (IMovesInFormation) unit;
 				int formationRank = formationUnit.getFormationRank();
 				
-				if (!leader.addEntity(unit)) {
+				if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) {
 					FormationLeaderEntity restore = leader;
-					leader = this.spawnInnerFormationLeaders(slevel, pos, facing, this.getNewFormation(stack, 0), commandGroup, owner);
-					if (!leader.addEntity(unit)) { // Should not happen under any circumstances
-						leader.remove();
+					leader = this.getNewFormation(stack, 0).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
+					if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) { // Should not happen under any circumstances
+						leader.kill();
 						leader = restore;
 						looseUnits.add(unit);
 					} else {
-						leaderBrain = leader.getBrain();
-						leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-						if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
-						leaderUUID = leader.getUUID();
-						controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
+						restore.setFollower(leader);
 					}
 				}
 			}
@@ -252,7 +244,6 @@ public class WhistleItem extends Item implements
 			if (!checkMemoryForMovement(brain)) continue;
 			brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-			if (shouldBePrecise) brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
 		}
 		
 		nbt.put(TAG_CONTROLLED_LEADERS, controlledLeaders);
@@ -260,32 +251,8 @@ public class WhistleItem extends Item implements
 		return ActionResultType.CONSUME;
 	}
 	
-	private FormationLeaderEntity spawnFormationLeader(World level, Vector3d pos, float facing, UnitFormation formation) {
-		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, formation);
-		leader.setPos(pos.x, pos.y, pos.z);
-		leader.yRot = facing;
-		leader.setState(UnitFormation.State.FORMED);
-		level.addFreshEntity(leader);
-		return leader;
-	}
-	
-	private FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UnitFormation topFormation, UUID commandGroup, PlayerIDTag owner) {
-		FormationLeaderEntity leader = this.spawnFormationLeader(level, pos, facing, topFormation);
-		leader.setOwner(owner);
-		Brain<?> brain = leader.getBrain();
-		brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
-		
-		for (UnitFormation innerFormation : topFormation.getInnerFormations()) {
-			leader.addEntity(this.spawnInnerFormationLeaders(level, pos, facing, innerFormation, commandGroup, owner));
-		}
-		return leader;
-	}
-	
 	private UnitFormation getNewFormation(ItemStack stack, int rank) {
-		return new PointFormation.Builder()
-				.addRegularPoint(new Point(0, 0), 0)
-				.addFormationPoint(new Point(0, -2), new LineFormation(0, 10, 3))
-				.build();
+		return UnitFormationTypeInit.THREE_LINES.get().getFormation();
 	}
 	
 	@Override
@@ -323,7 +290,7 @@ public class WhistleItem extends Item implements
 			}
 			if (selectedUnits.size() >= MAX_SELECTABLE_UNITS) {
 				player.displayClientMessage(CANNOT_SELECT_FULL, true);
-				return ActionResultType.FAIL;
+				return ActionResultType.CONSUME;
 			}
 			selectedUnits.add(NBTUtil.createUUID(uuid));
 			return ActionResultType.CONSUME;

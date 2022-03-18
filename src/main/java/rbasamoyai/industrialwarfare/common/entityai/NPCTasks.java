@@ -62,7 +62,7 @@ public class NPCTasks {
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),
-				Pair.of(1, new JoinNearbyFormationTask()),
+				Pair.of(1, new JoinNearbyFormationTask<>()),
 				Pair.of(2, new FinishMovementCommandTask(MemoryModuleType.MEETING_POINT))
 				);
 	}

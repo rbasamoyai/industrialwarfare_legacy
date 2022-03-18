@@ -1,9 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
+import java.util.Arrays;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
-import javax.annotation.Nullable;
+import com.google.common.collect.Streams;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -27,61 +29,63 @@ import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
-import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class LineFormation extends UnitFormation {
-	
-	public static final int RANK = 0xF00BA000; // FUBAR #000
-	
-	private static final double CLOSE_ENOUGH = 0.1d;
 	
 	private int formationRank;
 	private int width;
 	private int depth;
+	private int followSpacing;
 	
-	private int currentRank = 0;
+	private Float cachedAngle;
 	
 	private FormationEntityWrapper<?>[][] lines;
 	
-	public LineFormation(int formationRank, int width, int depth) {
-		super(UnitFormationTypeInit.LINE.get());
+	public LineFormation(UnitFormationType<? extends LineFormation> type) {
+		this(type, -1, 0, 0, 0);
+	}
+	
+	public LineFormation(UnitFormationType<? extends LineFormation> type, int formationRank, int width, int depth) {
+		this(type, formationRank, width, depth, 3);
+	}
+	
+	public LineFormation(UnitFormationType<? extends LineFormation> type, int formationRank, int width, int depth, int followSpacing) {
+		super(type);
 		this.formationRank = formationRank;
 		this.width = width;
 		this.depth = depth;
+		this.followSpacing = followSpacing;
 		this.lines = new FormationEntityWrapper<?>[this.depth][this.width];
 	}
 	
 	@Override
-	public boolean addEntity(CreatureEntity entity) {
-		if (!UnitFormation.checkMemoriesForMovement(entity) || !(entity instanceof IMovesInFormation)) return false;
-		IMovesInFormation unit = (IMovesInFormation) entity;
-		if (!unit.isLowLevelUnit() || unit.getFormationRank() != this.formationRank) return false;
+	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
+		if (!entity.isLowLevelUnit() || entity.getFormationRank() != this.formationRank) return false;
 		if (this.insertEntityAtBack(entity)) return true;
 		this.moveUpUnits();
 		return this.insertEntityAtBack(entity);
 	}
 	
-	private boolean insertEntityAtBack(CreatureEntity entity) {
+	private <E extends CreatureEntity & IMovesInFormation> boolean insertEntityAtBack(E entity) {
 		for (int file = 0; file < this.width; ++file) {
 			FormationEntityWrapper<?> wrapper = this.lines[this.depth - 1][file];
 			if (UnitFormation.isSlotEmpty(wrapper)) {
-				this.lines[this.depth - 1][file] = new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) entity);
+				this.lines[this.depth - 1][file] = new FormationEntityWrapper<>(entity);
 				return true;
 			}
 		}
 		return false;
 	}
-	
-	private static final float RAD_TO_DEG = (float) Math.PI / 180.0f;
 
 	@Override
 	protected void tick(FormationLeaderEntity leader) {
-		if (this.formationState == null || this.formationState == State.BROKEN || leader == null) return;
+		if (this.formationState == null || this.formationState == State.BROKEN) return;
 		
 		this.moveUpUnits();
 
-		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064; // 0.08^2
+		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064d; // 0.08^2
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
@@ -140,7 +144,7 @@ public class LineFormation extends UnitFormation {
 						continue; // Ignore position movement
 					}
 					
-					if (rank == this.currentRank && UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target)) {
+					if (rank == 0 && UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target)) {
 						unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
@@ -171,22 +175,74 @@ public class LineFormation extends UnitFormation {
 		if (finishedForming) {
 			this.formationState = State.FORMED;
 		}
-	}
-	
-	@Override 
-	public int getLeaderRank() {
-		return RANK;
-	}
-	
-	private static final double[] Y_CHECKS = new double[] {0.0d, 1.0d, -1.0d};
-	
-	@Nullable
-	private Vector3d tryFindingNewPosition(CreatureEntity unit, Vector3d precisePos) {
-		for (double y : Y_CHECKS) {
-			Vector3d newPos = precisePos.add(0.0d, y, 0.0d);
-			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)) return newPos;
+		
+		if (this.follower != null && this.follower.isAlive()) {
+			if (UnitFormation.checkMemoriesForMovement(this.follower)) {
+				Vector3d followPos =
+						leader.position()
+						.subtract(leaderForward.scale(this.depth + this.followSpacing))
+						.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
+				
+				boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
+				
+				if (stopped && closeEnough) {
+					if (this.follower instanceof FormationLeaderEntity) {
+						FormationLeaderEntity followerLeader = (FormationLeaderEntity) this.follower;
+						
+						// No derivation from the leader angle (i.e. straight angle, 0) is preferred, hence the largest weighting
+						IntStream angles = Arrays.stream(new int[] {-45, -30, -15, 0, 15, 30, 45});
+						IntStream weights = Arrays.stream(new int[] {6, 7, 8, 9, 8, 7, 6});
+						
+						if (this.cachedAngle == null) {
+							this.cachedAngle =
+									Streams.zip(angles.boxed(), weights.boxed(), (angle, weight) -> {
+										float angle1 = leader.yRot + angle.floatValue();
+										float score = followerLeader.scoreOrientationAngle(angle1) * weight.floatValue();
+										return new Tuple<>(score, angle1);
+									})
+									.sorted((a, b) -> -Float.compare(a.getA(), b.getA()))
+									.map(Tuple::getB)
+									.findFirst()
+									.get();
+						}
+						
+						followerLeader.yRot = this.cachedAngle;
+						followerLeader.yHeadRot = this.cachedAngle;
+					}
+				} else {
+					this.cachedAngle = null;
+					Brain<?> followerBrain = this.follower.getBrain();
+					if (followerBrain.hasMemoryValue(MemoryModuleType.MEETING_POINT) && !followerBrain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
+						followerBrain.eraseMemory(MemoryModuleType.MEETING_POINT);
+					} else {
+						Vector3d possiblePos = this.tryFindingNewPosition(this.follower, followPos);
+						if (possiblePos != null && !closeEnough) {
+							followerBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
+							followerBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
+						}
+					}	
+				}
+			} else {
+				this.setFollower(null);
+			}
 		}
-		return null;
+	}
+	
+	@Override
+	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader) {
+		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
+		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
+		Vector3d startPoint = leader.position().subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
+		
+		IntStream ranks = IntStream.range(0, this.depth);
+		IntStream files = IntStream.range(0, this.width);
+		
+		return Streams.zip(ranks.boxed(), files.boxed(), (a, b) -> {
+			if (UnitFormation.isSlotEmpty(this.lines[a][b])) return 0;
+			CreatureEntity unit = this.lines[a][b].getEntity();
+			BlockPos pos = (new BlockPos(startPoint.subtract(forward.scale(a)).subtract(right.scale(b)))).below();
+			return level.loadedAndEntityCanStandOn(pos, unit) ? 1 : 0;
+		}).reduce(Integer::sum).get();
 	}
 	
 	private void moveUpUnits() {
@@ -199,14 +255,6 @@ public class LineFormation extends UnitFormation {
 			}
 		}
 	}
-	
-	@Override
-	public void consumeGroupAction(int group, Consumer<CreatureEntity> action) {
-		
-	}
-	
-	@Override public float getWidth() { return this.width + 1; }
-	@Override public float getDepth() { return this.depth; }
 
 	private static final String TAG_WIDTH = "width";
 	private static final String TAG_DEPTH = "depth";
@@ -215,6 +263,7 @@ public class LineFormation extends UnitFormation {
 	private static final String TAG_RANK = "rank";
 	private static final String TAG_FILE = "file";
 	private static final String TAG_UUID = "uuid";
+	private static final String TAG_FOLLOW_SPACING = "followSpacing";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
@@ -222,6 +271,7 @@ public class LineFormation extends UnitFormation {
 		nbt.putInt(TAG_WIDTH, this.width);
 		nbt.putInt(TAG_DEPTH, this.depth);
 		nbt.putInt(TAG_FORMATION_RANK, this.formationRank);
+		nbt.putInt(TAG_FOLLOW_SPACING, this.followSpacing);
 		
 		ListNBT units = new ListNBT();
 		for (int rank = 0; rank < this.depth; ++rank) {
@@ -246,6 +296,7 @@ public class LineFormation extends UnitFormation {
 		this.width = nbt.getInt(TAG_WIDTH);
 		this.depth = nbt.getInt(TAG_DEPTH);
 		this.formationRank = nbt.getInt(TAG_FORMATION_RANK);
+		this.followSpacing = nbt.getInt(TAG_FOLLOW_SPACING);
 		
 		this.lines = new FormationEntityWrapper<?>[this.depth][this.width];
 	}

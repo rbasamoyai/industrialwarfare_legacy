@@ -13,9 +13,10 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
+import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class JoinNearbyFormationTask extends Task<CreatureEntity> {
+public class JoinNearbyFormationTask<E extends CreatureEntity & IMovesInFormation> extends Task<E> {
 
 	private int remainingCooldown;
 	
@@ -27,7 +28,7 @@ public class JoinNearbyFormationTask extends Task<CreatureEntity> {
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, CreatureEntity entity) {
+	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
 		if (this.remainingCooldown > 0) {
 			--this.remainingCooldown;
 			return false;
@@ -36,7 +37,7 @@ public class JoinNearbyFormationTask extends Task<CreatureEntity> {
 	}
 	
 	@Override
-	protected void start(ServerWorld level, CreatureEntity entity, long gameTime) {
+	protected void start(ServerWorld level, E entity, long gameTime) {
 		Brain<?> brain = entity.getBrain();
 		UUID commandGroup = brain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
 		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.LIVING_ENTITIES).get();
