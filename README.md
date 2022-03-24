@@ -24,6 +24,7 @@ can fight stuff.
 * Rudimentary formation movement
 
 ### """planned""" features:
+* Indirect NPC command
 * Generated structures with NPCs
 * Research trees
 * Some ores
