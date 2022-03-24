@@ -31,10 +31,19 @@ public class UnitFormationTypeInit {
 	public static final RegistryObject<UnitFormationType<DeferredFollowPointFormation>> DEFERRED_FOLLOW = UNIT_FORMATION_TYPES.register("deferred_follow",
 			() -> new UnitFormationType<>(DeferredFollowPointFormation::new, 0xF00BA021));
 	
-	public static final RegistryObject<UnitFormationType<UnitFormation>> THREE_LINES = UNIT_FORMATION_TYPES.register("three_lines",
-			() -> new UnitFormationType<>(type -> new DeferredFollowPointFormation.Builder(
+	/* Whistle formations, dimensions are specified in (width)W(depth)D */
+	
+	public static final RegistryObject<UnitFormationType<UnitFormation>> LINE_10W3D = UNIT_FORMATION_TYPES.register("line_10w3d",
+			() -> new UnitFormationType<>((type, rank) -> new DeferredFollowPointFormation.Builder(
 							new Point(0, -2),
 							new LineFormation(UnitFormationTypeInit.LINE.get(), 0, 10, 3))
+					.addRegularPoint(new Point(0, 0), 0)
+					.build(), -1));
+	
+	public static final RegistryObject<UnitFormationType<UnitFormation>> COLUMN_4W10D = UNIT_FORMATION_TYPES.register("column_4w10d",
+			() -> new UnitFormationType<>((type, rank) -> new DeferredFollowPointFormation.Builder(
+							new Point(0, -2),
+							new ColumnFormation(UnitFormationTypeInit.COLUMN.get(), 0, 4, 10))
 					.addRegularPoint(new Point(0, 0), 0)
 					.build(), -1));
 	

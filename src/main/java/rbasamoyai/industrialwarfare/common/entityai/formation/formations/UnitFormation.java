@@ -3,8 +3,11 @@ package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import javax.annotation.Nullable;
+
+import com.google.common.collect.Streams;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -14,7 +17,9 @@ import net.minecraft.entity.ai.brain.BrainUtil;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -38,9 +43,10 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected State formationState = State.BROKEN;
 	
 	private boolean loadDataOnNextTick = false;
-	private CompoundNBT dataToDeserialize;
+	private CompoundNBT dataToDeserialize = new CompoundNBT();
 	
 	protected CreatureEntity follower;
+	private Float cachedAngle;
 	
 	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
@@ -61,16 +67,84 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public final void doTick(FormationLeaderEntity leader) {
-		if (this.loadDataOnNextTick) {
-			this.loadFollowerData(dataToDeserialize, leader.level);
+		boolean loadedData = false;
+		if (this.loadDataOnNextTick && this.dataToDeserialize != null) {
+			this.loadFollowerData(this.dataToDeserialize, leader.level);
 			this.loadEntityData(this.dataToDeserialize, leader.level);
 			this.loadDataOnNextTick = false;
 			this.dataToDeserialize = new CompoundNBT();
+			loadedData = true;
 		}
 		this.tick(leader);
+		if (!loadedData) this.tickFollower(leader);
 	}
 	
-	public abstract float scoreOrientationAngle(float angle, World level, CreatureEntity leader);
+	protected void tickFollower(FormationLeaderEntity leader) {
+		if (this.follower == null) return;
+		if (!this.follower.isAlive() || !checkMemoriesForMovement(this.follower)) {
+			this.follower = null;
+			return;
+		}
+		
+		boolean stopped = isStopped(leader);
+		Vector3d followPos = this.getFollowPosition(leader);	
+		boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
+		
+		if (stopped && closeEnough) {
+			if (this.follower instanceof FormationLeaderEntity) {
+				FormationLeaderEntity followerLeader = (FormationLeaderEntity) this.follower;
+				
+				// No derivation from the leader angle (i.e. straight angle, 0) is preferred, hence the largest weighting
+				IntStream angles = Arrays.stream(new int[] {-45, -30, -15, 0, 15, 30, 45});
+				IntStream weights = Arrays.stream(new int[] {6, 7, 8, 9, 8, 7, 6});
+				
+				if (this.cachedAngle == null) {
+					this.cachedAngle =
+							Streams.zip(angles.boxed(), weights.boxed(), (angle, weight) -> {
+								float angle1 = leader.yRot + angle.floatValue();
+								float score = followerLeader.scoreOrientationAngle(angle1, followPos) * weight.floatValue();
+								CreatureEntity nextFollower = followerLeader.getFormation().follower;
+								if (!(nextFollower instanceof FormationLeaderEntity)) {
+									return new Tuple<>(score, angle1);
+								}
+								FormationLeaderEntity nextLeader = (FormationLeaderEntity) nextFollower;
+								
+								// Adjusting the follow position to be relative to followPos
+								Vector3d adjustedPos =
+										nextLeader.getFollowPosition()
+										.subtract(nextLeader.position())
+										.add(followPos);
+								
+								float score1 = score + nextLeader.scoreOrientationAngle(angle1, adjustedPos) * weight.floatValue();
+								return new Tuple<>(score1, angle1);
+							})
+							.sorted((a, b) -> -Float.compare(a.getA(), b.getA()))
+							.map(Tuple::getB)
+							.findFirst()
+							.get();
+				}
+				
+				followerLeader.yRot = this.cachedAngle;
+				followerLeader.yHeadRot = this.cachedAngle;
+			}
+		} else {
+			this.cachedAngle = null;
+			Brain<?> followerBrain = this.follower.getBrain();
+			if (followerBrain.hasMemoryValue(MemoryModuleType.MEETING_POINT) && !followerBrain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
+				followerBrain.eraseMemory(MemoryModuleType.MEETING_POINT);
+			} else {
+				Vector3d possiblePos = this.tryFindingNewPosition(this.follower, followPos);
+				if (possiblePos != null && !closeEnough) {
+					followerBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
+					followerBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
+				}
+			}	
+		}
+	}
+	
+	public abstract Vector3d getFollowPosition(FormationLeaderEntity leader);
+	
+	public abstract float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos);
 	
 	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
 		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, this);
@@ -137,8 +211,12 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 				&& !unit.getBrain().hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
 	}
 	
-	private static final String TAG_STATE = "state";
-	private static final String TAG_FOLLOWER = "follower";
+	public static boolean isStopped(Entity e) {
+		return e.getDeltaMovement().lengthSqr() < 0.0064d; // 0.08 ^ 2
+	}
+	
+	protected static final String TAG_STATE = "state";
+	protected static final String TAG_FOLLOWER = "follower";
 	
 	@Override
 	public CompoundNBT serializeNBT() {

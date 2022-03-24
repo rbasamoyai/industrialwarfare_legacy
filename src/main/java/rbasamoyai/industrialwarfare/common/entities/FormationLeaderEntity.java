@@ -24,6 +24,7 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
@@ -57,7 +58,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private PlayerIDTag owner;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
-		this(type, level, UnitFormationTypeInit.LINE.get().getFormation());
+		this(type, level, UnitFormationTypeInit.LINE.get().getFormation(-1));
 	}
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
@@ -150,7 +151,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		super.readAdditionalSaveData(nbt);
 		CompoundNBT formationData = nbt.getCompound(TAG_FORMATION);
 		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
-		this.formation = type.getFormation();
+		this.formation = type.getFormation(-1);
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
 	}
 	
@@ -174,8 +175,12 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		this.formation.setState(state);	
 	}
 	
-	public float scoreOrientationAngle(float angle) {
-		return this.formation.scoreOrientationAngle(angle, this.level, this);
+	public float scoreOrientationAngle(float angle, Vector3d pos) {
+		return this.formation.scoreOrientationAngle(angle, this.level, this, pos);
+	}
+	
+	public Vector3d getFollowPosition() {
+		return this.formation.getFollowPosition(this);
 	}
 	
 	@Override
@@ -200,6 +205,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	@Override protected void pushEntities() {}
 	@Override public boolean isPushable() { return false; }
+	@Override protected boolean isMovementNoisy() { return false; }
 	@Override protected SoundEvent getDeathSound() { return null; }
 	@Override protected SoundEvent getFallDamageSound(int dist) { return null; }
 	@Override protected SoundEvent getSwimSound() { return null; }

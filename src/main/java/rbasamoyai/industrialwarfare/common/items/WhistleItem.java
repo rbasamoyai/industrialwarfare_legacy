@@ -68,6 +68,7 @@ import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitClusterFinder;
+import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -91,7 +92,6 @@ public class WhistleItem extends Item implements
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
 	private static final ITextComponent CANNOT_SELECT_FULL = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "cannot_select_full", MAX_SELECTABLE_UNITS).withStyle(TextFormatting.RED);
 	private static final ITextComponent STOPPED_UNITS = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "stopped_units");
-	private static final String COMBAT_MODE_KEY = TRANSLATION_TEXT_KEY + "combat_mode.";
 	
 	private static final AttributeModifier REACH_MODIFIER = new AttributeModifier(UUID.fromString("c31ab93e-802d-435c-b386-84610ebcfd74"), "Reach modifier", 16, AttributeModifier.Operation.ADDITION);
 	
@@ -227,7 +227,7 @@ public class WhistleItem extends Item implements
 				
 				if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) {
 					FormationLeaderEntity restore = leader;
-					leader = this.getNewFormation(stack, 0).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
+					leader = this.getNewFormation(stack, formationRank).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
 					if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) { // Should not happen under any circumstances
 						leader.kill();
 						leader = restore;
@@ -252,7 +252,13 @@ public class WhistleItem extends Item implements
 	}
 	
 	private UnitFormation getNewFormation(ItemStack stack, int rank) {
-		return UnitFormationTypeInit.THREE_LINES.get().getFormation();
+		CompoundNBT nbt = stack.getOrCreateTag();	
+		if (!nbt.contains(TAG_FORMATION_TYPE, Constants.NBT.TAG_STRING)) {
+			nbt.putString(TAG_FORMATION_TYPE, UnitFormationTypeInit.LINE_10W3D.get().getRegistryName().toString());
+		}
+		ResourceLocation typeLoc = new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE));
+		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(typeLoc);
+		return type.getFormation(rank);
 	}
 	
 	@Override
@@ -463,7 +469,6 @@ public class WhistleItem extends Item implements
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
 		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
-		nbt.putInt(TAG_CURRENT_MODE, mode.getId());
 		
 		PlayerIDTag ownerTag = PlayerIDTag.of(player);
 		
@@ -502,7 +507,6 @@ public class WhistleItem extends Item implements
 		}
 		
 		player.getCooldowns().addCooldown(this, 10);
-		player.displayClientMessage(new TranslationTextComponent(COMBAT_MODE_KEY + mode.toString()), true);
 	}
 	
 	//private void formUpEntities

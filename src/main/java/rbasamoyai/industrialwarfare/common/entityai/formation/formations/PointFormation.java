@@ -70,7 +70,6 @@ public abstract class PointFormation extends UnitFormation {
 	
 	@Override
 	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
-		if (!UnitFormation.checkMemoriesForMovement(entity)) return false;
 		int rank = entity.getFormationRank();
 		
 		for (Point p : this.positions.keySet()) {
@@ -181,7 +180,7 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader) {
+	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
 		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
 		
@@ -191,11 +190,12 @@ public abstract class PointFormation extends UnitFormation {
 				.map(e -> {
 					CreatureEntity unit = e.getValue().getEntity();
 					if (unit instanceof FormationLeaderEntity) {
-						return ((FormationLeaderEntity) unit).scoreOrientationAngle(angle);
+						return ((FormationLeaderEntity) unit).scoreOrientationAngle(angle, pos);
 					}
 					Point p = e.getKey();
-					BlockPos pos = (new BlockPos(leader.position().add(forward.scale(p.z)).add(right.scale(p.x)))).below();
-					return level.loadedAndEntityCanStandOn(pos, unit) ? 1.0f : 0.0f;
+					Vector3d unitPos = pos.add(forward.scale(p.z)).add(right.scale(p.x));
+					BlockPos blockPos = (new BlockPos(unitPos)).below();
+					return level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos)) ? 1.0f : 0.0f;
 				})
 				.reduce(Float::sum)
 				.orElse(0.0f);

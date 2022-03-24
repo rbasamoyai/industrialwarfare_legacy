@@ -16,12 +16,12 @@ public class UnitFormationType<F extends UnitFormation> extends ForgeRegistryEnt
 		this.formationRank = formationRank;
 	}
 	
-	public F getFormation() { return this.factory.create(this); }
+	public F getFormation(int formationRank) { return this.factory.create(this, formationRank); }
 	
 	public int getFormationRank() { return this.formationRank; }
 	
 	public static interface IFactory<T extends UnitFormation> {
-		T create(UnitFormationType<T> type);
+		T create(UnitFormationType<T> type, int formationRank);
 	}
 	
 }

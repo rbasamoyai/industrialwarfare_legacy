@@ -30,7 +30,7 @@ public class DeferredFollowPointFormation extends PointFormation {
 	private UnitFormation deferredFormation;
 	private FormationLeaderEntity deferredLeader;
 	
-	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type) {
+	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type, int formationRank) {
 		this(type, new HashMap<>(), new ArrayList<>(), new Point(0, 0), null);
 	}
 	
@@ -79,7 +79,7 @@ public class DeferredFollowPointFormation extends PointFormation {
 		super.tick(leader);
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
 		
-		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064; // 0.08^2
+		boolean stopped = UnitFormation.isStopped(leader);
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
@@ -111,8 +111,24 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader) {
-		return super.scoreOrientationAngle(angle, level, leader) + (this.deferredLeader == null ? 0.0f : this.deferredLeader.scoreOrientationAngle(angle));
+	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
+		return leader.position();
+	}
+	
+	@Override
+	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
+		float score = super.scoreOrientationAngle(angle, level, leader, pos);
+		if (this.deferredLeader == null) return score;
+		
+		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
+		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
+		
+		Vector3d adjustedPos =
+				pos
+				.add(forward.scale(this.deferredPoint.z))
+				.add(right.scale(this.deferredPoint.x))
+				.add(0.0d, this.deferredLeader.getY() - leader.getY(), 0.0d);
+		return score + this.deferredLeader.scoreOrientationAngle(angle, adjustedPos);
 	}
 	
 	private static final String TAG_DEFERRED_LEADER = "deferredLeader";

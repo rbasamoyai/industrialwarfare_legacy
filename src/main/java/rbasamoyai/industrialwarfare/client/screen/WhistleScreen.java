@@ -6,6 +6,7 @@ import java.util.Map;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.widget.button.Button;
@@ -19,10 +20,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.HoldSelectImageButton;
 import rbasamoyai.industrialwarfare.common.containers.whistle.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
+import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages.SStopAction;
@@ -30,6 +34,9 @@ import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages.
 public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 
 	private static final ResourceLocation WHISTLE_TAB_LOCATION = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/whistle_grid.png");
+	
+	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
+	private static final String COMBAT_MODE_KEY = TRANSLATION_TEXT_KEY + "combat_mode.";
 	
 	private static final int RIGHT_HAND_TAB_TEX_Y = 0;
 	private static final int LEFT_HAND_TAB_TEX_Y = 104;
@@ -47,6 +54,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	private ItemStack whistleItem = new ItemStack(ItemInit.WHISTLE.get());
 	
 	private Map<CombatMode, HoldSelectImageButton> modeMap = new HashMap<>();
+	private Map<UnitFormationType<?>, HoldSelectImageButton> typeMap = new HashMap<>();
 	
 	public WhistleScreen(WhistleContainer container, PlayerInventory playerInv, ITextComponent title) {
 		super(container, playerInv, title);
@@ -70,6 +78,8 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 		} else {
 			this.leftPos += 100;
 		}
+		
+		/* Mode buttons */
 		
 		this.modeMap.put(CombatMode.ATTACK, new HoldSelectImageButton(
 				this.leftPos + GRID_START_X,
@@ -129,6 +139,38 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 		
 		this.modeMap.values().forEach(this::addButton);
 		
+		/* Formation buttons */
+		
+		this.typeMap.put(UnitFormationTypeInit.LINE_10W3D.get(), new HoldSelectImageButton(
+				this.leftPos + GRID_START_X,
+				this.topPos + GRID_START_Y + BUTTON_Y_DIST,
+				BUTTON_WIDTH,
+				BUTTON_HEIGHT,
+				BUTTON_TEX_X_START,
+				BUTTON_TEX_Y_START + BUTTON_HEIGHT * 3,
+				WHISTLE_TAB_LOCATION,
+				256,
+				256,
+				button -> this.setSelectedType(UnitFormationTypeInit.LINE_10W3D.get()),
+				Button.NO_TOOLTIP,
+				StringTextComponent.EMPTY));
+		
+		this.typeMap.put(UnitFormationTypeInit.COLUMN_4W10D.get(), new HoldSelectImageButton(
+				this.leftPos + GRID_START_X + BUTTON_X_DIST,
+				this.topPos + GRID_START_Y + BUTTON_Y_DIST,
+				BUTTON_WIDTH,
+				BUTTON_HEIGHT,
+				BUTTON_TEX_X_START + BUTTON_WIDTH,
+				BUTTON_TEX_Y_START + BUTTON_HEIGHT * 3,
+				WHISTLE_TAB_LOCATION,
+				256,
+				256,
+				button -> this.setSelectedType(UnitFormationTypeInit.COLUMN_4W10D.get()),
+				Button.NO_TOOLTIP,
+				StringTextComponent.EMPTY));
+		
+		this.typeMap.values().forEach(this::addButton);
+		
 		this.addButton(new ImageButton(
 				this.leftPos + GRID_START_X + BUTTON_X_DIST * 4,
 				this.topPos + GRID_START_Y,
@@ -143,10 +185,14 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				this::stopWhistle,
 				Button.NO_TOOLTIP,
 				StringTextComponent.EMPTY) {
-			@Override public void playDownSound(SoundHandler handler) {};
+			@Override
+			public void playDownSound(SoundHandler handler) {
+				handler.play(SimpleSound.forUI(SoundEvents.ANVIL_PLACE, 1.0f));
+			}
 		});
 		
-		this.setSelectedMode(this.menu.getMode());		
+		this.setSelectedMode(this.menu.getMode());
+		this.setSelectedType(this.menu.getFormation());
 	}
 	
 	@Override
@@ -186,13 +232,20 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	
 	private void setSelectedMode(CombatMode mode) {
 		this.modeMap.forEach((k, v) -> v.setSelected(k == mode));
-		if (this.menu.getMode() == mode) return;		
+		if (this.menu.getMode() == mode) return;
+		this.minecraft.player.displayClientMessage(new TranslationTextComponent(COMBAT_MODE_KEY + mode.toString()), true);
 		this.menu.setMode(mode);
 		this.menu.updateServer();
 	}
 	
+	private void setSelectedType(UnitFormationType<?> type) {
+		this.typeMap.forEach((k, v) -> v.setSelected(k == type));
+		if (this.menu.getFormation() == type) return;
+		this.menu.setFormation(type);
+		this.menu.updateServer();
+	}
+	
 	private void stopWhistle(Button button) {
-		this.minecraft.player.playSound(SoundEvents.ANVIL_PLACE, 1.0f, 1.0f);
 		IWNetwork.CHANNEL.sendToServer(new SStopAction());
 	}
 	

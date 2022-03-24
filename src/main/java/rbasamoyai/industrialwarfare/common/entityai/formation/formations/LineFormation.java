@@ -1,6 +1,5 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -15,7 +14,6 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -39,12 +37,10 @@ public class LineFormation extends UnitFormation {
 	private int depth;
 	private int followSpacing;
 	
-	private Float cachedAngle;
-	
 	private FormationEntityWrapper<?>[][] lines;
 	
-	public LineFormation(UnitFormationType<? extends LineFormation> type) {
-		this(type, -1, 0, 0, 0);
+	public LineFormation(UnitFormationType<? extends LineFormation> type, int formationRank) {
+		this(type, formationRank, 0, 0, 0);
 	}
 	
 	public LineFormation(UnitFormationType<? extends LineFormation> type, int formationRank, int width, int depth) {
@@ -175,64 +171,21 @@ public class LineFormation extends UnitFormation {
 		if (finishedForming) {
 			this.formationState = State.FORMED;
 		}
-		
-		if (this.follower != null && this.follower.isAlive()) {
-			if (UnitFormation.checkMemoriesForMovement(this.follower)) {
-				Vector3d followPos =
-						leader.position()
-						.subtract(leaderForward.scale(this.depth + this.followSpacing))
-						.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
-				
-				boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
-				
-				if (stopped && closeEnough) {
-					if (this.follower instanceof FormationLeaderEntity) {
-						FormationLeaderEntity followerLeader = (FormationLeaderEntity) this.follower;
-						
-						// No derivation from the leader angle (i.e. straight angle, 0) is preferred, hence the largest weighting
-						IntStream angles = Arrays.stream(new int[] {-45, -30, -15, 0, 15, 30, 45});
-						IntStream weights = Arrays.stream(new int[] {6, 7, 8, 9, 8, 7, 6});
-						
-						if (this.cachedAngle == null) {
-							this.cachedAngle =
-									Streams.zip(angles.boxed(), weights.boxed(), (angle, weight) -> {
-										float angle1 = leader.yRot + angle.floatValue();
-										float score = followerLeader.scoreOrientationAngle(angle1) * weight.floatValue();
-										return new Tuple<>(score, angle1);
-									})
-									.sorted((a, b) -> -Float.compare(a.getA(), b.getA()))
-									.map(Tuple::getB)
-									.findFirst()
-									.get();
-						}
-						
-						followerLeader.yRot = this.cachedAngle;
-						followerLeader.yHeadRot = this.cachedAngle;
-					}
-				} else {
-					this.cachedAngle = null;
-					Brain<?> followerBrain = this.follower.getBrain();
-					if (followerBrain.hasMemoryValue(MemoryModuleType.MEETING_POINT) && !followerBrain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
-						followerBrain.eraseMemory(MemoryModuleType.MEETING_POINT);
-					} else {
-						Vector3d possiblePos = this.tryFindingNewPosition(this.follower, followPos);
-						if (possiblePos != null && !closeEnough) {
-							followerBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-							followerBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
-						}
-					}	
-				}
-			} else {
-				this.setFollower(null);
-			}
-		}
 	}
 	
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader) {
+	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		return leader.position()
+				.subtract(leaderForward.scale(this.depth + this.followSpacing))
+				.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
+	}
+	
+	@Override
+	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
 		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
-		Vector3d startPoint = leader.position().subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
+		Vector3d startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
 		
 		IntStream ranks = IntStream.range(0, this.depth);
 		IntStream files = IntStream.range(0, this.width);
@@ -240,8 +193,9 @@ public class LineFormation extends UnitFormation {
 		return Streams.zip(ranks.boxed(), files.boxed(), (a, b) -> {
 			if (UnitFormation.isSlotEmpty(this.lines[a][b])) return 0;
 			CreatureEntity unit = this.lines[a][b].getEntity();
-			BlockPos pos = (new BlockPos(startPoint.subtract(forward.scale(a)).subtract(right.scale(b)))).below();
-			return level.loadedAndEntityCanStandOn(pos, unit) ? 1 : 0;
+			Vector3d unitPos = startPoint.subtract(forward.scale(a)).subtract(right.scale(b));
+			BlockPos blockPos = (new BlockPos(unitPos)).below();
+			return level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos)) ? 1 : 0;
 		}).reduce(Integer::sum).get();
 	}
 	
