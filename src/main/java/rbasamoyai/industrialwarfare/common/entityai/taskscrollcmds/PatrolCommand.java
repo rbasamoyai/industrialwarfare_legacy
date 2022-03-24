@@ -15,7 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
@@ -105,7 +105,7 @@ public class PatrolCommand extends TaskScrollCommand {
 		
 		if (!brain.getMemory(MemoryModuleTypeInit.STOP_EXECUTION.get()).orElse(true)) { // Interrupt
 			brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(world.dimension(), npc.blockPosition()));
-			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.FIGHTING);
+			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
 			brain.setActiveActivityIfPossible(Activity.FIGHT);
 			return;
 		}

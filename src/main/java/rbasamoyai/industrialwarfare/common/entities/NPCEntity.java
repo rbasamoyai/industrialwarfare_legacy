@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -8,12 +9,15 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
 import net.minecraft.entity.CreatureEntity;
+import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.brain.Brain;
@@ -55,17 +59,15 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask;
-import rbasamoyai.industrialwarfare.common.entityai.tasks.ExtendedShootTargetTask.Status;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType;
 import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -87,6 +89,14 @@ public class NPCEntity extends CreatureEntity implements
 		IItemPredicateSearch,
 		IMovesInFormation {
 	
+	/** Taken from {@link net.minecraft.entity.player.PlayerEntity#POSES}. */
+	private static final Map<Pose, EntitySize> POSES = ImmutableMap.<Pose, EntitySize>builder()
+			.put(Pose.FALL_FLYING, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.SWIMMING, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.SPIN_ATTACK, EntitySize.scalable(0.6F, 0.6F))
+			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F))
+			.put(Pose.DYING, EntitySize.fixed(0.2F, 0.2F)).build();
+	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,
 			MemoryModuleType.ATTACK_COOLING_DOWN,
@@ -106,16 +116,21 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
+			MemoryModuleTypeInit.CAN_ATTACK.get(),
 			MemoryModuleTypeInit.COMBAT_MODE.get(),
 			MemoryModuleTypeInit.COMPLAINT.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
+			MemoryModuleTypeInit.DEFENDING_SELF.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
+			MemoryModuleTypeInit.FINISHED_ATTACKING.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
+			MemoryModuleTypeInit.IN_FORMATION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
+			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
 	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(
@@ -134,6 +149,8 @@ public class NPCEntity extends CreatureEntity implements
 
 	private float effectiveness;
 	private float timeModifier;
+	
+	protected int rangedAttackDelay;
 	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
 		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
@@ -221,9 +238,9 @@ public class NPCEntity extends CreatureEntity implements
 		brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
 		brain.setDefaultActivity(Activity.IDLE);
 		
-		NPCActivityStatus status;
+		ActivityStatus status;
 		if (!brain.hasMemoryValue(MemoryModuleTypeInit.ACTIVITY_STATUS.get())) {
-			status = NPCActivityStatus.NO_ACTIVITY;
+			status = ActivityStatus.NO_ACTIVITY;
 			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), status);
 		} else {
 			status = brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get();
@@ -272,18 +289,27 @@ public class NPCEntity extends CreatureEntity implements
 		}
 	}
 	
+	@Override
+	public EntitySize getDimensions(Pose pose) {
+		return POSES.containsKey(pose) ? POSES.get(pose) : super.getDimensions(pose);
+	}
+	
 	/*
 	 * FORMATION METHODS
 	 */
 	
 	@Override
 	public int getFormationRank() {
-		return 0;
+		NPCCombatSkill skill = this.getDataHandler().map(INPCDataHandler::getCombatSkill).orElse(NPCCombatSkillInit.UNTRAINED.get());
+		if (skill == NPCCombatSkillInit.UNTRAINED.get()) return 0;
+		
+		boolean isRanged = this.canUseRangedWeapon(this.getMainHandItem());
+		return isRanged ? 0 : 0;
 	}
 	
 	@Override
-	public boolean isSpecialUnit() {
-		return false;
+	public boolean isLowLevelUnit() {
+		return true;
 	}
 	
 	/*
@@ -425,10 +451,11 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextEffectiveness();
 		this.getNextTimeModifier();
 		
-		if (weaponItem instanceof BowItem || weaponItem instanceof CrossbowItem || weaponItem instanceof FirearmItem) {
+		if (weaponItem instanceof BowItem || weaponItem instanceof CrossbowItem) {
 			this.startUsingItem(Hand.MAIN_HAND);
+		} else if (weaponItem instanceof FirearmItem) {
+			FirearmItem.tryReloadFirearm(weapon, this);
 		}
-		
 	}
 	
 	@Override
@@ -450,15 +477,52 @@ public class NPCEntity extends CreatureEntity implements
 		}
 		
 		if (weaponItem instanceof FirearmItem) {
-			return FirearmItem.getDataHandler(weapon).map(h -> h.getAction() == FirearmItem.ActionType.RELOADING && !h.isFinishedAction()).orElse(false);
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				FirearmItem.ActionType action = h.getAction();
+				
+				boolean reloading = action == FirearmItem.ActionType.RELOADING || action == FirearmItem.ActionType.START_RELOADING;
+				if (!h.hasAmmo() && !reloading) {
+					FirearmItem.tryReloadFirearm(weapon, this);
+					return true;
+				}
+				
+				return (reloading || action == FirearmItem.ActionType.CYCLING) && !h.isFinishedAction();
+			}).orElse(false);
 		}
 		
 		return false;
 	}
 	
 	@Override
-	public int getRangedAttackDelay() {
-		return MathHelper.ceil(60.0f * this.timeModifier);
+	public boolean whileWaitingToAttack() {
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		Brain<?> brain = this.getBrain();
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
+			return true;
+		}
+		
+		if (weaponItem instanceof FirearmItem) {
+			// TODO: aiming skill qualifier
+			if (this.canAim()) {
+				if (!FirearmItem.isAiming(weapon)) {
+					((FirearmItem) weaponItem).startAiming(weapon, this);
+				}
+			}
+			if (!FirearmItem.isFinishedAction(weapon)) {
+				this.rangedAttackDelay = MathHelper.ceil(30.0f * this.timeModifier);
+			}
+		} else if (this.rangedAttackDelay <= 0) {
+			this.rangedAttackDelay = MathHelper.ceil(60.0f * this.timeModifier);
+		}
+		
+		--this.rangedAttackDelay;
+		return this.rangedAttackDelay > 0;
+	}
+	
+	private boolean canAim() {
+		return true;
 	}
 	
 	@Override
@@ -480,6 +544,10 @@ public class NPCEntity extends CreatureEntity implements
 			CrossbowItem.setCharged(weapon, false);
 		} else if (weaponItem instanceof FirearmItem) {
 			this.shootUsingFirearm(target);
+			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
+				this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+			}
 		}
 		
 	}
@@ -492,7 +560,7 @@ public class NPCEntity extends CreatureEntity implements
 	 */
 	private void shootUsingBow(LivingEntity target) {
 		ItemStack bow = this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem));
-		ItemStack projectile = this.getProjectile(bow);
+		ItemStack projectile = this.getProjectile(bow).split(1);
 		AbstractArrowEntity arrow = ProjectileHelper.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
 		Item mainhandItem = this.getMainHandItem().getItem();
 		if (mainhandItem instanceof BowItem) {
@@ -528,18 +596,56 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public ExtendedShootTargetTask.Status getNextStatus() {
+	public IWeaponRangedAttackMob.ShootingStatus getNextStatus() {
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		boolean hasAttackTarget = this.brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET);
+		
+		if (weaponItem instanceof BowItem && !hasAttackTarget) return ShootingStatus.READY_TO_FIRE;
+		
+		if (weaponItem instanceof CrossbowItem) {
+			return CrossbowItem.isCharged(weapon) && CrossbowItem.containsChargedProjectile(weapon, weaponItem) ? ShootingStatus.READY_TO_FIRE : ShootingStatus.UNLOADED;
+		}
+		
+		if (weaponItem instanceof FirearmItem) {
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				ActionType action = h.getAction();
+				switch (action) {
+				case START_RELOADING: return ShootingStatus.RELOADING;
+				case RELOADING: return ShootingStatus.RELOADING;
+				case CYCLING: return ShootingStatus.CYCLING;
+				case NOTHING:
+					if (!h.isFinishedAction() && h.isFired()) return ShootingStatus.FIRED;
+					if (h.hasAmmo()) {
+						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
+					}
+					return ShootingStatus.RELOADING;
+				default: return ShootingStatus.FIRED;
+				}
+			}).orElse(ShootingStatus.FIRED);
+		}
+			
+		return ShootingStatus.RELOADING;
+	}
+	
+	@Override
+	public boolean whileCoolingDown() {
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
-			if (FirearmItem.getDataHandler(weapon).map(IFirearmItemDataHandler::hasAmmo).orElse(false)) {
-				return ((FirearmItem) weaponItem).needsCycle(weapon) ? Status.CYCLING : Status.READY_TO_FIRE;
+			if (FirearmItem.isFinishedAction(weapon)) {
+				if (FirearmItem.isAiming(weapon)) {
+					((FirearmItem) weaponItem).stopAiming(weapon, this);
+				} else {
+					return false;
+				}
 			}
-			return Status.RELOADING;
+			return true;
 		}
-			
-		return Status.RELOADING;
+		
+		return false;
 	}
 	
 	@Override
@@ -561,7 +667,16 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
-			return FirearmItem.getDataHandler(weapon).map(h -> h.getAction() == FirearmItem.ActionType.CYCLING && !h.isFinishedAction()).orElse(false);
+			return FirearmItem.getDataHandler(weapon).map(h -> {
+				FirearmItem.ActionType action = h.getAction();
+				
+				if (!h.isCycled() && action != FirearmItem.ActionType.CYCLING) {
+					this.swing(Hand.MAIN_HAND);
+					return true;
+				}
+				
+				return action == FirearmItem.ActionType.CYCLING && !h.isFinishedAction();
+			}).orElse(false);
 		}
 		
 		return false;
@@ -582,6 +697,27 @@ public class NPCEntity extends CreatureEntity implements
 	public LivingEntity getTarget() {
 		Brain<?> brain = this.getBrain();
 		return brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) ? brain.getMemory(MemoryModuleType.ATTACK_TARGET).get() : null;
+	}
+	
+	@Override
+	public void stopRangedAttack() {
+		if (this.isUsingItem()) {
+			this.stopUsingItem();
+		}
+		
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		if (weaponItem instanceof FirearmItem) {
+			((FirearmItem) weaponItem).stopAiming(weapon, this);
+		}
+		
+		IWeaponRangedAttackMob.ShootingStatus status = this.getNextStatus();
+		switch (status) {
+		case CYCLING: this.startCycling(); break;
+		case RELOADING: this.startReloading(); break;
+		default: break;
+		}
 	}
 	
 	@Override

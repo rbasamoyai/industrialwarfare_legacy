@@ -69,7 +69,7 @@ import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
 import rbasamoyai.industrialwarfare.common.items.IFovModifier;
 import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
-import rbasamoyai.industrialwarfare.common.items.IItemWithAttachments;
+import rbasamoyai.industrialwarfare.common.items.IItemWithScreen;
 import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
@@ -94,7 +94,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		IFovModifier,
 		IFirstPersonTransform,
 		IHideCrosshair,
-		IItemWithAttachments,
+		IItemWithScreen,
 		IAnimatable,
 		ISyncable,
 		ISpecialThirdPersonRender {
@@ -231,7 +231,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		ItemStack stack = player.getItemInHand(hand);
 		if (hand != Hand.MAIN_HAND) return ActionResult.pass(stack);
 		if (getDataHandler(stack).map(h -> {
-			return !h.isFinishedAction() && h.getAction() != ActionType.NOTHING || h.isMeleeing();
+			return !h.isFinishedAction() || h.isMeleeing();
 		}).orElse(false)) {
 			return ActionResult.fail(stack);
 		}
@@ -261,9 +261,9 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
 	
-	protected abstract void startAiming(ItemStack firearm, LivingEntity shooter);
+	public abstract void startAiming(ItemStack firearm, LivingEntity shooter);
 	
-	protected abstract void stopAiming(ItemStack firearm, LivingEntity shooter);
+	public abstract void stopAiming(ItemStack firearm, LivingEntity shooter);
 	
 	@Override
 	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
@@ -272,12 +272,18 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		if (world.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
-			
+		
 		getDataHandler(stack).ifPresent(h -> {
+			if (!h.isSelected() && selected) {
+				this.onSelect(stack, shooter);
+			}
+			h.setSelected(selected);
+			
 			if (!selected) {
 				// No time modified as an IQualityModifier entity could return a different time modifier each call
 				h.setAction(ActionType.NOTHING, this.drawTime);
 				h.setAiming(false);
+				h.setMelee(false);
 				return;
 			}
 			
@@ -311,12 +317,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {}
 	
+	protected void onSelect(ItemStack firearm, LivingEntity shooter) {}
+	
 	public static void tryReloadFirearm(ItemStack firearm, LivingEntity shooter) {
 		if (shooter.level.isClientSide) return;
 		Item item = firearm.getItem();
 		if (!(item instanceof FirearmItem)) return;
 		FirearmItem firearmItem = (FirearmItem) item;
-		
 		
 		ItemStack ammo = shooter.getProjectile(firearm);
 		if (ammo.isEmpty() || !firearmItem.getAllSupportedProjectiles().test(ammo)) return;
@@ -427,7 +434,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
 		Vector3d entityPos = entity.position();
 		float volume = mc.player == entity ? 16.0f : 1.0f;
-		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, false);
+		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, true);
 	}
 
 	@Override
@@ -460,8 +467,9 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (entity.isBaby()) animPos *= 3.0f;
 		
 		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
+		float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);		
 		
-		stack.mulPose(Vector3f.YP.rotationDegrees(entityYaw));
+		stack.mulPose(Vector3f.YN.rotationDegrees(headYaw));
 		
 		if (model instanceof BipedModel) {
 			BipedModel<?> bmodel = (BipedModel<?>) model;
@@ -483,11 +491,11 @@ public abstract class FirearmItem extends ShootableItem implements
 			bmodel.rightLeg.yRot = 0.0f;
 			bmodel.rightLeg.zRot = 0.0f;
 			
-			if (bmodel.crouching && isStill) {
-				bmodel.leftLeg.z -= 8.0f;
+			if (entity.isCrouching() && isStill) {
+				bmodel.leftLeg.z = -4.0f;
 				bmodel.leftLeg.xRot = 0.0f;
 				
-				bmodel.rightLeg.z -= 4.0f;
+				bmodel.rightLeg.z = 0.0f;
 				bmodel.rightLeg.xRot = 0.5f;
 			}
 			
@@ -509,7 +517,7 @@ public abstract class FirearmItem extends ShootableItem implements
 					stack.mulPose(Vector3f.YP.rotation((float)(Math.signum(cross) * Math.acos(dist))));
 				}
 				
-			} else if (bmodel.swimAmount > 0.0f) {
+			} else if (entity.getSwimAmount(partialTicks) > 0.0f) {
 				bmodel.leftLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.leftLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F + (float)Math.PI));
 				bmodel.rightLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.rightLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F));
 				float swimRot = entity.isInWater() ? -90.0f - entity.xRot : -90.0f;
@@ -525,9 +533,6 @@ public abstract class FirearmItem extends ShootableItem implements
 			stack.scale(0.9375f, 0.9375f, 0.9375f);
 			
 			stack.pushPose();
-			
-			float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-			stack.mulPose(Vector3f.YN.rotationDegrees(entityYaw + headYaw));
 			
 			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
 			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
@@ -560,7 +565,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.popPose();
 			
-			if (bmodel.crouching) {
+			if (entity.isCrouching()) {
 				stack.translate(0.0f, -0.25f, 0.0f);
 			}
 			
@@ -568,6 +573,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			bmodel.setAllVisible(false);
 		}
+		
+		stack.mulPose(Vector3f.YP.rotationDegrees(headYaw + entityYaw));
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -603,12 +610,10 @@ public abstract class FirearmItem extends ShootableItem implements
 				ResourceLocation armorLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, null);
 				IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, leggings.hasFoil());
 				
-				armor.innerModel.body.copyFrom(bmodel.body);
 				armor.innerModel.leftLeg.copyFrom(bmodel.leftLeg);
 				armor.innerModel.rightLeg.copyFrom(bmodel.rightLeg);
 				
 				List<ModelRenderer> parts = new ArrayList<>();
-				parts.add(armor.innerModel.body);
 				parts.add(armor.innerModel.leftLeg);
 				parts.add(armor.innerModel.rightLeg);
 				
@@ -711,6 +716,14 @@ public abstract class FirearmItem extends ShootableItem implements
 	private <E extends IAnimatable> PlayState upperBodyPredicate(AnimationEvent<E> event) {
 		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getAnimatable();
 		AnimationController<?> controller = event.getController();
+		
+		if (controller.getCurrentAnimation() == null) {
+			LivingEntity entity = RenderEvents.ENTITY_CACHE.get(animEntity.getUUID());
+			if (entity != null) {
+				controller.markNeedsReload();
+				controller.setAnimation(this.getDefaultAnimation(entity.getMainHandItem(), entity, controller));
+			}
+		}
 		
 		AnimationBuilder builder = animEntity.popAndGetAnim(controller.getName());
 		if (builder != null) {
@@ -859,6 +872,32 @@ public abstract class FirearmItem extends ShootableItem implements
 						
 						ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, slot, "overlay");
 						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
+						
+						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
+					} else {
+						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
+					}
+				}
+			}
+			
+			if (isBody) {
+				armorPart = armor.innerModel.body;
+				ItemStack legs = entity.getItemBySlot(EquipmentSlotType.LEGS);
+				Item legsItem = legs.getItem();
+				if (legsItem instanceof ArmorItem) {
+					ResourceLocation armorLoc = armor.getArmorResource(entity, legs, EquipmentSlotType.LEGS, null);
+					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, legs.hasFoil());
+					
+					if (legsItem instanceof IDyeableArmorItem) {
+						int color = ((IDyeableArmorItem) legsItem.getItem()).getColor(legs);
+						float r = (float)(color >> 16 & 255) / 255.0F;
+						float g = (float)(color >> 8 & 255) / 255.0F;
+						float b = (float)(color & 255) / 255.0F;
+						
+						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
+						
+						ResourceLocation overlayLoc = armor.getArmorResource(entity, legs, slot, "overlay");
+						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, legs.hasFoil());
 						
 						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
 					} else {

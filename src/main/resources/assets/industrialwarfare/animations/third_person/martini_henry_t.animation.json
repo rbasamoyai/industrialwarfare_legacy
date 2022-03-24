@@ -336,11 +336,6 @@
 					}
 				}
 			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "industrialwarfare:item.heavy_rifle.fired"
-				}
-			},
 			"timeline": {
 				"0.0": "set_hidden cartridge true"
 			}
@@ -506,11 +501,6 @@
 							"easing": "easeInOutSine"
 						}
 					}
-				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "industrialwarfare:item.heavy_rifle.fired"
 				}
 			},
 			"timeline": {
@@ -1167,6 +1157,111 @@
 						}
 					}
 				}
+			}
+		},
+		"select_firearm": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 1,
+			"bones": {
+				"firearm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-90, 0, 0]
+						},
+						"0.5": {
+							"vector": [-90, 0, 0]
+						},
+						"1.0": {
+							"vector": [0, -5, 0],
+							"easing": "easeOutQuad"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [-6, 7, -7]
+						},
+						"0.5": {
+							"vector": [-6, 7, -7]
+						},
+						"1.0": {
+							"vector": [-5, -1, -7],
+							"easing": "easeOutQuad"
+						}
+					}
+				},
+				"arm_left": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.1667": {
+							"vector": [-90, 0, 0],
+							"easing": "easeInQuad"
+						},
+						"0.3333": {
+							"vector": [0, 0, 90],
+							"easing": "easeOutQuad"
+						},
+						"0.5": {
+							"vector": [0, 0, 90],
+							"easing": "easeInQuad"
+						},
+						"1.0": {
+							"vector": [-47.13881, 40.78947, 20.94102],
+							"easing": "easeOutQuad"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.1667": {
+							"vector": [0, 0, -4],
+							"easing": "easeInQuad"
+						},
+						"0.3333": {
+							"vector": [-2, 0, -4],
+							"easing": "easeOutQuad"
+						},
+						"0.5": {
+							"vector": [-2, 0, -4],
+							"easing": "easeInQuad"
+						},
+						"1.0": {
+							"vector": [-3, -2, -4],
+							"easing": "easeOutQuad"
+						}
+					}
+				},
+				"arm_right": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.5": {
+							"vector": [0, 0, 0]
+						},
+						"1.0": {
+							"vector": [-22.32648, -2.86313, -6.93488],
+							"easing": "easeOutQuad"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.5": {
+							"vector": [0, 0, 0]
+						},
+						"1.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeOutQuad"
+						}
+					}
+				}
+			},
+			"timeline": {
+				"0.0": "set_hidden cartridge true; lock_limbs true"
 			}
 		}
 	},

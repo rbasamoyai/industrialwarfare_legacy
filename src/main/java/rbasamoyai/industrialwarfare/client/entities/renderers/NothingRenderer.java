@@ -1,6 +1,5 @@
 package rbasamoyai.industrialwarfare.client.entities.renderers;
 
-import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.entity.Entity;
@@ -19,11 +18,6 @@ public class NothingRenderer<T extends Entity> extends EntityRenderer<T> {
 	@Override
 	public ResourceLocation getTextureLocation(T entity) {
 		return TEXTURE_LOCATION;
-	}
-	
-	@Override
-	public boolean shouldRender(T entity, ClippingHelper helper, double distX, double distY, double distZ) {
-		return true;
 	}
 	
 }

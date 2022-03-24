@@ -21,7 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem.IScheduleItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.entityai.NPCActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
@@ -75,7 +75,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		if (!handler.shouldWork(minute + 2)) return false;
 		
 		Brain<?> brain = npc.getBrain();
-		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != NPCActivityStatus.NO_ACTIVITY) {
+		if (brain.getMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get()).get() != ActivityStatus.NO_ACTIVITY) {
 			return false;
 		}
 		
@@ -179,7 +179,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 	protected void stop(ServerWorld world, NPCEntity npc, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		if (!CommandUtils.hasComplaint(npc) && brain.getMemory(MemoryModuleTypeInit.STOP_EXECUTION.get()).orElse(true)) {
-			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), NPCActivityStatus.WORKING);
+			brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.WORKING);
 			brain.setMemory(MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(), 0);
 			
 			brain.setActiveActivityIfPossible(Activity.WORK);

@@ -1,1 +1,16 @@
 Current TODO:
+- Work on formations
+    - Follower handling
+    	- Making formation chains as
+    	straight as possible
+    - Line formation improvement
+	- Merging smaller formations
+	if possible
+	- Add unit classes
+ 	
+- Rewrite attacking?
+	- Formation commands, the drill
+	- Rewrite finding attack targets
+	- Solve case of attack range
+	- "Target entity" for smarter firing
+	- Volley firing?

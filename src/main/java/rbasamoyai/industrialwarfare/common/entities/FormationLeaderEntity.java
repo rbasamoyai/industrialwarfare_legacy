@@ -24,26 +24,32 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
-import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.State;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistance;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
-public class FormationLeaderEntity extends CreatureEntity implements IProjectilePassThrough {
+public class FormationLeaderEntity extends CreatureEntity implements IMovesInFormation {
 
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
+			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
+			MemoryModuleTypeInit.COMBAT_MODE.get(),
+			MemoryModuleTypeInit.ENGAGING_COMPLETED.get(),
+			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get()
 			);
 	
@@ -52,7 +58,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	private PlayerIDTag owner;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
-		this(type, level, new LineFormation(level, -1, 0, 0));
+		this(type, level, UnitFormationTypeInit.LINE.get().getFormation(-1));
 	}
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
@@ -90,8 +96,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	private static ImmutableList<Pair<Integer, ? extends Task<? super FormationLeaderEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
-				Pair.of(0, new PreciseWalkToPositionTask(2.0f, 1.5d, 0.125d))
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d)),
+				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
+				Pair.of(2, new MoveToEngagementDistance(14))
 				);
 	}
 	
@@ -104,9 +111,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	@Override
 	protected void customServerAiStep() {
 		Brain<FormationLeaderEntity> brain = this.getBrain();
-		if (this.formation.getState() == State.FORMED) {
-			brain.tick((ServerWorld) this.level, this);
-		}
+		brain.tick((ServerWorld) this.level, this);
 		super.customServerAiStep();
 	}
 	
@@ -146,7 +151,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 		super.readAdditionalSaveData(nbt);
 		CompoundNBT formationData = nbt.getCompound(TAG_FORMATION);
 		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
-		this.formation = type.getFormation(this.level);
+		this.formation = type.getFormation(-1);
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
 	}
 	
@@ -154,18 +159,53 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	 * FORMATION METHODS
 	 */
 	
-	public boolean addEntity(CreatureEntity entity) {
+	public UnitFormation getFormation() {
+		return this.formation;
+	}
+	
+	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
 		return this.formation.addEntity(entity);
 	}
 	
-	public void setState(UnitFormation.State state) {
-		this.formation.setState(state);
+	public void setFollower(CreatureEntity entity) {
+		this.formation.setFollower(entity);
 	}
 	
-	/* "Decreaturefying" the formation leader */
+	public void setState(UnitFormation.State state) {
+		this.formation.setState(state);	
+	}
+	
+	public float scoreOrientationAngle(float angle, Vector3d pos) {
+		return this.formation.scoreOrientationAngle(angle, this.level, this, pos);
+	}
+	
+	public Vector3d getFollowPosition() {
+		return this.formation.getFollowPosition(this);
+	}
+	
+	@Override
+	public int getFormationRank() {
+		return this.formation == null ? -1 : this.formation.getLeaderRank();
+	}
+	
+	@Override
+	public boolean isLowLevelUnit() {
+		return false;
+	}
+	
+	@Override
+	public void kill() {
+		super.kill();
+		this.formation.killInnerFormationLeaders();
+	}
+	
+	/*
+	 * "Decreaturefying" the formation leader
+	 */
 	
 	@Override protected void pushEntities() {}
 	@Override public boolean isPushable() { return false; }
+	@Override protected boolean isMovementNoisy() { return false; }
 	@Override protected SoundEvent getDeathSound() { return null; }
 	@Override protected SoundEvent getFallDamageSound(int dist) { return null; }
 	@Override protected SoundEvent getSwimSound() { return null; }
@@ -175,5 +215,6 @@ public class FormationLeaderEntity extends CreatureEntity implements IProjectile
 	@Override public boolean canSpawnSprintParticle() { return false; }
 	@Override public boolean isInvulnerable() { return true; }
 	@Override protected void tickDeath() { this.remove(false); }
+	@Override public boolean isPickable() { return false; }
 	
 }

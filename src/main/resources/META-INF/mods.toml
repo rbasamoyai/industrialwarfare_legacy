@@ -5,7 +5,7 @@ license="MIT License"
 
 [[mods]]
 modId="industrialwarfare"
-version="0.3.1-alpha"
+version="0.3.2-alpha"
 displayName="Industrial Warfare"
 #updateJSONURL="https://change.me.example.invalid/updates.json"
 #displayURL="https://change.me.to.your.mods.homepage.example.invalid/"

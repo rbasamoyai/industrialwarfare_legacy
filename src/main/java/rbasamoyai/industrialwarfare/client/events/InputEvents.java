@@ -17,7 +17,7 @@ import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
-import rbasamoyai.industrialwarfare.core.network.messages.SOpenAttachmentsScreen;
+import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class InputEvents {
@@ -49,8 +49,8 @@ public class InputEvents {
 		
 		if (mc.screen != null) return;
 		
-		if (KeyBindingsInit.ATTACHMENTS_SCREEN.isDown()) {
-			IWNetwork.CHANNEL.sendToServer(new SOpenAttachmentsScreen());
+		if (KeyBindingsInit.ITEM_SCREEN.isDown()) {
+			IWNetwork.CHANNEL.sendToServer(new SOpenItemScreen());
 		}
 		
 		if (KeyBindingsInit.DIPLOMACY_SCREEN.isDown()) {

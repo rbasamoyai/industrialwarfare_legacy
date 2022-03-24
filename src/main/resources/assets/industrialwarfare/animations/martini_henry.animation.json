@@ -291,11 +291,6 @@
 					}
 				}
 			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "industrialwarfare:item.heavy_rifle.fired"
-				}
-			},
 			"timeline": {
 				"0.0": "set_hidden cartridge true"
 			}
@@ -379,7 +374,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": ["set_hidden cartridge true", ""]
+				"0.0": "set_hidden cartridge true"
 			}
 		},
 		"hip_firing": {
@@ -448,11 +443,6 @@
 							"easing": "easeInOutSine"
 						}
 					}
-				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "industrialwarfare:item.heavy_rifle.fired"
 				}
 			},
 			"timeline": {
@@ -1039,6 +1029,98 @@
 						},
 						"1.0": {
 							"vector": [-5, 0, 0]
+						}
+					}
+				}
+			},
+			"timeline": {
+				"0.0": "set_hidden cartridge true"
+			}
+		},
+		"select_firearm": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 1,
+			"bones": {
+				"firearm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-90, 0, 0]
+						},
+						"0.5": {
+							"vector": [-90, 0, 0]
+						},
+						"1.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeOutQuad"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [-5, 7, 4]
+						},
+						"0.5": {
+							"vector": [-5, 7, 4]
+						},
+						"1.0": {
+							"vector": [-5, 0, 0],
+							"easing": "easeOutQuad"
+						}
+					}
+				},
+				"arm_left": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, -180]
+						},
+						"0.3333": {
+							"vector": [-2.5, 0, -45],
+							"easing": "easeInQuad"
+						},
+						"0.5": {
+							"vector": [-2.5, 0, -45],
+							"easing": "easeInQuad"
+						},
+						"0.75": {
+							"vector": [41.75703, 23.99981, -22.50035]
+						},
+						"1.0": {
+							"vector": [63.17604, 31.99975, -15.00046],
+							"easing": "easeOutQuad"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [-2, -3, 3]
+						},
+						"0.3333": {
+							"vector": [-2, -3, -2],
+							"easing": "easeInQuad"
+						},
+						"0.5": {
+							"vector": [-2, -3, -2],
+							"easing": "easeInQuad"
+						},
+						"1.0": {
+							"vector": [-4, -3, 0.5],
+							"easing": "easeOutQuad"
+						}
+					}
+				},
+				"arm_right": {
+					"rotation": {
+						"0.0": {
+							"vector": [79.76228, -12.3071, 2.20462]
+						},
+						"1.0": {
+							"vector": [79.76228, -12.3071, 2.20462]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [-2, -2, 10]
+						},
+						"1.0": {
+							"vector": [-2, -2, 10]
 						}
 					}
 				}

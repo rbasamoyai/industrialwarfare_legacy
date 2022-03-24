@@ -22,7 +22,7 @@ public class KeyBindingsInit {
 	public static final String KEY_ROOT = "key." + IndustrialWarfare.MOD_ID;
 	public static final String CATEGORY = KEY_ROOT + ".category";
 	
-	public static KeyBinding ATTACHMENTS_SCREEN = new KeyBinding(KEY_ROOT + ".attachments_screen", KeyEvent.VK_C, CATEGORY);
+	public static KeyBinding ITEM_SCREEN = new KeyBinding(KEY_ROOT + ".item_screen", KeyEvent.VK_C, CATEGORY);
 	public static KeyBinding DIPLOMACY_SCREEN = new KeyBinding(KEY_ROOT + ".diplomacy_screen", KeyConflictContext.IN_GAME, KeyModifier.ALT, InputMappings.Type.KEYSYM, KeyEvent.VK_1, CATEGORY);
 	public static KeyBinding PRONE = new ToggleableKeyBinding(KEY_ROOT + ".prone", KeyEvent.VK_Z, CATEGORY, () -> {
 		Minecraft mc = Minecraft.getInstance();
@@ -32,7 +32,7 @@ public class KeyBindingsInit {
 	
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
-		ClientRegistry.registerKeyBinding(ATTACHMENTS_SCREEN);
+		ClientRegistry.registerKeyBinding(ITEM_SCREEN);
 		ClientRegistry.registerKeyBinding(DIPLOMACY_SCREEN);
 		ClientRegistry.registerKeyBinding(PRONE);
 		ClientRegistry.registerKeyBinding(RELOAD_FIREARM);
