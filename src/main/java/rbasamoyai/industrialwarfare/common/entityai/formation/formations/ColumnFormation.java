@@ -2,11 +2,13 @@ package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
@@ -18,6 +20,7 @@ import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class ColumnFormation extends UnitFormation {
@@ -97,6 +100,30 @@ public class ColumnFormation extends UnitFormation {
 		if (tail.addEntity(entity)) return true;
 		this.moveUpUnits();
 		return tail.addEntity(entity);
+	}
+	
+	@Override
+	public void removeEntity(CreatureEntity entity) {
+		if (this.segmentLeaders.isEmpty()) return;
+		// Try doing this quickly by using MemoryModuleTypeInit#IN_FORMATION		
+		Brain<?> brain = entity.getBrain();
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+			FormationLeaderEntity leader = brain.getMemory(MemoryModuleTypeInit.IN_FORMATION.get()).get();
+			Optional<FormationLeaderEntity> optional =
+					this.segmentLeaders
+					.stream()
+					.filter(e -> e == leader)
+					.findFirst();
+			
+			if (optional.isPresent()) {
+				optional.get().removeEntity(entity);
+				return;
+			}
+		}
+		// Else, do a full search
+		for (int rank = 0; rank < this.depth; ++rank) {
+			this.segmentFormations.get(rank).removeEntity(entity);
+		}
 	}
 
 	@Override

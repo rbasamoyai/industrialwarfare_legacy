@@ -98,7 +98,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d)),
 				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
-				Pair.of(2, new MoveToEngagementDistance(14))
+				Pair.of(2, new MoveToEngagementDistance(50))
 				);
 	}
 	
@@ -165,6 +165,10 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
 		return this.formation.addEntity(entity);
+	}
+	
+	public void removeEntity(CreatureEntity entity) {
+		this.formation.removeEntity(entity);
 	}
 	
 	public void setFollower(CreatureEntity entity) {

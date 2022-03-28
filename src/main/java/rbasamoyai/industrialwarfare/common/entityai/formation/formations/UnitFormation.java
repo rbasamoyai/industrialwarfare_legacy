@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Streams;
 
+import net.minecraft.dispenser.IPosition;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -16,6 +17,8 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.BrainUtil;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ShootableItem;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
@@ -56,6 +59,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public State getState() { return this.formationState; }
 	
 	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
+	public abstract void removeEntity(CreatureEntity entity);
 	
 	protected abstract void tick(FormationLeaderEntity leader);
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
@@ -199,16 +203,23 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public static boolean checkMemoriesForEngagement(CreatureEntity entity) {
 		Brain<?> brain = entity.getBrain();
 		return brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.REGISTERED);
+			&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED);
 	}
 	
 	public static <E extends CreatureEntity & IWeaponRangedAttackMob> boolean canDoRangedAttack(E unit, LivingEntity target) {
 		return unit.canDoRangedAttack()
 				&& BrainUtil.canSee(unit, target)
 				&& BrainUtil.isWithinAttackRange(unit, target, 0)
-				&& !unit.getBrain().hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+				&& unit.getBrain().checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED);
+	}
+	
+	public static <E extends CreatureEntity & IWeaponRangedAttackMob> boolean canDoRangedAttack(E unit, IPosition target, MemoryModuleType<IPosition> type ) {
+		if (!unit.canDoRangedAttack() || !unit.getBrain().checkMemory(type, MemoryModuleStatus.REGISTERED)) return false;
+		
+		Item item = unit.getMainHandItem().getItem();
+		if (!(item instanceof ShootableItem)) return false;
+		int range = ((ShootableItem) item).getDefaultProjectileRange();
+		return unit.position().closerThan(target, range);
 	}
 	
 	public static boolean isStopped(Entity e) {

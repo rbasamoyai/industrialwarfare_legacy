@@ -9,11 +9,14 @@ import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
@@ -92,7 +95,13 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
+			
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(shooter.getViewVector(1.0f));
+			int count = 20 + random.nextInt(21);
+			slevel.sendParticles(ParticleTypes.POOF, smokePos.x, smokePos.y, smokePos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
+			
 			boolean isAiming = isAiming(firearm);
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
 			

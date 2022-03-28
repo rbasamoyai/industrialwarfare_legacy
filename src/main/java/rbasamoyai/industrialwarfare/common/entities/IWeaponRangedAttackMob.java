@@ -1,5 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
+import net.minecraft.dispenser.IPosition;
 import net.minecraft.entity.IRangedAttackMob;
 import net.minecraft.entity.LivingEntity;
 
@@ -26,6 +27,8 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	 * @return true if mob should cycle weapon, false if should reload
 	 */
 	ShootingStatus getNextStatus();
+	
+	void performRangedAttack(IPosition target, float damage);
 	
 	/**
 	 * @return false when done cooling down, true otherwise

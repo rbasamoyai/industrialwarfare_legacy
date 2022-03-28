@@ -14,18 +14,21 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class PrepareForShootingTask<E extends MobEntity & IWeaponRangedAttackMob> extends Task<E> {
 
+	private final MemoryModuleType<?> noType;
 	private ShootingStatus status = ShootingStatus.READY_TO_FIRE;
 	
-	public PrepareForShootingTask() {
+	public PrepareForShootingTask(MemoryModuleType<?> noType) {
 		super(ImmutableMap.of(
 				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED));
+		this.noType = noType;
 	}
 
 	@Override
 	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
 		Brain<?> brain = entity.getBrain();
-		return !brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) || brain.getMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get()).orElse(false);
+		return !brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && !brain.hasMemoryValue(this.noType)
+			|| brain.getMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get()).orElse(false);
 	}
 	
 	@Override

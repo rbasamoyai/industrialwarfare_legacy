@@ -35,9 +35,9 @@ public class UnitFormationTypeInit {
 	
 	public static final RegistryObject<UnitFormationType<UnitFormation>> LINE_10W3D = UNIT_FORMATION_TYPES.register("line_10w3d",
 			() -> new UnitFormationType<>((type, rank) -> new DeferredFollowPointFormation.Builder(
-							new Point(0, -2),
+							new Point(0, 0),
 							new LineFormation(UnitFormationTypeInit.LINE.get(), 0, 10, 3))
-					.addRegularPoint(new Point(0, 0), 0)
+					.addRegularPoint(new Point(-5, -4), 0)
 					.build(), -1));
 	
 	public static final RegistryObject<UnitFormationType<UnitFormation>> COLUMN_4W10D = UNIT_FORMATION_TYPES.register("column_4w10d",

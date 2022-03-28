@@ -45,6 +45,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionT
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PrepareForShootingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ShootPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.StartSelfDefenseTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.StopSelfDefenseTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
@@ -91,8 +92,9 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
 				Pair.of(1, new MoveToTargetTask(3.0f)),
-				Pair.of(1, new PrepareForShootingTask<>()),
+				Pair.of(1, new PrepareForShootingTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
 				Pair.of(2, new ExtendedShootTargetTask<>()),
+				Pair.of(2, new ShootPositionTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
 				Pair.of(2, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(3, new EndAttackTask(0, (e1, e2) -> false)),
 				Pair.of(3, new EndWhistleAttackTask()),
