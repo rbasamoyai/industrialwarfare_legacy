@@ -75,7 +75,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.TASK_SCROLL),
 					getItemStack(ItemInit.LABEL),
 					getItemStack(ItemInit.SCHEDULE),
-					getItemStack(ItemInit.AMMO_GENERIC)
+					getItemStack(ItemInit.AMMO_GENERIC),
+					getItemStack(ItemInit.INFINITE_AMMO_GENERIC)
 					));
 		}
 		

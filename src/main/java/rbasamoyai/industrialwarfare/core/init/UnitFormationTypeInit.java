@@ -34,17 +34,25 @@ public class UnitFormationTypeInit {
 	/* Whistle formations, dimensions are specified in (width)W(depth)D */
 	
 	public static final RegistryObject<UnitFormationType<UnitFormation>> LINE_10W3D = UNIT_FORMATION_TYPES.register("line_10w3d",
-			() -> new UnitFormationType<>((type, rank) -> new DeferredFollowPointFormation.Builder(
-							new Point(0, 0),
-							new LineFormation(UnitFormationTypeInit.LINE.get(), 0, 10, 3))
-					.addRegularPoint(new Point(-5, -4), 0)
-					.build(), -1));
+			() -> new UnitFormationType<>(UnitFormationTypeInit::getLine10w3d, -1));
 	
 	public static final RegistryObject<UnitFormationType<UnitFormation>> COLUMN_4W10D = UNIT_FORMATION_TYPES.register("column_4w10d",
-			() -> new UnitFormationType<>((type, rank) -> new DeferredFollowPointFormation.Builder(
-							new Point(0, -2),
-							new ColumnFormation(UnitFormationTypeInit.COLUMN.get(), 0, 4, 10))
-					.addRegularPoint(new Point(0, 0), 0)
-					.build(), -1));
+			() -> new UnitFormationType<>(UnitFormationTypeInit::getColumn4w10d, -1));
+	
+	private static UnitFormation getLine10w3d(UnitFormationType<?> type, int rank) {
+		return new DeferredFollowPointFormation.Builder(
+						new Point(0, 0),
+						new LineFormation(UnitFormationTypeInit.LINE.get(), 0, 10, 3))
+				.addRegularPoint(new Point(-5, -4), 0)
+				.build();
+	}
+	
+	private static UnitFormation getColumn4w10d(UnitFormationType<?> type, int rank) {
+		return new DeferredFollowPointFormation.Builder(
+						new Point(0, -2),
+						new ColumnFormation(UnitFormationTypeInit.COLUMN.get(), 0, 4, 10))
+				.addRegularPoint(new Point(0, 0), 0)
+				.build();
+	}
 	
 }

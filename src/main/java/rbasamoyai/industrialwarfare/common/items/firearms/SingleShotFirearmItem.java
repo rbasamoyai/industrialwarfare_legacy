@@ -10,6 +10,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.fml.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
@@ -107,7 +108,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 				return;
 			}
 			
-			if (shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
 				ammo = ammo.copy();
 			}
 			ammo = ammo.split(1);

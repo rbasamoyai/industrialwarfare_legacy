@@ -44,7 +44,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
 					new FirearmItem.Properties()
-							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get())
+							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(19.0f)
 							.headshotMultiplier(3.0f)
 							.spread(0.1f)
@@ -98,7 +98,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
 			
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(shooter.getViewVector(1.0f));
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(shooter.getViewVector(1.0f).scale(2.0d));
 			int count = 20 + random.nextInt(21);
 			slevel.sendParticles(ParticleTypes.POOF, smokePos.x, smokePos.y, smokePos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
 			

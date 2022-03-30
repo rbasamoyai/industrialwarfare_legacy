@@ -96,8 +96,7 @@ public class NPCEntity extends CreatureEntity implements
 			.put(Pose.FALL_FLYING, EntitySize.scalable(0.6F, 0.6F))
 			.put(Pose.SWIMMING, EntitySize.scalable(0.6F, 0.6F))
 			.put(Pose.SPIN_ATTACK, EntitySize.scalable(0.6F, 0.6F))
-			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F))
-			.put(Pose.DYING, EntitySize.fixed(0.2F, 0.2F)).build();
+			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F)).build();
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,

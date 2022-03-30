@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation;
 
 import net.minecraftforge.registries.ForgeRegistryEntry;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 
 public class UnitFormationType<F extends UnitFormation> extends ForgeRegistryEntry<UnitFormationType<?>> {
@@ -18,12 +17,7 @@ public class UnitFormationType<F extends UnitFormation> extends ForgeRegistryEnt
 	}
 	
 	public F getFormation(int formationRank) {
-		try {
-			return this.factory.create(this, formationRank);
-		} catch (Exception e) {
-			IndustrialWarfare.LOGGER.error("Error encountered within {}#getFormation", this.getRegistryName());
-			throw e;
-		}
+		return this.factory.create(this, formationRank);
 	}
 	
 	public int getFormationRank() { return this.formationRank; }

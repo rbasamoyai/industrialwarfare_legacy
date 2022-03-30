@@ -13,6 +13,8 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.ThrowableEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
+import net.minecraft.particles.BlockParticleData;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.IndirectEntityDamageSource;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -20,6 +22,7 @@ import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.fml.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -101,14 +104,12 @@ public class BulletEntity extends ThrowableEntity {
 	protected void onHitEntity(EntityRayTraceResult result) {
 		super.onHitEntity(result);
 		Entity hit = result.getEntity();
+		Entity owner = this.getOwner();
 		float damage = this.damage;
 		if (MathHelper.abs((float)(this.getEyeY() - hit.getEyeY())) < 0.2f) {
 			damage *= this.headshotMultiplier;
-			if (!this.level.isClientSide) {
-				Entity owner = this.getOwner();
-				if (owner instanceof ServerPlayerEntity) {
-					IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) owner), new FirearmActionMessages.CNotifyHeadshot());
-				}
+			if (!this.level.isClientSide && owner instanceof ServerPlayerEntity) {
+				IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) owner), new FirearmActionMessages.CNotifyHeadshot());
 			}
 		}
 		hit.hurt(new IndirectEntityDamageSource(DAMAGE_SOURCE_KEY, this, this.getOwner()), damage);
@@ -136,7 +137,12 @@ public class BulletEntity extends ThrowableEntity {
 			shouldRemove = false;
 		}
 		
-		if (shouldRemove) this.remove();
+		if (shouldRemove && !this.level.isClientSide) {
+			Vector3d hitPos = result.getLocation();
+			int count = 20 + random.nextInt(21);
+			((ServerWorld) this.level).sendParticles(new BlockParticleData(ParticleTypes.BLOCK, blockstate), hitPos.x, hitPos.y, hitPos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
+			this.remove();
+		}
 	}
 	
 	@Override

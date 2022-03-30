@@ -23,6 +23,7 @@ public class EntityTypeInit {
 	public static final RegistryObject<EntityType<NPCEntity>> NPC = ENTITY_TYPES.register("npc",
 			() -> EntityType.Builder.<NPCEntity>of(NPCEntity::new, EntityClassification.CREATURE)
 					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
 					.setTrackingRange(8)
 					.build(makeId("npc").toString()));
 	

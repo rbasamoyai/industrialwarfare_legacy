@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.InternalMagazineDataHandler;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
+import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
@@ -50,7 +51,7 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 				return;
 			}
 			
-			if (shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
 				ammo = ammo.copy();
 			}
 			

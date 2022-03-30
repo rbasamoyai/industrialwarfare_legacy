@@ -20,6 +20,7 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ShootableItem;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -30,10 +31,13 @@ import net.minecraftforge.common.util.INBTSerializable;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
@@ -47,12 +51,14 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	private boolean loadDataOnNextTick = false;
 	private CompoundNBT dataToDeserialize = new CompoundNBT();
+	protected FormationAttackType attackType;
 	
 	protected CreatureEntity follower;
 	private Float cachedAngle;
 	
 	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
+		this.attackType = FormationAttackTypeInit.NO_ATTACK.get();
 	}
 	
 	public void setState(State formationState) { this.formationState = formationState; } 
@@ -65,6 +71,8 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
 	
 	public void setFollower(CreatureEntity entity) { this.follower = entity; }
+	
+	public void setAttackType(FormationAttackType type) { this.attackType = type; }
 	
 	public UnitFormationType<?> getType() {
 		return this.type;
@@ -179,7 +187,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public void killInnerFormationLeaders() {
-		if (this.follower != null) this.follower.kill();
+		if (this.follower != null && this.follower.getType() == EntityTypeInit.FORMATION_LEADER.get()) this.follower.kill();
 	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
@@ -228,6 +236,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	protected static final String TAG_STATE = "state";
 	protected static final String TAG_FOLLOWER = "follower";
+	protected static final String TAG_ATTACK_TYPE = "attackType";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
@@ -236,12 +245,17 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		if (this.follower != null) {
 			nbt.putUUID(TAG_FOLLOWER, this.follower.getUUID());
 		}
+		nbt.putString(TAG_ATTACK_TYPE, this.attackType.getRegistryName().toString());
 		return nbt;
 	}
 	
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
 		this.formationState = State.fromId(nbt.getInt(TAG_STATE));
+		ResourceLocation typeLoc = nbt.contains(TAG_ATTACK_TYPE)
+				? new ResourceLocation(nbt.getString(TAG_ATTACK_TYPE))
+				: IWModRegistries.FORMATION_ATTACK_TYPES.getDefaultKey();
+		this.attackType = IWModRegistries.FORMATION_ATTACK_TYPES.getValue(typeLoc);
 		this.loadDataOnNextTick = true;
 		this.dataToDeserialize = nbt;
 	}
@@ -288,6 +302,22 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		@Override
 		public int hashCode() {
 			return this.x ^ (this.z << 16 | this.z >> 16);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof Point) {
+				return this.hashCode() == obj.hashCode();
+			} else {
+				return false;
+			}
+		}
+		
+		@Override
+		public String toString() {
+			return "(" + this.x + ", " + this.z + ")";
 		}
 	}
 	

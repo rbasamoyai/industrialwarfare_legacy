@@ -522,7 +522,7 @@ public class WhistleItem extends Item implements
 	}
 	
 	private static boolean isValidUnit(Entity entity, PlayerIDTag owner) {
-		if (entity == null || !(entity instanceof IHasDiplomaticOwner || entity instanceof CreatureEntity)) return false;
+		if (entity == null || !(entity instanceof IHasDiplomaticOwner && entity instanceof CreatureEntity)) return false;
 		IHasDiplomaticOwner ownedEntity = (IHasDiplomaticOwner) entity;
 		return entity.isAlive() && ownedEntity.getDiplomaticOwner().equals(owner);
 	}

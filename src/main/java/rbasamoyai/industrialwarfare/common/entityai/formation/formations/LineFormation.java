@@ -136,7 +136,6 @@ public class LineFormation extends UnitFormation {
 				
 				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 				
-				Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
 				Vector3d firingPos = startPoint.add(leaderForward).add(leaderRight.scale(file)).add(0.0d, unit.getEyeHeight(), 0.0d);				
 				
 				if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
@@ -154,7 +153,11 @@ public class LineFormation extends UnitFormation {
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 						continue;
 					}
-				} else if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+				}
+				
+				Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
+				
+				if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
 					// Stop and stay oriented if not attacking
 					unit.yRot = leader.yRot;
 					unit.yHeadRot = leader.yRot;

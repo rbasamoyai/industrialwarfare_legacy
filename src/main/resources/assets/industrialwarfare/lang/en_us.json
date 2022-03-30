@@ -13,6 +13,7 @@
 	"item.industrialwarfare.ammo_233": "Large Caliber Round (Smokeless)",
 	
 	"item.industrialwarfare.ammo_generic": "Generic Ammo",
+	"item.industrialwarfare.infinite_ammo_generic": "Infinite Generic Ammo",
 	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
@@ -129,6 +130,8 @@
 	"key.industrialwarfare.reload_firearm": "Reload Firearm",
 	
 	"entity.industrialwarfare.bullet": "Bullet",
+	"entity.industrialwarfare.npc": "NPC",
+	
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",
 	"death.attack.industrialwarfare.bullet": "%1$s was shot by %2$s",
