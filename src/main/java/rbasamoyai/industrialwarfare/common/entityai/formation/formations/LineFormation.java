@@ -149,18 +149,21 @@ public class LineFormation extends UnitFormation {
 				
 				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 				
-				if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.VALUE_ABSENT) && newPeriod) {
+				if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.VALUE_ABSENT)) {
 					if (this.attackType == FormationAttackTypeInit.FIRE_AT_WILL.get()) {
+						unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
 						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), true, 80L);
-					} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_RANK.get() && rank == currentRank) {
-						unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
-						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
-					} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_FILE.get() && file == currentFile) {
-						unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
-						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
-					} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_COMPANY.get()) {
-						unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
-						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+					} else if (newPeriod) {
+						if (this.attackType == FormationAttackTypeInit.FIRE_BY_RANK.get() && rank == currentRank) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_FILE.get() && file == currentFile) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_COMPANY.get()) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						}
 					}
 				} else if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
 					if (this.attackType == FormationAttackTypeInit.NO_ATTACK.get() || !engagementFlag) {

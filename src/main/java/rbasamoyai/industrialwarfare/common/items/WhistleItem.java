@@ -102,7 +102,6 @@ public class WhistleItem extends Item implements
 	private static final int MAX_SELECTABLE_UNITS = 128;
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
 	private static final ITextComponent CANNOT_SELECT_FULL = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "cannot_select_full", MAX_SELECTABLE_UNITS).withStyle(TextFormatting.RED);
-	private static final ITextComponent STOPPED_UNITS = new TranslationTextComponent(TRANSLATION_TEXT_KEY + "stopped_units");
 	
 	private static final AttributeModifier REACH_MODIFIER = new AttributeModifier(UUID.fromString("c31ab93e-802d-435c-b386-84610ebcfd74"), "Reach modifier", 16, AttributeModifier.Operation.ADDITION);
 	
@@ -405,7 +404,6 @@ public class WhistleItem extends Item implements
 		.forEach(Entity::kill);
 		
 		player.getCooldowns().addCooldown(this, 10);
-		player.displayClientMessage(STOPPED_UNITS, true);
 	}
 	
 	public void removeUnits(ServerWorld level, ItemStack stack, PlayerEntity player) {

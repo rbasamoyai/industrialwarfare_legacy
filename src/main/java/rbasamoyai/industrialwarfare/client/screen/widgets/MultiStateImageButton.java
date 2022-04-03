@@ -66,6 +66,10 @@ public abstract class MultiStateImageButton extends Button {
 		
 		RenderSystem.enableDepthTest();
 		blit(stack, this.x, this.y, (float) this.xTexStart, (float) y, this.width, this.height, this.textureWidth, this.textureHeight);
+		
+		if (this.isHovered()) {
+			this.onTooltip.onTooltip(this, stack, mouseX, mouseY);
+		}
 	}
 	
 	public abstract int getHeightMultiplier();

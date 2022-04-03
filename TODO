@@ -1,13 +1,15 @@
 Current TODO:
 - Rewrite attacking?
-	- Making entities in formation
-	attack
 	- Attack aiming?
 	
 - Work on formations
+	- Reforming when formation type
+	switches
 	- Merging smaller formations
 	if possible
 	- Add unit classes
+	- Better column
+		- No segment entities
 	
 - Content drop?
 	- Colt SAA

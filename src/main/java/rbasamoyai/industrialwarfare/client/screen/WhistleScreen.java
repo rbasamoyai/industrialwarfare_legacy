@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.client.screen;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
@@ -23,6 +24,7 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.HoldSelectImageButton;
@@ -46,9 +48,37 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	
 	private static final String TRANSLATION_TEXT_KEY = "tooltip." + IndustrialWarfare.MOD_ID + ".whistle";
 	private static final String COMBAT_MODE_KEY = TRANSLATION_TEXT_KEY + ".combat_mode.";
+	private static final String FORM_CATEGORY_KEY = TRANSLATION_TEXT_KEY + ".formation_category.";
 	private static final String INTERVAL_KEY = TRANSLATION_TEXT_KEY + ".interval";
 	private static final String INTERVAL2_KEY = INTERVAL_KEY + "2";
 	
+	private static final List<ITextComponent> COMBAT_MODE_ATTACK_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.ATTACK.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.ATTACK.toString() + ".desc"));
+	
+	private static final List<ITextComponent> COMBAT_MODE_DEFEND_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DEFEND.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DEFEND.toString() + ".desc"));
+	
+	private static final List<ITextComponent> COMBAT_MODE_STAND_GROUND_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.STAND_GROUND.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.STAND_GROUND.toString() + ".desc"));
+	
+	private static final List<ITextComponent> COMBAT_MODE_DONT_ATTACK_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DONT_ATTACK.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DONT_ATTACK.toString() + ".desc"));
+	
+	private static final List<ITextComponent> FORM_CATEGORY_LINE_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.LINE.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.LINE.toString() + ".desc"));
+	
+	private static final List<ITextComponent> FORM_CATEGORY_COLUMN_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString() + ".desc"));
+	
+	private static final ITextComponent STOP_UNITS_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_units");
+	private static final ITextComponent FORMATION_TYPES_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".formation_types");
+	private static final ITextComponent ATTACK_TYPES_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".attack_types");
 	private static final ITextComponent INTERVAL_TEXT1 = new TranslationTextComponent(INTERVAL_KEY + "1");
 	private static final ITextComponent BACK_TO_MAIN_PAGE_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".back_to_main_page");
 	
@@ -116,7 +146,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedMode(CombatMode.ATTACK),
-				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.ATTACK.toString()), mouseX, mouseY),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, COMBAT_MODE_ATTACK_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		this.modeMap.put(CombatMode.DEFEND, new HoldSelectImageButton(
@@ -130,7 +160,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedMode(CombatMode.DEFEND),
-				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DEFEND.toString()), mouseX, mouseY),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, COMBAT_MODE_DEFEND_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		this.modeMap.put(CombatMode.STAND_GROUND, new HoldSelectImageButton(
@@ -144,7 +174,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedMode(CombatMode.STAND_GROUND),
-				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.STAND_GROUND.toString()), mouseX, mouseY),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, COMBAT_MODE_STAND_GROUND_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		this.modeMap.put(CombatMode.DONT_ATTACK, new HoldSelectImageButton(
@@ -158,7 +188,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedMode(CombatMode.DONT_ATTACK),
-				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, new TranslationTextComponent(COMBAT_MODE_KEY + CombatMode.DONT_ATTACK.toString()), mouseX, mouseY),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, COMBAT_MODE_DONT_ATTACK_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		/* Formation buttons */
@@ -175,7 +205,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedCategory(FormationCategory.LINE),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_LINE_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		this.typeMap.put(FormationCategory.COLUMN, new HoldSelectImageButton(
@@ -189,7 +219,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedCategory(FormationCategory.COLUMN),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_COLUMN_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		Button stopActionButton = new ImageButton(
@@ -204,7 +234,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				this::stopWhistle,
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, STOP_UNITS_TEXT, mouseX, mouseY),
 				StringTextComponent.EMPTY) {
 			@Override
 			public void playDownSound(SoundHandler handler) {
@@ -224,7 +254,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setCurrentPage(this.formationTypePages.get(this.menu.getCategory())),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, FORMATION_TYPES_TEXT, mouseX, mouseY),
 				StringTextComponent.EMPTY);
 		
 		Button openAttackTypesButton = new ImageButton(
@@ -239,7 +269,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setCurrentPage(this.attackTypePages.get(this.menu.getCategory())),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderTooltip(stack, ATTACK_TYPES_TEXT, mouseX, mouseY),
 				StringTextComponent.EMPTY);
 		
 		Button nextIntervalButton = new ImageButton(
@@ -299,7 +329,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedTypeInCategory(FormationCategory.LINE, UnitFormationTypeInit.LINE_10W3D.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderFormationTypeTooltip(UnitFormationTypeInit.LINE_10W3D.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		lineCatButtons.put(UnitFormationTypeInit.LINE_15W2D.get(), new HoldSelectImageButton(
@@ -313,7 +343,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedTypeInCategory(FormationCategory.LINE, UnitFormationTypeInit.LINE_15W2D.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderFormationTypeTooltip(UnitFormationTypeInit.LINE_15W2D.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
 		this.selectedTypes.put(FormationCategory.LINE, lineCatButtons);
@@ -342,7 +372,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedAttackTypeInCategory(FormationCategory.LINE, FormationAttackTypeInit.FIRE_AT_WILL.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderAttackTypeTooltip(FormationAttackTypeInit.FIRE_AT_WILL.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY
 				));
 		
@@ -357,7 +387,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedAttackTypeInCategory(FormationCategory.LINE, FormationAttackTypeInit.FIRE_BY_COMPANY.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderAttackTypeTooltip(FormationAttackTypeInit.FIRE_BY_COMPANY.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY
 				));
 		
@@ -372,7 +402,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedAttackTypeInCategory(FormationCategory.LINE, FormationAttackTypeInit.FIRE_BY_RANK.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderAttackTypeTooltip(FormationAttackTypeInit.FIRE_BY_RANK.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY
 				));
 		
@@ -387,7 +417,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				256,
 				256,
 				button -> this.setSelectedAttackTypeInCategory(FormationCategory.LINE, FormationAttackTypeInit.FIRE_BY_FILE.get()),
-				Button.NO_TOOLTIP,
+				(button, stack, mouseX, mouseY) -> this.renderAttackTypeTooltip(FormationAttackTypeInit.FIRE_BY_FILE.get(), stack, mouseX, mouseY),
 				StringTextComponent.EMPTY
 				));
 		
@@ -449,7 +479,6 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	private void setSelectedMode(CombatMode mode) {
 		this.modeMap.forEach((k, v) -> v.setSelected(k == mode));
 		if (this.menu.getMode() == mode) return;
-		this.minecraft.player.displayClientMessage(new TranslationTextComponent(COMBAT_MODE_KEY + mode.toString()), true);
 		this.menu.setMode(mode);
 		this.menu.updateServer();
 	}
@@ -497,6 +526,19 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	
 	private void renderIntervalTooltip(Button button, MatrixStack stack, int mouseX, int mouseY) {
 		this.renderComponentTooltip(stack, ImmutableList.of(INTERVAL_TEXT1, new TranslationTextComponent(INTERVAL2_KEY, this.menu.getInterval().toString())), mouseX, mouseY);
+	}
+	
+	private void renderFormationTypeTooltip(UnitFormationType<?> type, MatrixStack stack, int mouseX, int mouseY) {
+		ResourceLocation regName = type.getRegistryName();
+		this.renderTooltip(stack, new TranslationTextComponent("formation." + regName.getNamespace() + "." + regName.getPath()), mouseX, mouseY);
+	}
+	
+	private void renderAttackTypeTooltip(FormationAttackType type, MatrixStack stack, int mouseX, int mouseY) {
+		ResourceLocation regName = type.getRegistryName();
+		List<ITextComponent> tooltip = ImmutableList.of(
+				new TranslationTextComponent("attack_type." + regName.getNamespace() + "." + regName.getPath()).withStyle(TextFormatting.BOLD),
+				new TranslationTextComponent("attack_type." + regName.getNamespace() + "." + regName.getPath() + ".desc"));
+		this.renderComponentTooltip(stack, tooltip, mouseX, mouseY);
 	}
 	
 	@Override
