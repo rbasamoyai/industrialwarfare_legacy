@@ -20,7 +20,7 @@ public class MoveToEngagementDistance extends Task<LivingEntity> {
 		super(ImmutableMap.of(
 				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT,
-				MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED));
+				MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.VALUE_ABSENT));
 		this.distance = distance;
 	}
 	

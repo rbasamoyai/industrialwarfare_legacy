@@ -11,5 +11,8 @@ public class FormationAttackTypeInit {
 	
 	public static final RegistryObject<FormationAttackType> NO_ATTACK = FORMATION_ATTACK_TYPES.register("no_attack", () -> new FormationAttackType("no_attack"));
 	public static final RegistryObject<FormationAttackType> FIRE_AT_WILL = FORMATION_ATTACK_TYPES.register("fire_at_will", () -> new FormationAttackType("fire_at_will"));
+	public static final RegistryObject<FormationAttackType> FIRE_BY_RANK = FORMATION_ATTACK_TYPES.register("fire_by_rank", () -> new FormationAttackType("fire_by_rank"));
+	public static final RegistryObject<FormationAttackType> FIRE_BY_FILE = FORMATION_ATTACK_TYPES.register("fire_by_file", () -> new FormationAttackType("fire_by_file"));
+	public static final RegistryObject<FormationAttackType> FIRE_BY_COMPANY = FORMATION_ATTACK_TYPES.register("fire_by_company", () -> new FormationAttackType("fire_by_company"));
 	
 }

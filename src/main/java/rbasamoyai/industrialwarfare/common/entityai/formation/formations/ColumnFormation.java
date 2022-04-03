@@ -125,6 +125,11 @@ public class ColumnFormation extends UnitFormation {
 			this.segmentFormations.get(rank).removeEntity(entity);
 		}
 	}
+	
+	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return this.segmentLeaders.stream().anyMatch(f -> f.hasMatchingFormationLeader(inFormationWith));
+	}
 
 	@Override
 	protected void tick(FormationLeaderEntity leader) {

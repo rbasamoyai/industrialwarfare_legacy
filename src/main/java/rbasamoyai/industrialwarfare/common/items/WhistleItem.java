@@ -1,10 +1,13 @@
 package rbasamoyai.industrialwarfare.common.items;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -45,6 +48,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -58,7 +62,7 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.rendering.SelectionRendering;
-import rbasamoyai.industrialwarfare.common.containers.whistle.WhistleContainer;
+import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
@@ -66,11 +70,14 @@ import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitClusterFinder;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
+import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -87,6 +94,10 @@ public class WhistleItem extends Item implements
 	public static final String TAG_COMMAND_GROUP = "commandGroup";
 	public static final String TAG_FORMATION_TYPE = "formationType";
 	public static final String TAG_DIRTY = "dirty";
+	public static final String TAG_FORMATION_CATEGORIES = "categories";
+	public static final String TAG_INTERVAL = "interval";
+	public static final String TAG_CATEGORY_TYPE = "categoryType";
+	public static final String TAG_ATTACK_TYPE = "attackType";
 	
 	private static final int MAX_SELECTABLE_UNITS = 128;
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
@@ -129,15 +140,15 @@ public class WhistleItem extends Item implements
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
 		if (!nbt.contains(TAG_SELECTED_UNITS, Constants.NBT.TAG_LIST)) return ActionResultType.CONSUME;
-		ListNBT selectedUnitsUUIDs = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
-		if (selectedUnitsUUIDs.isEmpty()) return ActionResultType.CONSUME;
+		ListNBT unitUUIDs = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		if (unitUUIDs.isEmpty()) return ActionResultType.CONSUME;
 		
 		Vector3d precisePos = useContext.getClickLocation();
 		BlockPos blockPos = useContext.getClickedPos();
 		boolean shouldBePrecise = useContext.getClickedFace() == Direction.UP;
 		GlobalPos globPos = GlobalPos.of(slevel.dimension(), blockPos);
 		
-		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		ListNBT leaderUUIDs = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
 		
 		if (!nbt.contains(TAG_COMMAND_GROUP)) {
 			nbt.putUUID(TAG_COMMAND_GROUP, MathHelper.createInsecureUUID(RNG));
@@ -145,108 +156,56 @@ public class WhistleItem extends Item implements
 		UUID commandGroup = nbt.getUUID(TAG_COMMAND_GROUP);
 		
 		// Set new position
-		for (INBT t : controlledLeaders) {
-			Entity e = slevel.getEntity(NBTUtil.loadUUID(t));
-			if (!isValidLeader(e)) continue;
-			FormationLeaderEntity leader = (FormationLeaderEntity) e;
-			
-			Brain<?> leaderBrain = leader.getBrain();
-			leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-			if (shouldBePrecise) leaderBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
-			leaderBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
-			leaderBrain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
-			leaderBrain.eraseMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
-		}
+		List<FormationLeaderEntity> leaders =
+				leaderUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(slevel::getEntity)
+				.filter(WhistleItem::isValidLeader)
+				.map(e -> (FormationLeaderEntity) e)
+				.collect(Collectors.toList());
 		
 		PlayerIDTag owner = PlayerIDTag.of(player);
 		
-		List<CreatureEntity> looseUnits = new ArrayList<>();
+		List<CreatureEntity> unitsToFormUp =
+				unitUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(slevel::getEntity)
+				.filter(e -> isValidUnit(e, owner))
+				.map(e -> (CreatureEntity) e)
+				.collect(Collectors.toList());
 		
-		List<CreatureEntity> unitsToCluster = new ArrayList<>();
-		
-		for (INBT t : selectedUnitsUUIDs) {
-			Entity e = slevel.getEntity(NBTUtil.loadUUID(t));
-			if (!isValidUnit(e, owner)) continue;
-			CreatureEntity unit = (CreatureEntity) e;
-			
-			Brain<?> unitBrain = unit.getBrain();
-			
-			if (!unitBrain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
-				looseUnits.add(unit);
-				continue;
-			}
-			
-			if (!unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
-				|| !unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(commandGroup)
-				|| !unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
-				unitsToCluster.add(unit);
-			}
-			
-			unitBrain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
-		}
-		
-		List<List<CreatureEntity>> spatialClusters = (new UnitClusterFinder(3, 5.0f)).findClusters(unitsToCluster);
-		if (spatialClusters.isEmpty()) return ActionResultType.FAIL;
-		looseUnits.addAll(spatialClusters.remove(spatialClusters.size() - 1));
-		
-		for (List<CreatureEntity> cluster : spatialClusters) {
-			if (cluster.isEmpty()) continue;
-			
-			Vector3d centroid =
-					cluster
-					.stream()
-					.map(Entity::position)
-					.reduce((a, b) -> a.add(b))
-					.map(v -> v.scale(1.0d / (double) cluster.size()))
-					.get();
-			
-			Vector3d pos =
-					cluster
-					.stream()
-					.map(Entity::position)
-					.reduce((a, b) -> centroid.distanceToSqr(a) < centroid.distanceToSqr(b) ? a : b)
-					.get();
-			
-			float facing = (float) -MathHelper.wrapDegrees(Math.toDegrees(MathHelper.atan2(precisePos.x - pos.x, precisePos.z - pos.z)));
-			
-			FormationLeaderEntity leader = this.getNewFormation(stack, 0).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
-			Brain<?> leaderBrain = leader.getBrain();
-			leaderBrain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-			UUID leaderUUID = leader.getUUID();
-			controlledLeaders.add(NBTUtil.createUUID(leaderUUID));
-			// TODO: unit class map
-			
-			// Making low-level formations
-			for (CreatureEntity unit : cluster) {
-				if (!(unit instanceof IMovesInFormation)) {
-					looseUnits.add(unit);
-					continue;
-				}
-				IMovesInFormation formationUnit = (IMovesInFormation) unit;
-				int formationRank = formationUnit.getFormationRank();
-				
-				if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) {
-					FormationLeaderEntity restore = leader;
-					leader = this.getNewFormation(stack, formationRank).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
-					if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) { // Should not happen under any circumstances
-						leader.kill();
-						leader = restore;
-						looseUnits.add(unit);
-					} else {
-						restore.setFollower(leader);
-					}
-				}
+		for (CreatureEntity unit : unitsToFormUp) {
+			Brain<?> brain = unit.getBrain();
+			if (brain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
+				brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			}
 		}
 		
-		for (CreatureEntity unit : looseUnits) {
+		List<CreatureEntity> unitsToMove = this.formUpEntities(unitsToFormUp, stack, player, precisePos, commandGroup, leaders);
+		
+		leaderUUIDs.clear();
+		
+		for (CreatureEntity unit : unitsToMove) {
 			Brain<?> brain = unit.getBrain();
 			if (!checkMemoryForMovement(brain)) continue;
-			brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
+			if (shouldBePrecise) brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);			
+			
+			if (brain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
+				brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
+			}
+			
+			brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
+			brain.eraseMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
+			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
+			
+			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+				leaderUUIDs.add(NBTUtil.createUUID(unit.getUUID()));
+			}
 		}
-		
-		nbt.put(TAG_CONTROLLED_LEADERS, controlledLeaders);
+		nbt.put(TAG_CONTROLLED_LEADERS, leaderUUIDs);
 		
 		return ActionResultType.CONSUME;
 	}
@@ -274,36 +233,36 @@ public class WhistleItem extends Item implements
 		if (!nbt.contains(TAG_SELECTED_UNITS, Constants.NBT.TAG_LIST)) {
 			nbt.put(TAG_SELECTED_UNITS, new ListNBT());
 		}
-		ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		ListNBT unitUUIDs = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
 		
 		if (!nbt.contains(TAG_COMMAND_GROUP)) {
 			nbt.putUUID(TAG_COMMAND_GROUP, MathHelper.createInsecureUUID(RNG));
 		}
-		UUID commandGroupUUID = nbt.getUUID(TAG_COMMAND_GROUP);
+		UUID commandGroup = nbt.getUUID(TAG_COMMAND_GROUP);
 		
 		PlayerIDTag owner = PlayerIDTag.of(player);
 		if (isValidUnit(entity, owner)) {
 			UUID uuid = entity.getUUID();
-			for (int i = 0; i < selectedUnits.size(); ++i) {
-				if (!uuid.equals(NBTUtil.loadUUID(selectedUnits.get(i)))) continue;
-				selectedUnits.remove(i);
+			for (int i = 0; i < unitUUIDs.size(); ++i) {
+				if (!uuid.equals(NBTUtil.loadUUID(unitUUIDs.get(i)))) continue;
+				unitUUIDs.remove(i);
 				Brain<?> unitBrain = entity.getBrain();
 				if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
-					&& unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(commandGroupUUID)) {
+					&& unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get().equals(commandGroup)) {
 					unitBrain.eraseMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get());
 				}
 				return ActionResultType.CONSUME;
 			}
-			if (selectedUnits.size() >= MAX_SELECTABLE_UNITS) {
+			if (unitUUIDs.size() >= MAX_SELECTABLE_UNITS) {
 				player.displayClientMessage(CANNOT_SELECT_FULL, true);
 				return ActionResultType.CONSUME;
 			}
-			selectedUnits.add(NBTUtil.createUUID(uuid));
+			unitUUIDs.add(NBTUtil.createUUID(uuid));
 			return ActionResultType.CONSUME;
 		}
 		
 		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
-		if (selectedUnits.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.CONSUME;
+		if (unitUUIDs.isEmpty() || mode == CombatMode.DONT_ATTACK) return ActionResultType.CONSUME;
 		
 		// Unlike passive targeting, directly targeting a unit will not take
 		// anything into consideration other than if they are an ally.
@@ -315,47 +274,59 @@ public class WhistleItem extends Item implements
 			if (status == DiplomaticStatus.ALLY) return ActionResultType.CONSUME;
 		}
 		
-		for (INBT tag : selectedUnits) {
-			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
-			if (!isValidUnit(e, owner)) continue;
-			CreatureEntity unit = (CreatureEntity) e;
+		ListNBT leaderUUIDs = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		
+		List<FormationLeaderEntity> leaders =
+				leaderUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(slevel::getEntity)
+				.filter(WhistleItem::isValidLeader)
+				.map(e -> (FormationLeaderEntity) e)
+				.collect(Collectors.toList());
+		
+		List<CreatureEntity> unitsToFormUp =
+				unitUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(slevel::getEntity)
+				.filter(e -> isValidUnit(e, owner))
+				.map(e -> (CreatureEntity) e)
+				.collect(Collectors.toList());
+		
+		for (CreatureEntity unit : unitsToFormUp) {
 			Brain<?> brain = unit.getBrain();
-			
 			if (brain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
-				brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroupUUID);
-			}
-			
-			if (checkMemoryForAction(brain)
-				&& brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
-				&& !brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
-				
-				brain.setMemory(MemoryModuleType.ATTACK_TARGET, Optional.of(entity));
-				brain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
-				brain.setActiveActivityIfPossible(Activity.FIGHT);
+				brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
 			}
 		}
 		
-		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
-		for (INBT tag : controlledLeaders) {
-			Entity e = slevel.getEntity(NBTUtil.loadUUID(tag));
-			if (!(e instanceof FormationLeaderEntity)) continue;
-			FormationLeaderEntity leader = (FormationLeaderEntity) e;
-			Brain<?> brain = leader.getBrain();
+		List<CreatureEntity> unitsToMove = this.formUpEntities(unitsToFormUp, stack, player, entity.position(), commandGroup, leaders);
+		
+		leaderUUIDs.clear();
+		
+		for (CreatureEntity unit : unitsToMove) {
+			Brain<?> brain = unit.getBrain();
+			if (!brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
+				continue;
+			}
 			
-			if (checkMemoryForEngagement(brain)) {
-				brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
-				brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+			brain.setMemory(MemoryModuleType.ATTACK_TARGET, entity);
+			brain.eraseMemory(MemoryModuleType.MEETING_POINT);
+			brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+			
+			if (brain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED)) {
 				brain.eraseMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
-				
-				if (brain.hasMemoryValue(MemoryModuleType.MEETING_POINT)) {
-					brain.eraseMemory(MemoryModuleType.MEETING_POINT);
-				}
-				
-				if (brain.hasMemoryValue(MemoryModuleTypeInit.PRECISE_POS.get())) {
-					brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
-				}
+			}
+			if (brain.hasMemoryValue(MemoryModuleTypeInit.PRECISE_POS.get())) {
+				brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+			}
+			
+			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+				leaderUUIDs.add(NBTUtil.createUUID(unit.getUUID()));
 			}
 		}
+		nbt.put(TAG_CONTROLLED_LEADERS, leaderUUIDs);
 		
 		return ActionResultType.CONSUME;
 	}
@@ -427,11 +398,11 @@ public class WhistleItem extends Item implements
 			}
 		}
 		
-		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
-		for (INBT tag : controlledLeaders) {
-			Entity e = level.getEntity(NBTUtil.loadUUID(tag));
-			if (e != null) e.kill();
-		}
+		nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY)
+		.stream()
+		.map(NBTUtil::loadUUID)
+		.map(level::getEntity)
+		.forEach(Entity::kill);
 		
 		player.getCooldowns().addCooldown(this, 10);
 		player.displayClientMessage(STOPPED_UNITS, true);
@@ -439,41 +410,40 @@ public class WhistleItem extends Item implements
 	
 	public void removeUnits(ServerWorld level, ItemStack stack, PlayerEntity player) {
 		CompoundNBT nbt = stack.getOrCreateTag();
-		ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
-		List<Integer> removeIndices = new ArrayList<>(selectedUnits.size());
 		PlayerIDTag owner = new PlayerIDTag(player.getUUID(), true);
-		for (int i = 0; i < selectedUnits.size(); ++i) {
-			Entity unit = level.getEntity(NBTUtil.loadUUID(selectedUnits.get(i)));
-			if (!isValidUnit(unit, owner)) {
-				removeIndices.add(i);
-			}
-		}
-		for (int i = removeIndices.size() - 1; i >= 0; --i) {
-			selectedUnits.remove(removeIndices.get(i).intValue());
-		}
+		ListNBT unitUUIDs = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		nbt.put(TAG_SELECTED_UNITS,
+				unitUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(level::getEntity)
+				.filter(e -> isValidUnit(e, owner))
+				.map(Entity::getUUID)
+				.map(NBTUtil::createUUID)
+				.collect(Collectors.toCollection(ListNBT::new)));
 		
-		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
-		removeIndices.clear();
-		for (int i = 0; i < controlledLeaders.size(); ++i) {
-			Entity leader = level.getEntity(NBTUtil.loadUUID(controlledLeaders.get(i)));
-			if (!isValidLeader(leader)) {
-				removeIndices.add(i);
-			}
-		}
-		for (int i = removeIndices.size() - 1; i >= 0; --i) {
-			controlledLeaders.remove(removeIndices.get(i).intValue());
-		}
+		ListNBT leaderUUIDs = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		nbt.put(TAG_CONTROLLED_LEADERS,
+				leaderUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(level::getEntity)
+				.filter(WhistleItem::isValidLeader)
+				.map(Entity::getUUID)
+				.map(NBTUtil::createUUID)
+				.collect(Collectors.toCollection(ListNBT::new)));
 	}
 	
 	public void updateStance(ServerWorld level, ItemStack stack, PlayerEntity player) {
 		CompoundNBT nbt = stack.getOrCreateTag();
 		
 		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
+		Interval interval = Interval.fromId(nbt.getInt(TAG_INTERVAL));
 		
 		PlayerIDTag ownerTag = PlayerIDTag.of(player);
 		
-		ListNBT selectedUnits = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
-		for (INBT tag : selectedUnits) {
+		ListNBT unitUUIDs = nbt.getList(TAG_SELECTED_UNITS, Constants.NBT.TAG_INT_ARRAY);
+		for (INBT tag : unitUUIDs) {
 			UUID uuid = NBTUtil.loadUUID(tag);
 			Entity e = level.getEntity(uuid);
 			if (!isValidUnit(e, ownerTag)) continue;
@@ -485,12 +455,21 @@ public class WhistleItem extends Item implements
 			brain.setActiveActivityIfPossible(mode == CombatMode.DONT_ATTACK ? Activity.IDLE : Activity.FIGHT);
 		}
 		
-		ListNBT controlledLeaders = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
-		for (INBT tag : controlledLeaders) {
+		UnitFormationType<?> currentFormation = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE)));
+		CompoundNBT formationCategories = nbt.getCompound(TAG_FORMATION_CATEGORIES);
+		CompoundNBT catTag = formationCategories.getCompound(currentFormation.getCategory().getTag());
+		ResourceLocation attackTypeLoc = new ResourceLocation(catTag.getString(TAG_ATTACK_TYPE));
+		FormationAttackType attackType = IWModRegistries.FORMATION_ATTACK_TYPES.getValue(attackTypeLoc);
+		
+		ListNBT leaderUUIDs = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		for (INBT tag : leaderUUIDs) {
 			Entity e = level.getEntity(NBTUtil.loadUUID(tag));
 			if (!(e instanceof FormationLeaderEntity)) continue;
 			FormationLeaderEntity leader = (FormationLeaderEntity) e;
 			Brain<?> brain = leader.getBrain();
+			
+			leader.setAttackInterval(interval);
+			leader.setAttackType(attackType);
 			
 			if (brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)) {
 				brain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), mode);
@@ -509,7 +488,103 @@ public class WhistleItem extends Item implements
 		player.getCooldowns().addCooldown(this, 10);
 	}
 	
-	//private void formUpEntities
+	private List<CreatureEntity> formUpEntities(List<CreatureEntity> selectedUnits, ItemStack stack,
+			PlayerEntity player, Vector3d precisePos, UUID commandGroup, List<FormationLeaderEntity> controlledLeaders) {
+		ServerWorld slevel = (ServerWorld) player.level;
+		PlayerIDTag owner = PlayerIDTag.of(player);
+		
+		List<CreatureEntity> unitsToMove = new ArrayList<>();
+		unitsToMove.addAll(controlledLeaders);
+		
+		List<CreatureEntity> unitsToCluster = new ArrayList<>();
+		
+		for (Entity e : selectedUnits) {
+			if (!isValidUnit(e, owner)) continue;
+			CreatureEntity unit = (CreatureEntity) e;
+			
+			Brain<?> unitBrain = unit.getBrain();
+			
+			if (!(unit instanceof IMovesInFormation) || !unitBrain.checkMemory(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.REGISTERED)) {
+				unitsToMove.add(unit);
+				continue;
+			}
+			if (unitBrain.getMemory(MemoryModuleTypeInit.IN_FORMATION.get()).map(l -> !controlledLeaders.stream().anyMatch(f -> f.hasMatchingFormationLeader(l))).orElse(true)) {
+				unitsToCluster.add(unit);
+			}
+		}
+		
+		unitsToCluster =
+				unitsToCluster
+				.stream()
+				.map(u -> (CreatureEntity & IMovesInFormation) u)
+				.filter(u -> !this.addToNearbyLeadersIfPossible(u, slevel))
+				.collect(Collectors.toList());
+		
+		List<List<CreatureEntity>> spatialClusters = (new UnitClusterFinder(3, 5.0f)).findClusters(unitsToCluster);
+		if (spatialClusters.isEmpty()) {
+			return selectedUnits;
+		}
+		unitsToMove.addAll(spatialClusters.remove(spatialClusters.size() - 1));
+		
+		for (List<CreatureEntity> cluster : spatialClusters) {
+			if (cluster.isEmpty()) continue;
+			
+			Vector3d centroid =
+					cluster
+					.stream()
+					.map(Entity::position)
+					.reduce((a, b) -> a.add(b))
+					.map(v -> v.scale(1.0d / (double) cluster.size()))
+					.get();
+			
+			Vector3d pos =
+					cluster
+					.stream()
+					.map(Entity::position)
+					.reduce((a, b) -> centroid.distanceToSqr(a) < centroid.distanceToSqr(b) ? a : b)
+					.get();
+			
+			float facing = (float) -MathHelper.wrapDegrees(Math.toDegrees(MathHelper.atan2(precisePos.x - pos.x, precisePos.z - pos.z)));
+			
+			FormationLeaderEntity leader = this.getNewFormation(stack, 0).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
+			unitsToMove.add(leader);
+			// TODO: unit class map
+			
+			// Making formations and chaining them
+			for (CreatureEntity unit : cluster) {
+				IMovesInFormation formationUnit = (IMovesInFormation) unit;
+				int formationRank = formationUnit.getFormationRank();
+				
+				if (!leader.addEntity((CreatureEntity & IMovesInFormation) unit)) {
+					FormationLeaderEntity restore = leader;
+					leader = this.getNewFormation(stack, formationRank).spawnInnerFormationLeaders(slevel, pos, facing, commandGroup, owner);
+					if (leader.addEntity((CreatureEntity & IMovesInFormation) unit)) {
+						restore.setFollower(leader);
+					} else {
+						// Should not happen under any circumstances
+						leader.kill();
+						leader = restore;
+						unitsToMove.add(unit);
+					}
+				}
+			}
+		}
+		return unitsToMove;
+	}
+	
+	private <E extends CreatureEntity & IMovesInFormation> boolean addToNearbyLeadersIfPossible(E unit, World level) {
+		Brain<?> unitBrain = unit.getBrain();
+		if (!unitBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) {
+			return false;
+		}
+		UUID unitCommandGroup = unitBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
+		
+		AxisAlignedBB box = unit.getBoundingBox().inflate(16.0d);
+		List<FormationLeaderEntity> potentialLeaders = level.getEntitiesOfClass(FormationLeaderEntity.class, box,
+				l -> l.getBrain().getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).map(unitCommandGroup::equals).orElse(false));
+		
+		return potentialLeaders.stream().anyMatch(l -> l.addEntity(unit));
+	}
 	
 	@Override
 	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
@@ -539,13 +614,6 @@ public class WhistleItem extends Item implements
 	private static boolean checkMemoryForMovement(Brain<?> brain) {
 		return brain.checkMemory(MemoryModuleType.MEETING_POINT, MemoryModuleStatus.REGISTERED)
 			&& brain.checkMemory(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED);
-	}
-	
-	private static boolean checkMemoryForEngagement(Brain<?> brain) {
-		return brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
-				&& brain.checkMemory(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-				&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)
-				&& brain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED);
 	}
 	
 	@Override
@@ -588,16 +656,32 @@ public class WhistleItem extends Item implements
 	@Override
 	public void writeContainerInfo(PacketBuffer buf, ItemStack stack) {
 		CompoundNBT nbt = stack.getOrCreateTag();
-		
-		CombatMode mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
-		
+			
 		ResourceLocation typeLoc = nbt.contains(TAG_FORMATION_TYPE)
 				? new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE))
-				: IWModRegistries.UNIT_FORMATION_TYPES.getDefaultKey(); 
+				: IWModRegistries.UNIT_FORMATION_TYPES.getDefaultKey();
 		
 		buf
-		.writeVarInt(mode.getId())
+		.writeVarInt(nbt.getInt(TAG_INTERVAL))
+		.writeVarInt(nbt.getInt(TAG_CURRENT_MODE))
 		.writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES, typeLoc);
+		
+		CompoundNBT formationCategories = nbt.getCompound(TAG_FORMATION_CATEGORIES);
+		buf.writeVarInt(FormationCategory.values().length);
+		for (FormationCategory cat : FormationCategory.values()) {
+			if (!formationCategories.contains(cat.getTag(), Constants.NBT.TAG_COMPOUND)) {
+				CompoundNBT newCatTag = new CompoundNBT();
+				newCatTag.putString(TAG_CATEGORY_TYPE, cat.getDefaultType().getRegistryName().toString());
+				formationCategories.putString(TAG_ATTACK_TYPE, FormationAttackTypeInit.FIRE_AT_WILL.get().getRegistryName().toString());
+			}
+			CompoundNBT catTag = formationCategories.getCompound(cat.getTag());
+			ResourceLocation catLoc = new ResourceLocation(catTag.getString(TAG_CATEGORY_TYPE));
+			ResourceLocation attackTypeLoc = new ResourceLocation(catTag.getString(TAG_ATTACK_TYPE));
+			
+			buf.writeVarInt(cat.getId());
+			buf.writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES, catLoc);
+			buf.writeRegistryIdUnsafe(IWModRegistries.FORMATION_ATTACK_TYPES, attackTypeLoc);
+		}
 	}
 	
 	private static final ResourceLocation WHISTLE_TAB_LOCATION = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/whistle_grid.png");
@@ -644,6 +728,62 @@ public class WhistleItem extends Item implements
 		itemRenderer.renderGuiItem(new ItemStack(this), itemX, itemY);
 		
 		stack.popPose();
+	}
+	
+	public static enum FormationCategory {
+		LINE("line", () -> UnitFormationTypeInit.LINE_10W3D.get(), 0),
+		COLUMN("column", () -> UnitFormationTypeInit.COLUMN_4W10D.get(), 1),
+		NO_WHISTLE("no_whistle", () -> UnitFormationTypeInit.POINTS.get(), 2);
+		
+		private final String tag;
+		private final Supplier<UnitFormationType<?>> defaultType;
+		private final int id;
+		
+		private static final FormationCategory[] BY_ID = Arrays.stream(values()).sorted(Comparator.comparingInt(FormationCategory::getId)).toArray(sz -> new FormationCategory[sz]);
+		
+		private FormationCategory(String tag, Supplier<UnitFormationType<?>> defaultType, int id) {
+			this.tag = tag;
+			this.defaultType = defaultType;
+			this.id = id;
+		}
+		
+		public String getTag() { return this.tag; }
+		public UnitFormationType<?> getDefaultType() { return this.defaultType.get(); }
+		public int getId() { return this.id; }
+		public static FormationCategory fromId(int id) { return 0 <= id && id < BY_ID.length ? BY_ID[id] : NO_WHISTLE; }
+		
+		@Override public String toString() { return this.getTag(); }
+	}
+	
+	public static enum Interval {
+		T_1S(0, 20, "1"),
+		T_2S(1, 40, "2"),
+		T_3S(2, 60, "3"),
+		T_4S(3, 80, "4"),
+		T_5S(4, 100, "5"),
+		T_10S(5, 200, "10");
+		
+		private final int id;
+		private final int time;
+		private final String timeString;
+		
+		private static final Interval[] BY_ID = Arrays.stream(values()).sorted(Comparator.comparingInt(Interval::getId)).toArray(sz -> new Interval[sz]);
+		
+		private Interval(int id, int time, String timeString) {
+			this.id = id;
+			this.time = time;
+			this.timeString = timeString;
+		}
+		
+		public int getTime() { return this.time; }		
+		public int getId() { return this.id; }
+		public static Interval fromId(int id) { return 0 <= id && id < BY_ID.length ? BY_ID[id] : T_1S; }
+		public Interval next() { return fromId(this.id + 1); }
+		
+		@Override
+		public String toString() {
+			return this.timeString;
+		}
 	}
 	
 }

@@ -23,7 +23,7 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 		super(ImmutableMap.of(
 				memoryType, MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(), MemoryModuleStatus.VALUE_PRESENT,
+				MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.VALUE_ABSENT,
 				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED));
 		this.memoryType = memoryType;
@@ -51,13 +51,11 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 	protected void start(ServerWorld level, LivingEntity entity, long gameTime) {
 		Brain<?> brain = entity.getBrain();
 		brain.eraseMemory(this.memoryType);
-		brain.eraseMemory(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
 		brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
 	}
 	
 	private boolean checkMemories(Brain<?> brain) {
-		return brain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
-			&& !brain.hasMemoryValue(MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get());
+		return brain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get());
 	}
 	
 	private static UUID getCommandGroup(Brain<?> brain) {

@@ -28,6 +28,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
@@ -35,6 +36,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistan
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkTowardsPosNoDelayTask;
+import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
@@ -171,12 +173,24 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		this.formation.removeEntity(entity);
 	}
 	
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return this.equals(inFormationWith) || this.formation.hasMatchingFormationLeader(inFormationWith);
+	}
+	
 	public void setFollower(CreatureEntity entity) {
 		this.formation.setFollower(entity);
 	}
 	
 	public void setState(UnitFormation.State state) {
 		this.formation.setState(state);	
+	}
+	
+	public void setAttackInterval(Interval interval) {
+		this.formation.setAttackInterval(interval);
+	}
+	
+	public void setAttackType(FormationAttackType attackType) {
+		this.formation.setAttackType(attackType);
 	}
 	
 	public float scoreOrientationAngle(float angle, Vector3d pos) {

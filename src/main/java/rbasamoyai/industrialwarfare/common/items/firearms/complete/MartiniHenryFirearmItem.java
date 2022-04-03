@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
@@ -98,9 +99,13 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
 			
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(shooter.getViewVector(1.0f).scale(2.0d));
-			int count = 20 + random.nextInt(21);
-			slevel.sendParticles(ParticleTypes.POOF, smokePos.x, smokePos.y, smokePos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
+			Vector3d viewVector = shooter.getViewVector(1.0f);
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vector3d smokeDelta = viewVector.scale(0.5d);
+			int count = 30 + random.nextInt(31);
+			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
+			}
 			
 			boolean isAiming = isAiming(firearm);
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);

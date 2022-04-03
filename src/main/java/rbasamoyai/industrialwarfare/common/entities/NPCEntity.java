@@ -152,7 +152,7 @@ public class NPCEntity extends CreatureEntity implements
 	private float effectiveness;
 	private float timeModifier;
 	
-	protected int rangedAttackDelay;
+	protected int actionDelay;
 	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
 		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
@@ -501,21 +501,21 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
-			// TODO: aiming skill qualifier
+			if (this.actionDelay <= 0) {
+				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
+			}
 			if (this.canAim()) {
 				if (!FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).startAiming(weapon, this);
+					this.actionDelay += 10;
 				}
 			}
-			if (!FirearmItem.isFinishedAction(weapon)) {
-				this.rangedAttackDelay = MathHelper.ceil(30.0f * this.timeModifier);
-			}
-		} else if (this.rangedAttackDelay <= 0) {
-			this.rangedAttackDelay = MathHelper.ceil(60.0f * this.timeModifier);
+		} else if (this.actionDelay <= 0) {
+			this.actionDelay = MathHelper.ceil(60.0f * this.timeModifier);
 		}
 		
-		--this.rangedAttackDelay;
-		return this.rangedAttackDelay > 0;
+		--this.actionDelay;
+		return this.actionDelay > 0;
 	}
 	
 	private boolean canAim() {
@@ -543,8 +543,10 @@ public class NPCEntity extends CreatureEntity implements
 		} else if (weaponItem instanceof FirearmItem) {
 			this.shootUsingFirearm(target);
 			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				if (!this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(true)) {
+					this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+				}
 				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
-				this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
 			}
 		}
 	}
@@ -569,8 +571,10 @@ public class NPCEntity extends CreatureEntity implements
 		} else if (weaponItem instanceof FirearmItem) {
 			this.shootUsingFirearm(null);
 			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				if (!this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(true)) {
+					this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+				}
 				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
-				this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
 			}
 		}
 	}
@@ -639,7 +643,7 @@ public class NPCEntity extends CreatureEntity implements
 				case RELOADING: return ShootingStatus.RELOADING;
 				case CYCLING: return ShootingStatus.CYCLING;
 				case NOTHING:
-					if (!h.isFinishedAction() && h.isFired()) return ShootingStatus.FIRED;
+					if (h.isAiming() || !h.isFinishedAction()) return ShootingStatus.FIRED;
 					if (h.hasAmmo()) {
 						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
 					}
@@ -661,13 +665,16 @@ public class NPCEntity extends CreatureEntity implements
 			if (FirearmItem.isFinishedAction(weapon)) {
 				if (FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).stopAiming(weapon, this);
-				} else {
-					return false;
+					this.actionDelay = 11;
 				}
+			} else {
+				return true;
 			}
+			if (this.actionDelay <= 0) return false;
+			--this.actionDelay;
 			return true;
 		}
-		
+
 		return false;
 	}
 	
@@ -724,13 +731,6 @@ public class NPCEntity extends CreatureEntity implements
 	public void stopRangedAttack() {
 		if (this.isUsingItem()) {
 			this.stopUsingItem();
-		}
-		
-		ItemStack weapon = this.getMainHandItem();
-		Item weaponItem = weapon.getItem();
-		
-		if (weaponItem instanceof FirearmItem) {
-			((FirearmItem) weaponItem).stopAiming(weapon, this);
 		}
 		
 		IWeaponRangedAttackMob.ShootingStatus status = this.getNextStatus();

@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
@@ -70,9 +71,13 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEventInit.RIFLE_FIRED.get(), SoundCategory.MASTER, 4.0f, 1.0f);
 			
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(shooter.getViewVector(1.0f).scale(2.0d));
+			Vector3d viewVector = shooter.getViewVector(1.0f);
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vector3d smokeDelta = viewVector.scale(0.5d);
 			int count = 20 + random.nextInt(21);
-			slevel.sendParticles(ParticleTypes.POOF, smokePos.x, smokePos.y, smokePos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
+			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
+			}
 			
 			boolean isAiming = isAiming(firearm);
 			int fpsAnim = isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING;

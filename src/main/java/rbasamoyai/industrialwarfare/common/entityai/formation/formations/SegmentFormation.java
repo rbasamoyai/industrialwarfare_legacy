@@ -68,6 +68,11 @@ public class SegmentFormation extends UnitFormation {
 		}
 	}
 	
+	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return false;
+	}
+	
 	public void removeEntityAtFile(int file) {
 		if (file < 0 || this.width <= file) return;
 		this.units[file] = null;

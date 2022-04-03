@@ -52,9 +52,12 @@ public class PrepareForShootingTask<E extends MobEntity & IWeaponRangedAttackMob
 			case RELOADING: entity.startReloading(); break;
 			default: this.status = ShootingStatus.READY_TO_FIRE;
 			}
-		} else {
-			this.status = ShootingStatus.READY_TO_FIRE;
 		}
+	}
+	
+	@Override
+	protected void stop(ServerWorld level, E shooter, long gameTime) {
+		shooter.getBrain().eraseMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get());
 	}
 	
 }

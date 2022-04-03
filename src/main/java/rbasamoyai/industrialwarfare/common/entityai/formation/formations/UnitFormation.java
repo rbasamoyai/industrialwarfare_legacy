@@ -35,6 +35,7 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackTyp
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
@@ -51,14 +52,16 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	private boolean loadDataOnNextTick = false;
 	private CompoundNBT dataToDeserialize = new CompoundNBT();
-	protected FormationAttackType attackType;
+	
+	protected FormationAttackType attackType = FormationAttackTypeInit.FIRE_AT_WILL.get();
 	
 	protected CreatureEntity follower;
 	private Float cachedAngle;
 	
+	protected Interval interval = Interval.T_1S;
+	
 	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
-		this.attackType = FormationAttackTypeInit.NO_ATTACK.get();
 	}
 	
 	public void setState(State formationState) { this.formationState = formationState; } 
@@ -67,12 +70,18 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
 	public abstract void removeEntity(CreatureEntity entity);
 	
+	public abstract boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith);
+	
 	protected abstract void tick(FormationLeaderEntity leader);
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
 	
 	public void setFollower(CreatureEntity entity) { this.follower = entity; }
 	
-	public void setAttackType(FormationAttackType type) { this.attackType = type; }
+	public void setAttackType(FormationAttackType type) { 
+		if (this.type.checkAttackType(type)) this.attackType = type;
+	}
+	
+	public void setAttackInterval(Interval interval) { this.interval = interval; }
 	
 	public UnitFormationType<?> getType() {
 		return this.type;
@@ -237,6 +246,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected static final String TAG_STATE = "state";
 	protected static final String TAG_FOLLOWER = "follower";
 	protected static final String TAG_ATTACK_TYPE = "attackType";
+	protected static final String TAG_INTERVAL = "interval";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
@@ -245,6 +255,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		if (this.follower != null) {
 			nbt.putUUID(TAG_FOLLOWER, this.follower.getUUID());
 		}
+		nbt.putInt(TAG_INTERVAL, this.interval.getId());
 		nbt.putString(TAG_ATTACK_TYPE, this.attackType.getRegistryName().toString());
 		return nbt;
 	}
@@ -255,6 +266,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		ResourceLocation typeLoc = nbt.contains(TAG_ATTACK_TYPE)
 				? new ResourceLocation(nbt.getString(TAG_ATTACK_TYPE))
 				: IWModRegistries.FORMATION_ATTACK_TYPES.getDefaultKey();
+		this.interval = Interval.fromId(nbt.getInt(TAG_INTERVAL));
 		this.attackType = IWModRegistries.FORMATION_ATTACK_TYPES.getValue(typeLoc);
 		this.loadDataOnNextTick = true;
 		this.dataToDeserialize = nbt;

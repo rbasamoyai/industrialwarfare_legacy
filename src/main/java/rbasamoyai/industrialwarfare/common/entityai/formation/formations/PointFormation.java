@@ -27,10 +27,13 @@ import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class PointFormation extends UnitFormation {
@@ -96,6 +99,41 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return this.units.values()
+				.stream()
+				.filter(w -> !UnitFormation.isSlotEmpty(w))
+				.map(FormationEntityWrapper::getEntity)
+				.filter(u -> u instanceof FormationLeaderEntity)
+				.map(u -> (FormationLeaderEntity) u)
+				.anyMatch(f -> f.hasMatchingFormationLeader(inFormationWith));
+	}
+	
+	@Override
+	public void setAttackInterval(Interval interval) {
+		super.setAttackInterval(interval);
+		
+		this.units.values()
+		.stream()
+		.filter(w -> !UnitFormation.isSlotEmpty(w))
+		.map(FormationEntityWrapper::getEntity)
+		.filter(u -> u instanceof FormationLeaderEntity)
+		.forEach(u -> ((FormationLeaderEntity) u).setAttackInterval(interval));
+	}
+	
+	@Override
+	public void setAttackType(FormationAttackType type) {
+		super.setAttackType(type);
+		
+		this.units.values()
+		.stream()
+		.filter(w -> !UnitFormation.isSlotEmpty(w))
+		.map(FormationEntityWrapper::getEntity)
+		.filter(u -> u instanceof FormationLeaderEntity)
+		.forEach(u -> ((FormationLeaderEntity) u).setAttackType(type));
+	}
+	
+	@Override
 	public void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
 		
@@ -120,6 +158,8 @@ public abstract class PointFormation extends UnitFormation {
 		if (!leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
 		UUID commandGroup = leaderBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
 		
+		this.attackType = FormationAttackTypeInit.FIRE_AT_WILL.get();
+		
 		for (Point p : this.positions.keySet()) {
 			if (!this.units.containsKey(p)) continue;
 
@@ -141,13 +181,19 @@ public abstract class PointFormation extends UnitFormation {
 				continue;
 			}
 			
-			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);			
-			
-			if (unitBrain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED)) {
-				unitBrain.setMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), engagementFlag);
+			if (this.attackType == FormationAttackTypeInit.NO_ATTACK.get()) {
+				unitBrain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
+			} else {
+				unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
 			}
 			
-			if (UnitFormation.checkMemoriesForEngagement(unit) && engagementFlag) {
+			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
+			
+			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+				unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
+				unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
+			} else if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
+				// Engagement
 				if (unitBrain.getActiveNonCoreActivity().map(a -> a != Activity.FIGHT).orElse(true)) {
 					unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
 					unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
@@ -156,16 +202,27 @@ public abstract class PointFormation extends UnitFormation {
 				
 				if (unit instanceof IWeaponRangedAttackMob
 					&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target.position(), MemoryModuleTypeInit.SHOOTING_POS.get())) {
-					unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.position(), 40L);
+					if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
+						unitBrain.eraseMemory(MemoryModuleTypeInit.SHOOTING_POS.get());
+					} else if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
+						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.position(), 40L);
+					}
 				} else {
 					unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 					continue;
 				}
+			} else if (unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+				unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
 			}
 			
 			Vector3d precisePos = leader.position().add(leaderForward.scale(p.z)).add(leaderRight.scale(p.x)).add(0.0d, unit.getY() - leader.getY(), 0.0d);
+			boolean closeEnough = unit.position().closerThan(precisePos, CLOSE_ENOUGH);
 			
-			if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+			if (unitBrain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED) && closeEnough) {
+				unitBrain.setMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), engagementFlag);
+			}
+			
+			if (this.formationState == State.FORMED && stopped && closeEnough) {
 				// Stop and stay oriented
 				unit.yRot = leader.yRot;
 				unit.yHeadRot = leader.yRot;

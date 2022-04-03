@@ -30,7 +30,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * effectiveness) / 1.5f;
+			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
@@ -80,7 +80,6 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			h.setAiming(true);
-			h.setAction(ActionType.NOTHING, 10);
 		});
 	}
 	
@@ -88,7 +87,6 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			h.setAiming(false);
-			h.setAction(ActionType.NOTHING, 10);
 		});
 	}
 

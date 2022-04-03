@@ -36,6 +36,12 @@ public class FollowPointFormation extends PointFormation {
 				.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
 	}
 	
+	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return super.hasMatchingFormationLeader(inFormationWith)
+			|| this.follower instanceof FormationLeaderEntity && ((FormationLeaderEntity) this.follower).hasMatchingFormationLeader(inFormationWith);
+	}
+	
 	private static final String TAG_FOLLOW_POINT = "followPoint";
 	private static final String TAG_X = "x";
 	private static final String TAG_Z = "z";
