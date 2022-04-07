@@ -94,7 +94,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true; lock_limbs false; allow_mod lever_pin"
+				"0.0": "set_hidden cartridge true; lock_limbs false"
 			}
 		},
 		"ads_aiming_start": {
@@ -436,7 +436,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true; lock_limbs false; allow_mod lever_pin"
+				"0.0": "set_hidden cartridge true; lock_limbs false"
 			}
 		},
 		"hip_firing": {
@@ -787,7 +787,7 @@
 				"0.0": "set_hidden cartridge true; lock_limbs true; suppress_mod lever_pin",
 				"1.0": "set_hidden cartridge false; set_hidden bullet false",
 				"1.6667": "set_hidden cartridge true",
-				"2.375": "allow_mod lever_pin; rotate lever_pin -30 0 0"
+				"2.4583": "allow_mod lever_pin; rotate lever_pin -30 0 0"
 			}
 		},
 		"reload_extract": {
@@ -1124,7 +1124,7 @@
 				"0.9167": "set_hidden cartridge true",
 				"1.0": "set_hidden cartridge false; set_hidden bullet false",
 				"1.6667": "set_hidden cartridge true",
-				"2.375": "rotate lever_pin -30 0 0"
+				"2.4583": "allow_mod lever_pin; rotate lever_pin -30 0 0"
 			}
 		},
 		"reload_hold": {
@@ -1185,9 +1185,6 @@
 						}
 					}
 				}
-			},
-			"timeline": {
-				"0.0": "allow_mod lever_pin"
 			}
 		},
 		"select_firearm": {

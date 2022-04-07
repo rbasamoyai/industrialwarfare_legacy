@@ -36,6 +36,11 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	}
 	
 	@Override
+	public ItemStack peekAmmo(int position) {
+		return 0 <= position && position < this.magazine.size() ? this.magazine.elementAt(position) : ItemStack.EMPTY;
+	}
+	
+	@Override
 	public boolean hasAmmo() {
 		return this.magazine.size() > 0;
 	}

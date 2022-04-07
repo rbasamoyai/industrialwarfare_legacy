@@ -3,7 +3,10 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
@@ -19,6 +22,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
@@ -70,8 +74,19 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	/*
-	 * BROADCASTING ANIMATION OVERRIDES
+	 * ANIMATION CONTROL METHODS
 	 */
+	
+	private static final float PIN_ROT = (float) Math.toRadians(30.0d);
+	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		getDataHandler(stack).ifPresent(h -> {
+			if (h.getAction() == ActionType.NOTHING) {
+				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+			}
+		});
+	}
 	
 	@Override
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
@@ -241,6 +256,20 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
 		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
+	}
+	
+	@Override
+	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
+		
+		ItemStack item = entity.getMainHandItem();
+		
+		getDataHandler(item).ifPresent(h -> {
+			if (h.getAction() == ActionType.NOTHING) {
+				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+			}
+		});
 	}
 
 	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/martini_henry_t.animation.json");

@@ -169,9 +169,9 @@ public class RenderEvents {
 			
 			matrixStack.pushPose();
 			
-			stpr.onPreRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onPreRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight, animRenderer);
 			animRenderer.render(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
-			stpr.onJustAfterRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onJustAfterRender(entity, animEntity, dYaw, partialTick, matrixStack, buffers, packedLight, animRenderer);
 			
 			matrixStack.popPose();
 		}
@@ -211,8 +211,13 @@ public class RenderEvents {
 			}
 			ThirdPersonItemAnimEntity animEntity = ANIM_ENTITY_CACHE.get(uuid);
 			
+			if (!RENDERER_CACHE.containsKey(uuid)) {
+				RENDERER_CACHE.put(uuid, new ThirdPersonItemAnimRenderer(mc.getEntityRenderDispatcher(), animEntity));
+			}
+			ThirdPersonItemAnimRenderer animRenderer = RENDERER_CACHE.get(uuid);
+			
 			float lerpYaw = MathHelper.lerp(partialTick, entity.yRotO, entity.yRot);
-			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight);
+			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight, animRenderer);
 		}
 	}
 	

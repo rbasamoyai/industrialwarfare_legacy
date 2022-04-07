@@ -306,10 +306,238 @@
 					"rotation": {
 						"vector": [0, 0, -22.5]
 					}
+				},
+				"firing_pin": {
+					"position": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true; move firing_pin 0 0 0"
+				"0.0": "set_hidden cartridge true; suppress_mod firing_pin;",
+				"0.9583": "allow_mod firing_pin; move firing_pin 0 0 0"
+			}
+		},
+		"ads_cycling": {
+			"animation_length": 1,
+			"bones": {
+				"firearm": {
+					"rotation": {
+						"vector": [-0.23293, -2.47158, 0.30014]
+					},
+					"position": {
+						"vector": [-4.25, 8, -16]
+					}
+				},
+				"arm_left": {
+					"rotation": {
+						"0.0": {
+							"vector": [-100, 45, 0]
+						},
+						"1.0": {
+							"vector": [-100, 45, 0]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [-2, 0, -5]
+						},
+						"1.0": {
+							"vector": [-2, 0, -5]
+						}
+					}
+				},
+				"arm_right": {
+					"rotation": {
+						"0.0": {
+							"vector": [-112.63575, -6.92748, 0.96661]
+						},
+						"0.125": {
+							"vector": [-82.43745, 14.8599, 89.08542],
+							"easing": "easeInOutSine"
+						},
+						"0.875": {
+							"vector": [-82.43745, 14.8599, 89.08542],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [-112.63575, -6.92748, 0.96661],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -3, 1]
+						},
+						"0.25": {
+							"vector": [0, -0.5, 1],
+							"easing": "easeInOutSine"
+						},
+						"0.375": {
+							"vector": [0, -0.5, 3],
+							"easing": "easeInQuad"
+						},
+						"0.4167": {
+							"vector": [0, -0.5, 3.25],
+							"easing": "easeOutQuad"
+						},
+						"0.5833": {
+							"vector": [0, -0.5, 3.25],
+							"easing": "easeOutQuad"
+						},
+						"0.625": {
+							"vector": [0, -0.5, 3],
+							"easing": "easeInQuad"
+						},
+						"0.75": {
+							"vector": [0, -0.5, 1],
+							"easing": "easeInQuad"
+						},
+						"1.0": {
+							"vector": [0, -3, 1],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, -22.5]
+						},
+						"0.125": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"0.875": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [0, 0, -22.5],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"bolt": {
+					"position": {
+						"0.25": {
+							"vector": [0, 0, 0]
+						},
+						"0.375": {
+							"vector": [0, 0, 2],
+							"easing": "easeInQuad"
+						},
+						"0.4167": {
+							"vector": [0, 0, 2.25],
+							"easing": "easeOutQuad"
+						},
+						"0.5833": {
+							"vector": [0, 0, 2.25],
+							"easing": "easeOutQuad"
+						},
+						"0.625": {
+							"vector": [0, 0, 2],
+							"easing": "easeInQuad"
+						},
+						"0.75": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"bolt_handle": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0, 90],
+							"easing": "easeInOutSine"
+						},
+						"0.75": {
+							"vector": [0, 0, 90],
+							"easing": "easeInOutSine"
+						},
+						"1.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"firing_pin": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0, 0.25],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"elevator": {
+					"position": {
+						"0.375": {
+							"vector": [0, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0.75, 0]
+						},
+						"0.5417": {
+							"vector": [0, 0.75, 0]
+						},
+						"0.5833": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"cartridge": {
+					"rotation": {
+						"vector": [-0.23293, -2.47158, 0.30014]
+					},
+					"position": {
+						"0.25": {
+							"vector": [-4.375, 8.75, -15.775]
+						},
+						"0.375": {
+							"vector": [-4.475, 8.75, -13.775],
+							"easing": "easeInQuad"
+						},
+						"0.4167": {
+							"vector": [-4.475, 10, -13.775],
+							"easing": "easeInQuad"
+						},
+						"0.5417": {
+							"vector": [-4.94, 10.89, -13.87]
+						},
+						"0.6667": {
+							"vector": [-5.94, 8.89, -13.87]
+						},
+						"0.7917": {
+							"vector": [-6.94, 2.89, -13.87]
+						},
+						"0.875": {
+							"vector": [-7.44, -4.11, -13.87]
+						},
+						"0.9583": {
+							"vector": [-7.44, -10.11, -13.87]
+						}
+					}
+				}
+			},
+			"sound_effects": {
+				"0.2917": {
+					"effect": "industrialwarfare:item.rifle.cycle_start"
+				},
+				"0.5833": {
+					"effect": "industrialwarfare:item.rifle.cycle_end"
+				}
+			},
+			"timeline": {
+				"0.0": "set_hidden cartridge false; suppress_mod firing_pin",
+				"0.9583": "set_hidden cartridge true; allow_mod firing_pin; move firing_pin 0 0 0.25"
 			}
 		},
 		"hip_aiming": {
@@ -482,7 +710,8 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; suppress_mod firing_pin",
+				"0.9583": "allow_mod firing_pin; move firing_pin 0 0 0"
 			}
 		},
 		"hip_cycling": {
@@ -532,12 +761,13 @@
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"0.7917": {
+						"0.875": {
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"0.9167": {
-							"vector": [0, 0, 0]
+						"1.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeInSine"
 						}
 					}
 				},
@@ -559,11 +789,12 @@
 				},
 				"firing_pin": {
 					"position": {
-						"0.2917": {
+						"0.0": {
 							"vector": [0, 0, 0]
 						},
-						"0.375": {
-							"vector": [0, 0, 0.25]
+						"0.125": {
+							"vector": [0, 0, 0.25],
+							"easing": "easeInSine"
 						}
 					}
 				},
@@ -619,15 +850,16 @@
 						"0.4167": {
 							"vector": [-50.41773, 11.7873, 1.23229]
 						},
-						"0.5417": {
+						"0.5833": {
 							"vector": [-50.41773, 11.7873, 1.23229]
 						},
-						"0.8333": {
+						"0.875": {
 							"vector": [-50.96817, 7.91746, -1.9819],
 							"easing": "easeInSine"
 						},
-						"0.9583": {
-							"vector": [-31.33344, -6.68018, -12.0467]
+						"1.0": {
+							"vector": [-31.33344, -6.68018, -12.0467],
+							"easing": "easeInSine"
 						}
 					},
 					"position": {
@@ -644,17 +876,17 @@
 						"0.4167": {
 							"vector": [0, 0, 1.91]
 						},
-						"0.5417": {
+						"0.5833": {
 							"vector": [0, 0, 1.91]
 						},
-						"0.5833": {
+						"0.625": {
 							"vector": [0, 0, "Math.sqrt(2)"],
 							"easing": "easeInQuad"
 						},
-						"0.7083": {
+						"0.75": {
 							"vector": [0, 0, 0]
 						},
-						"0.9583": {
+						"1.0": {
 							"vector": [0, -0.5, 1.5]
 						}
 					}
@@ -669,9 +901,8 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge false; move firing_pin 0 0 0",
-				"0.375": "move firing_pin 0 0 0.25",
-				"1.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge false; suppress_mod firing_pin",
+				"0.9583": "set_hidden cartridge true; allow_mod firing_pin; move firing_pin 0 0 0.25"
 			}
 		},
 		"port_arms": {
@@ -951,7 +1182,7 @@
 		},
 		"reload_end": {
 			"loop": "hold_on_last_frame",
-			"animation_length": 1.5,
+			"animation_length": 1.45833,
 			"bones": {
 				"firearm": {
 					"rotation": {
@@ -1008,12 +1239,13 @@
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"1.2917": {
+						"1.3333": {
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"1.4167": {
-							"vector": [0, 0, 0]
+						"1.4583": {
+							"vector": [0, 0, 0],
+							"easing": "easeInSine"
 						}
 					}
 				},
@@ -1032,12 +1264,7 @@
 				},
 				"firing_pin": {
 					"position": {
-						"0.875": {
-							"vector": [0, 0, 0]
-						},
-						"0.9167": {
-							"vector": [0, 0, 0.25]
-						}
+						"vector": [0, 0, 0.25]
 					}
 				},
 				"arm_left": {
@@ -1076,7 +1303,8 @@
 							"easing": "easeInSine"
 						},
 						"1.4583": {
-							"vector": [-31.33344, -6.68018, -12.0467]
+							"vector": [-31.33344, -6.68018, -12.0467],
+							"easing": "easeInSine"
 						}
 					},
 					"position": {
@@ -1135,14 +1363,13 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden bullet true; lock_limbs false",
-				"0.9167": "move firing_pin 0 0 0.25",
-				"1.5": "set_hidden cartridge true; lock_limbs false"
+				"0.0": "set_hidden bullet true; lock_limbs true; suppress_mod firing_pin",
+				"1.4167": "set_hidden cartridge true; lock_limbs false; allow_mod firing_pin; move firing_pin 0 0 0.25"
 			}
 		},
 		"reload_end_extract": {
 			"loop": "hold_on_last_frame",
-			"animation_length": 1.5,
+			"animation_length": 1.45833,
 			"bones": {
 				"firearm": {
 					"rotation": {
@@ -1199,12 +1426,13 @@
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"1.2917": {
+						"1.3333": {
 							"vector": [0, 0, 90],
 							"easing": "easeInSine"
 						},
-						"1.4167": {
-							"vector": [0, 0, 0]
+						"1.4583": {
+							"vector": [0, 0, 0],
+							"easing": "easeInSine"
 						}
 					}
 				},
@@ -1276,7 +1504,8 @@
 							"easing": "easeInSine"
 						},
 						"1.4583": {
-							"vector": [-31.33344, -6.68018, -12.0467]
+							"vector": [-31.33344, -6.68018, -12.0467],
+							"easing": "easeInSine"
 						}
 					},
 					"position": {
@@ -1319,6 +1548,17 @@
 							"easing": "easeInOutSine"
 						}
 					}
+				},
+				"firing_pin": {
+					"position": {
+						"0.5": {
+							"vector": [0, 0, 0]
+						},
+						"0.625": {
+							"vector": [0, 0, 0.25],
+							"easing": "easeInSine"
+						}
+					}
 				}
 			},
 			"sound_effects": {
@@ -1330,10 +1570,9 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true; lock_limbs true",
+				"0.0": "set_hidden cartridge true; lock_limbs true; suppress_mod firing_pin",
 				"0.75": "set_hidden cartridge false",
-				"0.9167": "move firing_pin 0 0 0.25",
-				"1.5": "set_hidden cartridge true; lock_limbs false"
+				"1.4167": "set_hidden cartridge true; lock_limbs false; allow_mod firing_pin; move firing_pin 0 0 0.25"
 			}
 		},
 		"reload_hold": {

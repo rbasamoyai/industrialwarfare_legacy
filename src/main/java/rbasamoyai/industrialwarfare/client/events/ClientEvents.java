@@ -1,6 +1,8 @@
 package rbasamoyai.industrialwarfare.client.events;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.renderer.entity.SpriteRenderer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -42,7 +44,9 @@ public class ClientEvents {
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
 		ScreenManager.register(ContainerInit.WHISTLE.get(), WhistleScreen::new);
 		
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), NothingRenderer::new);
+		Minecraft mc = Minecraft.getInstance();
+		
+		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), erm -> new SpriteRenderer<>(erm, mc.getItemRenderer()));
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.FORMATION_LEADER.get(), NothingRenderer::new);
 		

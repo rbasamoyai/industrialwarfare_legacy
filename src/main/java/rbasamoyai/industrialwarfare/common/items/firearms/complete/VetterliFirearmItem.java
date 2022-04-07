@@ -3,7 +3,10 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
@@ -15,7 +18,9 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
@@ -63,6 +68,13 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	/*
 	 * ANIMATION CONTROL METHODS
 	 */
+	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
+		}
+	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
@@ -167,11 +179,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
 		super.startCycle(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_CYCLING);
+			boolean aiming = isAiming(firearm);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, aiming ? ANIM_ADS_CYCLING : ANIM_HIP_CYCLING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
-			upperBody.add(new Tuple<>("hip_cycling", false));
-			upperBody.add(new Tuple<>("hip_aiming", true));
+			upperBody.add(new Tuple<>(aiming ? "ads_cycling" : "hip_cycling", false));
+			upperBody.add(new Tuple<>(aiming ? "ads_aiming" : "hip_aiming", true));
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
@@ -234,6 +247,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public static final int ANIM_ADS_FIRING = 11;
 	public static final int ANIM_RELOAD_END_EXTRACT = 12;
 	public static final int ANIM_SELECT_FIREARM = 13;
+	public static final int ANIM_ADS_CYCLING = 14;
 	
 	@Override
 	public void onAnimationSync(int id, int state) {
@@ -283,6 +297,11 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			.addAnimation("ads_firing", false)
 			.addAnimation("ads_aiming", true);
 			break;
+		case ANIM_ADS_CYCLING:
+			builder
+			.addAnimation("ads_cycling", false)
+			.addAnimation("ads_aiming", true);
+			break;
 		case ANIM_RELOAD_END_EXTRACT:
 			builder
 			.addAnimation("reload_end_extract", false)
@@ -307,8 +326,20 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
 		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
-	}	
-
+	}
+	
+	@Override
+	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
+		
+		ItemStack item = entity.getMainHandItem();
+		
+		if (getDataHandler(item).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(item) ? 0.25f : 0.0f);
+		}
+	}
+	
 	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/vetterli_t.animation.json");
 	@Override
 	public ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity) {

@@ -34,6 +34,7 @@ public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 	int getMagazineSize();
 	ItemStack insertAmmo(ItemStack ammo);
 	ItemStack extractAmmo();
+	ItemStack peekAmmo(int position);
 	boolean hasAmmo();
 	boolean isFull();
 	default boolean isEmpty() { return !this.hasAmmo(); }

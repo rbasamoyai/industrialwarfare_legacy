@@ -1,4 +1,15 @@
 Current TODO:
+- Content drop?
+	- Colt SAA
+		- Rewriting animation
+		instructions to handle
+		revolvers
+	- Matchlocks
+		- English matchlock
+		- Tanegashima (Japanese
+		matchlock)
+		- Slow match system
+		
 - Rewrite attacking?
 	- Attack aiming?
 	
@@ -10,10 +21,3 @@ Current TODO:
 	- Add unit classes
 	- Better column
 		- No segment entities
-	
-- Content drop?
-	- Colt SAA
-	- Matchlocks
-		- English matchlock
-		- Tanegashima (Japanese
-		matchlock)

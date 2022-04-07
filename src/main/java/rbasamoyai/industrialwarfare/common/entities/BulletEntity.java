@@ -5,12 +5,14 @@ import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.SoundType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.entity.projectile.ThrowableEntity;
+import net.minecraft.entity.projectile.ProjectileItemEntity;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.particles.BlockParticleData;
@@ -29,10 +31,11 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 
-public class BulletEntity extends ThrowableEntity {
+public class BulletEntity extends ProjectileItemEntity {
 
 	private static final String DAMAGE_SOURCE_KEY = IndustrialWarfare.MOD_ID + ".bullet";
 	
@@ -59,10 +62,6 @@ public class BulletEntity extends ThrowableEntity {
 		this.damage = damage;
 		this.headshotMultiplier = headshotMultiplier;
 		this.origin = origin; 
-	}
-	
-	@Override
-	protected void defineSynchedData() {
 	}
 	
 	@Override
@@ -135,6 +134,12 @@ public class BulletEntity extends ThrowableEntity {
 		} else if (block == Blocks.MELON) {
 			this.level.destroyBlock(pos, true);
 			shouldRemove = false;
+		} else {
+			if (!this.level.isClientSide) {
+				SoundType type = block.getSoundType(blockstate, this.level, pos, this);
+				float pitch = 0.9f + 0.2f * this.random.nextFloat();
+				this.level.playSound(null, this.getX(), this.getY(), this.getZ(), type.getBreakSound(), this.getSoundSource(), 0.5f, pitch);
+			}
 		}
 		
 		if (shouldRemove && !this.level.isClientSide) {
@@ -177,6 +182,11 @@ public class BulletEntity extends ThrowableEntity {
 	@Override
 	protected float getGravity() {
 		return 0.01f;
+	}
+
+	@Override
+	protected Item getDefaultItem() {
+		return PartItemInit.PART_BULLET.get();
 	}
 
 }

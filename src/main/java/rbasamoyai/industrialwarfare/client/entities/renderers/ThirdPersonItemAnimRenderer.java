@@ -38,7 +38,10 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	private float partialTicks;
 	
 	private final Set<String> hiddenBones = new HashSet<>();
-	private final Map<String, Vector3f> queuedBoneMovements = new HashMap<>();
+	private final Set<String> suppressedBones = new HashSet<>();
+	private final Map<String, Vector3f> queuedBoneSetMovements = new HashMap<>();
+	private final Map<String, Vector3f> queuedBoneSetRotations = new HashMap<>();
+	private final Map<String, Vector3f> queuedBoneAddRotations = new HashMap<>();
 	
 	private boolean lockedLimbs = false;
 	
@@ -52,6 +55,7 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		if (!(entity instanceof LivingEntity)) { // Check stolen from GeoReplacedEntityRenderer
 			throw (new RuntimeException("Replaced renderer was not an instanceof LivingEntity"));
 		}
+		
 		this.entity = (LivingEntity) entity;
 		this.currentAnimEntity = (ThirdPersonItemAnimEntity) animatable;
 		this.currentBuffer = bufferIn;
@@ -69,19 +73,35 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		
 		if (!(item instanceof ISpecialThirdPersonRender)) return;
 		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
-		stpr.onRenderRecursively(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha);
+		stpr.onRenderRecursively(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha, this);
 		
 		String name = bone.getName();
 		bone.setHidden(this.hiddenBones.contains(name));
 		
-		float boneAlpha = stpr.getBoneAlpha(itemStack, this.entity, bone, alpha);
-		if (this.queuedBoneMovements.containsKey(name)) {
-			Vector3f pos = this.queuedBoneMovements.get(name);
-			bone.setPositionX(pos.x());
-			bone.setPositionY(pos.y());
-			bone.setPositionZ(pos.z());
+		if (!this.suppressedBones.contains(name)) {
+			if (this.queuedBoneSetMovements.containsKey(name)) {
+				Vector3f pos = this.queuedBoneSetMovements.get(name);
+				bone.setPositionX(pos.x());
+				bone.setPositionY(pos.y());
+				bone.setPositionZ(pos.z());
+			}
+			
+			if (this.queuedBoneSetRotations.containsKey(name)) {
+				Vector3f rot = this.queuedBoneSetRotations.get(name);
+				bone.setRotationX(rot.x());
+				bone.setRotationY(rot.y());
+				bone.setRotationZ(rot.z());
+			}
+			
+			if (this.queuedBoneAddRotations.containsKey(name)) {
+				Vector3f rotAdd = this.queuedBoneAddRotations.get(name);
+				bone.setRotationX(bone.getRotationX() + rotAdd.x());
+				bone.setRotationY(bone.getRotationY() + rotAdd.y());
+				bone.setRotationZ(bone.getRotationZ() + rotAdd.z());
+			}
 		}
 		
+		float boneAlpha = stpr.getBoneAlpha(itemStack, this.entity, bone, alpha);
 		super.renderRecursively(bone, stack, this.currentBuffer.getBuffer(this.renderType), packedLightIn, packedOverlayIn, red, green, blue, boneAlpha);
 		stack.popPose();
 	}
@@ -107,9 +127,20 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	public void lockLimbs(boolean lock) { this.lockedLimbs = lock; }
 	public boolean areLimbsLocked() { return this.lockedLimbs; }
 	
-	public void moveBone(String name, float x, float y, float z) {
-		this.queuedBoneMovements.put(name, new Vector3f(x, y, z));
+	public void setBonePosition(String name, float x, float y, float z) {
+		this.queuedBoneSetMovements.put(name, new Vector3f(x, y, z));
 	}
+	
+	public void setBoneRotation(String name, float x, float y, float z) {
+		this.queuedBoneSetRotations.put(name, new Vector3f(x, y, z));
+	}
+	
+	public void addToBoneRotation(String name, float x, float y, float z) {
+		this.queuedBoneAddRotations.put(name, new Vector3f(x, y, z));
+	}
+	
+	public void suppressModification(String name) { this.suppressedBones.add(name); }
+	public void allowModification(String name) { this.suppressedBones.remove(name); }
 	
 	public static <E extends IAnimatable> void parse(CustomInstructionKeyframeEvent<E> event) {
 		List<String> instructions = Arrays.stream(event.instructions.split(";")).filter(s -> s.length() > 0).collect(Collectors.toList());
@@ -128,19 +159,31 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		
 		for (List<String> tokens : instructionTokens) {
 			String firstTok = tokens.get(0);
+			
+			if (tokens.size() < 2) continue;
+			
+			String boneName = tokens.get(1);
+			
 			if (firstTok.equals("set_hidden")) {
-				String boneName = tokens.get(1);
 				boolean hidden = Boolean.valueOf(tokens.get(2));
 				renderer.setBoneVisibility(boneName, hidden);
 			} else if (firstTok.equals("lock_limbs")) {
 				boolean lock = Boolean.valueOf(tokens.get(1));
 				renderer.lockLimbs(lock);
 			} else if (firstTok.equals("move")) {
-				String boneName = tokens.get(1);
 				float x = Float.valueOf(tokens.get(2));
 				float y = Float.valueOf(tokens.get(3));
 				float z = Float.valueOf(tokens.get(4));
-				renderer.moveBone(boneName, x, y, z);
+				renderer.setBonePosition(boneName, x, y, z);
+			} else if (firstTok.equals("rotate")) {
+				float x = Float.valueOf(tokens.get(2));
+				float y = Float.valueOf(tokens.get(3));
+				float z = Float.valueOf(tokens.get(4));
+				renderer.setBoneRotation(boneName, x, y, z);
+			}  else if (firstTok.equals("suppress_mod")) {
+				renderer.suppressModification(boneName);
+			} else if (firstTok.equals("allow_mod")) {
+				renderer.allowModification(boneName);
 			}
 		}
 	}

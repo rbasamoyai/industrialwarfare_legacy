@@ -83,7 +83,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; allow_mod lever_pin"
 			}
 		},
 		"ads_aiming_start": {
@@ -221,7 +221,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": ["set_hidden cartridge true", ""]
 			}
 		},
 		"ads_firing": {
@@ -289,10 +289,16 @@
 							"easing": "easeInOutSine"
 						}
 					}
+				},
+				"lever_pin": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; suppress_mod lever_pin",
+				"0.5": "allow_mod lever_pin; rotate lever_pin 0 0 0"
 			}
 		},
 		"hip_aiming": {
@@ -374,7 +380,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; allow_mod lever_pin"
 			}
 		},
 		"hip_firing": {
@@ -443,10 +449,16 @@
 							"easing": "easeInOutSine"
 						}
 					}
+				},
+				"lever_pin": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; suppress_mod lever_pin",
+				"0.5": "allow_mod lever_pin; rotate lever_pin 0 0 0"
 			}
 		},
 		"reload": {
@@ -676,6 +688,17 @@
 					"position": {
 						"vector": [0, 0, 0]
 					}
+				},
+				"lever_pin": {
+					"rotation": {
+						"0.25": {
+							"vector": [0, 0, 0]
+						},
+						"0.4167": {
+							"vector": [-30, 0, 0],
+							"easing": "easeInQuad"
+						}
+					}
 				}
 			},
 			"sound_effects": {
@@ -690,7 +713,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true",
+				"0.0": "set_hidden cartridge true; suppress_mod lever_pin",
 				"1.0": "set_hidden cartridge false; set_hidden bullet false",
 				"1.6667": "set_hidden cartridge true"
 			}
@@ -954,6 +977,17 @@
 					"position": {
 						"vector": [0, 0, 0]
 					}
+				},
+				"lever_pin": {
+					"rotation": {
+						"0.25": {
+							"vector": [0, 0, 0]
+						},
+						"0.4167": {
+							"vector": [-30, 0, 0],
+							"easing": "easeInQuad"
+						}
+					}
 				}
 			},
 			"sound_effects": {
@@ -968,7 +1002,8 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge false; set_hidden bullet true",
+				"0.0": "set_hidden cartridge false; set_hidden bullet true; suppress_mod lever_pin",
+				"0.4167": "allow_mod lever_pin; rotate lever_pin -30 0 0",
 				"0.7917": "set_hidden cartridge true",
 				"1.0": "set_hidden cartridge false; set_hidden bullet false",
 				"1.6667": "set_hidden cartridge true"
@@ -1034,7 +1069,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; allow_mod lever_pin"
 			}
 		},
 		"select_firearm": {

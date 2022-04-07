@@ -18,6 +18,7 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
@@ -41,6 +42,7 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 			
 			float damage = this.baseDamage * (quality + 0.5f * effectiveness) / 1.5f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
+			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
 			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
