@@ -136,6 +136,7 @@ public class BulletEntity extends ProjectileItemEntity {
 			shouldRemove = false;
 		} else {
 			if (!this.level.isClientSide) {
+				blockstate.onProjectileHit(level, blockstate, result, this);
 				SoundType type = block.getSoundType(blockstate, this.level, pos, this);
 				float pitch = 0.9f + 0.2f * this.random.nextFloat();
 				this.level.playSound(null, this.getX(), this.getY(), this.getZ(), type.getBreakSound(), this.getSoundSource(), 0.5f, pitch);

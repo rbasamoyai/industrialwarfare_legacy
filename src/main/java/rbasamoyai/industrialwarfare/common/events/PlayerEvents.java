@@ -40,6 +40,15 @@ public class PlayerEvents {
 	}
 	
 	@SubscribeEvent
+	public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
+		PlayerEntity player = event.getPlayer();
+		ItemStack stack = player.getMainHandItem();
+		if (event.isCancelable() && stack.getItem() instanceof FirearmItem) {
+			event.setCanceled(true);
+		}
+	}
+	
+	@SubscribeEvent
 	public static void onAttackEntity(AttackEntityEvent event) {
 		PlayerEntity player = event.getPlayer();
 		if (player.swingingArm == null) return;
