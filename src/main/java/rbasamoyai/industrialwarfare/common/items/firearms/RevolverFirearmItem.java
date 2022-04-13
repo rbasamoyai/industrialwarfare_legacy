@@ -1,31 +1,39 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.fml.network.PacketDistributor;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.RevolverDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
-import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
-public abstract class SingleShotFirearmItem extends FirearmItem {
+public abstract class RevolverFirearmItem extends FirearmItem {
 
-	public SingleShotFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties) {
-		super(itemProperties, firearmProperties.needsCycle(false), SingleShotDataHandler::new);
+	public RevolverFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int cylinderSize) {
+		super(itemProperties, firearmProperties, () -> {
+			RevolverDataHandler handler = new RevolverDataHandler();
+			handler.setMagazineSize(cylinderSize);
+			return handler;
+		});
 	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			ItemStack ammo = h.extractAmmo();
-			// TODO: process ammo stack
+			if (ammo.isEmpty()) {
+				h.setCycled(false);
+				this.startCycle(firearm, shooter);
+				this.setDamage(firearm, this.getDamage(firearm) - 1);
+				return;
+			}
 			
 			float quality = h.getQuality();
 			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
@@ -53,55 +61,37 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 				IWNetwork.CHANNEL.send(target, msg);
 			}
 			
-			h.setFired(true);
+			h.setCycled(false);
 			h.setAction(ActionType.NOTHING, this.cooldownTime);
 		});
 	}
 
-	@Override 
+	@Override
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
-			h.setAction(ActionType.NOTHING, 1);
+			h.setAction(ActionType.CYCLING, this.cycleTime);
 		});
-	}
-
-	@Override
-	protected void startReload(ItemStack firearm, LivingEntity shooter) {
-		if (isAiming(firearm)) return;
-		getDataHandler(firearm).ifPresent(h -> {
-			h.setAction(ActionType.START_RELOADING, getTimeModifiedByEntity(shooter, this.reloadTime));
-		});
-	}
-	
-	@Override
-	protected void actuallyStartReloading(ItemStack firearm, LivingEntity shooter) {
-		this.reload(firearm, shooter);
 	}
 
 	@Override
 	protected void endCycle(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
+			h.setCycled(true);
+			h.setAmmoPosition(this.wrapInt(h.getAmmoPosition() + 1, h.getMagazineSize()));
 			h.setAction(ActionType.NOTHING, 1);
 		});
 	}
-
-	@Override
-	protected void reload(ItemStack firearm, LivingEntity shooter) {
-		getDataHandler(firearm).ifPresent(h -> {
-			ItemStack ammo = shooter.getProjectile(firearm);
-			if (h.isFull() || !this.getAllSupportedProjectiles().test(ammo)) {
-				h.setAction(ActionType.NOTHING, 1);
-				return;
-			}
-			
-			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
-				ammo = ammo.copy();
-			}
-			
-			h.insertAmmo(ammo);
-			h.setFired(false);
-			h.setAction(ActionType.NOTHING, 1);
-		});
+	
+	protected boolean isEmptyOrFired(ItemStack stack) { return stack.isEmpty() || stack.getItem() == ItemInit.CARTRIDGE_CASE.get(); }
+	
+	protected int wrapInt(int wrap, int mod) {
+		if (wrap < 0) {
+			return wrap % mod + mod;
+		} else if (wrap >= mod) {
+			return wrap % mod; 
+		} else {
+			return wrap;
+		}
 	}
 
 }

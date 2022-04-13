@@ -1,14 +1,11 @@
 Current TODO:
 - Content drop?
-	- Colt SAA
-		- Rewriting animation
-		instructions to handle
-		revolvers
 	- Matchlocks
 		- English matchlock
 		- Tanegashima (Japanese
 		matchlock)
 		- Slow match system
+	- Rewrite firearm class hierarchy?
 		
 - Rewrite attacking?
 	- Attack aiming?

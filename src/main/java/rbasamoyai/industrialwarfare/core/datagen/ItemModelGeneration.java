@@ -40,6 +40,7 @@ public class ItemModelGeneration extends ItemModelProvider {
 		
 		simpleBuilder("recipe_manual");
 		
+		simpleBuilder("cartridge_case", "ammo_large_metal_casing");
 		simpleBuilder("ammo_generic", "ammo_large_metal");
 		simpleBuilder("infinite_ammo_generic", "ammo_large_metal");
 		

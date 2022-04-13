@@ -279,15 +279,27 @@ public abstract class FirearmItem extends ShootableItem implements
 		});
 	}
 	
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setDisplaySprinting(true);
+		});
+	}
+	
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setDisplaySprinting(false);
+		});
+	}
+	
 	@Override
-	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
 		
-		if (world.isClientSide) return;
-		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
+		if (level.isClientSide) return;
+		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) level);
 		
-		getDataHandler(stack).ifPresent(h -> {
+		getDataHandler(stack).ifPresent(h -> {	
 			if (!h.isSelected() && selected) {
 				this.onSelect(stack, shooter);
 			}
@@ -299,6 +311,15 @@ public abstract class FirearmItem extends ShootableItem implements
 				h.setAiming(false);
 				h.setMelee(false);
 				return;
+			}
+			
+			if (h.getAction() == ActionType.NOTHING) {
+				boolean sprinting = entity.isSprinting();
+				if (h.shouldDisplaySprinting() && !sprinting) {
+					this.stopSprinting(stack, shooter);
+				} else if (!h.shouldDisplaySprinting() && sprinting) {
+					this.startSprinting(stack, shooter);
+				}
 			}
 			
 			if (!h.isFinishedAction()) {
@@ -418,32 +439,36 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		ItemStackTileEntityRenderer ister = this.getItemStackTileEntityRenderer();
 		if (!(ister instanceof FirearmRenderer)) return;
-		FirearmRenderer imrister = (FirearmRenderer) ister;
+		FirearmRenderer renderer = (FirearmRenderer) ister;
 		
 		for (List<String> tokens : instructionTokens) {
-			String firstTok = tokens.get(0);
-			if (tokens.size() < 2) continue;
-			
-			String boneName = tokens.get(1);
-			
-			if (firstTok.equals("set_hidden")) {
-				boolean hidden = Boolean.valueOf(tokens.get(2));
-				imrister.setBoneVisibility(boneName, hidden);
-			} else if (firstTok.equals("move")) {
-				float x = Float.valueOf(tokens.get(2));
-				float y = Float.valueOf(tokens.get(3));
-				float z = Float.valueOf(tokens.get(4));
-				imrister.setBonePosition(boneName, x, y, z);
-			} else if (firstTok.equals("rotate")) {
-				float x = Float.valueOf(tokens.get(2));
-				float y = Float.valueOf(tokens.get(3));
-				float z = Float.valueOf(tokens.get(4));
-				imrister.setBoneRotation(boneName, x, y, z);
-			} else if (firstTok.equals("suppress_mod")) {
-				imrister.suppressModification(boneName);
-			} else if (firstTok.equals("allow_mod")) {
-				imrister.allowModification(boneName);
-			}
+			if (!tokens.isEmpty()) this.interpretFirstPersonInstructions(tokens, renderer);
+		}
+	}
+	
+	protected void interpretFirstPersonInstructions(List<String> tokens, FirearmRenderer renderer) {
+		String firstTok = tokens.get(0);
+		if (tokens.size() < 2) return;
+		
+		String boneName = tokens.get(1);
+		
+		if (firstTok.equals("set_hidden")) {
+			boolean hidden = Boolean.valueOf(tokens.get(2));
+			renderer.hideBone(boneName, hidden);
+		} else if (firstTok.equals("move")) {
+			float x = Float.valueOf(tokens.get(2));
+			float y = Float.valueOf(tokens.get(3));
+			float z = Float.valueOf(tokens.get(4));
+			renderer.setBonePosition(boneName, x, y, z);
+		} else if (firstTok.equals("rotate")) {
+			float x = Float.valueOf(tokens.get(2));
+			float y = Float.valueOf(tokens.get(3));
+			float z = Float.valueOf(tokens.get(4));
+			renderer.setBoneRotation(boneName, x, y, z);
+		} else if (firstTok.equals("suppress_mod")) {
+			renderer.suppressModification(boneName);
+		} else if (firstTok.equals("allow_mod")) {
+			renderer.allowModification(boneName);
 		}
 	}
 	
@@ -948,6 +973,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		String name = bone.getName();
 		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head") ? 0.0f : 1.0f;
 	}
+	
+	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
 	
 	/*
 	 * STATIC QUERY METHODS

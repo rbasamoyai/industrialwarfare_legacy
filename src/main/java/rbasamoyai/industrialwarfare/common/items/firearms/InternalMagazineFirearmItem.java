@@ -33,10 +33,10 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-		super.inventoryTick(stack, world, entity, slot, selected);
+	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+		super.inventoryTick(stack, level, entity, slot, selected);
 		
-		if (!selected && entity instanceof LivingEntity && !world.isClientSide) {
+		if (!selected && entity instanceof LivingEntity && !level.isClientSide) {
 			AnimationController<?> controller = GeckoLibUtil.getControllerForStack(this.factory, stack, "controller");
 			controller.markNeedsReload();
 		}
@@ -46,7 +46,7 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	protected void reload(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			ItemStack ammo = shooter.getProjectile(firearm);
-			if (ammo.isEmpty()) {
+			if (h.isFull() || !this.getAllSupportedProjectiles().test(ammo)) {
 				h.setAction(ActionType.NOTHING, 1);
 				return;
 			}

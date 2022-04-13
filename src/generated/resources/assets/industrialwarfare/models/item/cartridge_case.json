@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "industrialwarfare:item/ammo_large_metal_casing"
+  }
+}

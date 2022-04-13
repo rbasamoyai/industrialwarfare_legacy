@@ -120,14 +120,33 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			int animId = ANIM_HIP_AIMING;
+			String animStr = "hip_aiming";
 			if (isAiming(firearm)) {
-				AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_ADS_AIMING);
-				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "ads_aiming", true, 1.0f);
-			} else {
-				AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
-				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "hip_aiming", true, 1.0f);
+				animId = ANIM_ADS_AIMING;
+				animStr = "ads_aiming";
+			} else if (shooter.isSprinting()) {
+				animId = ANIM_PORT_ARMS;
+				animStr = "port_arms";
 			}
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
 		}
+	}
+	
+	@Override
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.startSprinting(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_PORT_ARMS);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "port_arms", true, 1.0f);
+		}
+	}
+	
+	@Override
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.stopSprinting(firearm, shooter);
+		this.doNothing(firearm, shooter);
 	}
 	
 	@Override
@@ -252,6 +271,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
+		
 		switch (state) {
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
 		case ANIM_TRAIL_ARMS: builder.addAnimation("trail_arms", true); break;
@@ -362,7 +382,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public AnimationBuilder getDefaultAnimation(ItemStack stack, LivingEntity entity, AnimationController<?> controller) {
 		return (new AnimationBuilder())
 				.addAnimation("select_firearm", false)
-				.addAnimation("hip_aiming", true);
+				.addAnimation(getDataHandler(stack).map(IFirearmItemDataHandler::shouldDisplaySprinting).orElse(false) ? "port_arms" : "hip_aiming", true);
 	}
 	
 }

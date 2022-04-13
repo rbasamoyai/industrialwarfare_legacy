@@ -6,7 +6,7 @@ import net.minecraft.network.PacketBuffer;
 
 public interface IItemWithScreen {
 	
-	boolean canOpen(ItemStack stack);
+	boolean canOpenScreen(ItemStack stack);
 	INamedContainerProvider getItemContainerProvider(ItemStack stack);
 	default void writeContainerInfo(PacketBuffer buf, ItemStack stack) {}
 	

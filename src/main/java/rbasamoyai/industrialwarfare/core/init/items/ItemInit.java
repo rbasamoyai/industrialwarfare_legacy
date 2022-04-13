@@ -62,6 +62,9 @@ public class ItemInit {
 				@Override public boolean isFoil(ItemStack stack) { return true; }
 			});
 	
+	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));
 	}

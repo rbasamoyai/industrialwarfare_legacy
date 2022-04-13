@@ -65,7 +65,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
-	@Override public boolean canOpen(ItemStack stack) { return false; }
+	@Override public boolean canOpenScreen(ItemStack stack) { return false; }
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	@Override 
@@ -101,10 +101,33 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			boolean isAiming = isAiming(firearm);
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_AIMING : ANIM_HIP_AIMING);
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", isAiming ? "ads_aiming" : "hip_aiming", true, 1.0f);
+			int animId = ANIM_HIP_AIMING;
+			String animStr = "hip_aiming";
+			if (isAiming(firearm)) {
+				animId = ANIM_ADS_AIMING;
+				animStr = "ads_aiming";
+			} else if (shooter.isSprinting()) {
+				animId = ANIM_PORT_ARMS;
+				animStr = "port_arms";
+			}
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
 		}
+	}
+	
+	@Override
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.startSprinting(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_PORT_ARMS);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "port_arms", true, 1.0f);
+		}
+	}
+	
+	@Override
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.stopSprinting(firearm, shooter);
+		this.doNothing(firearm, shooter);
 	}
 	
 	@Override

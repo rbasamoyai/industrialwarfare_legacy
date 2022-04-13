@@ -75,6 +75,7 @@ public class IWItemGroups {
 					getItemStack(ItemInit.TASK_SCROLL),
 					getItemStack(ItemInit.LABEL),
 					getItemStack(ItemInit.SCHEDULE),
+					getItemStack(ItemInit.CARTRIDGE_CASE),
 					getItemStack(ItemInit.AMMO_GENERIC),
 					getItemStack(ItemInit.INFINITE_AMMO_GENERIC)
 					));
@@ -152,8 +153,9 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1),
-					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1)
+					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		

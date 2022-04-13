@@ -640,7 +640,7 @@ public class WhistleItem extends Item implements
 	}
 	
 	@Override
-	public boolean canOpen(ItemStack stack) {
+	public boolean canOpenScreen(ItemStack stack) {
 		return true;
 	}
 	

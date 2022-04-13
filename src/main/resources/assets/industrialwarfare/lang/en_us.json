@@ -12,6 +12,7 @@
 	"item.industrialwarfare.ammo_232": "Intermediate Caliber Round (Smokeless)",
 	"item.industrialwarfare.ammo_233": "Large Caliber Round (Smokeless)",
 	
+	"item.industrialwarfare.cartridge_case": "Cartridge Case",
 	"item.industrialwarfare.ammo_generic": "Generic Ammo",
 	"item.industrialwarfare.infinite_ammo_generic": "Infinite Generic Ammo",
 	
@@ -115,6 +116,7 @@
 	"item.industrialwarfare.rifle_henry":			"Henry Rifle",
 	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
+	"item.industrialwarfare.colt_saa": "Colt Single Action Army Revolver",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -397,5 +399,6 @@
 	"profession.industrialwarfare.jobless":		"Jobless",
 	
 	"subtitle.industrialwarfare.item.heavy_rifle.fired": "Heavy rifle fired",
-	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired"
+	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
+	"subtitle.industrialwarfare.item.revolver.fired": "Revolver fired"
 }

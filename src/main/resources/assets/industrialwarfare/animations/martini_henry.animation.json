@@ -1072,6 +1072,99 @@
 				"0.0": "set_hidden cartridge true; allow_mod lever_pin"
 			}
 		},
+		"port_arms": {
+			"loop": true,
+			"animation_length": 6,
+			"bones": {
+				"firearm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-21.39959, -49.1684, -10.11879]
+						},
+						"3.0": {
+							"vector": [-24.96153, -44.35388, -12.09094],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [-21.39959, -49.1684, -10.11879],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [5, -3, -1]
+						},
+						"3.0": {
+							"vector": [5, -3, -1],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [5, -3, -1],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"arm_left": {
+					"rotation": {
+						"0.0": {
+							"vector": [39.05144, 18.97367, -20.2831]
+						},
+						"3.0": {
+							"vector": [46.68966, 19.52509, -19.72717],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [39.05144, 18.97367, -20.2831],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [3, -10, 1]
+						},
+						"3.0": {
+							"vector": [3, -9, 2],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [3, -10, 1],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"arm_right": {
+					"rotation": {
+						"0.0": {
+							"vector": [90, -12.5, 0]
+						},
+						"3.0": {
+							"vector": [97.58022, -14.97839, -0.33769],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [90, -12.5, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [2, -7, 9]
+						},
+						"3.0": {
+							"vector": [2, -7, 9],
+							"easing": "easeInOutSine"
+						},
+						"6.0": {
+							"vector": [2, -7, 9],
+							"easing": "easeInOutSine"
+						}
+					}
+				}
+			},
+			"timeline": {
+				"0.0": "set_hidden cartridge true"
+			}
+		},
 		"select_firearm": {
 			"loop": "hold_on_last_frame",
 			"animation_length": 1,

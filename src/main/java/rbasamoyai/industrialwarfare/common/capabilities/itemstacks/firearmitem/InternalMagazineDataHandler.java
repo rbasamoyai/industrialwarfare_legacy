@@ -41,6 +41,11 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	}
 	
 	@Override
+	public int getAmmoPosition() {
+		return this.magazine.size() <= 0 ? 0 : this.magazine.size() - 1;
+	}
+	
+	@Override
 	public boolean hasAmmo() {
 		return this.magazine.size() > 0;
 	}

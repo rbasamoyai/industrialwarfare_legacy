@@ -38,6 +38,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	protected IRenderTypeBuffer currentBuffer;
 	protected RenderType renderType;
 	protected TransformType transformType;
+	protected ItemStack itemStack;
 	
 	protected FirearmItem animatable;
 	
@@ -55,6 +56,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	public void renderByItem(ItemStack itemStack, TransformType transformType, MatrixStack matrixStack, 
 			IRenderTypeBuffer bufferIn, int combinedLightIn, int p_239207_6_) {
 		this.transformType = transformType;
+		this.itemStack = itemStack;
 		super.renderByItem(itemStack, transformType, matrixStack, bufferIn, combinedLightIn, p_239207_6_);
 	}
 	
@@ -121,7 +123,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 			}
 			
 			if (this.queuedBoneAddRotations.containsKey(name)) {
-				Vector3f rot = this.queuedBoneSetRotations.get(name);
+				Vector3f rot = this.queuedBoneAddRotations.get(name);
 				bone.setRotationX(bone.getRotationX() + rot.x());
 				bone.setRotationY(bone.getRotationY() + rot.y());
 				bone.setRotationZ(bone.getRotationZ() + rot.z());
@@ -164,14 +166,14 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public Integer getUniqueID(FirearmItem animatable) {
-		if (this.transformType != TransformType.FIRST_PERSON_LEFT_HAND && this.transformType != TransformType.FIRST_PERSON_RIGHT_HAND && this.transformType != TransformType.FIXED) {
+		if (this.transformType != TransformType.FIRST_PERSON_LEFT_HAND && this.transformType != TransformType.FIRST_PERSON_RIGHT_HAND) {
 			return -1;
 		}
 		return super.getUniqueID(animatable);
 	}
 	
-	public void setBoneVisibility(String name, boolean isVisible) {
-		if (isVisible) {
+	public void hideBone(String name, boolean hide) {
+		if (hide) {
 			this.hiddenBones.add(name);
 		} else {
 			this.hiddenBones.remove(name);
@@ -196,5 +198,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	public void setBoneRotation(String name, float x, float y, float z) {
 		this.queuedBoneSetRotations.put(name, new Vector3f(x, y, z));
 	}
+	
+	public ItemStack getCurrentItem() { return this.itemStack; }
 	
 }

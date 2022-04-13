@@ -40,7 +40,7 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * effectiveness) / 1.5f;
+			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
@@ -69,7 +69,7 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 	}
 	
 	@Override
-	public boolean canOpen(ItemStack stack) {
+	public boolean canOpenScreen(ItemStack stack) {
 		return getDataHandler(stack).map(IFirearmItemDataHandler::isFinishedAction).orElse(false);
 	}
 	
@@ -98,11 +98,6 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 		if (isMeleeing(stack)) return false;
 		if (!isFinishedAction(stack)) return true;
 		return super.onEntitySwing(stack, entity);
-	}
-	
-	@Override
-	public boolean shouldHideCrosshair(ItemStack stack) {
-		return true;
 	}
 
 }

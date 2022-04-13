@@ -65,6 +65,28 @@
       }
     ]
   },
+  "item.revolver.fired": {
+    "subtitle": "subtitle.industrialwarfare.item.revolver.fired",
+    "sounds": [
+      {
+        "name": "industrialwarfare:firearms/revolver/fired",
+        "volume": 1.5,
+        "pitch": 0.8,
+        "attenuation_distance": 64
+      },
+      {
+        "name": "industrialwarfare:firearms/revolver/fired",
+        "volume": 1.5,
+        "pitch": 0.9,
+        "attenuation_distance": 64
+      },
+      {
+        "name": "industrialwarfare:firearms/revolver/fired",
+        "volume": 1.5,
+        "attenuation_distance": 64
+      }
+    ]
+  },
   "item.heavy_rifle.fired": {
     "subtitle": "subtitle.industrialwarfare.item.heavy_rifle.fired",
     "sounds": [
@@ -84,6 +106,24 @@
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
         "volume": 1.5,
         "attenuation_distance": 80
+      }
+    ]
+  },
+  "item.firearms.hammer_click": {
+    "sounds": [
+      {
+        "name": "industrialwarfare:firearms/hammer_click",
+        "pitch": 0.9,
+        "attenuation_distance": 4
+      },
+      {
+        "name": "industrialwarfare:firearms/hammer_click",
+        "pitch": 0.95,
+        "attenuation_distance": 4
+      },
+      {
+        "name": "industrialwarfare:firearms/hammer_click",
+        "attenuation_distance": 4
       }
     ]
   },
