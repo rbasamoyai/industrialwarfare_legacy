@@ -45,6 +45,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionT
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PrepareForShootingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.RunCommandFromTaskScrollTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.ShootPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.StartSelfDefenseTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.StopSelfDefenseTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.WalkToTargetSpecialTask;
@@ -91,8 +92,9 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
 				Pair.of(1, new MoveToTargetTask(3.0f)),
-				Pair.of(1, new PrepareForShootingTask<>()),
+				Pair.of(1, new PrepareForShootingTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
 				Pair.of(2, new ExtendedShootTargetTask<>()),
+				Pair.of(2, new ShootPositionTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
 				Pair.of(2, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(3, new EndAttackTask(0, (e1, e2) -> false)),
 				Pair.of(3, new EndWhistleAttackTask()),
@@ -118,8 +120,7 @@ public class NPCTasks {
 		}
 		
 		// Targets will be assigned in formation code
-		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
-			&& (!brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get()) || brain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get()))) {
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
 			return false;
 		}
 		
@@ -165,6 +166,8 @@ public class NPCTasks {
 		Optional<GlobalPos> gpop = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get());
 		BlockPos pos = gpop.isPresent() && gpop.get().dimension() == npc.level.dimension() ? gpop.get().pos() : npc.blockPosition();
 		
+		Optional<LivingEntity> targetOptional = Optional.empty();
+		
 		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(new ArrayList<>());
 		for (LivingEntity e : visibleEntities) {		
 			if (!e.blockPosition().closerThan(pos, pursuitDistance)) continue;
@@ -174,27 +177,36 @@ public class NPCTasks {
 				if (npcOwner.equals(otherOwner)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, otherOwner);
 				if (status == DiplomaticStatus.ENEMY || status != DiplomaticStatus.ALLY && isViableNonEnemyTarget(e)) {
-					return Optional.of(e);
+					targetOptional = Optional.of(e);
+					break;
 				}
 			}
 			
 			Brain<?> targetBrain = e.getBrain();
 			if (targetBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && targetBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() == npc) {
-				return Optional.of(e);
+				targetOptional = Optional.of(e);
+				break;
 			}
-			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc) {
-				return Optional.of(e);
+			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc && isViableTargetingTarget((MobEntity) e)) {
+				targetOptional = Optional.of(e);
+				break;
 			}
 			
 			if (e instanceof PlayerEntity && ((PlayerEntity) e).isCreative()) {
 				PlayerIDTag otherPlayerTag = PlayerIDTag.of((PlayerEntity) e);
 				if (npcOwner.equals(otherPlayerTag)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((PlayerEntity) e));
-				// TODO: stand down modifier (e.g. diplomatic meeting in game or sumfin)
+				
 				if (status == DiplomaticStatus.ENEMY || status != DiplomaticStatus.ALLY && isViableNonEnemyTarget(e)) {
-					return Optional.of(e);
+					targetOptional = Optional.of(e);
+					break;
 				}
 			}
+		}
+		
+		if (targetOptional.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(npc.level.dimension(), npc.blockPosition()));
+			return targetOptional;
 		}
 		
 		// Assisting nearby allies with their attack targets
@@ -207,22 +219,31 @@ public class NPCTasks {
 			if (allyBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) {
 				LivingEntity target = allyBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
 				if (BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
-					return Optional.of(target);
+					targetOptional = Optional.of(e);
+					break;
 				}
 			}
 			if (e instanceof MobEntity) {
 				LivingEntity target = ((MobEntity) e).getTarget();
 				if (target != null && BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
-					return Optional.of(target);
+					targetOptional = Optional.of(e);
+					break;
 				}
 			}
 		}
 		
-		return Optional.empty();
+		if (targetOptional.isPresent()) {
+			brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(npc.level.dimension(), npc.blockPosition()));
+		}
+		return targetOptional;
 	}
 	
-	// TODO: neutral/unknown modifiers (e.g. non-military/attacking)
+	// TODO: neutral/unknown modifiers (e.g. non-military)
 	private static boolean isViableNonEnemyTarget(LivingEntity target) {
+		return false;
+	}
+	
+	private static boolean isViableTargetingTarget(MobEntity targeter) {
 		return true;
 	}
 	

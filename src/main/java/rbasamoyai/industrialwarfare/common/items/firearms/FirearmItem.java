@@ -34,6 +34,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.IDyeableArmorItem;
 import net.minecraft.item.Item;
@@ -206,6 +208,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	@Override
 	public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
 		if (entity.level.isClientSide) return true;
+		if (entity instanceof PlayerEntity) {
+			Container ct = ((PlayerEntity) entity).containerMenu;
+			if (ct != null && !(ct instanceof PlayerContainer)) return true;
+		}
 		
 		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isFinishedAction() || h.isMeleeing()) return;
@@ -217,7 +223,7 @@ public abstract class FirearmItem extends ShootableItem implements
 				stack.hurtAndBreak(1, entity, e -> {
 					e.broadcastBreakEvent(entity.swingingArm);
 				});
-			} else if (this.needsCycle && !h.isCycled() && !h.isAiming()) {
+			} else if (this.needsCycle && !h.isCycled()) {
 				this.startCycle(stack, entity);
 			} else if (!ammo.isEmpty() && this.getAllSupportedProjectiles().test(ammo) && !h.isFull() && !h.isAiming()) {
 				this.startReload(stack, entity);
@@ -261,19 +267,39 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
 	
-	public abstract void startAiming(ItemStack firearm, LivingEntity shooter);
+	public void startAiming(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAiming(true);
+		});
+	}
 	
-	public abstract void stopAiming(ItemStack firearm, LivingEntity shooter);
+	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setAiming(false);
+		});
+	}
+	
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setDisplaySprinting(true);
+		});
+	}
+	
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setDisplaySprinting(false);
+		});
+	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
 		
-		if (world.isClientSide) return;
-		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) world);
+		if (level.isClientSide) return;
+		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) level);
 		
-		getDataHandler(stack).ifPresent(h -> {
+		getDataHandler(stack).ifPresent(h -> {	
 			if (!h.isSelected() && selected) {
 				this.onSelect(stack, shooter);
 			}
@@ -285,6 +311,15 @@ public abstract class FirearmItem extends ShootableItem implements
 				h.setAiming(false);
 				h.setMelee(false);
 				return;
+			}
+			
+			if (h.getAction() == ActionType.NOTHING) {
+				boolean sprinting = entity.isSprinting();
+				if (h.shouldDisplaySprinting() && !sprinting) {
+					this.stopSprinting(stack, shooter);
+				} else if (!h.shouldDisplaySprinting() && sprinting) {
+					this.startSprinting(stack, shooter);
+				}
 			}
 			
 			if (!h.isFinishedAction()) {
@@ -372,7 +407,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public boolean shouldTransform(ItemStack stack, PlayerEntity player) {
-		return getDataHandler(stack).map(h -> (h.getAction() == ActionType.NOTHING || h.isFinishedAction()) && h.isAiming()).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemDataHandler::isAiming).orElse(false);
 	}
 	
 	@Override
@@ -404,21 +439,36 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		ItemStackTileEntityRenderer ister = this.getItemStackTileEntityRenderer();
 		if (!(ister instanceof FirearmRenderer)) return;
-		FirearmRenderer imrister = (FirearmRenderer) ister;
+		FirearmRenderer renderer = (FirearmRenderer) ister;
 		
 		for (List<String> tokens : instructionTokens) {
-			String firstTok = tokens.get(0);
-			if (firstTok.equals("set_hidden")) {
-				String boneName = tokens.get(1);
-				boolean hidden = Boolean.valueOf(tokens.get(2));
-				imrister.setBoneVisibility(boneName, hidden);
-			} else if (firstTok.equals("move")) {
-				String boneName = tokens.get(1);
-				float x = Float.valueOf(tokens.get(2));
-				float y = Float.valueOf(tokens.get(3));
-				float z = Float.valueOf(tokens.get(4));
-				imrister.moveBone(boneName, x, y, z);
-			}
+			if (!tokens.isEmpty()) this.interpretFirstPersonInstructions(tokens, renderer);
+		}
+	}
+	
+	protected void interpretFirstPersonInstructions(List<String> tokens, FirearmRenderer renderer) {
+		String firstTok = tokens.get(0);
+		if (tokens.size() < 2) return;
+		
+		String boneName = tokens.get(1);
+		
+		if (firstTok.equals("set_hidden")) {
+			boolean hidden = Boolean.valueOf(tokens.get(2));
+			renderer.hideBone(boneName, hidden);
+		} else if (firstTok.equals("move")) {
+			float x = Float.valueOf(tokens.get(2));
+			float y = Float.valueOf(tokens.get(3));
+			float z = Float.valueOf(tokens.get(4));
+			renderer.setBonePosition(boneName, x, y, z);
+		} else if (firstTok.equals("rotate")) {
+			float x = Float.valueOf(tokens.get(2));
+			float y = Float.valueOf(tokens.get(3));
+			float z = Float.valueOf(tokens.get(4));
+			renderer.setBoneRotation(boneName, x, y, z);
+		} else if (firstTok.equals("suppress_mod")) {
+			renderer.suppressModification(boneName);
+		} else if (firstTok.equals("allow_mod")) {
+			renderer.allowModification(boneName);
 		}
 	}
 	
@@ -442,6 +492,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		return this.factory;
 	}
 	
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {}
+	
 	/*
 	 * THIRD-PERSON RENDERING METHODS
 	 */
@@ -449,13 +501,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
-		ResourceLocation loc = renderer.getTextureLocation(entity);
+		EntityModel<?> model = baseRenderer.getModel();
+		ResourceLocation loc = baseRenderer.getTextureLocation(entity);
 		int packedOverlay = LivingRenderer.getOverlayCoords(entity, 0.0f);
 		
 		float bob = (float) entity.tickCount + partialTicks;
@@ -534,7 +586,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.pushPose();
 			
-			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
+			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, baseRenderer);
 			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
 			if (entity.deathTime > 0) {
@@ -551,13 +603,13 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			if (entity instanceof AbstractClientPlayerEntity) {
 				AbstractClientPlayerEntity client = (AbstractClientPlayerEntity) entity;
-				List<CapeLayer> capes = AnimUtils.getLayers(CapeLayer.class, renderer);
+				List<CapeLayer> capes = AnimUtils.getLayers(CapeLayer.class, baseRenderer);
 				for (CapeLayer layer : capes) {
 					layer.render(stack, bufferIn, packedLightIn, client, -1.0f, -1.0f, partialTicks, bob, -1.0f, -1.0f);
 				}
 			}
 			
-			List<ElytraLayer> elytras = AnimUtils.getLayers(ElytraLayer.class, renderer);
+			List<ElytraLayer> elytras = AnimUtils.getLayers(ElytraLayer.class, baseRenderer);
 			for (ElytraLayer layer : elytras) {
 				layer.render(stack, bufferIn, packedLightIn, entity, -1.0f, -1.0f, partialTicks, bob, -1.0f, -1.0f);
 			}
@@ -668,34 +720,34 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		
-		AnimUtils.hideLayers(CapeLayer.class, renderer);
-		AnimUtils.hideLayers(ElytraLayer.class, renderer);
-		AnimUtils.hideLayers(HeldItemLayer.class, renderer);
-		AnimUtils.hideLayers(BipedArmorLayer.class, renderer);
+		AnimUtils.hideLayers(CapeLayer.class, baseRenderer);
+		AnimUtils.hideLayers(ElytraLayer.class, baseRenderer);
+		AnimUtils.hideLayers(HeldItemLayer.class, baseRenderer);
+		AnimUtils.hideLayers(BipedArmorLayer.class, baseRenderer);
 	}
 
 	@Override
 	public void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn) {
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
+		EntityModel<?> model = baseRenderer.getModel();
 		
 		if (model instanceof PlayerModel) {
 			PlayerModel<?> pmodel = (PlayerModel<?>) model;
 			pmodel.setAllVisible(true);
 		}
 		
-		AnimUtils.restoreLayers(renderer);
+		AnimUtils.restoreLayers(baseRenderer);
 	}
 	
 	@Override
@@ -743,13 +795,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	@Override
 	public void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack,
 			IRenderTypeBuffer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue,
-			float alpha) {
+			float alpha, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> renderer =
+		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
 				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
-		EntityModel<?> model = renderer.getModel();
-		ResourceLocation loc = renderer.getTextureLocation(entity);
+		EntityModel<?> model = baseRenderer.getModel();
+		ResourceLocation loc = baseRenderer.getTextureLocation(entity);
 		
 		ThirdPersonItemAnimRenderer animRenderer = RenderEvents.RENDERER_CACHE.get(entity.getUUID());
 		
@@ -760,7 +812,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			BipedModel<?> bmodel = (BipedModel<?>) model;
 			PlayerModel<?> pmodel = bmodel instanceof PlayerModel ? (PlayerModel<?>) bmodel : null;
 			
-			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, renderer);
+			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, baseRenderer);
 			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
 			boolean isSneaking = bmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
@@ -921,6 +973,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		String name = bone.getName();
 		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head") ? 0.0f : 1.0f;
 	}
+	
+	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
 	
 	/*
 	 * STATIC QUERY METHODS

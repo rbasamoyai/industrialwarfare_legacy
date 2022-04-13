@@ -3,15 +3,24 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
@@ -36,7 +45,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
 					new FirearmItem.Properties()
-							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get())
+							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(10.0f)
 							.headshotMultiplier(3.0f)
 							.spread(0.1f)
@@ -61,10 +70,26 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	 */
 	
 	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
+		}
+	}
+	
+	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), SoundEventInit.RIFLE_FIRED.get(), SoundCategory.MASTER, 4.0f, 1.0f);
+			
+			Vector3d viewVector = shooter.getViewVector(1.0f);
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vector3d smokeDelta = viewVector.scale(0.5d);
+			int count = 20 + random.nextInt(21);
+			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
+			}
 			
 			boolean isAiming = isAiming(firearm);
 			int fpsAnim = isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING;
@@ -95,14 +120,33 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			int animId = ANIM_HIP_AIMING;
+			String animStr = "hip_aiming";
 			if (isAiming(firearm)) {
-				AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_ADS_AIMING);
-				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "ads_aiming", true, 1.0f);
-			} else {
-				AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
-				AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "hip_aiming", true, 1.0f);
+				animId = ANIM_ADS_AIMING;
+				animStr = "ads_aiming";
+			} else if (shooter.isSprinting()) {
+				animId = ANIM_PORT_ARMS;
+				animStr = "port_arms";
 			}
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
 		}
+	}
+	
+	@Override
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.startSprinting(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_PORT_ARMS);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "port_arms", true, 1.0f);
+		}
+	}
+	
+	@Override
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.stopSprinting(firearm, shooter);
+		this.doNothing(firearm, shooter);
 	}
 	
 	@Override
@@ -154,11 +198,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
 		super.startCycle(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_CYCLING);
+			boolean aiming = isAiming(firearm);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, aiming ? ANIM_ADS_CYCLING : ANIM_HIP_CYCLING);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
-			upperBody.add(new Tuple<>("hip_cycling", false));
-			upperBody.add(new Tuple<>("hip_aiming", true));
+			upperBody.add(new Tuple<>(aiming ? "ads_cycling" : "hip_cycling", false));
+			upperBody.add(new Tuple<>(aiming ? "ads_aiming" : "hip_aiming", true));
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
 		}
 	}
@@ -221,10 +266,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public static final int ANIM_ADS_FIRING = 11;
 	public static final int ANIM_RELOAD_END_EXTRACT = 12;
 	public static final int ANIM_SELECT_FIREARM = 13;
+	public static final int ANIM_ADS_CYCLING = 14;
 	
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
+		
 		switch (state) {
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
 		case ANIM_TRAIL_ARMS: builder.addAnimation("trail_arms", true); break;
@@ -270,6 +317,11 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			.addAnimation("ads_firing", false)
 			.addAnimation("ads_aiming", true);
 			break;
+		case ANIM_ADS_CYCLING:
+			builder
+			.addAnimation("ads_cycling", false)
+			.addAnimation("ads_aiming", true);
+			break;
 		case ANIM_RELOAD_END_EXTRACT:
 			builder
 			.addAnimation("reload_end_extract", false)
@@ -294,8 +346,20 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
 		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
-	}	
-
+	}
+	
+	@Override
+	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
+		
+		ItemStack item = entity.getMainHandItem();
+		
+		if (getDataHandler(item).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(item) ? 0.25f : 0.0f);
+		}
+	}
+	
 	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/vetterli_t.animation.json");
 	@Override
 	public ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity) {
@@ -318,7 +382,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public AnimationBuilder getDefaultAnimation(ItemStack stack, LivingEntity entity, AnimationController<?> controller) {
 		return (new AnimationBuilder())
 				.addAnimation("select_firearm", false)
-				.addAnimation("hip_aiming", true);
+				.addAnimation(getDataHandler(stack).map(IFirearmItemDataHandler::shouldDisplaySprinting).orElse(false) ? "port_arms" : "hip_aiming", true);
 	}
 	
 }

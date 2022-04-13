@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
+import net.minecraft.dispenser.IPosition;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
@@ -47,6 +48,7 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -94,8 +96,7 @@ public class NPCEntity extends CreatureEntity implements
 			.put(Pose.FALL_FLYING, EntitySize.scalable(0.6F, 0.6F))
 			.put(Pose.SWIMMING, EntitySize.scalable(0.6F, 0.6F))
 			.put(Pose.SPIN_ATTACK, EntitySize.scalable(0.6F, 0.6F))
-			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F))
-			.put(Pose.DYING, EntitySize.fixed(0.2F, 0.2F)).build();
+			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F)).build();
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,
@@ -129,8 +130,9 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
-			MemoryModuleTypeInit.STOP_EXECUTION.get(),
+			MemoryModuleTypeInit.SHOOTING_POS.get(),
 			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
+			MemoryModuleTypeInit.STOP_EXECUTION.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
 	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(
@@ -150,7 +152,7 @@ public class NPCEntity extends CreatureEntity implements
 	private float effectiveness;
 	private float timeModifier;
 	
-	protected int rangedAttackDelay;
+	protected int actionDelay;
 	
 	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
 		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
@@ -498,27 +500,22 @@ public class NPCEntity extends CreatureEntity implements
 		ItemStack weapon = this.getMainHandItem();
 		Item weaponItem = weapon.getItem();
 		
-		Brain<?> brain = this.getBrain();
-		if (brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
-			return true;
-		}
-		
 		if (weaponItem instanceof FirearmItem) {
-			// TODO: aiming skill qualifier
+			if (this.actionDelay <= 0) {
+				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
+			}
 			if (this.canAim()) {
 				if (!FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).startAiming(weapon, this);
+					this.actionDelay += 10;
 				}
 			}
-			if (!FirearmItem.isFinishedAction(weapon)) {
-				this.rangedAttackDelay = MathHelper.ceil(30.0f * this.timeModifier);
-			}
-		} else if (this.rangedAttackDelay <= 0) {
-			this.rangedAttackDelay = MathHelper.ceil(60.0f * this.timeModifier);
+		} else if (this.actionDelay <= 0) {
+			this.actionDelay = MathHelper.ceil(60.0f * this.timeModifier);
 		}
 		
-		--this.rangedAttackDelay;
-		return this.rangedAttackDelay > 0;
+		--this.actionDelay;
+		return this.actionDelay > 0;
 	}
 	
 	private boolean canAim() {
@@ -536,7 +533,8 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextTimeModifier();
 		
 		if (weaponItem instanceof BowItem) {
-			this.shootUsingBow(target);
+			Vector3d targetPos = target.position().add(0.0d, target.getBbHeight() * ONE_THIRD, 0.0d);
+			this.shootUsingBow(targetPos);
 			weapon.hurtAndBreak(1, this, npc -> this.broadcastBreakEvent(this.getUsedItemHand()));
 			this.stopUsingItem();
 		} else if (weaponItem instanceof CrossbowItem) {
@@ -545,11 +543,40 @@ public class NPCEntity extends CreatureEntity implements
 		} else if (weaponItem instanceof FirearmItem) {
 			this.shootUsingFirearm(target);
 			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				if (!this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(true)) {
+					this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+				}
 				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
-				this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
 			}
 		}
+	}
+	
+	@Override
+	public void performRangedAttack(IPosition target, float damage) {
+		if (target == null) return;
 		
+		ItemStack weapon = this.getMainHandItem();
+		Item weaponItem = weapon.getItem();
+		
+		this.getNextEffectiveness();
+		this.getNextTimeModifier();
+		
+		if (weaponItem instanceof BowItem) {
+			this.shootUsingBow(target);
+			weapon.hurtAndBreak(1, this, npc -> this.broadcastBreakEvent(this.getUsedItemHand()));
+			this.stopUsingItem();
+		} else if (weaponItem instanceof CrossbowItem) {
+			this.shootUsingCrossbow(null);
+			CrossbowItem.setCharged(weapon, false);
+		} else if (weaponItem instanceof FirearmItem) {
+			this.shootUsingFirearm(null);
+			if (this.brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())) {
+				if (!this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(true)) {
+					this.brain.setMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get(), true);
+				}
+				this.brain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
+			}
+		}
 	}
 	
 	private static final double ONE_THIRD = 1.0d / 3.0d;
@@ -558,7 +585,7 @@ public class NPCEntity extends CreatureEntity implements
 	/**
 	 * Code based on {@link net.minecraft.entity.monster.AbstractSkeletonEntity#performRangedAttack AbstractSkeletonEntity#performRangedAttack}
 	 */
-	private void shootUsingBow(LivingEntity target) {
+	private void shootUsingBow(IPosition target) {
 		ItemStack bow = this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem));
 		ItemStack projectile = this.getProjectile(bow).split(1);
 		AbstractArrowEntity arrow = ProjectileHelper.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
@@ -567,10 +594,10 @@ public class NPCEntity extends CreatureEntity implements
 			arrow = ((BowItem) mainhandItem).customArrow(arrow);
 		}
 		
-		double dx = target.getX() - this.getX();
-		double dz = target.getZ() - this.getZ();
+		double dx = target.x() - this.getX();
+		double dz = target.z() - this.getZ();
 		double dyOffset = MathHelper.sqrt(dx * dx + dz * dz);
-		double dy = target.getY(ONE_THIRD) - arrow.getY() + dyOffset * 0.2d;
+		double dy = target.y() - arrow.getY() + dyOffset * 0.2d;
 		float spread = 14.0f - 12.0f * this.effectiveness;
 		arrow.shoot(dx, dy, dz, ARROW_SPEED, spread);
 		
@@ -616,7 +643,7 @@ public class NPCEntity extends CreatureEntity implements
 				case RELOADING: return ShootingStatus.RELOADING;
 				case CYCLING: return ShootingStatus.CYCLING;
 				case NOTHING:
-					if (!h.isFinishedAction() && h.isFired()) return ShootingStatus.FIRED;
+					if (h.isAiming() || !h.isFinishedAction()) return ShootingStatus.FIRED;
 					if (h.hasAmmo()) {
 						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
 					}
@@ -638,13 +665,16 @@ public class NPCEntity extends CreatureEntity implements
 			if (FirearmItem.isFinishedAction(weapon)) {
 				if (FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).stopAiming(weapon, this);
-				} else {
-					return false;
+					this.actionDelay = 11;
 				}
+			} else {
+				return true;
 			}
+			if (this.actionDelay <= 0) return false;
+			--this.actionDelay;
 			return true;
 		}
-		
+
 		return false;
 	}
 	
@@ -688,9 +718,7 @@ public class NPCEntity extends CreatureEntity implements
 		if (!this.canUseRangedWeapon(weapon)) return false;
 		
 		Item weaponItem = weapon.getItem();
-		if (weaponItem instanceof ShootableItem && this.has(((ShootableItem) weaponItem).getAllSupportedProjectiles())) return true;
-		
-		return false;
+		return weaponItem instanceof ShootableItem && this.has(((ShootableItem) weaponItem).getAllSupportedProjectiles());
 	}
 	
 	@Override
@@ -703,13 +731,6 @@ public class NPCEntity extends CreatureEntity implements
 	public void stopRangedAttack() {
 		if (this.isUsingItem()) {
 			this.stopUsingItem();
-		}
-		
-		ItemStack weapon = this.getMainHandItem();
-		Item weaponItem = weapon.getItem();
-		
-		if (weaponItem instanceof FirearmItem) {
-			((FirearmItem) weaponItem).stopAiming(weapon, this);
 		}
 		
 		IWeaponRangedAttackMob.ShootingStatus status = this.getNextStatus();

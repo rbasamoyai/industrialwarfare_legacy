@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -19,13 +20,13 @@ public interface ISpecialThirdPersonRender {
 	boolean shouldSpecialRender(ItemStack stack, LivingEntity entity);
 	
 	default void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+			IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {}
 	
 	default void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+			IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {}
 	
 	default void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn) {}
+			IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {}
 	
 	ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity);
 	ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity);
@@ -36,7 +37,7 @@ public interface ISpecialThirdPersonRender {
 	List<AnimationController<ThirdPersonItemAnimEntity>> getAnimationControlllers(ItemStack stack, LivingEntity entity);
 	
 	void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack, IRenderTypeBuffer bufferIn,
-			int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha);
+			int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha, ThirdPersonItemAnimRenderer renderer);
 	
 	float getBoneAlpha(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha);
 	

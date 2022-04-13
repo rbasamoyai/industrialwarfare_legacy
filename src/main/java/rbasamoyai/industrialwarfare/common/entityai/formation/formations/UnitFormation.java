@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Streams;
 
+import net.minecraft.dispenser.IPosition;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -16,7 +17,10 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.BrainUtil;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ShootableItem;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -27,10 +31,14 @@ import net.minecraftforge.common.util.INBTSerializable;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
@@ -45,8 +53,12 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	private boolean loadDataOnNextTick = false;
 	private CompoundNBT dataToDeserialize = new CompoundNBT();
 	
+	protected FormationAttackType attackType = FormationAttackTypeInit.FIRE_AT_WILL.get();
+	
 	protected CreatureEntity follower;
 	private Float cachedAngle;
+	
+	protected Interval interval = Interval.T_1S;
 	
 	public UnitFormation(UnitFormationType<?> type) {
 		this.type = type;
@@ -56,11 +68,20 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public State getState() { return this.formationState; }
 	
 	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
+	public abstract void removeEntity(CreatureEntity entity);
+	
+	public abstract boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith);
 	
 	protected abstract void tick(FormationLeaderEntity leader);
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
 	
 	public void setFollower(CreatureEntity entity) { this.follower = entity; }
+	
+	public void setAttackType(FormationAttackType type) { 
+		if (this.type.checkAttackType(type)) this.attackType = type;
+	}
+	
+	public void setAttackInterval(Interval interval) { this.interval = interval; }
 	
 	public UnitFormationType<?> getType() {
 		return this.type;
@@ -175,7 +196,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public void killInnerFormationLeaders() {
-		if (this.follower != null) this.follower.kill();
+		if (this.follower != null && this.follower.getType() == EntityTypeInit.FORMATION_LEADER.get()) this.follower.kill();
 	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
@@ -199,16 +220,23 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public static boolean checkMemoriesForEngagement(CreatureEntity entity) {
 		Brain<?> brain = entity.getBrain();
 		return brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.REGISTERED);
+			&& brain.checkMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), MemoryModuleStatus.REGISTERED);
 	}
 	
 	public static <E extends CreatureEntity & IWeaponRangedAttackMob> boolean canDoRangedAttack(E unit, LivingEntity target) {
 		return unit.canDoRangedAttack()
 				&& BrainUtil.canSee(unit, target)
 				&& BrainUtil.isWithinAttackRange(unit, target, 0)
-				&& !unit.getBrain().hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+				&& unit.getBrain().checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED);
+	}
+	
+	public static <E extends CreatureEntity & IWeaponRangedAttackMob> boolean canDoRangedAttack(E unit, IPosition target, MemoryModuleType<IPosition> type ) {
+		if (!unit.canDoRangedAttack() || !unit.getBrain().checkMemory(type, MemoryModuleStatus.REGISTERED)) return false;
+		
+		Item item = unit.getMainHandItem().getItem();
+		if (!(item instanceof ShootableItem)) return false;
+		int range = ((ShootableItem) item).getDefaultProjectileRange();
+		return unit.position().closerThan(target, range);
 	}
 	
 	public static boolean isStopped(Entity e) {
@@ -217,6 +245,8 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	protected static final String TAG_STATE = "state";
 	protected static final String TAG_FOLLOWER = "follower";
+	protected static final String TAG_ATTACK_TYPE = "attackType";
+	protected static final String TAG_INTERVAL = "interval";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
@@ -225,12 +255,19 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		if (this.follower != null) {
 			nbt.putUUID(TAG_FOLLOWER, this.follower.getUUID());
 		}
+		nbt.putInt(TAG_INTERVAL, this.interval.getId());
+		nbt.putString(TAG_ATTACK_TYPE, this.attackType.getRegistryName().toString());
 		return nbt;
 	}
 	
 	@Override
 	public void deserializeNBT(CompoundNBT nbt) {
 		this.formationState = State.fromId(nbt.getInt(TAG_STATE));
+		ResourceLocation typeLoc = nbt.contains(TAG_ATTACK_TYPE)
+				? new ResourceLocation(nbt.getString(TAG_ATTACK_TYPE))
+				: IWModRegistries.FORMATION_ATTACK_TYPES.getDefaultKey();
+		this.interval = Interval.fromId(nbt.getInt(TAG_INTERVAL));
+		this.attackType = IWModRegistries.FORMATION_ATTACK_TYPES.getValue(typeLoc);
 		this.loadDataOnNextTick = true;
 		this.dataToDeserialize = nbt;
 	}
@@ -277,6 +314,22 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		@Override
 		public int hashCode() {
 			return this.x ^ (this.z << 16 | this.z >> 16);
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof Point) {
+				return this.hashCode() == obj.hashCode();
+			} else {
+				return false;
+			}
+		}
+		
+		@Override
+		public String toString() {
+			return "(" + this.x + ", " + this.z + ")";
 		}
 	}
 	

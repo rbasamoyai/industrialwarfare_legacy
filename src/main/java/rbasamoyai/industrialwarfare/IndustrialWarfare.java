@@ -12,6 +12,7 @@ import rbasamoyai.industrialwarfare.core.config.IWConfig;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCCombatSkillInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
@@ -46,6 +47,7 @@ public class IndustrialWarfare {
 		MemoryModuleTypeInit.MEMORY_MODULE_TYPES.register(modEventBus);
 		SoundEventInit.SOUND_EVENTS.register(modEventBus);
 		
+		FormationAttackTypeInit.FORMATION_ATTACK_TYPES.register(modEventBus);
 		NPCCombatSkillInit.COMBAT_SKILLS.register(modEventBus);
 		NPCComplaintInit.COMPLAINTS.register(modEventBus);
 		NPCProfessionInit.PROFESSIONS.register(modEventBus);

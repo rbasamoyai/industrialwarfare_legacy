@@ -4,30 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
-import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class DeferredFollowPointFormation extends PointFormation {
 	
-	private Point deferredPoint;
-	private UnitFormation deferredFormation;
 	private FormationLeaderEntity deferredLeader;
 	
 	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type, int formationRank) {
@@ -35,30 +25,26 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type, Map<Point, Integer> positions, List<UnitFormation> innerFormations, Point deferredPoint, UnitFormation deferredFormation) {
-		super(type, positions, innerFormations);
-		this.deferredPoint = deferredPoint;
-		this.deferredFormation = deferredFormation;
+		super(type, joinPositions(positions, deferredPoint, deferredFormation), joinFormations(innerFormations, deferredFormation));
 	}
 	
-	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
-		if (this.deferredFormation != null) {
-			this.deferredLeader = this.deferredFormation.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
-		}
-		return super.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
+	private static Map<Point, Integer> joinPositions(Map<Point, Integer> positions, Point deferredPoint, UnitFormation deferredFormation) {
+		Map<Point, Integer> result = new HashMap<>();
+		result.putAll(positions);
+		if (deferredPoint == null || deferredFormation == null) return result;
+		result.put(deferredPoint, deferredFormation.getLeaderRank());
+		return result;
 	}
 	
-	@Override
-	public void killInnerFormationLeaders() {
-		super.killInnerFormationLeaders();
-		if (this.deferredLeader != null) this.deferredLeader.kill();
+	private static List<UnitFormation> joinFormations(List<UnitFormation> innerFormations, UnitFormation deferredFormation) {
+		List<UnitFormation> result = new ArrayList<>(innerFormations.size() + 1);
+		result.addAll(innerFormations);
+		result.add(deferredFormation);
+		return result;
 	}
 	
 	public void setDeferredLeader(FormationLeaderEntity entity) {
 		this.deferredLeader = entity;
-		if (this.deferredLeader != null) {
-			this.deferredFormation = this.deferredLeader.getFormation();
-		}
 	}
 	
 	@Override
@@ -69,86 +55,18 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
-		if (super.addEntity(entity)) return true;
-		return this.deferredLeader == null ? false : this.deferredLeader.addEntity(entity);
-	}
-	
-	@Override
-	public void tick(FormationLeaderEntity leader) {
-		super.tick(leader);
-		if (this.formationState == null || this.formationState == State.BROKEN) return;
-		
-		boolean stopped = UnitFormation.isStopped(leader);
-		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
-		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		
-		if (this.deferredLeader != null && this.deferredLeader.isAlive()) {
-			if (UnitFormation.checkMemoriesForMovement(this.deferredLeader)) {
-				Vector3d followPos =
-						leader.position()
-						.add(leaderForward.scale(this.deferredPoint.z))
-						.add(leaderRight.scale(this.deferredPoint.x))
-						.add(0.0d, this.deferredLeader.getY() - leader.getY(), 0.0d);
-				
-				if (this.formationState == State.FORMED && stopped && this.deferredLeader.position().closerThan(followPos, CLOSE_ENOUGH)) {
-					// Stop and stay oriented
-					this.deferredLeader.yRot = leader.yRot;
-					this.deferredLeader.yHeadRot = leader.yRot;
-				} else {
-					Vector3d possiblePos = this.tryFindingNewPosition(this.deferredLeader, followPos);
-					if (possiblePos != null && !this.deferredLeader.position().closerThan(possiblePos, CLOSE_ENOUGH)) {
-						Brain<?> followerBrain = this.deferredLeader.getBrain();
-						followerBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-						followerBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
-					}
-				}
-			} else {
-				this.setFollower(null);
-			}
-		}
-	}
-	
-	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
 		return leader.position();
 	}
 	
-	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		float score = super.scoreOrientationAngle(angle, level, leader, pos);
-		if (this.deferredLeader == null) return score;
-		
-		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
-		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
-		
-		Vector3d adjustedPos =
-				pos
-				.add(forward.scale(this.deferredPoint.z))
-				.add(right.scale(this.deferredPoint.x))
-				.add(0.0d, this.deferredLeader.getY() - leader.getY(), 0.0d);
-		return score + this.deferredLeader.scoreOrientationAngle(angle, adjustedPos);
-	}
-	
 	private static final String TAG_DEFERRED_LEADER = "deferredLeader";
-	private static final String TAG_DEFERRED_POINT = "deferredPoint";
-	private static final String TAG_X = "x";
-	private static final String TAG_Z = "z";
 	
 	@Override
 	public CompoundNBT serializeNBT() {
 		CompoundNBT nbt = super.serializeNBT();
-		
-		CompoundNBT followPointTag = new CompoundNBT();
-		followPointTag.putInt(TAG_X, this.deferredPoint.x);
-		followPointTag.putInt(TAG_Z, this.deferredPoint.z);
-		nbt.put(TAG_DEFERRED_POINT, followPointTag);
-		
 		if (this.deferredLeader != null) {
 			nbt.putUUID(TAG_DEFERRED_LEADER, this.deferredLeader.getUUID());
 		}
-		
 		return nbt;
 	}
 	
@@ -157,9 +75,6 @@ public class DeferredFollowPointFormation extends PointFormation {
 		super.loadEntityData(nbt, level);
 		if (level.isClientSide) return;
 		ServerWorld slevel = (ServerWorld) level;
-		
-		CompoundNBT deferredPointTag = nbt.getCompound(TAG_DEFERRED_POINT);
-		this.deferredPoint = new Point(deferredPointTag.getInt(TAG_X), deferredPointTag.getInt(TAG_Z));
 		
 		if (nbt.contains(TAG_DEFERRED_LEADER)) {
 			Entity e = slevel.getEntity(nbt.getUUID(TAG_DEFERRED_LEADER));
@@ -176,6 +91,24 @@ public class DeferredFollowPointFormation extends PointFormation {
 			super();
 			this.deferredPoint = deferredPoint;
 			this.deferredFormation = deferredFormation;
+		}
+		
+		@Override
+		public Builder addFormationPoint(Point point, UnitFormation formation) {
+			return this.checkPoint(point) ? super.addFormationPoint(point, formation) : this.getThis();
+		}
+		
+		@Override
+		public Builder addRegularPoint(Point point, int rank) {
+			return this.checkPoint(point) ? super.addRegularPoint(point, rank) : this.getThis();
+		}
+		
+		private boolean checkPoint(Point point) {
+			if (point.equals(this.deferredPoint)) {
+				IndustrialWarfare.LOGGER.warn("Point {} is already occupied by the deferred point and will not be added!", point);
+				return false;
+			}
+			return true;
 		}
 		
 		@Override

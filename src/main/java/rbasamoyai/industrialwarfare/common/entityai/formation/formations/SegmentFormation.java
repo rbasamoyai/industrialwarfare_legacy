@@ -59,6 +59,20 @@ public class SegmentFormation extends UnitFormation {
 		return true;
 	}
 	
+	@Override
+	public void removeEntity(CreatureEntity entity) {
+		for (int file = 0; file < this.width; ++file) {
+			if (UnitFormation.isSlotEmpty(this.units[file]) || this.units[file].getEntity() != entity) continue;
+			this.units[file] = null;
+			return;
+		}
+	}
+	
+	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return false;
+	}
+	
 	public void removeEntityAtFile(int file) {
 		if (file < 0 || this.width <= file) return;
 		this.units[file] = null;
@@ -84,7 +98,6 @@ public class SegmentFormation extends UnitFormation {
 		
 		if (!leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
 		UUID commandGroup = leaderBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
-		UUID leaderUUID = leader.getUUID();
 		
 		for (int file = 0; file < this.width; ++file) {
 			FormationEntityWrapper<?> wrapper = this.units[file];
@@ -105,7 +118,7 @@ public class SegmentFormation extends UnitFormation {
 				continue;
 			}
 			
-			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID);
+			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 			
 			Vector3d precisePos = startPoint.add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
 			
@@ -160,6 +173,7 @@ public class SegmentFormation extends UnitFormation {
 		
 		nbt.putInt(TAG_WIDTH, this.width);
 		nbt.putInt(TAG_FORMATION_RANK, this.formationRank);
+		nbt.putBoolean(TAG_TAIL_END, this.tailEnd);
 		
 		ListNBT unitTags = new ListNBT();
 		for (int file = 0; file < this.width; ++file) {

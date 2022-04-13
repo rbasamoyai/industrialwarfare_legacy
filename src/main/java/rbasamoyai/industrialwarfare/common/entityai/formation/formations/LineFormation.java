@@ -8,8 +8,8 @@ import com.google.common.collect.Streams;
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Pose;
 import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
@@ -28,6 +28,7 @@ import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
+import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class LineFormation extends UnitFormation {
@@ -74,6 +75,22 @@ public class LineFormation extends UnitFormation {
 		}
 		return false;
 	}
+	
+	@Override
+	public void removeEntity(CreatureEntity entity) {
+		for (int rank = 0; rank < this.depth; ++rank) {
+			for (int file = 0; file < this.width; ++file) {
+				if (UnitFormation.isSlotEmpty(this.lines[rank][file]) || this.lines[rank][file].getEntity() != entity) continue;
+				this.lines[rank][file] = null;
+				return;
+			}
+		}
+	}
+	
+	@Override
+	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
+		return false;
+	}
 
 	@Override
 	protected void tick(FormationLeaderEntity leader) {
@@ -81,17 +98,16 @@ public class LineFormation extends UnitFormation {
 		
 		this.moveUpUnits();
 
-		boolean stopped = leader.getDeltaMovement().lengthSqr() < 0.0064d; // 0.08^2
+		boolean stopped = UnitFormation.isStopped(leader);
 		
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
+		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d) - 1));
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
 		if (!leaderBrain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())) return;
 		UUID commandGroup = leaderBrain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
-		UUID leaderUUID = leader.getUUID();
 		
 		boolean engagementFlag =
 				leaderBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)
@@ -105,7 +121,13 @@ public class LineFormation extends UnitFormation {
 		
 		boolean finishedForming = this.formationState == State.FORMING && !engagementFlag;
 		
-		for (int rank = 0; rank < this.depth; ++rank) {
+		int period = MathHelper.floor((double) leader.tickCount / (double) this.interval.getTime());
+		
+		int currentRank = period % this.depth;
+		int currentFile = period % this.width;
+		boolean newPeriod = leader.tickCount % this.interval.getTime() == 0;
+		
+		for (int rank = 0; rank < this.depth; ++rank) {		
 			for (int file = 0; file < this.width; ++file) {
 				FormationEntityWrapper<?> wrapper = this.lines[rank][file];
 				if (UnitFormation.isSlotEmpty(wrapper)) {
@@ -125,41 +147,72 @@ public class LineFormation extends UnitFormation {
 					continue;
 				}
 				
-				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leaderUUID);
+				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 				
-				Vector3d precisePos = startPoint.subtract(leaderForward.scale(rank)).add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
+				if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.VALUE_ABSENT)) {
+					if (this.attackType == FormationAttackTypeInit.FIRE_AT_WILL.get()) {
+						unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), true, 80L);
+					} else if (newPeriod) {
+						if (this.attackType == FormationAttackTypeInit.FIRE_BY_RANK.get() && rank == currentRank) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_FILE.get() && file == currentFile) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						} else if (this.attackType == FormationAttackTypeInit.FIRE_BY_COMPANY.get()) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.CAN_ATTACK.get(), false, 80L);
+						}
+					}
+				} else if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+					if (this.attackType == FormationAttackTypeInit.NO_ATTACK.get() || !engagementFlag) {
+						unitBrain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
+					}
+				}
+				
+				Vector3d firingPos =
+						startPoint
+						.add(leaderForward)
+						.add(leaderRight.scale(file))
+						.add(0.0d, unit.getEyeHeight(), 0.0d);				
 				
 				if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
 					// Engagement
-					if (!(unit instanceof IWeaponRangedAttackMob)) {
-						unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
-						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
+					if (unitBrain.getActiveNonCoreActivity().map(a -> a != Activity.FIGHT).orElse(true)) {
 						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
 						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
 						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
-						continue; // Ignore position movement
 					}
 					
-					if (rank == 0 && UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target)) {
-						unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
+					if (unit instanceof IWeaponRangedAttackMob
+						&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, firingPos, MemoryModuleTypeInit.SHOOTING_POS.get())) {
+						if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
+							unitBrain.eraseMemory(MemoryModuleTypeInit.SHOOTING_POS.get());
+						} else if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
+							unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), firingPos, 40L);
+						}
+					} else {
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
-						unitBrain.setMemory(MemoryModuleTypeInit.ACTIVITY_STATUS.get(), ActivityStatus.FIGHTING);
-						unitBrain.setMemory(MemoryModuleTypeInit.COMBAT_MODE.get(), combatMode);
-						unitBrain.setActiveActivityIfPossible(Activity.FIGHT);
-						unit.setPose(Pose.STANDING);
-					} else if (!unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
-						unit.setPose(Pose.CROUCHING);
+						continue;
 					}
-				} else if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+				} else if (unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+					unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
+				}
+				
+				Vector3d precisePos =
+						startPoint
+						.subtract(leaderForward.scale(rank))
+						.add(leaderRight.scale(file))
+						.add(0.0d, unit.getY() - startPoint.y, 0.0d);
+				
+				if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
 					// Stop and stay oriented if not attacking
 					unit.yRot = leader.yRot;
 					unit.yHeadRot = leader.yRot;
 					continue;
 				}
 				
-				if (!engagementFlag) {
-					unit.setPose(Pose.STANDING);
-				}
 				// Position movement
 				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
 				if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;

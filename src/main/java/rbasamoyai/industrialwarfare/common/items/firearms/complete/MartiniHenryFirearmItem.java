@@ -3,18 +3,26 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
@@ -41,7 +49,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
 					new FirearmItem.Properties()
-							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get())
+							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(19.0f)
 							.headshotMultiplier(3.0f)
 							.spread(0.1f)
@@ -57,7 +65,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
-	@Override public boolean canOpen(ItemStack stack) { return false; }
+	@Override public boolean canOpenScreen(ItemStack stack) { return false; }
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	@Override 
@@ -66,8 +74,19 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	/*
-	 * BROADCASTING ANIMATION OVERRIDES
+	 * ANIMATION CONTROL METHODS
 	 */
+	
+	private static final float PIN_ROT = (float) Math.toRadians(30.0d);
+	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		getDataHandler(stack).ifPresent(h -> {
+			if (h.getAction() == ActionType.NOTHING) {
+				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+			}
+		});
+	}
 	
 	@Override
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
@@ -82,17 +101,50 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			boolean isAiming = isAiming(firearm);
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_AIMING : ANIM_HIP_AIMING);
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", isAiming ? "ads_aiming" : "hip_aiming", true, 1.0f);
+			int animId = ANIM_HIP_AIMING;
+			String animStr = "hip_aiming";
+			if (isAiming(firearm)) {
+				animId = ANIM_ADS_AIMING;
+				animStr = "ads_aiming";
+			} else if (shooter.isSprinting()) {
+				animId = ANIM_PORT_ARMS;
+				animStr = "port_arms";
+			}
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
 		}
+	}
+	
+	@Override
+	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.startSprinting(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_PORT_ARMS);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "port_arms", true, 1.0f);
+		}
+	}
+	
+	@Override
+	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
+		super.stopSprinting(firearm, shooter);
+		this.doNothing(firearm, shooter);
 	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
+			ServerWorld slevel = (ServerWorld) shooter.level;
 			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
+			
+			Vector3d viewVector = shooter.getViewVector(1.0f);
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vector3d smokeDelta = viewVector.scale(0.5d);
+			int count = 30 + random.nextInt(31);
+			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
+			}
+			
 			boolean isAiming = isAiming(firearm);
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
 			
@@ -227,6 +279,20 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
 		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
+	}
+	
+	@Override
+	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
+			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
+		
+		ItemStack item = entity.getMainHandItem();
+		
+		getDataHandler(item).ifPresent(h -> {
+			if (h.getAction() == ActionType.NOTHING) {
+				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+			}
+		});
 	}
 
 	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/martini_henry_t.animation.json");

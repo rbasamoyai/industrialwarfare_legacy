@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.InternalMagazineDataHandler;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
+import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
@@ -32,10 +33,10 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-		super.inventoryTick(stack, world, entity, slot, selected);
+	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+		super.inventoryTick(stack, level, entity, slot, selected);
 		
-		if (!selected && entity instanceof LivingEntity && !world.isClientSide) {
+		if (!selected && entity instanceof LivingEntity && !level.isClientSide) {
 			AnimationController<?> controller = GeckoLibUtil.getControllerForStack(this.factory, stack, "controller");
 			controller.markNeedsReload();
 		}
@@ -45,12 +46,12 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	protected void reload(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			ItemStack ammo = shooter.getProjectile(firearm);
-			if (ammo.isEmpty()) {
+			if (h.isFull() || !this.getAllSupportedProjectiles().test(ammo)) {
 				h.setAction(ActionType.NOTHING, 1);
 				return;
 			}
 			
-			if (shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
 				ammo = ammo.copy();
 			}
 			
@@ -114,22 +115,6 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 			h.setAction(ActionType.START_RELOADING, getTimeModifiedByEntity(shooter, this.reloadStartTime));
 		});
 		// TODO: speedloaders
-	}
-	
-	@Override
-	public void startAiming(ItemStack firearm, LivingEntity shooter) {
-		getDataHandler(firearm).ifPresent(h -> {
-			h.setAiming(true);
-			h.setAction(ActionType.NOTHING, 10);
-		});
-	}
-	
-	@Override
-	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
-		getDataHandler(firearm).ifPresent(h -> {
-			h.setAiming(false);
-			h.setAction(ActionType.NOTHING, 10);
-		});
 	}
 	
 	@Override

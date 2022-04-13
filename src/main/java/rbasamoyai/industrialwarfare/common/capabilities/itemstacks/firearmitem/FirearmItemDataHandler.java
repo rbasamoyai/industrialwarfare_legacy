@@ -19,6 +19,7 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	protected boolean fired;
 	protected boolean meleeing = false;
 	protected boolean aiming;
+	protected boolean displaySprinting;
 	
 	@Override public void setSelected(boolean selected) { this.selected = selected; }
 	@Override public boolean isSelected() { return this.selected; }
@@ -34,6 +35,9 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	
 	@Override public void setAiming(boolean aiming) { this.aiming = aiming; }
 	@Override public boolean isAiming() { return this.aiming; }
+	
+	@Override public void setDisplaySprinting(boolean displaySprinting) { this.displaySprinting = displaySprinting; }
+	@Override public boolean shouldDisplaySprinting() { return this.displaySprinting; }
 	
 	@Override
 	public void setAction(ActionType action, int time) {

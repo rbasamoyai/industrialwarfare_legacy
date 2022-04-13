@@ -24,6 +24,9 @@ public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 	void setAiming(boolean aiming);
 	boolean isAiming();
 	
+	void setDisplaySprinting(boolean displaySprinting);
+	boolean shouldDisplaySprinting();
+	
 	void setAction(FirearmItem.ActionType action, int time);
 	ActionType getAction();
 	boolean isFinishedAction();
@@ -32,11 +35,18 @@ public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 	
 	void setMagazineSize(int size);
 	int getMagazineSize();
+	
+	int getAmmoPosition();
+	default void setAmmoPosition(int position) {}
+	
 	ItemStack insertAmmo(ItemStack ammo);
 	ItemStack extractAmmo();
+	ItemStack peekAmmo(int position);
+	
 	boolean hasAmmo();
 	boolean isFull();
 	default boolean isEmpty() { return !this.hasAmmo(); }
+	
 	CompoundNBT serializeAmmo();
 	void deserializeAmmo(CompoundNBT nbt);
 	

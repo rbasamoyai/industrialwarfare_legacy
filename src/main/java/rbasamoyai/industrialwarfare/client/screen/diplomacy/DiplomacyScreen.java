@@ -13,7 +13,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -206,7 +205,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 				.textureDimensions(new Point(SCROLL_BAR_WIDGET_WIDTH, SCROLL_BAR_WIDGET_HEIGHT))
 				.textureLocation(DIPLOMACY_GUI));
 		this.drpScrollbar = new DraggableDecorator(diplomaticRelationsPage, this, drpScrollBar$properties);
-		this.drpStatuses = new WidgetCollectionDecorator(this.drpScrollbar, new Widget[] {});
+		this.drpStatuses = new WidgetCollectionDecorator(this.drpScrollbar, new ArrayList<>());
 		this.drpList = new DiplomacyStatusesListDecorator(
 				this.drpStatuses,
 				LIST_ROWS,

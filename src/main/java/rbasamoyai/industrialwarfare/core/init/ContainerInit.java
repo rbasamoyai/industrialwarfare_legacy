@@ -9,11 +9,11 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
-import rbasamoyai.industrialwarfare.common.containers.whistle.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.containers.workstations.NormalWorkstationContainer;
 
 public class ContainerInit {

@@ -23,7 +23,7 @@ public class SOpenItemScreen {
 			Item item = stack.getItem();
 			if (item instanceof IItemWithScreen) {
 				IItemWithScreen attachmentsItem = (IItemWithScreen) item;
-				if (!attachmentsItem.canOpen(stack)) return;
+				if (!attachmentsItem.canOpenScreen(stack)) return;
 				NetworkHooks.openGui(player, attachmentsItem.getItemContainerProvider(stack), buf -> attachmentsItem.writeContainerInfo(buf, stack));
 			}
 		});

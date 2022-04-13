@@ -38,11 +38,15 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	protected IRenderTypeBuffer currentBuffer;
 	protected RenderType renderType;
 	protected TransformType transformType;
+	protected ItemStack itemStack;
 	
 	protected FirearmItem animatable;
 	
 	private final Set<String> hiddenBones = new HashSet<>();
-	private final Map<String, Vector3f> queuedBoneMovements = new HashMap<>();
+	private final Set<String> suppressedBones = new HashSet<>();
+	private final Map<String, Vector3f> queuedBoneSetMovements = new HashMap<>();
+	private final Map<String, Vector3f> queuedBoneSetRotations = new HashMap<>();
+	private final Map<String, Vector3f> queuedBoneAddRotations = new HashMap<>();
 	
 	public FirearmRenderer() {
 		super(new FirearmModel());
@@ -52,6 +56,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	public void renderByItem(ItemStack itemStack, TransformType transformType, MatrixStack matrixStack, 
 			IRenderTypeBuffer bufferIn, int combinedLightIn, int p_239207_6_) {
 		this.transformType = transformType;
+		this.itemStack = itemStack;
 		super.renderByItem(itemStack, transformType, matrixStack, bufferIn, combinedLightIn, p_239207_6_);
 	}
 	
@@ -74,6 +79,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public void render(FirearmItem animatable, MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ItemStack itemStack) {
+		animatable.setupAnimationState(this, itemStack);
 		super.render(animatable, stack, bufferIn, packedLightIn, itemStack);
 		
 		FirearmItem.getDataHandler(itemStack).ifPresent(h -> {
@@ -101,11 +107,27 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 			bone.setHidden(this.hiddenBones.contains(name));
 		}
 		
-		if (this.queuedBoneMovements.containsKey(name)) {
-			Vector3f pos = this.queuedBoneMovements.get(name);
-			bone.setPositionX(pos.x());
-			bone.setPositionY(pos.y());
-			bone.setPositionZ(pos.z());
+		if (!this.suppressedBones.contains(name)) {
+			if (this.queuedBoneSetMovements.containsKey(name)) {
+				Vector3f pos = this.queuedBoneSetMovements.get(name);
+				bone.setPositionX(pos.x());
+				bone.setPositionY(pos.y());
+				bone.setPositionZ(pos.z());
+			}
+			
+			if (this.queuedBoneSetRotations.containsKey(name)) {
+				Vector3f rot = this.queuedBoneSetRotations.get(name);
+				bone.setRotationX(rot.x());
+				bone.setRotationY(rot.y());
+				bone.setRotationZ(rot.z());
+			}
+			
+			if (this.queuedBoneAddRotations.containsKey(name)) {
+				Vector3f rot = this.queuedBoneAddRotations.get(name);
+				bone.setRotationX(bone.getRotationX() + rot.x());
+				bone.setRotationY(bone.getRotationY() + rot.y());
+				bone.setRotationZ(bone.getRotationZ() + rot.z());
+			}
 		}
 		
 		if (this.renderArms && renderingArms && !mc.isPaused()) {
@@ -144,14 +166,14 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public Integer getUniqueID(FirearmItem animatable) {
-		if (this.transformType == TransformType.GUI || this.transformType == TransformType.GROUND) {
+		if (this.transformType != TransformType.FIRST_PERSON_LEFT_HAND && this.transformType != TransformType.FIRST_PERSON_RIGHT_HAND) {
 			return -1;
 		}
 		return super.getUniqueID(animatable);
 	}
 	
-	public void setBoneVisibility(String name, boolean isVisible) {
-		if (isVisible) {
+	public void hideBone(String name, boolean hide) {
+		if (hide) {
 			this.hiddenBones.add(name);
 		} else {
 			this.hiddenBones.remove(name);
@@ -162,8 +184,21 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	public TransformType getCurrentTransform() { return this.transformType; }
 	
-	public void moveBone(String name, float x, float y, float z) {
-		this.queuedBoneMovements.put(name, new Vector3f(x, y, z));
+	public void suppressModification(String name) { this.suppressedBones.add(name); }
+	public void allowModification(String name) { this.suppressedBones.remove(name); }
+	
+	public void setBonePosition(String name, float x, float y, float z) {
+		this.queuedBoneSetMovements.put(name, new Vector3f(x, y, z));
 	}
+	
+	public void addToBoneRotation(String name, float x, float y, float z) {
+		this.queuedBoneAddRotations.put(name, new Vector3f(x, y, z));
+	}
+	
+	public void setBoneRotation(String name, float x, float y, float z) {
+		this.queuedBoneSetRotations.put(name, new Vector3f(x, y, z));
+	}
+	
+	public ItemStack getCurrentItem() { return this.itemStack; }
 	
 }

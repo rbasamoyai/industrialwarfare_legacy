@@ -10,6 +10,8 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.fml.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
+import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
@@ -29,8 +31,9 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * effectiveness) / 1.5f;
+			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
+			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
 			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
@@ -76,22 +79,6 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 	}
 
 	@Override
-	public void startAiming(ItemStack firearm, LivingEntity shooter) {
-		getDataHandler(firearm).ifPresent(h -> {
-			h.setAiming(true);
-			h.setAction(ActionType.NOTHING, 10);
-		});
-	}
-	
-	@Override
-	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
-		getDataHandler(firearm).ifPresent(h -> {
-			h.setAiming(false);
-			h.setAction(ActionType.NOTHING, 10);
-		});
-	}
-
-	@Override
 	protected void endCycle(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			h.setAction(ActionType.NOTHING, 1);
@@ -102,19 +89,17 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 	protected void reload(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			ItemStack ammo = shooter.getProjectile(firearm);
-			if (ammo.isEmpty() || h.isFull()) {
+			if (h.isFull() || !this.getAllSupportedProjectiles().test(ammo)) {
 				h.setAction(ActionType.NOTHING, 1);
 				return;
 			}
 			
-			if (shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
 				ammo = ammo.copy();
 			}
-			ammo = ammo.split(1);
 			
-			if (super.getAllSupportedProjectiles().test(ammo)) {
-				h.insertAmmo(ammo);
-			}
+			h.insertAmmo(ammo);
+			h.setFired(false);
 			h.setAction(ActionType.NOTHING, 1);
 		});
 	}

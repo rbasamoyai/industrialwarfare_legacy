@@ -11,6 +11,7 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class TagsGeneration {
 	
@@ -98,6 +99,9 @@ public class TagsGeneration {
 		
 		@Override
 		protected void addTags() {
+			tag(IWItemTags.CHEAT_AMMO)
+					.add(ItemInit.INFINITE_AMMO_GENERIC.get());
+			
 			tag(IWItemTags.ENTRENCHING_TOOLS)
 					.add(Items.WOODEN_SHOVEL, Items.STONE_SHOVEL, Items.IRON_SHOVEL, Items.GOLDEN_SHOVEL, Items.DIAMOND_SHOVEL, Items.NETHERITE_SHOVEL);
 			
@@ -105,6 +109,8 @@ public class TagsGeneration {
 					.addTag(IWItemTags.ENTRENCHING_TOOLS)
 					.add(Items.WOODEN_SWORD, Items.STONE_SWORD, Items.IRON_SWORD, Items.GOLDEN_SWORD, Items.DIAMOND_SWORD, Items.NETHERITE_SWORD)
 					.add(Items.WOODEN_AXE, Items.STONE_AXE, Items.IRON_AXE, Items.GOLDEN_AXE, Items.DIAMOND_AXE, Items.NETHERITE_AXE);
+			
+			tag(IWItemTags.FIREARM_OPTIC_ATTACHMENTS);
 		}
 		
 		@Override

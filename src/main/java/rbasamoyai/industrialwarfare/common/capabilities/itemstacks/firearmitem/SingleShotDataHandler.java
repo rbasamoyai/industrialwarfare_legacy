@@ -13,11 +13,13 @@ public class SingleShotDataHandler extends FirearmItemDataHandler {
 	@Override 
 	public ItemStack insertAmmo(ItemStack ammo) {
 		if (!this.shot.isEmpty()) return ammo;
-		this.shot = ammo;
+		this.shot = ammo.split(1);
 		return ItemStack.EMPTY;
 	}
 
 	@Override public ItemStack extractAmmo() { return this.shot.split(1); }
+	@Override public ItemStack peekAmmo(int position) { return this.shot; }
+	@Override public int getAmmoPosition() { return 0; }
 
 	@Override public boolean hasAmmo() { return !this.shot.isEmpty(); }
 	@Override public boolean isFull() { return !this.shot.isEmpty(); }

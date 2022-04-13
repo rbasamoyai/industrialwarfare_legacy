@@ -12,7 +12,9 @@
 	"item.industrialwarfare.ammo_232": "Intermediate Caliber Round (Smokeless)",
 	"item.industrialwarfare.ammo_233": "Large Caliber Round (Smokeless)",
 	
+	"item.industrialwarfare.cartridge_case": "Cartridge Case",
 	"item.industrialwarfare.ammo_generic": "Generic Ammo",
+	"item.industrialwarfare.infinite_ammo_generic": "Infinite Generic Ammo",
 	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
@@ -114,6 +116,7 @@
 	"item.industrialwarfare.rifle_henry":			"Henry Rifle",
 	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
+	"item.industrialwarfare.colt_saa": "Colt Single Action Army Revolver",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -129,6 +132,8 @@
 	"key.industrialwarfare.reload_firearm": "Reload Firearm",
 	
 	"entity.industrialwarfare.bullet": "Bullet",
+	"entity.industrialwarfare.npc": "NPC",
+	
 	"death.attack.industrialwarfare.bullet.no_owner.msg1": "%1$s was hit by a rogue bullet",
 	"death.attack.industrialwarfare.bullet.no_owner.msg2": "%1$s was found dead from a bullet wound, who shot them?",
 	"death.attack.industrialwarfare.bullet": "%1$s was shot by %2$s",
@@ -330,11 +335,35 @@
 	"gui.industrialwarfare.text.not_owned_by_you":		"You do not own this NPC!",
 	"gui.industrialwarfare.text.removed_complaints":	"Removed %1$s's complaint (was %2$s)",
 	"gui.industrialwarfare.text.cannot_select_full": "Cannot select more than %1$s units!",
-	"gui.industrialwarfare.text.stopped_units": "Stopped units",
-	"gui.industrialwarfare.text.combat_mode.attack": "Stance: Attack",
-	"gui.industrialwarfare.text.combat_mode.defend": "Stance: Defend",
-	"gui.industrialwarfare.text.combat_mode.stand_ground": "Stance: Stand Ground",
-	"gui.industrialwarfare.text.combat_mode.dont_attack": "Stance: Don't Attack/Stop Attack",
+	
+	"tooltip.industrialwarfare.whistle.combat_mode.attack": "Attack",
+	"tooltip.industrialwarfare.whistle.combat_mode.attack.desc": "When attacking, units will keep pursuing their targets until they die.", 
+	"tooltip.industrialwarfare.whistle.combat_mode.defend": "Defend",
+	"tooltip.industrialwarfare.whistle.combat_mode.defend.desc": "When defending, units will pursue their targets for a short distance or until they die.", 
+	"tooltip.industrialwarfare.whistle.combat_mode.stand_ground": "Stand Ground",
+	"tooltip.industrialwarfare.whistle.combat_mode.stand_ground.desc": "When standing ground, units will not pursue their targets and will not move.",
+	"tooltip.industrialwarfare.whistle.combat_mode.dont_attack": "Don't Attack",
+	"tooltip.industrialwarfare.whistle.combat_mode.dont_attack.desc": "When not attacking, units will not deal damage whatsoever to any nearby enemies and will not retaliate if attacked.",
+	"tooltip.industrialwarfare.whistle.formation_category.line": "Line",
+	"tooltip.industrialwarfare.whistle.formation_category.line.desc": "Form a line that is wider than it is deep. Wide attack area, but hard to maneuver.",
+	"tooltip.industrialwarfare.whistle.formation_category.column": "Column",
+	"tooltip.industrialwarfare.whistle.formation_category.column.desc": "Form a column that is deeper than it is wide. Good maneuverability, but attack power is heavily concentrated.",
+	
+	"tooltip.industrialwarfare.whistle.stop_units": "Stop units",
+	"tooltip.industrialwarfare.whistle.back_to_main_page": "Back to main page",
+	"tooltip.industrialwarfare.whistle.interval1": "\u00A7lInterval", 
+	"tooltip.industrialwarfare.whistle.interval2": "Current time between attack stages: %1$ss",
+	"tooltip.industrialwarfare.whistle.formation_types": "Formation patterns",
+	"tooltip.industrialwarfare.whistle.attack_types": "Formation attack patterns",
+	
+	"attack_type.industrialwarfare.fire_at_will": "Fire at will",
+	"attack_type.industrialwarfare.fire_at_will.desc": "Units fire independently. Flexible, but not much power.",
+	"attack_type.industrialwarfare.fire_by_company": "Fire by company",
+	"attack_type.industrialwarfare.fire_by_company.desc": "The entire formation fires by volley at once. High power, but long reload time.",
+	"attack_type.industrialwarfare.fire_by_file": "Fire by file",
+	"attack_type.industrialwarfare.fire_by_file.desc": "Units fire one file at a time. Steady rate of fire and decent power, but limited attack area at a time.",
+	"attack_type.industrialwarfare.fire_by_rank": "Fire by rank",
+	"attack_type.industrialwarfare.fire_by_rank.desc": "Units fire by volley one rank at a time. Lots of attack area, but slower rate of fire.",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",
@@ -358,14 +387,18 @@
 	"complaint.industrialwarfare.clear":			"Fine day, isn't it?",
 	"complaint.industrialwarfare.invalid_workstation":	"I can't work there.",
 	"complaint.industrialwarfare.invalid_order":	"I can't read this order.",
-	"complaint.industrialwarfare.no_data_handler":	"For some reason, I just can't.",
+	"complaint.industrialwarfare.no_data_handler":	"Reality break - I don't have a data handler. What happened?",
 	"complaint.industrialwarfare.nothing_here":		"There is nothing to access here.",
 	"complaint.industrialwarfare.time_stopped":		"For some reason it just feels like time isn't running.",
 	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away.",
+	
+	"formation.industrialwarfare.line_10w3d": "Line, 10 wide \u00D7 3 deep",
+	"formation.industrialwarfare.line_15w2d": "Line, 15 wide \u00D7 2 deep",
 	
 	"profession.industrialwarfare.assembler":	"Assembler",
 	"profession.industrialwarfare.jobless":		"Jobless",
 	
 	"subtitle.industrialwarfare.item.heavy_rifle.fired": "Heavy rifle fired",
-	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired"
+	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
+	"subtitle.industrialwarfare.item.revolver.fired": "Revolver fired"
 }

@@ -3,6 +3,8 @@ package rbasamoyai.industrialwarfare.core.init.items;
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Rarity;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
@@ -53,6 +55,14 @@ public class ItemInit {
 	public static final RegistryObject<Item> SCHEDULE = ITEMS.register("schedule", ScheduleItem::new);
 	
 	public static final RegistryObject<Item> AMMO_GENERIC = ITEMS.register("ammo_generic",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
+	public static final RegistryObject<Item> INFINITE_AMMO_GENERIC = ITEMS.register("infinite_ammo_generic",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).rarity(Rarity.EPIC)) {
+				@Override public boolean isFoil(ItemStack stack) { return true; }
+			});
+	
+	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case",
 			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
 	
 	private static Item toolItem() {
