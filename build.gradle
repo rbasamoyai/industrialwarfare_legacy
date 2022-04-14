@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '0.4.0-alpha'
+version = '0.4.1-alpha'
 group = 'rbasamoyai.industrialwarfare'
 archivesBaseName = 'industrialwarfare'
 
@@ -91,9 +91,9 @@ jar {
         attributes([
             "Specification-Title": "industrialwarfare",
             "Specification-Vendor": "rbasamoyai",
-            "Specification-Version": "0.4.0-alpha",
+            "Specification-Version": "0.4.1-alpha",
             "Implementation-Title": project.name,
-            "Implementation-Version": "0.4.0-alpha",
+            "Implementation-Version": "0.4.1-alpha",
             "Implementation-Vendor" :"rbasamoyai",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])

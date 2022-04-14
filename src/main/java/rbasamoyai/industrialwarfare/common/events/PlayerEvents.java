@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.events;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -42,8 +43,16 @@ public class PlayerEvents {
 	@SubscribeEvent
 	public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
 		PlayerEntity player = event.getPlayer();
-		ItemStack stack = player.getMainHandItem();
+		Entity target = event.getTarget();
+		Hand hand = event.getHand();
+		
+		ItemStack stack = player.getItemInHand(hand);
+		
 		if (event.isCancelable() && stack.getItem() instanceof FirearmItem) {
+			if (target instanceof ItemFrameEntity) {
+				ItemFrameEntity frame = (ItemFrameEntity) target;
+				frame.interact(player, hand);
+			}
 			event.setCanceled(true);
 		}
 	}

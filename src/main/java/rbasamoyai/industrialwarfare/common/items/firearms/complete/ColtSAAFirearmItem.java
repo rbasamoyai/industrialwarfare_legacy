@@ -115,6 +115,19 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 	 */
 	
 	@Override
+	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
+		super.onSelect(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_SELECT_FIREARM);
+			
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>("select_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
+		}
+	}
+	
+	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
