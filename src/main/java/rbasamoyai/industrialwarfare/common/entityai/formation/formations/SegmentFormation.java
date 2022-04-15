@@ -139,8 +139,15 @@ public class SegmentFormation extends UnitFormation {
 	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
 		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
-		Vector3d followPos = leader.position().subtract(leaderForward.scale(this.tailEnd ? 4 : 2));
-		return this.follower == null ? followPos : followPos.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
+		
+		if (this.follower == null) {
+			return leader.position().subtract(leaderForward.scale(this.tailEnd ? 4.0d : 2.0d));
+		}
+
+		double halfLength = this.tailEnd ? 2.0d : 1.0d;
+		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
+		Vector3d secondSegment = this.follower.position().subtract(joint).normalize().scale(halfLength);
+		return joint.add(secondSegment);
 	}
 
 	@Override

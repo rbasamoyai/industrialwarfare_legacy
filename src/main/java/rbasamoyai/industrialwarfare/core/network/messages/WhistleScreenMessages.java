@@ -4,17 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
+import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem.FormationCategory;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
+import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 
 public class WhistleScreenMessages {
 	
@@ -107,7 +111,28 @@ public class WhistleScreenMessages {
 				WhistleContainer whistleCt = (WhistleContainer) ct;
 				whistleCt.stopWhistle(player);
 			});
-			ctx.setPacketHandled(false);
+			ctx.setPacketHandled(true);
+		}
+	}
+	
+	public static class SStopAllFormationLeaders {
+		public SStopAllFormationLeaders() {}
+		
+		public static void encode(SStopAllFormationLeaders msg, PacketBuffer buf) {}
+		public static SStopAllFormationLeaders decode(PacketBuffer buf) { return new SStopAllFormationLeaders(); }
+		
+		public static void handle(SStopAllFormationLeaders msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				ServerPlayerEntity player = ctx.getSender();
+				if (player.level.isClientSide) return;
+				PlayerIDTag owner = PlayerIDTag.of(player);
+				player.level.getEntities(EntityTypeInit.FORMATION_LEADER.get(), player.getBoundingBox().inflate(2.5d, 2.5d, 2.5d), e -> {
+					PlayerIDTag leaderOwner = ((FormationLeaderEntity) e).getOwner();
+					return leaderOwner.equals(owner);
+				}).forEach(Entity::kill);
+			});
+			ctx.setPacketHandled(true);
 		}
 	}
 	

@@ -4,6 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -49,11 +50,18 @@ public class PlayerEvents {
 		ItemStack stack = player.getItemInHand(hand);
 		
 		if (event.isCancelable() && stack.getItem() instanceof FirearmItem) {
-			if (target instanceof ItemFrameEntity) {
-				ItemFrameEntity frame = (ItemFrameEntity) target;
-				frame.interact(player, hand);
+			if (!player.level.isClientSide) {
+				if (target instanceof ItemFrameEntity) {
+					ItemFrameEntity frame = (ItemFrameEntity) target;
+					frame.interact(player, hand);
+				}
+				
+				player.startUsingItem(hand);
+				((FirearmItem) stack.getItem()).startAiming(stack, player);
 			}
+			
 			event.setCanceled(true);
+			event.setCancellationResult(ActionResultType.CONSUME);
 		}
 	}
 	

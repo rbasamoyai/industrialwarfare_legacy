@@ -24,7 +24,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActi
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.9.1";
+	public static final String NETWORK_VERSION = "0.10.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -50,6 +50,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, SSetProneMessage.class, SSetProneMessage::encode, SSetProneMessage::decode, SSetProneMessage::handle);
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SWhistleScreenSync.class, WhistleScreenMessages.SWhistleScreenSync::encode, WhistleScreenMessages.SWhistleScreenSync::decode, WhistleScreenMessages.SWhistleScreenSync::handle);
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAction.class, WhistleScreenMessages.SStopAction::encode, WhistleScreenMessages.SStopAction::decode, WhistleScreenMessages.SStopAction::handle);
+		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAllFormationLeaders.class, WhistleScreenMessages.SStopAllFormationLeaders::encode, WhistleScreenMessages.SStopAllFormationLeaders::decode, WhistleScreenMessages.SStopAllFormationLeaders::handle);
 	}
 	
 	@SubscribeEvent

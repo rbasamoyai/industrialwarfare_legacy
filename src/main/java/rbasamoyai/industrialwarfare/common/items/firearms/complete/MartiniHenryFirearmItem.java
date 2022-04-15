@@ -81,6 +81,8 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	
 	@Override
 	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		
 		getDataHandler(stack).ifPresent(h -> {
 			if (h.getAction() == ActionType.NOTHING) {
 				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);

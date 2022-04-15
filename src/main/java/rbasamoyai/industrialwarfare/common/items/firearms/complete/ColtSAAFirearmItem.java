@@ -84,6 +84,8 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 	
 	@Override
 	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		
 		getDataHandler(stack).ifPresent(h -> {
 			ActionType type = h.getAction();
 			boolean reloading = type == ActionType.RELOADING;

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -230,6 +231,11 @@ public abstract class FirearmItem extends ShootableItem implements
 			}
 		});
 		return true;
+	}
+	
+	@Override
+	public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+		return stack.getMaxDamage() - stack.getDamageValue() > 1 ? super.damageItem(stack, amount, entity, onBroken) : 0;
 	}
 	
 	@Override

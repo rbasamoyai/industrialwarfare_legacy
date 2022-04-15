@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -77,7 +78,6 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
-import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -98,6 +98,7 @@ public class WhistleItem extends Item implements
 	public static final String TAG_INTERVAL = "interval";
 	public static final String TAG_CATEGORY_TYPE = "categoryType";
 	public static final String TAG_ATTACK_TYPE = "attackType";
+	public static final String TAG_UPDATE_FORMATION = "updateFormation";
 	
 	private static final int MAX_SELECTABLE_UNITS = 128;
 	private static final String TRANSLATION_TEXT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text.";
@@ -344,9 +345,11 @@ public class WhistleItem extends Item implements
 					return true;
 				}
 				nbt.remove(TAG_SELECTED_UNITS);
+				this.stopUnits((ServerWorld) player.level, stack, player);
 				player.getCooldowns().addCooldown(this, 10);
 			}
 		}
+		
 		return true;
 	}
 	
@@ -366,6 +369,8 @@ public class WhistleItem extends Item implements
 			if (dirty) {
 				
 			}
+			
+			
 		}
 		nbt.putInt(TAG_TICKS_TO_UPDATE, t);
 	}
@@ -459,11 +464,101 @@ public class WhistleItem extends Item implements
 		ResourceLocation attackTypeLoc = new ResourceLocation(catTag.getString(TAG_ATTACK_TYPE));
 		FormationAttackType attackType = IWModRegistries.FORMATION_ATTACK_TYPES.getValue(attackTypeLoc);
 		
+		boolean updateFormation = nbt.contains(TAG_UPDATE_FORMATION);
+		
 		ListNBT leaderUUIDs = nbt.getList(TAG_CONTROLLED_LEADERS, Constants.NBT.TAG_INT_ARRAY);
+		if (updateFormation) {
+			nbt.remove(TAG_UPDATE_FORMATION);
+			if (!leaderUUIDs.isEmpty()) {
+				leaderUUIDs
+				.stream()
+				.map(NBTUtil::loadUUID)
+				.map(level::getEntity)
+				.map(e -> {
+					e.kill();
+					return e;
+				})
+				.filter(e -> e instanceof FormationLeaderEntity)
+				.findFirst()
+				.map(e -> (FormationLeaderEntity) e)
+				.ifPresent(leader -> {
+					Brain<?> leaderBrain = leader.getBrain();
+					
+					if (!nbt.contains(TAG_COMMAND_GROUP)) {
+						nbt.putUUID(TAG_COMMAND_GROUP, MathHelper.createInsecureUUID(RNG));
+					}
+					UUID commandGroup = nbt.getUUID(TAG_COMMAND_GROUP);
+					
+					// Set new position
+					List<FormationLeaderEntity> leaders =
+							leaderUUIDs
+							.stream()
+							.map(NBTUtil::loadUUID)
+							.map(level::getEntity)
+							.filter(WhistleItem::isValidLeader)
+							.map(e -> (FormationLeaderEntity) e)
+							.collect(Collectors.toList());
+					
+					PlayerIDTag owner = PlayerIDTag.of(player);
+					
+					List<CreatureEntity> unitsToFormUp =
+							unitUUIDs
+							.stream()
+							.map(NBTUtil::loadUUID)
+							.map(level::getEntity)
+							.filter(e -> isValidUnit(e, owner))
+							.map(e -> (CreatureEntity) e)
+							.collect(Collectors.toList());
+					
+					for (CreatureEntity unit : unitsToFormUp) {
+						Brain<?> brain = unit.getBrain();
+						if (brain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
+							brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
+						}
+					}
+					
+					Optional<Vector3d> precisePos = leaderBrain.getMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+					
+					Vector3d facingPos = precisePos.orElseGet(() -> leader.position().add(leader.getViewVector(1.0f)));
+					List<CreatureEntity> unitsToMove = this.formUpEntities(unitsToFormUp, stack, player, facingPos, commandGroup, leaders);
+					
+					Optional<LivingEntity> attackTarget = leaderBrain.getMemory(MemoryModuleType.ATTACK_TARGET);
+					Optional<GlobalPos> globPos = leaderBrain.getMemory(MemoryModuleType.MEETING_POINT);
+					Optional<Boolean> engaging = leaderBrain.getMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
+					
+					leaderUUIDs.clear();
+					
+					for (CreatureEntity unit : unitsToMove) {
+						Brain<?> brain = unit.getBrain();
+						
+						if (attackTarget.isPresent()) {
+							if (brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED)) {
+								brain.setMemory(MemoryModuleType.ATTACK_TARGET, attackTarget);
+								if (brain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED)) {
+									brain.setMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), engaging);
+								}
+							}
+						} else {
+							brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
+							brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
+						}
+						
+						if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+							leaderUUIDs.add(NBTUtil.createUUID(unit.getUUID()));
+						}
+						brain.eraseMemory(MemoryModuleTypeInit.FINISHED_ATTACKING.get());
+					}
+					
+					nbt.put(TAG_CONTROLLED_LEADERS, leaderUUIDs);
+				});
+			}				
+		}
+		
 		for (INBT tag : leaderUUIDs) {
 			Entity e = level.getEntity(NBTUtil.loadUUID(tag));
 			if (!(e instanceof FormationLeaderEntity)) continue;
 			FormationLeaderEntity leader = (FormationLeaderEntity) e;
+			
 			Brain<?> brain = leader.getBrain();
 			
 			leader.setAttackInterval(interval);
@@ -482,7 +577,7 @@ public class WhistleItem extends Item implements
 			}
 			brain.setActiveActivityIfPossible(mode == CombatMode.DONT_ATTACK ? Activity.IDLE : Activity.FIGHT);
 		}
-		
+			
 		player.getCooldowns().addCooldown(this, 10);
 	}
 	
@@ -657,7 +752,7 @@ public class WhistleItem extends Item implements
 			
 		ResourceLocation typeLoc = nbt.contains(TAG_FORMATION_TYPE)
 				? new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE))
-				: IWModRegistries.UNIT_FORMATION_TYPES.getDefaultKey();
+				: UnitFormationTypeInit.LINE_10W3D.get().getRegistryName();
 		
 		buf
 		.writeVarInt(nbt.getInt(TAG_INTERVAL))
@@ -670,7 +765,8 @@ public class WhistleItem extends Item implements
 			if (!formationCategories.contains(cat.getTag(), Constants.NBT.TAG_COMPOUND)) {
 				CompoundNBT newCatTag = new CompoundNBT();
 				newCatTag.putString(TAG_CATEGORY_TYPE, cat.getDefaultType().getRegistryName().toString());
-				formationCategories.putString(TAG_ATTACK_TYPE, FormationAttackTypeInit.FIRE_AT_WILL.get().getRegistryName().toString());
+				newCatTag.putString(TAG_ATTACK_TYPE, IWModRegistries.FORMATION_ATTACK_TYPES.getDefaultKey().toString());
+				formationCategories.put(cat.getTag(), newCatTag);
 			}
 			CompoundNBT catTag = formationCategories.getCompound(cat.getTag());
 			ResourceLocation catLoc = new ResourceLocation(catTag.getString(TAG_CATEGORY_TYPE));

@@ -181,12 +181,6 @@ public abstract class PointFormation extends UnitFormation {
 				continue;
 			}
 			
-			if (this.attackType == FormationAttackTypeInit.NO_ATTACK.get()) {
-				unitBrain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
-			} else {
-				unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
-			}
-			
 			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 			
 			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
@@ -202,11 +196,7 @@ public abstract class PointFormation extends UnitFormation {
 				
 				if (unit instanceof IWeaponRangedAttackMob
 					&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target.position(), MemoryModuleTypeInit.SHOOTING_POS.get())) {
-					if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
-						unitBrain.eraseMemory(MemoryModuleTypeInit.SHOOTING_POS.get());
-					} else if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
-						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.position(), 40L);
-					}
+					unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.position(), 40L);
 				} else {
 					unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 					continue;

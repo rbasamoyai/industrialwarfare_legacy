@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
@@ -24,6 +25,7 @@ import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
+import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages.SWhistleScreenSync;
 
@@ -36,6 +38,7 @@ public class WhistleContainer extends Container {
 	private static final String TAG_INTERVAL = WhistleItem.TAG_INTERVAL;
 	private static final String TAG_CATEGORY_TYPE = WhistleItem.TAG_CATEGORY_TYPE;
 	private static final String TAG_ATTACK_TYPE = WhistleItem.TAG_ATTACK_TYPE;
+	private static final String TAG_UPDATE_FORMATION = WhistleItem.TAG_UPDATE_FORMATION;
 	
 	public static WhistleContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
 		WhistleContainer ct = new WhistleContainer(ContainerInit.WHISTLE.get(), windowId, Optional.empty());
@@ -78,11 +81,16 @@ public class WhistleContainer extends Container {
 			CompoundNBT nbt = stack.getOrCreateTag();
 			
 			this.mode = CombatMode.fromId(nbt.getInt(TAG_CURRENT_MODE));
+			this.interval = Interval.fromId(nbt.getInt(TAG_INTERVAL));
 			
-			ResourceLocation typeLoc = nbt.contains(TAG_FORMATION_TYPE)
-					? new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE))
-					: IWModRegistries.UNIT_FORMATION_TYPES.getDefaultKey(); 
-			this.type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(typeLoc);
+			if (nbt.contains(TAG_FORMATION_TYPE)) {
+				ResourceLocation typeLoc = new ResourceLocation(nbt.getString(TAG_FORMATION_TYPE));
+				this.type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(typeLoc);
+			} else {
+				this.type = UnitFormationTypeInit.LINE_10W3D.get(); 
+			}
+			this.category = this.type.getCategory();
+			this.setCategoryType(this.category, this.type);
 		}
 	}
 
@@ -128,7 +136,13 @@ public class WhistleContainer extends Container {
 		CompoundNBT nbt = stack.getOrCreateTag();
 		nbt.putInt(TAG_INTERVAL, this.interval.getId());
 		nbt.putInt(TAG_CURRENT_MODE, this.mode.getId());
-		nbt.putString(TAG_FORMATION_TYPE, this.type.getRegistryName().toString());
+		
+		String typeStr = this.type.getRegistryName().toString();
+		if (nbt.contains(TAG_FORMATION_TYPE, Constants.NBT.TAG_STRING) && !nbt.getString(TAG_FORMATION_TYPE).equals(typeStr)) {
+			nbt.putBoolean(TAG_UPDATE_FORMATION, true);
+		}
+		
+		nbt.putString(TAG_FORMATION_TYPE, typeStr);
 		nbt.putBoolean(TAG_DIRTY, true);
 		
 		CompoundNBT formationCategories = nbt.getCompound(TAG_FORMATION_CATEGORIES);

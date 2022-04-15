@@ -123,8 +123,8 @@ public class LineFormation extends UnitFormation {
 		
 		int period = MathHelper.floor((double) leader.tickCount / (double) this.interval.getTime());
 		
-		int currentRank = period % this.depth;
-		int currentFile = period % this.width;
+		int currentRank = period % (this.depth == 0 ? 1 : this.depth);
+		int currentFile = period % (this.width == 0 ? 1 : this.width);
 		boolean newPeriod = leader.tickCount % this.interval.getTime() == 0;
 		
 		for (int rank = 0; rank < this.depth; ++rank) {		

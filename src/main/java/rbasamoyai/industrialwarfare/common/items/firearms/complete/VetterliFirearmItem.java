@@ -71,6 +71,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	
 	@Override
 	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
 		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
 			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
 		}

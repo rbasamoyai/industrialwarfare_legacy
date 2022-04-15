@@ -36,17 +36,18 @@ public abstract class RevolverFirearmItem extends FirearmItem {
 			}
 			
 			float quality = h.getQuality();
-			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
+			float durability = 1.0f  - (float) firearm.getDamageValue() / (float) firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
+			float damage = this.baseDamage * (quality + durability) / 2.0f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
 			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
-			spread *= (2.0f - (0.5f * quality + 0.5f * durability + effectiveness) / 2.0f);
-			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, this.muzzleVelocity, spread);
+			spread *= 1.0f + (3.0f - (quality + durability + effectiveness) / 3.0f);
+			float velocity = this.muzzleVelocity * (quality + durability) / 2.0f;
+			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, velocity, spread);
 			
 			shooter.level.addFreshEntity(bullet);
 			

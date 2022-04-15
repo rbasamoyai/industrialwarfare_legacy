@@ -349,9 +349,13 @@
 	"tooltip.industrialwarfare.whistle.formation_category.column": "Column",
 	"tooltip.industrialwarfare.whistle.formation_category.column.desc": "Form a column that is deeper than it is wide. Good maneuverability, but attack power is heavily concentrated.",
 	
+	"tooltip.industrialwarfare.whistle.stop_nearby": "Stop all nearby formations",
+	"tooltip.industrialwarfare.whistle.stop_nearby.desc": "Stops all nearby formations that you command.",
+	"tooltip.industrialwarfare.whistle.stop_nearby.warning": "Should only be used if your units are stuck between multiple formations; this action is irreversible.",
+	
 	"tooltip.industrialwarfare.whistle.stop_units": "Stop units",
 	"tooltip.industrialwarfare.whistle.back_to_main_page": "Back to main page",
-	"tooltip.industrialwarfare.whistle.interval1": "\u00A7lInterval", 
+	"tooltip.industrialwarfare.whistle.interval1": "Interval", 
 	"tooltip.industrialwarfare.whistle.interval2": "Current time between attack stages: %1$ss",
 	"tooltip.industrialwarfare.whistle.formation_types": "Formation patterns",
 	"tooltip.industrialwarfare.whistle.attack_types": "Formation attack patterns",

@@ -27,6 +27,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
@@ -146,6 +147,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		formationData.putString(TAG_TYPE, this.formation.getType().getRegistryName().toString());
 		formationData.put(TAG_DATA, this.formation.serializeNBT());
 		nbt.put(TAG_FORMATION, formationData);
+		if (this.owner != null) {
+			nbt.put("owner", this.owner.serializeNBT());
+		}
 	}
 	
 	@Override
@@ -155,6 +159,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
 		this.formation = type.getFormation(-1);
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
+		if (nbt.contains("owner", Constants.NBT.TAG_COMPOUND)) {
+			this.owner = PlayerIDTag.fromNBT(nbt.getCompound("owner"));
+		}
 	}
 	
 	/*

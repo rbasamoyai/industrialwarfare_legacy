@@ -1,12 +1,9 @@
 Current TODO:	
 - Work on formations
-	- Reforming when formation type
-	switches
+	- Better column
+		- Better column navigation
 	- Merging smaller formations
 	if possible
-	- Add unit classes
-	- Better column
-		- No segment entities
 
 - Content drop?
 	- Matchlocks
