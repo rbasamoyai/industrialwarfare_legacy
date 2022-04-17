@@ -43,7 +43,7 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 
-	protected static final float RAD_TO_DEG = (float) Math.PI / 180.0f;
+	protected static final float DEG_TO_RAD = (float) Math.PI / 180.0f;
 	protected static final double CLOSE_ENOUGH = 0.1d;
 	protected static final double ORIENTATION_CALC_DIST = 1.0d;
 	
@@ -56,7 +56,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected FormationAttackType attackType = FormationAttackTypeInit.FIRE_AT_WILL.get();
 	
 	protected CreatureEntity follower;
-	private Float cachedAngle;
+	protected Float cachedAngle;
 	
 	protected Interval interval = Interval.T_1S;
 	
@@ -109,6 +109,9 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		
 		boolean stopped = isStopped(leader);
 		Vector3d followPos = this.getFollowPosition(leader);
+		
+		
+		
 		boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
 		
 		if (stopped && closeEnough) {

@@ -27,7 +27,7 @@ public class FollowPointFormation extends PointFormation {
 	
 	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		
 		return leader.position()

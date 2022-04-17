@@ -59,7 +59,7 @@ public class NPCTasks {
 				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d)),
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d, false)),
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),

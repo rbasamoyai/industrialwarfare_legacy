@@ -47,7 +47,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
 			return false;
 		}
-		if (lzop.resolve().get().getProfession().checkMemories(npc)) {
+		if (!lzop.resolve().get().getProfession().checkMemories(npc)) {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
 			return false;
 		}

@@ -99,7 +99,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private static ImmutableList<Pair<Integer, ? extends Task<? super FormationLeaderEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d)),
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d, true)),
 				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
 				Pair.of(2, new MoveToEngagementDistance(50))
 				);

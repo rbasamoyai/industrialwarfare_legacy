@@ -1,8 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
+import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -134,6 +137,23 @@ public class ColumnFormation extends UnitFormation {
 	@Override
 	protected void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
+		
+		// Fixing units with multiple positions, since that seems to happen
+		if (leader.tickCount % 20 == 0) {
+			Set<CreatureEntity> units = new HashSet<>();
+			for (int rank = 0; rank < this.depth; ++rank) {
+				SegmentFormation segment = this.segmentFormations.get(rank);
+				for (int file = 0; file < this.width; ++file) {
+					CreatureEntity unit = segment.getEntityAtFile(file);
+					if (unit == null) continue;
+					if (units.contains(unit)) {
+						segment.removeEntityAtFile(file);
+					} else {
+						units.add(unit);
+					}
+				}
+			}
+		}
 		
 		this.moveUpUnits();
 	}

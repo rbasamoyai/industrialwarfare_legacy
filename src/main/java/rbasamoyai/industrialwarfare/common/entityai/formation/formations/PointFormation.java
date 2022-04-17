@@ -140,7 +140,7 @@ public abstract class PointFormation extends UnitFormation {
 		boolean finishedForming = this.formationState == State.FORMING;
 		boolean stopped = UnitFormation.isStopped(leader);
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		
 		Brain<?> leaderBrain = leader.getBrain();
@@ -238,7 +238,7 @@ public abstract class PointFormation extends UnitFormation {
 	
 	@Override
 	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
 		
 		return this.units.entrySet()

@@ -87,6 +87,7 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 	@Override
 	public void setRecipe(ItemStack stack, boolean dropItem) {
 		ItemStack previousRecipe = this.recipeItemHandler.getStackInSlot(0);
+		if (ItemStack.matches(stack, previousRecipe)) return;
 		if (!previousRecipe.isEmpty() && dropItem) {
 			ItemStack previousRecipeDrop = this.recipeItemHandler.extractItem(0, this.recipeItemHandler.getSlotLimit(0), false);
 			InventoryHelper.dropItemStack(this.level, (double) this.worldPosition.getX(), this.worldPosition.above().getY(), this.worldPosition.getZ(), previousRecipeDrop);
@@ -99,6 +100,7 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 		this.workingRecipe = null;
 		this.getDataHandler().ifPresent(h -> {
 			h.setWorkingTicks(0);
+			h.setIsWorking(false);
 		});
 		this.setChangedAndForceUpdate();
 	}
@@ -110,7 +112,6 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 	}
 	
 	private void innerTick() {
-		if (this.clockTicks > 0) return;
 		if (this.level.isClientSide) return;
 		
 		LazyOptional<IWorkstationDataHandler> teOptional = this.getDataHandler();
@@ -118,7 +119,7 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 		LivingEntity workerEntity = this.checkForWorkerEntity();
 		teOptional.ifPresent(h -> {
 			h.setWorker(workerEntity);
-			h.setIsWorking(workerEntity != null);
+			h.setIsWorking(workerEntity != null && this.outputItemHandler.getStackInSlot(0).isEmpty());
 		});
 		if (workerEntity == null) return;
 		boolean isNPC = workerEntity instanceof NPCEntity;
@@ -126,7 +127,7 @@ public class NormalWorkstationTileEntity extends WorkstationTileEntity {
 		ItemStack recipeItem;
 		
 		if (this.workingRecipe == null) {
-			if (isNPC) this.attemptCraft(workerEntity);
+			this.attemptCraft(workerEntity);
 			return;
 		}
 		

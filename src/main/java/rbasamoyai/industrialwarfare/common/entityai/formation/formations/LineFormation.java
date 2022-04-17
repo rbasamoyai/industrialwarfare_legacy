@@ -100,7 +100,7 @@ public class LineFormation extends UnitFormation {
 
 		boolean stopped = UnitFormation.isStopped(leader);
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d) - 1));
 		
@@ -228,7 +228,7 @@ public class LineFormation extends UnitFormation {
 	
 	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		return leader.position()
 				.subtract(leaderForward.scale(this.depth + this.followSpacing))
 				.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
@@ -236,7 +236,7 @@ public class LineFormation extends UnitFormation {
 	
 	@Override
 	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
+		Vector3d forward = new Vector3d(-MathHelper.sin(angle * DEG_TO_RAD), 0.0d, MathHelper.cos(angle * DEG_TO_RAD));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
 		Vector3d startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
 		
