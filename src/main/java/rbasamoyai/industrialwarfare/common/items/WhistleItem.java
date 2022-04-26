@@ -76,6 +76,7 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitClusterFinder;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
+import rbasamoyai.industrialwarfare.common.entityai.navigation.PosWrapper;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -191,7 +192,12 @@ public class WhistleItem extends Item implements
 			Brain<?> brain = unit.getBrain();
 			if (!checkMemoryForMovement(brain)) continue;
 			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-			if (shouldBePrecise) brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);			
+			
+			if (unit.position().closerThan(precisePos, 0.5d)) {
+				unit.getLookControl().setLookAt(precisePos);
+			} else if (shouldBePrecise) {
+				brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);			
+			}
 			
 			if (brain.checkMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.REGISTERED)) {
 				brain.setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
@@ -539,8 +545,14 @@ public class WhistleItem extends Item implements
 								}
 							}
 						} else {
+							if (precisePos.isPresent()
+								&& unit.position().closerThan(precisePos.get(), 1.5d)
+								&& brain.checkMemory(MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED)) {
+								brain.setMemory(MemoryModuleType.LOOK_TARGET, new PosWrapper(precisePos.get()));
+							} else {
+								brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
+							}
 							brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
-							brain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), precisePos);
 						}
 						
 						if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
@@ -855,7 +867,10 @@ public class WhistleItem extends Item implements
 		T_3S(2, 60, "3"),
 		T_4S(3, 80, "4"),
 		T_5S(4, 100, "5"),
-		T_10S(5, 200, "10");
+		T_10S(5, 200, "10"),
+		T_15S(6, 300, "15"),
+		T_20S(7, 400, "20"),
+		T_30S(8, 600, "30");
 		
 		private final int id;
 		private final int time;

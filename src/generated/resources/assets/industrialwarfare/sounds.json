@@ -180,5 +180,36 @@
         "attenuation_distance": 4
       }
     ]
+  },
+  "item.firearms.breathe_on_match": {
+    "sounds": [
+      {
+        "name": "random/breath",
+        "pitch": 1.5,
+        "attenuation_distance": 4
+      },
+      {
+        "name": "random/breath",
+        "pitch": 1.75,
+        "attenuation_distance": 4
+      },
+      {
+        "name": "random/breath",
+        "pitch": 2.0,
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "item.firearms.spit_cartridge_tab": {
+    "sounds": [
+      {
+        "name": "mob/llama/spit1",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "mob/llama/spit2",
+        "attenuation_distance": 4
+      }
+    ]
   }
 }

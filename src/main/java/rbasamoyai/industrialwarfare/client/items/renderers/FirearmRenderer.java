@@ -38,7 +38,6 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	protected IRenderTypeBuffer currentBuffer;
 	protected RenderType renderType;
 	protected TransformType transformType;
-	protected ItemStack itemStack;
 	
 	protected FirearmItem animatable;
 	
@@ -56,7 +55,6 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	public void renderByItem(ItemStack itemStack, TransformType transformType, MatrixStack matrixStack, 
 			IRenderTypeBuffer bufferIn, int combinedLightIn, int p_239207_6_) {
 		this.transformType = transformType;
-		this.itemStack = itemStack;
 		super.renderByItem(itemStack, transformType, matrixStack, bufferIn, combinedLightIn, p_239207_6_);
 	}
 	
@@ -199,6 +197,6 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 		this.queuedBoneSetRotations.put(name, new Vector3f(x, y, z));
 	}
 	
-	public ItemStack getCurrentItem() { return this.itemStack; }
+	public ItemStack getCurrentItem() { return this.currentItemStack; }
 	
 }

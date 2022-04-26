@@ -149,7 +149,7 @@ public class SegmentFormation extends UnitFormation {
 		
 		double halfLength = this.tailEnd ? 2.0d : 1.0d;
 		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
-		Vector3d secondSegment = joint.subtract(this.follower.position()).normalize().scale(halfLength);
+		Vector3d secondSegment = joint.subtract(this.follower.position()).normalize();
 		this.cachedAngle = (float) -Math.toDegrees(MathHelper.atan2(secondSegment.x, secondSegment.z));
 		
 		super.tickFollower(leader);

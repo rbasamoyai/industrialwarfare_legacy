@@ -9,17 +9,21 @@ import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType
 
 public abstract class FirearmItemDataHandler extends PartItemDataHandler implements IFirearmItemDataHandler {
 	
-	protected final ItemStackHandler attachments = new ItemStackHandler(2);
+	protected final ItemStackHandler attachments;
 	
 	protected FirearmItem.ActionType action;
 	protected int time;
 	
 	protected boolean selected = false;
 	protected boolean cycled;
-	protected boolean fired;
+	protected boolean fired = false;
 	protected boolean meleeing = false;
 	protected boolean aiming;
 	protected boolean displaySprinting;
+	
+	public FirearmItemDataHandler(ItemStackHandler attachments) {
+		this.attachments = attachments;
+	}
 	
 	@Override public void setSelected(boolean selected) { this.selected = selected; }
 	@Override public boolean isSelected() { return this.selected; }

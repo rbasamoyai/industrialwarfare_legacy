@@ -10,9 +10,11 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
+import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
@@ -64,6 +66,17 @@ public class ItemInit {
 	
 	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case",
 			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
+	public static final RegistryObject<Item> PAPER_CARTRIDGE = ITEMS.register("paper_cartridge",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
+	public static final RegistryObject<Item> INFINITE_PAPER_CARTRIDGE = ITEMS.register("infinite_paper_cartridge",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).rarity(Rarity.EPIC)) {
+				@Override public boolean isFoil(ItemStack stack) { return true; }
+			});
+	
+	public static final RegistryObject<Item> MATCH_CORD = ITEMS.register("match_cord", MatchCordItem::new);
+	public static final RegistryObject<Item> INFINITE_MATCH_CORD = ITEMS.register("infinite_match_cord", InfiniteMatchCordItem::new);
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

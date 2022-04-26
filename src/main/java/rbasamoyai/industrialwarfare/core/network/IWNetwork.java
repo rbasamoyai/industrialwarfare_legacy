@@ -24,7 +24,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActi
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.10.0";
+	public static final String NETWORK_VERSION = "0.10.1";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -42,7 +42,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SRequestUpdate.class, DiplomacyScreenMessages.SRequestUpdate::encode, DiplomacyScreenMessages.SRequestUpdate::decode, DiplomacyScreenMessages.SRequestUpdate::handle);
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.CBroadcastChanges.class, DiplomacyScreenMessages.CBroadcastChanges::encode, DiplomacyScreenMessages.CBroadcastChanges::decode, DiplomacyScreenMessages.CBroadcastChanges::handle);
 		CHANNEL.registerMessage(id++, DiplomacyScreenMessages.SDiplomaticStatusChangeSync.class, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::encode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::decode, DiplomacyScreenMessages.SDiplomaticStatusChangeSync::handle);
-		CHANNEL.registerMessage(id++, FirearmActionMessages.SReloadingFirearm.class, FirearmActionMessages.SReloadingFirearm::encode, FirearmActionMessages.SReloadingFirearm::decode, FirearmActionMessages.SReloadingFirearm::handle);
+		CHANNEL.registerMessage(id++, FirearmActionMessages.SInputAction.class, FirearmActionMessages.SInputAction::encode, FirearmActionMessages.SInputAction::decode, FirearmActionMessages.SInputAction::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CApplyRecoil.class, FirearmActionMessages.CApplyRecoil::encode, FirearmActionMessages.CApplyRecoil::decode, FirearmActionMessages.CApplyRecoil::handle);
 		CHANNEL.registerMessage(id++, FirearmActionMessages.CNotifyHeadshot.class, FirearmActionMessages.CNotifyHeadshot::encode, FirearmActionMessages.CNotifyHeadshot::decode, FirearmActionMessages.CNotifyHeadshot::handle);
 		CHANNEL.registerMessage(id++, SOpenItemScreen.class, SOpenItemScreen::encode, SOpenItemScreen::decode, SOpenItemScreen::handle);

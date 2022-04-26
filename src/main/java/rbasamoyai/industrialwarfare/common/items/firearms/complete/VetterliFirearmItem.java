@@ -22,7 +22,7 @@ import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAni
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
@@ -44,7 +44,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.durability(1200)
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
-					new FirearmItem.Properties()
+					new InternalMagazineFirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(10.0f)
 							.headshotMultiplier(3.0f)
@@ -60,22 +60,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.reloadTime(20)
 							.reloadEndTime(40)
 							.projectileRange(80)
-							.fovModifier(0.5f),
-							12,
-							s -> false);
+							.magazineSize(12));
 	}
 	
 	/*
 	 * ANIMATION CONTROL METHODS
 	 */
-	
-	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
-		if (renderer.getUniqueID(this).intValue() == -1) return;
-		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
-			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
-		}
-	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
@@ -113,7 +103,10 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		super.onSelect(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_SELECT_FIREARM);
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "select_firearm", true, 1.0f);
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>("select_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -121,14 +114,17 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			int animId = ANIM_HIP_AIMING;
-			String animStr = "hip_aiming";
+			int animId;
+			String animStr;
 			if (isAiming(firearm)) {
 				animId = ANIM_ADS_AIMING;
 				animStr = "ads_aiming";
 			} else if (shooter.isSprinting()) {
 				animId = ANIM_PORT_ARMS;
 				animStr = "port_arms";
+			} else {
+				animId = ANIM_HIP_AIMING;
+				animStr = "hip_aiming";
 			}
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
@@ -251,6 +247,14 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	
 	private <E extends Item & IAnimatable> PlayState firstPersonPredicate(AnimationEvent<E> event) {
 		return PlayState.CONTINUE;
+	}
+	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
+		}
 	}
 	
 	public static final int ANIM_PORT_ARMS = 0;

@@ -1,7 +1,5 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import java.util.function.Predicate;
-
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
@@ -26,8 +24,8 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 	
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	
-	public InternalMagazineRifleItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int magazineSize, Predicate<ItemStack> speedloaderPredicate) {
-		super(itemProperties, firearmProperties, magazineSize, speedloaderPredicate);
+	public InternalMagazineRifleItem(Item.Properties itemProperties, InternalMagazineFirearmItem.Properties firearmProperties) {
+		super(itemProperties, firearmProperties);
 	}
 	
 	@Override

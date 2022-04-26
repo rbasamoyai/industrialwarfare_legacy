@@ -153,6 +153,30 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.pitch(1.03f)
 						.attenuationDistance(4)));
 		
+		add(loc("item.firearms.breathe_on_match"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:random/breath"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.5f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:random/breath"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.75f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:random/breath"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(2.0f)
+						.attenuationDistance(4)));
+		
+		add(loc("item.firearms.spit_cartridge_tab"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:mob/llama/spit1"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.0f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:mob/llama/spit2"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.0f)
+						.attenuationDistance(4)));
+		
 	}
 	
 	private ResourceLocation loc(String id) {

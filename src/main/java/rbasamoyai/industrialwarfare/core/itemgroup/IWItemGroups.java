@@ -77,7 +77,11 @@ public class IWItemGroups {
 					getItemStack(ItemInit.SCHEDULE),
 					getItemStack(ItemInit.CARTRIDGE_CASE),
 					getItemStack(ItemInit.AMMO_GENERIC),
-					getItemStack(ItemInit.INFINITE_AMMO_GENERIC)
+					getItemStack(ItemInit.INFINITE_AMMO_GENERIC),
+					getItemStack(ItemInit.PAPER_CARTRIDGE),
+					getItemStack(ItemInit.INFINITE_PAPER_CARTRIDGE),
+					getItemStack(ItemInit.MATCH_CORD),
+					getItemStack(ItemInit.INFINITE_MATCH_CORD)
 					));
 		}
 		
@@ -95,7 +99,7 @@ public class IWItemGroups {
 					getItemStack(ItemInit.DEBUG_OWNER.get()),
 					getItemStack(ItemInit.NPC_SPAWN_EGG.get())
 					));
-		}	
+		}
 		
 		@Override
 		public ItemStack makeIcon() {
@@ -155,7 +159,8 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		

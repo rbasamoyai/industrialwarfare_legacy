@@ -15,11 +15,11 @@ import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
 public abstract class RevolverFirearmItem extends FirearmItem {
-
-	public RevolverFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int cylinderSize) {
-		super(itemProperties, firearmProperties, () -> {
-			RevolverDataHandler handler = new RevolverDataHandler();
-			handler.setMagazineSize(cylinderSize);
+	
+	public RevolverFirearmItem(Item.Properties itemProperties, RevolverFirearmItem.Properties firearmProperties) {
+		super(itemProperties, firearmProperties, attachments -> {
+			RevolverDataHandler handler = new RevolverDataHandler(attachments);
+			handler.setMagazineSize(firearmProperties.cylinderSize);
 			return handler;
 		});
 	}
@@ -92,6 +92,17 @@ public abstract class RevolverFirearmItem extends FirearmItem {
 			return wrap % mod; 
 		} else {
 			return wrap;
+		}
+	}
+	
+	public static class Properties extends FirearmItem.AbstractProperties<Properties> {
+		private int cylinderSize;
+		
+		@Override protected Properties getThis() { return this; }
+		
+		public Properties cylinderSize(int cylinderSize) {
+			this.cylinderSize = cylinderSize;
+			return this;
 		}
 	}
 

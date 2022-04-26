@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
@@ -18,16 +17,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
-import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
-import rbasamoyai.industrialwarfare.common.items.firearms.SingleShotFirearmItem;
+import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.MatchlockFirearmItem;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -40,51 +36,56 @@ import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
+public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 
-	public MartiniHenryFirearmItem() {
+	public FishtailMatchlockFirearmItem() {
 		super(new Item.Properties()
 							.stacksTo(1)
 							.durability(1200)
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
-					new FirearmItem.Properties()
-							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
-							.baseDamage(19.0f)
+					new MatchlockFirearmItem.Properties()
+							.ammoPredicate(s -> s.getItem() == ItemInit.PAPER_CARTRIDGE.get() || s.getItem() == ItemInit.INFINITE_PAPER_CARTRIDGE.get())
+							.baseDamage(35.0f)
 							.headshotMultiplier(3.0f)
-							.spread(0.1f)
+							.spread(1.5f)
 							.hipfireSpread(5.0f)
 							.muzzleVelocity(6.0f)
 							.horizontalRecoil(e -> 1.5f * (float) e.getRandom().nextGaussian())
 							.verticalRecoil(e -> 6.0f + 2.0f * e.getRandom().nextFloat())
 							.cooldownTime(20)
 							.drawTime(20)
-							.reloadTime(50)
-							.projectileRange(100)
-							.needsCycle(false));
-
+							.reloadTime(280)
+							.reloadUnreadyTime(290)
+							.reloadUnreadyNoCordTime(265)
+							.cycleTime(70)
+							.primingNoCordTime(90)
+							.unprimingTime(40)
+							.unprimingNoCordTime(20)
+							.projectileRange(75));
 	}
 	
-	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
-	@Override public boolean canOpenScreen(ItemStack stack) { return false; }
+	@Override
+	public boolean canOpenScreen(ItemStack stack) {
+		return false;
+	}
 
-	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
-	@Override 
+	@Override
 	public INamedContainerProvider getItemContainerProvider(ItemStack stack) {
-		return new SimpleNamedContainerProvider(AttachmentsRifleContainer.getServerContainerProvider(stack), TITLE);
+		return null;
 	}
 	
 	/*
 	 * ANIMATION CONTROL METHODS
 	 */
 	
-	private static final float PIN_ROT = (float) Math.toRadians(30.0d);
+	private static final float PAN_COVER_ROT = (float) Math.toRadians(180.0f);
 	
 	@Override
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
 		super.onSelect(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_SELECT_FIREARM);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_SELECT_FIREARM);
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("select_firearm", false));
 			upperBody.add(new Tuple<>("hip_aiming", true));
@@ -115,6 +116,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	
 	@Override
 	public void startSprinting(ItemStack firearm, LivingEntity shooter) {
+		if (isFired(firearm)) return;
 		super.startSprinting(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_PORT_ARMS);
@@ -126,46 +128,6 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	public void stopSprinting(ItemStack firearm, LivingEntity shooter) {
 		super.stopSprinting(firearm, shooter);
 		this.doNothing(firearm, shooter);
-	}
-	
-	@Override
-	protected void shoot(ItemStack firearm, LivingEntity shooter) {
-		super.shoot(firearm, shooter);
-		if (!shooter.level.isClientSide) {
-			ServerWorld slevel = (ServerWorld) shooter.level;
-			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
-			
-			Vector3d viewVector = shooter.getViewVector(1.0f);
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
-			Vector3d smokeDelta = viewVector.scale(0.5d);
-			int count = 30 + random.nextInt(31);
-			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
-				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
-			}
-			
-			boolean isAiming = isAiming(firearm);
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
-			
-			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
-			upperBody.add(new Tuple<>(isAiming ? "ads_firing" : "hip_firing", false));
-			upperBody.add(new Tuple<>(isAiming ? "ads_aiming" : "hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
-		}
-	}
-	
-	@Override
-	protected void startReload(ItemStack firearm, LivingEntity shooter) {
-		if (isAiming(firearm)) return;
-		super.startReload(firearm, shooter);
-		if (!shooter.level.isClientSide) {			
-			boolean fired = isFired(firearm);
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_EXTRACT : ANIM_RELOAD);
-			
-			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
-			upperBody.add(new Tuple<>(fired ? "reload_extract" : "reload", false));
-			upperBody.add(new Tuple<>("hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
-		}
 	}
 	
 	@Override
@@ -194,8 +156,86 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		}
 	}
 	
+	@Override
+	protected void shoot(ItemStack firearm, LivingEntity shooter) {
+		super.shoot(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			ServerWorld slevel = (ServerWorld) shooter.level;
+			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
+			
+			Vector3d viewVector = shooter.getViewVector(1.0f);
+			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vector3d smokeDelta = viewVector.scale(0.3d);
+			int count = 50 + random.nextInt(51);
+			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.03d);
+			}
+			
+			boolean isAiming = isAiming(firearm);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isAiming ? ANIM_ADS_FIRING : ANIM_HIP_FIRING);
+			
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>(isAiming ? "ads_firing" : "hip_firing", false));
+			upperBody.add(new Tuple<>(isAiming ? "ads_aiming" : "hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+		}
+	}
+	
+	@Override
+	protected void startReload(ItemStack firearm, LivingEntity shooter) {
+		if (isAiming(firearm) || shooter.isVisuallySwimming()) return;
+		super.startReload(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			int animation;
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			if (!isCycled(firearm)) {
+				animation = ANIM_RELOAD;
+				upperBody.add(new Tuple<>("reload", false));
+			} else if (isFired(firearm)) {
+				animation = ANIM_UNREADY_RELOAD;
+				upperBody.add(new Tuple<>("unready_reload", false));
+			} else {
+				animation = ANIM_UNREADY_NO_CORD_RELOAD;
+				upperBody.add(new Tuple<>("unready_no_cord_reload", false));
+			}
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animation);
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
+		}
+	}
+	
+	@Override
+	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
+		if (isAiming(firearm) || isCycled(firearm)) return;
+		super.startCycle(firearm, shooter);
+		if (!shooter.level.isClientSide && shooter.getOffhandItem().getItem() instanceof MatchCordItem && MatchCordItem.isLit(shooter.getOffhandItem())) {
+			boolean isCycled = isCycled(firearm);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, isCycled ? ANIM_READY_FIREARM_NO_CORD : ANIM_READY_FIREARM);
+			
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>(isCycled ? "ready_firearm_no_cord" : "ready_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
+		}
+	}
+	
+	@Override
+	protected void goToPreviousStance(ItemStack firearm, LivingEntity shooter) {
+		if (isAiming(firearm) || !isCycled(firearm)) return;
+		super.goToPreviousStance(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			boolean hasMatch = isFired(firearm);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, hasMatch ? ANIM_UNREADY_FIREARM : ANIM_UNREADY_FIREARM_NO_CORD);
+			
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>(hasMatch ? "unready_firearm" : "unready_firearm_no_cord", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
+		}
+	}
+	
 	/*
-	 * FIRST PERSON ANIMATION METHODS
+	 * FIRST-PERSON ANIMATION METHODS
 	 */
 
 	@Override
@@ -218,72 +258,92 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		
 		getDataHandler(stack).ifPresent(h -> {
 			if (h.getAction() == ActionType.NOTHING) {
-				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+				renderer.setBoneRotation("pan_cover", 0.0f, h.isCycled() ? PAN_COVER_ROT : 0.0f, 0.0f);
+				renderer.hideBone("slow_match", !h.isFired());
 			}
 		});
 	}
 
-	public static final int ANIM_PORT_ARMS = 0;
-	public static final int ANIM_TRAIL_ARMS = 1;
-	public static final int ANIM_HIP_AIMING = 2;
-	public static final int ANIM_HIP_FIRING = 3;
-	public static final int ANIM_RELOAD = 4;
-	public static final int ANIM_RELOAD_EXTRACT = 5;
-	public static final int ANIM_ADS_AIMING = 6;
-	public static final int ANIM_ADS_AIMING_START = 7;
-	public static final int ANIM_ADS_AIMING_END = 8;
-	public static final int ANIM_ADS_FIRING = 9;
-	public static final int ANIM_SELECT_FIREARM = 13;
+	private static final int ANIM_SELECT_FIREARM = 0;
+	private static final int ANIM_PORT_ARMS = 1;
+	private static final int ANIM_HIP_AIMING = 10;
+	private static final int ANIM_HIP_FIRING = 11;
+	private static final int ANIM_ADS_AIMING = 20;
+	private static final int ANIM_ADS_FIRING = 21;
+	private static final int ANIM_READY_FIREARM = 30;
+	private static final int ANIM_READY_FIREARM_NO_CORD = 31;
+	private static final int ANIM_UNREADY_FIREARM = 40;
+	private static final int ANIM_UNREADY_FIREARM_NO_CORD = 41;
+	private static final int ANIM_RELOAD = 50;
+	private static final int ANIM_UNREADY_RELOAD = 51;
+	private static final int ANIM_UNREADY_NO_CORD_RELOAD = 52;
 	
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
 		switch (state) {
+		case ANIM_SELECT_FIREARM:
+			builder
+			.addAnimation("select_firearm", false)
+			.addAnimation("hip_aiming", true);
+			break;
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
-		case ANIM_TRAIL_ARMS: builder.addAnimation("trail_arms", true); break;
 		case ANIM_HIP_AIMING: builder.addAnimation("hip_aiming", true); break;
 		case ANIM_HIP_FIRING:
 			builder
 			.addAnimation("hip_firing", false)
 			.addAnimation("hip_aiming", true);
 			break;
-		case ANIM_RELOAD:
-			builder
-			.addAnimation("reload", false)
-			.addAnimation("reload_hold", true);
-			break;
-		case ANIM_RELOAD_EXTRACT:
-			builder
-			.addAnimation("reload_extract", false)
-			.addAnimation("hip_aiming", true);
-			break;
 		case ANIM_ADS_AIMING: builder.addAnimation("ads_aiming", true); break;
-		case ANIM_ADS_AIMING_START:
-			builder
-			.addAnimation("ads_aiming_start", false)
-			.addAnimation("ads_aiming", true);
-			break;
-		case ANIM_ADS_AIMING_END:
-			builder
-			.addAnimation("ads_aiming_stop", false)
-			.addAnimation("hip_aiming", true);
-			break;
 		case ANIM_ADS_FIRING:
 			builder
 			.addAnimation("ads_firing", false)
 			.addAnimation("ads_aiming", true);
 			break;
-		case ANIM_SELECT_FIREARM:
+		case ANIM_READY_FIREARM:
 			builder
-			.addAnimation("select_firearm", false)
+			.addAnimation("ready_firearm", false)
 			.addAnimation("hip_aiming", true);
 			break;
+		case ANIM_READY_FIREARM_NO_CORD:
+			builder
+			.addAnimation("ready_firearm_no_cord", false)
+			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_UNREADY_FIREARM:
+			builder
+			.addAnimation("unready_firearm", false)
+			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_UNREADY_FIREARM_NO_CORD:
+			builder
+			.addAnimation("unready_firearm_no_cord", false)
+			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_RELOAD:
+			builder
+			.addAnimation("reload", false)
+			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_UNREADY_RELOAD:
+			builder
+			.addAnimation("unready_reload", false)
+			.addAnimation("hip_aiming", true);
+			break;
+		case ANIM_UNREADY_NO_CORD_RELOAD:
+			builder
+			.addAnimation("unready_no_cord_reload", false)
+			.addAnimation("hip_aiming", true);
 		}
 		
 		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
 		controller.markNeedsReload();
 		controller.setAnimation(builder);
 	}
+	
+	/*
+	 * THIRD-PERSON ANIMATION METHODS
+	 */
 
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
@@ -299,24 +359,25 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		
 		getDataHandler(item).ifPresent(h -> {
 			if (h.getAction() == ActionType.NOTHING) {
-				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+				renderer.setBoneRotation("pan_cover", 0.0f, h.isCycled() ? PAN_COVER_ROT : 0.0f, 0.0f);
+				renderer.hideBone("slow_match", !h.isFired());
 			}
 		});
 	}
 
-	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/martini_henry_t.animation.json");
+	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/fishtail_matchlock_t.animation.json");
 	@Override
 	public ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity) {
 		return ANIM_FILE_LOC;
 	}
 
-	private static final ResourceLocation MODEL_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "geo/third_person/martini_henry_t.geo.json");
+	private static final ResourceLocation MODEL_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "geo/third_person/fishtail_matchlock_t.geo.json");
 	@Override
 	public ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity) {
 		return MODEL_LOC;
 	}
 
-	private static final ResourceLocation TEXTURE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/item/martini_henry.png");
+	private static final ResourceLocation TEXTURE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/item/fishtail_matchlock.png");
 	@Override
 	public ResourceLocation getTextureLocation(ItemStack stack, LivingEntity entity) {
 		return TEXTURE_LOC;

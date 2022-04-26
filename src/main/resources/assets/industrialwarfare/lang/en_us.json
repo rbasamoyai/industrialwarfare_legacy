@@ -15,6 +15,10 @@
 	"item.industrialwarfare.cartridge_case": "Cartridge Case",
 	"item.industrialwarfare.ammo_generic": "Generic Ammo",
 	"item.industrialwarfare.infinite_ammo_generic": "Infinite Generic Ammo",
+	"item.industrialwarfare.paper_cartridge": "Paper Cartridge",
+	"item.industrialwarfare.infinite_paper_cartridge": "Infinite Paper Cartridge",
+	"item.industrialwarfare.match_cord": "Match Cord",
+	"item.industrialwarfare.infinite_match_cord": "Infinite Match Cord",
 	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
@@ -117,6 +121,7 @@
 	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	"item.industrialwarfare.colt_saa": "Colt Single Action Army Revolver",
+	"item.industrialwarfare.fishtail_matchlock": "Fishtail Matchlock Musket",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -359,6 +364,10 @@
 	"tooltip.industrialwarfare.whistle.interval2": "Current time between attack stages: %1$ss",
 	"tooltip.industrialwarfare.whistle.formation_types": "Formation patterns",
 	"tooltip.industrialwarfare.whistle.attack_types": "Formation attack patterns",
+	
+	"tooltip.industrialwarfare.match_cord.expired": "This match cord has burnt out while outside of inventory.",
+	"tooltip.industrialwarfare.match_cord.expired1": "It will be deleted if you put it in your inventory, or any other ticked inventory.",
+	"tooltip.industrialwarfare.infinite_match_cord.tooltip": "Never burns out!",
 	
 	"attack_type.industrialwarfare.fire_at_will": "Fire at will",
 	"attack_type.industrialwarfare.fire_at_will.desc": "Units fire independently. Flexible, but not much power.",

@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.items.ItemStackHandler;
 
 public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	
@@ -14,6 +15,10 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	
 	private int magazineSize;
 	private Stack<ItemStack> magazine = new Stack<>();
+	
+	public InternalMagazineDataHandler(ItemStackHandler handler) {
+		super(handler);
+	}
 	
 	@Override public void setMagazineSize(int size) { this.magazineSize = size; }
 	@Override public int getMagazineSize() { return this.magazineSize; }

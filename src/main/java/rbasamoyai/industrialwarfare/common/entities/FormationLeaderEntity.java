@@ -17,6 +17,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Brain.BrainCodec;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
+import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.RedstoneParticleData;
@@ -47,6 +48,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
@@ -100,6 +102,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d, true)),
+				Pair.of(0, new LookTask(45, 90)),
 				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
 				Pair.of(2, new MoveToEngagementDistance(50))
 				);

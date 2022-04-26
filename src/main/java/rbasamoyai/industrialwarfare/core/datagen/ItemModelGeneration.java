@@ -43,10 +43,26 @@ public class ItemModelGeneration extends ItemModelProvider {
 		simpleBuilder("cartridge_case", "ammo_large_metal_casing");
 		simpleBuilder("ammo_generic", "ammo_large_metal");
 		simpleBuilder("infinite_ammo_generic", "ammo_large_metal");
+		simpleBuilder("paper_cartridge", "paper_cartridge_musket");
+		simpleBuilder("infinite_paper_cartridge", "paper_cartridge_musket");
 		
 		simpleBuilder("part_bullet");
 		
 		simpleBuilder("whistle");
+		
+		simpleBuilder("match_cord")
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"), 1.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/match_cord_lit")))
+				.end();
+		
+		simpleBuilder("match_cord_lit");
+		
+		simpleBuilder("infinite_match_cord", "match_cord")
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"), 1.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/match_cord_lit")))
+				.end();
 		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}

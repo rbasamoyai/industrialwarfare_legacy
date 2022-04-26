@@ -110,8 +110,6 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		boolean stopped = isStopped(leader);
 		Vector3d followPos = this.getFollowPosition(leader);
 		
-		
-		
 		boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
 		
 		if (stopped && closeEnough) {

@@ -196,7 +196,9 @@ public class LineFormation extends UnitFormation {
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 						continue;
 					}
-				} else if (unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+					
+				} else if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())
+						&& unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.VALUE_ABSENT)) {
 					unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
 				}
 				

@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
+	package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
@@ -6,6 +6,7 @@ import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.PartItemDataCapability;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType;
 
@@ -25,7 +26,7 @@ public class FirearmItemDataCapability {
 	public static Capability<IFirearmItemDataHandler> FIREARM_ITEM_DATA_CAPABILITY = null;
 	
 	public static void register() {
-		CapabilityManager.INSTANCE.register(IFirearmItemDataHandler.class, new Storage<>(), InternalMagazineDataHandler::new);
+		CapabilityManager.INSTANCE.register(IFirearmItemDataHandler.class, new Storage<>(), () -> new InternalMagazineDataHandler(new ItemStackHandler()));
 	}
 	
 	public static class Storage<T extends IFirearmItemDataHandler> extends PartItemDataCapability.Storage<T> {

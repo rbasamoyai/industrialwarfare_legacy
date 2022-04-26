@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.client.events;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.entity.SpriteRenderer;
+import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -25,13 +26,17 @@ import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
+import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD, value = Dist.CLIENT)
 public class ClientEvents {
 
+	private static final String TAG_IS_LIT = MatchCordItem.TAG_IS_LIT;
+	
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		ScreenManager.register(ContainerInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
@@ -51,6 +56,18 @@ public class ClientEvents {
 		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.FORMATION_LEADER.get(), NothingRenderer::new);
 		
 		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);
+		
+		event.enqueueWork(() -> {
+			ItemModelsProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+					(stack, level, living) -> {
+						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+					});
+			
+			ItemModelsProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+					(stack, level, living) -> {
+						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+					});
+		});
 	}
 	
 	@SubscribeEvent

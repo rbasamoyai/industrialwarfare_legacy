@@ -501,14 +501,22 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
+			if (!FirearmItem.isCycled(weapon) && ((FirearmItem) weaponItem).needsCycle(weapon)) {
+				this.actionDelay = 0;
+				if (FirearmItem.isFinishedAction(weapon)) {
+					this.swing(Hand.MAIN_HAND);
+				}
+				return true;
+			}
+			
+			if (!FirearmItem.isFinishedAction(weapon)) return true;
+			
 			if (this.actionDelay <= 0) {
 				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
 			}
-			if (this.canAim()) {
-				if (!FirearmItem.isAiming(weapon)) {
-					((FirearmItem) weaponItem).startAiming(weapon, this);
-					this.actionDelay += 10;
-				}
+			if (this.canAim() && !FirearmItem.isAiming(weapon)) {
+				((FirearmItem) weaponItem).startAiming(weapon, this);
+				this.actionDelay += 10;
 			}
 		} else if (this.actionDelay <= 0) {
 			this.actionDelay = MathHelper.ceil(60.0f * this.timeModifier);
@@ -643,9 +651,11 @@ public class NPCEntity extends CreatureEntity implements
 				case RELOADING: return ShootingStatus.RELOADING;
 				case CYCLING: return ShootingStatus.CYCLING;
 				case NOTHING:
-					if (h.isAiming() || !h.isFinishedAction()) return ShootingStatus.FIRED;
 					if (h.hasAmmo()) {
 						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
+					}
+					if (h.isAiming() || !h.isFinishedAction()) {
+						return ShootingStatus.FIRED;
 					}
 					return ShootingStatus.RELOADING;
 				default: return ShootingStatus.FIRED;
