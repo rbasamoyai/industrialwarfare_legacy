@@ -61,6 +61,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private UnitFormation formation;
 	@Nullable
 	private PlayerIDTag owner;
+	@Nullable
+	private long orderLastReceived;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
 		this(type, level, UnitFormationTypeInit.LINE.get().getFormation(-1));
@@ -69,6 +71,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
 		super(type, level);
 		this.formation = formation;
+		this.updateOrderTime();
 		this.setPersistenceRequired();
 		this.setInvulnerable(true);
 	}
@@ -209,6 +212,15 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	public Vector3d getFollowPosition() {
 		return this.formation.getFollowPosition(this);
+	}
+	
+	public void updateOrderTime() {
+		this.orderLastReceived = this.level.getGameTime();
+		if (this.formation != null) this.formation.updateOrderTime();
+	}
+	
+	public long getLastOrderTime() {
+		return this.orderLastReceived;
 	}
 	
 	@Override

@@ -16,6 +16,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -158,6 +159,10 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
+  		if (isSubmergedInWater(shooter)) {
+  			firearm.setDamageValue(firearm.getDamageValue() - 1);
+  			return;
+  		}
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			ServerWorld slevel = (ServerWorld) shooter.level;
@@ -183,7 +188,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	
 	@Override
 	protected void startReload(ItemStack firearm, LivingEntity shooter) {
-		if (isAiming(firearm) || shooter.isVisuallySwimming()) return;
+		if (isSubmergedInWater(shooter) || isAiming(firearm) || shooter.isVisuallySwimming()) return;
 		super.startReload(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			int animation;
@@ -206,7 +211,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	
 	@Override
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
-		if (isAiming(firearm) || isCycled(firearm)) return;
+		if (isSubmergedInWater(shooter) || isAiming(firearm) || isCycled(firearm)) return;
 		super.startCycle(firearm, shooter);
 		if (!shooter.level.isClientSide && shooter.getOffhandItem().getItem() instanceof MatchCordItem && MatchCordItem.isLit(shooter.getOffhandItem())) {
 			boolean isCycled = isCycled(firearm);
@@ -253,7 +258,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		
 		getDataHandler(stack).ifPresent(h -> {
@@ -262,6 +267,8 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 				renderer.hideBone("slow_match", !h.isFired());
 			}
 		});
+		float f = 1.0f / MathHelper.lerp(aimProgress, 1.0f, this.fovModifier);
+		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
 	private static final int ANIM_SELECT_FIREARM = 0;

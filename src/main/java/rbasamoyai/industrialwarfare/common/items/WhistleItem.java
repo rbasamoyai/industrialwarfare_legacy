@@ -163,7 +163,7 @@ public class WhistleItem extends Item implements
 				.map(NBTUtil::loadUUID)
 				.map(slevel::getEntity)
 				.filter(WhistleItem::isValidLeader)
-				.map(e -> (FormationLeaderEntity) e)
+				.map(FormationLeaderEntity.class::cast)
 				.collect(Collectors.toList());
 		
 		PlayerIDTag owner = PlayerIDTag.of(player);
@@ -174,7 +174,7 @@ public class WhistleItem extends Item implements
 				.map(NBTUtil::loadUUID)
 				.map(slevel::getEntity)
 				.filter(e -> isValidUnit(e, owner))
-				.map(e -> (CreatureEntity) e)
+				.map(CreatureEntity.class::cast)
 				.collect(Collectors.toList());
 		
 		for (CreatureEntity unit : unitsToFormUp) {
@@ -207,8 +207,9 @@ public class WhistleItem extends Item implements
 			brain.eraseMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get());
 			brain.setMemory(MemoryModuleType.MEETING_POINT, globPos);
 			
-			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+			if (unit instanceof FormationLeaderEntity) {
 				leaderUUIDs.add(NBTUtil.createUUID(unit.getUUID()));
+				((FormationLeaderEntity) unit).updateOrderTime();
 			}
 		}
 		nbt.put(TAG_CONTROLLED_LEADERS, leaderUUIDs);
@@ -288,7 +289,7 @@ public class WhistleItem extends Item implements
 				.map(NBTUtil::loadUUID)
 				.map(slevel::getEntity)
 				.filter(WhistleItem::isValidLeader)
-				.map(e -> (FormationLeaderEntity) e)
+				.map(FormationLeaderEntity.class::cast)
 				.collect(Collectors.toList());
 		
 		List<CreatureEntity> unitsToFormUp =
@@ -297,7 +298,7 @@ public class WhistleItem extends Item implements
 				.map(NBTUtil::loadUUID)
 				.map(slevel::getEntity)
 				.filter(e -> isValidUnit(e, owner))
-				.map(e -> (CreatureEntity) e)
+				.map(CreatureEntity.class::cast)
 				.collect(Collectors.toList());
 		
 		for (CreatureEntity unit : unitsToFormUp) {
@@ -328,8 +329,9 @@ public class WhistleItem extends Item implements
 				brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
 			}
 			
-			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
+			if (unit instanceof FormationLeaderEntity) {
 				leaderUUIDs.add(NBTUtil.createUUID(unit.getUUID()));
+				((FormationLeaderEntity) unit).updateOrderTime();
 			}
 		}
 		nbt.put(TAG_CONTROLLED_LEADERS, leaderUUIDs);
@@ -502,7 +504,7 @@ public class WhistleItem extends Item implements
 							.map(NBTUtil::loadUUID)
 							.map(level::getEntity)
 							.filter(WhistleItem::isValidLeader)
-							.map(e -> (FormationLeaderEntity) e)
+							.map(FormationLeaderEntity.class::cast)
 							.collect(Collectors.toList());
 					
 					PlayerIDTag owner = PlayerIDTag.of(player);
@@ -513,7 +515,7 @@ public class WhistleItem extends Item implements
 							.map(NBTUtil::loadUUID)
 							.map(level::getEntity)
 							.filter(e -> isValidUnit(e, owner))
-							.map(e -> (CreatureEntity) e)
+							.map(CreatureEntity.class::cast)
 							.collect(Collectors.toList());
 					
 					for (CreatureEntity unit : unitsToFormUp) {
@@ -588,6 +590,7 @@ public class WhistleItem extends Item implements
 				}
 			}
 			brain.setActiveActivityIfPossible(mode == CombatMode.DONT_ATTACK ? Activity.IDLE : Activity.FIGHT);
+			leader.updateOrderTime();
 		}
 			
 		player.getCooldowns().addCooldown(this, 10);
@@ -638,7 +641,7 @@ public class WhistleItem extends Item implements
 					cluster
 					.stream()
 					.map(Entity::position)
-					.reduce((a, b) -> a.add(b))
+					.reduce(Vector3d::add)
 					.map(v -> v.scale(1.0d / (double) cluster.size()))
 					.get();
 			

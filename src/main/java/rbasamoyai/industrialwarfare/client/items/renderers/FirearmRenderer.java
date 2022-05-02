@@ -16,11 +16,10 @@ import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3f;
-import net.minecraftforge.items.IItemHandler;
 import rbasamoyai.industrialwarfare.client.items.models.FirearmModel;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
@@ -40,6 +39,8 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	protected TransformType transformType;
 	
 	protected FirearmItem animatable;
+	
+	private float aimProgress = 0.0f;
 	
 	private final Set<String> hiddenBones = new HashSet<>();
 	private final Set<String> suppressedBones = new HashSet<>();
@@ -77,18 +78,14 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public void render(FirearmItem animatable, MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ItemStack itemStack) {
-		animatable.setupAnimationState(this, itemStack);
-		super.render(animatable, stack, bufferIn, packedLightIn, itemStack);
+		Minecraft mc = Minecraft.getInstance();
+		float sign = FirearmItem.isAiming(itemStack) ? 1.0f : -1.0f;
+		this.aimProgress = MathHelper.clamp(this.aimProgress + mc.getFrameTime() * sign * 0.1f, 0.0f, 1.0f);
 		
-		FirearmItem.getDataHandler(itemStack).ifPresent(h -> {
-			IItemHandler attachments = h.getAttachmentsHandler();
-			
-			int slotSize = attachments.getSlots();
-			if (slotSize >= 1) {
-				ItemStack melee = attachments.getStackInSlot(0);
-				ItemStackTileEntityRenderer ister = melee.getItem().getItemStackTileEntityRenderer();
-			}
-		});
+		stack.pushPose();
+		animatable.setupAnimationState(this, itemStack, stack, this.aimProgress);
+		super.render(animatable, stack, bufferIn, packedLightIn, itemStack);
+		stack.popPose();
 	}
 	
 	@Override

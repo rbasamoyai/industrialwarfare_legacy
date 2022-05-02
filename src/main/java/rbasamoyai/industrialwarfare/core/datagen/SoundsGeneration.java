@@ -167,6 +167,20 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.pitch(2.0f)
 						.attenuationDistance(4)));
 		
+		add(loc("item.firearms.extinguish_match"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:dig/cloth1"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:dig/cloth2"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:dig/cloth3"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.attenuationDistance(4))
+				.with(Sound.sound(innerLoc("minecraft:dig/cloth4"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.attenuationDistance(4)));
+		
 		add(loc("item.firearms.spit_cartridge_tab"), SoundDefinition.definition()
 				.with(Sound.sound(innerLoc("minecraft:mob/llama/spit1"), SoundDefinition.SoundType.SOUND)
 						.volume(1.0f)
@@ -177,6 +191,11 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.pitch(1.0f)
 						.attenuationDistance(4)));
 		
+		add(loc("item.firearms.ram_charge"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:dig/stone2"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(2.0f)
+						.attenuationDistance(4)));		
 	}
 	
 	private ResourceLocation loc(String id) {

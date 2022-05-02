@@ -200,6 +200,26 @@
       }
     ]
   },
+  "item.firearms.extinguish_match": {
+    "sounds": [
+      {
+        "name": "dig/cloth1",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "dig/cloth2",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "dig/cloth3",
+        "attenuation_distance": 4
+      },
+      {
+        "name": "dig/cloth4",
+        "attenuation_distance": 4
+      }
+    ]
+  },
   "item.firearms.spit_cartridge_tab": {
     "sounds": [
       {
@@ -208,6 +228,15 @@
       },
       {
         "name": "mob/llama/spit2",
+        "attenuation_distance": 4
+      }
+    ]
+  },
+  "item.firearms.ram_charge": {
+    "sounds": [
+      {
+        "name": "dig/stone2",
+        "pitch": 2.0,
         "attenuation_distance": 4
       }
     ]

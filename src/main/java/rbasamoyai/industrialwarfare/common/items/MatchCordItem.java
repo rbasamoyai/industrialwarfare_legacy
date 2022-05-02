@@ -1,5 +1,8 @@
 package rbasamoyai.industrialwarfare.common.items;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -12,10 +15,10 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
+import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
 public class MatchCordItem extends Item {
@@ -69,8 +72,14 @@ public class MatchCordItem extends Item {
 			if (entity instanceof LivingEntity) {
 				if (stack.hurt(burnTime, random, null)) {
 					stack.shrink(1);
-					entity.level.playSound(null, entity.blockPosition(), SoundEvents.WOOL_BREAK, SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
+					entity.level.playSound(null, entity.blockPosition(), SoundEventInit.EXTINGUISH_MATCH.get(), SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
 				}
+			}
+			
+			BlockState bstate = level.getBlockState(entity.blockPosition());
+			if (bstate.getBlock() == Blocks.WATER && (bstate.getValue(FlowingFluidBlock.LEVEL) & 7) == 0) {
+				lightMatch(stack, false);
+				entity.level.playSound(null, entity.blockPosition(), SoundEventInit.EXTINGUISH_MATCH.get(), SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
 			}
 		}
 		nbt.putLong(TAG_LAST_UPDATED_TICK, level.getGameTime());
@@ -86,7 +95,21 @@ public class MatchCordItem extends Item {
 				int burnTime = (int)(entity.level.getGameTime() - lastUpdated);
 				if (stack.hurt(burnTime, random, null)) {
 					stack.shrink(1);
-					entity.level.playSound(null, entity.blockPosition(), SoundEvents.WOOL_BREAK, SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
+					entity.level.playSound(null, entity.blockPosition(), SoundEventInit.EXTINGUISH_MATCH.get(), SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
+				}
+				
+				BlockState bstate = entity.level.getBlockState(entity.blockPosition());
+				if (bstate.getBlock() == Blocks.WATER) {
+					ItemStack newMatch = stack.copy();
+					lightMatch(newMatch, false);
+					stack.shrink(1);
+					ItemEntity newItem = new ItemEntity(entity.level, entity.getX(), entity.getY(), entity.getZ(), newMatch);
+					entity.level.addFreshEntity(newItem);
+					
+					newItem.setPickUpDelay(10);
+					newItem.setDeltaMovement(entity.getDeltaMovement());
+					
+					entity.level.playSound(null, entity.blockPosition(), SoundEventInit.EXTINGUISH_MATCH.get(), SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
 				}
 			}
 			nbt.putLong(TAG_LAST_UPDATED_TICK, entity.level.getGameTime());
@@ -104,6 +127,7 @@ public class MatchCordItem extends Item {
 				lightMatch(offhand, true);
 			} else {
 				lightMatch(stack, false);
+				level.playSound(null, player.blockPosition(), SoundEventInit.EXTINGUISH_MATCH.get(), SoundCategory.NEUTRAL, 1.0F, random.nextFloat() * 0.4F + 0.8F);
 			}
 		}
 		return ActionResult.sidedSuccess(stack, level.isClientSide);

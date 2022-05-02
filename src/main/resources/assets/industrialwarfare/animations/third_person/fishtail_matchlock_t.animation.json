@@ -305,7 +305,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; allow_mod pan_cover"
 			}
 		},
 		"ads_aiming_stop": {
@@ -392,7 +392,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge true"
+				"0.0": "set_hidden cartridge true; allow_mod pan_cover"
 			}
 		},
 		"hip_aiming": {
@@ -2490,6 +2490,18 @@
 			"sound_effects": {
 				"2.5417": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"7.1667": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"10.25": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.5833": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.9167": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {
@@ -3297,6 +3309,18 @@
 			"sound_effects": {
 				"1.375": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"6.0": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"9.0833": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"9.4167": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"9.75": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {
@@ -4112,6 +4136,18 @@
 			"sound_effects": {
 				"2.125": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"6.75": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"9.8333": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.1667": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.5": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {

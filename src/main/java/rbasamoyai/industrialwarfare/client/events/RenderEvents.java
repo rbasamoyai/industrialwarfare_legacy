@@ -75,10 +75,8 @@ public class RenderEvents {
 			((IRendersPlayerArms) ister).setRenderArms(true);
 		}
 		
-		if (item instanceof IFirstPersonTransform) {
-			if (((IFirstPersonTransform) item).shouldTransform(itemStack, mc.player)) {
-				((IFirstPersonTransform) item).transformMatrixStack(itemStack, mc.player, event.getMatrixStack());
-			}
+		if (item instanceof IFirstPersonTransform && ((IFirstPersonTransform) item).shouldTransform(itemStack, mc.player)) {
+			((IFirstPersonTransform) item).transformMatrixStack(itemStack, mc.player, event.getMatrixStack());
 		}
 	}
 	

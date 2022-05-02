@@ -267,6 +267,7 @@ public class NPCEntity extends CreatureEntity implements
 	@Override
 	protected void customServerAiStep() {
 		Brain<NPCEntity> brain = this.getBrain();
+		
 		brain.tick((ServerWorld) this.level, this);
 		
 		if (this.level.getGameTime() % 20 == 0) {
@@ -509,13 +510,19 @@ public class NPCEntity extends CreatureEntity implements
 				return true;
 			}
 			
-			if (!FirearmItem.isFinishedAction(weapon)) return true;
+			if (!FirearmItem.isFinishedAction(weapon)) {
+				this.actionDelay = 0;
+				boolean flag = this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(false);
+				this.brain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), flag);
+				return true;
+			}
 			
 			if (this.actionDelay <= 0) {
 				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
 			}
 			if (this.canAim() && !FirearmItem.isAiming(weapon)) {
 				((FirearmItem) weaponItem).startAiming(weapon, this);
+				this.startUsingItem(Hand.MAIN_HAND);
 				this.actionDelay += 10;
 			}
 		} else if (this.actionDelay <= 0) {
@@ -675,12 +682,16 @@ public class NPCEntity extends CreatureEntity implements
 			if (FirearmItem.isFinishedAction(weapon)) {
 				if (FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).stopAiming(weapon, this);
+					this.stopUsingItem();
 					this.actionDelay = 11;
 				}
 			} else {
 				return true;
 			}
-			if (this.actionDelay <= 0) return false;
+			if (this.actionDelay <= 0) {
+				brain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
+				return false;
+			}
 			--this.actionDelay;
 			return true;
 		}

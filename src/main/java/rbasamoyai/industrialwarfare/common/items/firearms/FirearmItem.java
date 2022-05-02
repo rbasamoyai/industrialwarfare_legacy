@@ -14,6 +14,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -96,9 +97,9 @@ import software.bernie.geckolib3.util.RenderUtils;
 public abstract class FirearmItem extends ShootableItem implements
 		ISimultaneousUseAndAttack,
 		IFovModifier,
-		IFirstPersonTransform,
 		IHideCrosshair,
 		IItemWithScreen,
+		IFirstPersonTransform,
 		IAnimatable,
 		ISyncable,
 		ISpecialThirdPersonRender {
@@ -117,6 +118,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	protected final float hipfireSpread;
 	protected final float muzzleVelocity;
 	protected final float spread;
+	protected final float fovModifier;
 	protected final Function<LivingEntity, Float> horizontalRecoilSupplier;
 	protected final Function<LivingEntity, Float> verticalRecoilSupplier;
 	protected final Predicate<ItemStack> ammoPredicate;
@@ -143,6 +145,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		this.hipfireSpread = firearmProperties.hipfireSpread;
 		this.muzzleVelocity = firearmProperties.muzzleVelocity;
 		this.spread = firearmProperties.spread;
+		this.fovModifier = firearmProperties.fovModifier;
 		this.horizontalRecoilSupplier = firearmProperties.horizontalRecoilSupplier;
 		this.verticalRecoilSupplier = firearmProperties.verticalRecoilSupplier;
 		this.ammoPredicate = firearmProperties.ammoPredicate;
@@ -426,18 +429,17 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public float getFovModifier(ItemStack stack) {
-		//return isAiming(stack) ? this.fovModifier : 1.0f;
-		return 1.0f;
+		return isAiming(stack) ? this.fovModifier : 1.0f;
 	}
 	
 	@Override
 	public boolean shouldTransform(ItemStack stack, PlayerEntity player) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isAiming).orElse(false);
+		return true;
 	}
 	
 	@Override
 	public void transformMatrixStack(ItemStack itemStack, PlayerEntity player, MatrixStack matrixStack) {
-		matrixStack.scale(1.0f, 1.0f, 0.5f);
+		matrixStack.scale(1.0f, 1.0f, isAiming(itemStack) ? 0.5f : 1.0f);
 	}
 	
 	/*
@@ -518,7 +520,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		return this.factory;
 	}
 	
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {}
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {}
 	
 	/*
 	 * THIRD-PERSON RENDERING METHODS
@@ -1030,6 +1032,11 @@ public abstract class FirearmItem extends ShootableItem implements
 		return PartItem.stackOf(item, quality, partCount, weight);
 	}
 	
+	public static boolean isSubmergedInWater(LivingEntity shooter) {
+		return shooter.level.getBlockState(new BlockPos(shooter.getEyePosition(1.0f))).getBlock() == Blocks.WATER
+				&& (!(shooter instanceof PlayerEntity) || !((PlayerEntity) shooter).isCreative());
+	}
+	
 	protected static float getEffectivenessFromEntity(LivingEntity entity) {
 		return entity instanceof IQualityModifier ? ((IQualityModifier) entity).getEffectiveness() : 1.0f;
 	}
@@ -1080,6 +1087,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		private float hipfireSpread;
 		private float muzzleVelocity;
 		private float spread;
+		private float fovModifier = 1.0f;
 		private Function<LivingEntity, Float> horizontalRecoilSupplier;
 		private Function<LivingEntity, Float> verticalRecoilSupplier;
 		private Predicate<ItemStack> ammoPredicate;
@@ -1180,6 +1188,11 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		public T attachmentsHandler(Supplier<ItemStackHandler> supplier) {
 			this.attachmentsHandler = supplier;
+			return this.thisObj;
+		}
+		
+		public T fovModifier(float fovModifier) {
+			this.fovModifier = fovModifier;
 			return this.thisObj;
 		}
 	}

@@ -77,6 +77,12 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	public void setFollower(CreatureEntity entity) { this.follower = entity; }
 	
+	public void updateOrderTime() {
+		if (this.follower instanceof FormationLeaderEntity) {
+			((FormationLeaderEntity) this.follower).updateOrderTime();
+		}		
+	}
+	
 	public void setAttackType(FormationAttackType type) { 
 		if (this.type.checkAttackType(type)) this.attackType = type;
 	}
@@ -187,7 +193,10 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected Vector3d tryFindingNewPosition(CreatureEntity unit, Vector3d precisePos) {
 		for (double y : Y_CHECKS) {
 			Vector3d newPos = precisePos.add(0.0d, y, 0.0d);
-			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)) return newPos;
+			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)
+				&& unit.level.noCollision(unit, unit.getBoundingBox().move(newPos.subtract(unit.position())))) {
+				return newPos;
+			}
 		}
 		return null;
 	}
@@ -201,7 +210,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
-		if (wrapper == null) return true;
+		if (wrapper == null || wrapper == FormationEntityWrapper.EMPTY) return true;
 		CreatureEntity entity = wrapper.getEntity();
 		return entity == null || !entity.isAlive();
 	}

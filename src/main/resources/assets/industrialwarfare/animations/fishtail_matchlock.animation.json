@@ -1424,11 +1424,11 @@
 							"easing": "easeInOutSine"
 						},
 						"5.0833": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "easeInOutSine"
 						},
 						"13.4167": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "linear"
 						},
 						"13.7917": {
@@ -1609,8 +1609,8 @@
 							"easing": "easeInOutSine"
 						},
 						"11.0833": {
-							"vector": [89.23571, -85.53702, -11.07422],
-							"easing": "easeInQuad"
+							"vector": [96.73571, -85.53702, -11.07422],
+							"easing": "easeInOutSine"
 						},
 						"11.4167": {
 							"vector": [47.55407, -66.79141, -20.02494],
@@ -1715,90 +1715,90 @@
 						},
 						"5.0833": {
 							"vector": [-2.8, -0.25, 12.25],
-							"easing": "linear"
+							"easing": "easeInOutSine"
 						},
 						"5.4167": {
-							"vector": [-4.25, 8, 11.75],
+							"vector": [-4.25, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.1667": {
-							"vector": [-4.25, 8, 11.75],
-							"easing": "linear"
+							"vector": [-4.25, 4, 8.75],
+							"easing": "easeInOutSine"
 						},
 						"6.4167": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.6667": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.9167": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"7.1667": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"7.4167": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"7.75": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"8.0833": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"8.4167": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"8.75": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"9.0833": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInQuad"
 						},
 						"9.75": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"10.0833": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"11.0833": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"11.4167": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"12.0833": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInOutQuad"
 						},
 						"12.4167": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"12.75": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"13.0833": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"13.1667": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "linear"
 						},
 						"13.4167": {
@@ -1862,12 +1862,10 @@
 							"easing": "linear"
 						},
 						"5.0833": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "easeInOutSine"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"13.4167": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "linear"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"13.7917": {
 							"vector": [-5, 1.75, -3],
@@ -2033,7 +2031,7 @@
 						},
 						"11.0833": {
 							"vector": [0, 0.45, -1.75],
-							"easing": "easeInOutSine"
+							"easing": "linear"
 						},
 						"11.4167": {
 							"vector": [0, 0.45, -31.25],
@@ -2169,38 +2167,39 @@
 							"easing": "easeInOutSine"
 						},
 						"5.0833": {
-							"vector": [-6, -1, -1]
+							"vector": [-6, -1, -1],
+							"easing": "easeInOutSine"
 						},
 						"5.4167": {
-							"vector": [-0.275, 5, 1],
+							"vector": [-0.275, 1, -2],
 							"easing": "easeInOutSine"
 						},
 						"5.5417": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.9167": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.1667": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.4167": {
-							"vector": [0.325, 4.65, 1.25],
+							"vector": [0.325, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.6667": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.9167": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"7.1667": {
-							"vector": [0.325, 2.6, 1.25],
+							"vector": [0.325, -1.4, -1.75],
 							"easing": "easeInOutSine"
 						}
 					}
@@ -2257,6 +2256,18 @@
 			"sound_effects": {
 				"2.5417": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"7.1667": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"10.25": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.5833": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.9167": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {
@@ -2330,11 +2341,11 @@
 							"easing": "easeInOutSine"
 						},
 						"4.0": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "easeInOutSine"
 						},
 						"12.3333": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "linear"
 						},
 						"12.625": {
@@ -2507,8 +2518,8 @@
 							"easing": "easeInOutSine"
 						},
 						"10.0": {
-							"vector": [89.23571, -85.53702, -11.07422],
-							"easing": "easeInQuad"
+							"vector": [96.73571, -85.53702, -11.07422],
+							"easing": "easeInOutSine"
 						},
 						"10.3333": {
 							"vector": [47.55407, -66.79141, -20.02494],
@@ -2605,90 +2616,90 @@
 						},
 						"4.0": {
 							"vector": [-2.8, -0.25, 12.25],
-							"easing": "linear"
+							"easing": "easeInOutSine"
 						},
 						"4.3333": {
-							"vector": [-4.25, 8, 11.75],
+							"vector": [-4.25, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"5.0833": {
-							"vector": [-4.25, 8, 11.75],
-							"easing": "linear"
+							"vector": [-4.25, 4, 8.75],
+							"easing": "easeInOutSine"
 						},
 						"5.3333": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"5.5833": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"5.8333": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.0833": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.3333": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"6.6667": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"7.0": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"7.3333": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"7.6667": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"8.0": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInQuad"
 						},
 						"8.6667": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"9.0": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"10.0": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"10.3333": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"11.0": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInOutQuad"
 						},
 						"11.3333": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"11.6667": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"12.0": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"12.0833": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "linear"
 						},
 						"12.3333": {
@@ -2752,12 +2763,10 @@
 							"easing": "linear"
 						},
 						"4.0": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "easeInOutSine"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"12.3333": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "linear"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"12.625": {
 							"vector": [-5, 1.75, -3],
@@ -2856,7 +2865,7 @@
 						},
 						"10.0": {
 							"vector": [0, 0.45, -1.75],
-							"easing": "easeInOutSine"
+							"easing": "linear"
 						},
 						"10.3333": {
 							"vector": [0, 0.45, -31.25],
@@ -2992,38 +3001,39 @@
 							"easing": "easeInOutSine"
 						},
 						"4.0": {
-							"vector": [-6, -1, -1]
+							"vector": [-6, -1, -1],
+							"easing": "easeInOutSine"
 						},
 						"4.3333": {
-							"vector": [-0.275, 5, 1],
+							"vector": [-0.275, 1, -2],
 							"easing": "easeInOutSine"
 						},
 						"4.4583": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"4.8333": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.0833": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.3333": {
-							"vector": [0.325, 4.65, 1.25],
+							"vector": [0.325, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.5833": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.8333": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.0833": {
-							"vector": [0.325, 2.6, 1.25],
+							"vector": [0.325, -1.4, -1.75],
 							"easing": "easeInOutSine"
 						}
 					}
@@ -3080,6 +3090,18 @@
 			"sound_effects": {
 				"1.4583": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"6.0833": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"9.1667": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"9.5": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"9.8333": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {
@@ -3152,11 +3174,11 @@
 							"easing": "easeInOutSine"
 						},
 						"4.5833": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "easeInOutSine"
 						},
 						"12.9167": {
-							"vector": [3.5, -15.5, 2.75],
+							"vector": [3.5, -15.5, -0.25],
 							"easing": "linear"
 						},
 						"13.2917": {
@@ -3337,8 +3359,8 @@
 							"easing": "easeInOutSine"
 						},
 						"10.5833": {
-							"vector": [89.23571, -85.53702, -11.07422],
-							"easing": "easeInQuad"
+							"vector": [96.73571, -85.53702, -11.07422],
+							"easing": "easeInOutSine"
 						},
 						"10.9167": {
 							"vector": [47.55407, -66.79141, -20.02494],
@@ -3443,90 +3465,90 @@
 						},
 						"4.5833": {
 							"vector": [-2.8, -0.25, 12.25],
-							"easing": "linear"
+							"easing": "easeInOutSine"
 						},
 						"4.9167": {
-							"vector": [-4.25, 8, 11.75],
+							"vector": [-4.25, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"5.6667": {
-							"vector": [-4.25, 8, 11.75],
-							"easing": "linear"
+							"vector": [-4.25, 4, 8.75],
+							"easing": "easeInOutSine"
 						},
 						"5.9167": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.1667": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.4167": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.6667": {
-							"vector": [-3.75, 8, 11.75],
+							"vector": [-3.75, 4, 8.75],
 							"easing": "easeInOutSine"
 						},
 						"6.9167": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"7.25": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"7.5833": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"7.9167": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"8.25": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"8.5833": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInQuad"
 						},
 						"9.25": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"9.5833": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"10.5833": {
-							"vector": [-5.25, 8.25, 5.25],
+							"vector": [-5.25, 4.25, 2.25],
 							"easing": "easeInQuad"
 						},
 						"10.9167": {
-							"vector": [-0.25, 13.25, 7.75],
+							"vector": [-0.25, 9.25, 4.75],
 							"easing": "easeInOutSine"
 						},
 						"11.5833": {
-							"vector": [0.75, 10.25, 6.5],
+							"vector": [0.75, 6.25, 3.5],
 							"easing": "easeInOutQuad"
 						},
 						"11.9167": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"12.25": {
-							"vector": [-1.25, 6.25, 8.5],
+							"vector": [-1.25, 2.25, 5.5],
 							"easing": "easeInQuad"
 						},
 						"12.5833": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "easeInOutSine"
 						},
 						"12.6667": {
-							"vector": [-3.25, 6.25, 9.5],
+							"vector": [-3.25, 2.25, 6.5],
 							"easing": "linear"
 						},
 						"12.9167": {
@@ -3590,12 +3612,10 @@
 							"easing": "linear"
 						},
 						"4.5833": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "easeInOutSine"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"12.9167": {
-							"vector": [3.5875, -12.25, 10.625],
-							"easing": "linear"
+							"vector": [3.59, -16.25, 7.63]
 						},
 						"13.2917": {
 							"vector": [-5, 1.75, -3],
@@ -3702,7 +3722,7 @@
 						},
 						"10.5833": {
 							"vector": [0, 0.45, -1.75],
-							"easing": "easeInOutSine"
+							"easing": "linear"
 						},
 						"10.9167": {
 							"vector": [0, 0.45, -31.25],
@@ -3838,38 +3858,39 @@
 							"easing": "easeInOutSine"
 						},
 						"4.5833": {
-							"vector": [-6, -1, -1]
+							"vector": [-6, -1, -1],
+							"easing": "easeInOutSine"
 						},
 						"4.9167": {
-							"vector": [-0.275, 5, 1],
+							"vector": [-0.275, 1, -2],
 							"easing": "easeInOutSine"
 						},
 						"5.0417": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.4167": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.6667": {
-							"vector": [-0.25, 4.65, 1.25],
+							"vector": [-0.25, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"5.9167": {
-							"vector": [0.325, 4.65, 1.25],
+							"vector": [0.325, 0.65, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.1667": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.4167": {
-							"vector": [0.325, 3.6, 1.25],
+							"vector": [0.325, -0.4, -1.75],
 							"easing": "easeInOutSine"
 						},
 						"6.6667": {
-							"vector": [0.325, 2.6, 1.25],
+							"vector": [0.325, -1.4, -1.75],
 							"easing": "easeInOutSine"
 						}
 					}
@@ -3926,6 +3947,18 @@
 			"sound_effects": {
 				"2.0417": {
 					"effect": "industrialwarfare:item.firearms.spit_cartridge_tab"
+				},
+				"6.6667": {
+					"effect": "industrialwarfare:item.firearms.insert_ammo"
+				},
+				"9.75": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.0833": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
+				},
+				"10.4167": {
+					"effect": "industrialwarfare:item.firearms.ram_charge"
 				}
 			},
 			"timeline": {

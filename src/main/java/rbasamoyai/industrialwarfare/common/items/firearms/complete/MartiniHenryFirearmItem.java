@@ -17,6 +17,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -213,7 +214,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		
 		getDataHandler(stack).ifPresent(h -> {
@@ -221,6 +222,8 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
 			}
 		});
+		float f = 1.0f / MathHelper.lerp(aimProgress, 1.0f, this.fovModifier);
+		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
 	public static final int ANIM_PORT_ARMS = 0;

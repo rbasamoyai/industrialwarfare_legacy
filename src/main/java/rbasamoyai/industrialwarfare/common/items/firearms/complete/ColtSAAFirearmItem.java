@@ -350,7 +350,7 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		
 		getDataHandler(stack).ifPresent(h -> {

@@ -112,6 +112,7 @@ public class NPCTasks {
 	
 	private static boolean canFindNewTarget(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
+		
 		if (brain.hasMemoryValue(MemoryModuleTypeInit.DEFENDING_SELF.get())) return false;
 		
 		CombatMode mode = brain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
@@ -192,7 +193,7 @@ public class NPCTasks {
 				break;
 			}
 			
-			if (e instanceof PlayerEntity && ((PlayerEntity) e).isCreative()) {
+			if (e instanceof PlayerEntity && !((PlayerEntity) e).isCreative()) {
 				PlayerIDTag otherPlayerTag = PlayerIDTag.of((PlayerEntity) e);
 				if (npcOwner.equals(otherPlayerTag)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((PlayerEntity) e));

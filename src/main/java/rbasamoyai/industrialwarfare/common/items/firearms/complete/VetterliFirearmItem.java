@@ -209,7 +209,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_START);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_start", false));
@@ -222,7 +222,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_STOP);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_stop", false));
@@ -250,7 +250,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
 			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
@@ -267,7 +267,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public static final int ANIM_RELOAD_END = 7;
 	public static final int ANIM_ADS_AIMING = 8;
 	public static final int ANIM_ADS_AIMING_START = 9;
-	public static final int ANIM_ADS_AIMING_END = 10;
+	public static final int ANIM_ADS_AIMING_STOP = 10;
 	public static final int ANIM_ADS_FIRING = 11;
 	public static final int ANIM_RELOAD_END_EXTRACT = 12;
 	public static final int ANIM_SELECT_FIREARM = 13;
@@ -276,6 +276,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
+		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
 		
 		switch (state) {
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
@@ -312,9 +313,9 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			.addAnimation("ads_aiming_start", false)
 			.addAnimation("ads_aiming", true);
 			break;
-		case ANIM_ADS_AIMING_END:
+		case ANIM_ADS_AIMING_STOP:
 			builder
-			.addAnimation("ads_aiming_end", false)
+			.addAnimation("ads_aiming_stop", false)
 			.addAnimation("hip_aiming", true);
 			break;
 		case ANIM_ADS_FIRING:
@@ -339,7 +340,6 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			break;
 		}
 		
-		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
 		controller.markNeedsReload();
 		controller.setAnimation(builder);
 	}

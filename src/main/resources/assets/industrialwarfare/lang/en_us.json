@@ -367,7 +367,7 @@
 	
 	"tooltip.industrialwarfare.match_cord.expired": "This match cord has burnt out while outside of inventory.",
 	"tooltip.industrialwarfare.match_cord.expired1": "It will be deleted if you put it in your inventory, or any other ticked inventory.",
-	"tooltip.industrialwarfare.infinite_match_cord.tooltip": "Never burns out!",
+	"tooltip.industrialwarfare.infinite_match_cord.tooltip": "Never burns out! Also water resistant!",
 	
 	"attack_type.industrialwarfare.fire_at_will": "Fire at will",
 	"attack_type.industrialwarfare.fire_at_will.desc": "Units fire independently. Flexible, but not much power.",

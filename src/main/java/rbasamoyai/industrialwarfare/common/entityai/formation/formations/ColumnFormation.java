@@ -20,7 +20,6 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
-import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -49,6 +48,12 @@ public class ColumnFormation extends UnitFormation {
 	@Override
 	public void killInnerFormationLeaders() {
 		this.segmentLeaders.forEach(Entity::kill);
+	}
+	
+	@Override
+	public void updateOrderTime() {
+		super.updateOrderTime();
+		this.segmentLeaders.forEach(FormationLeaderEntity::updateOrderTime);
 	}
 	
 	@Override

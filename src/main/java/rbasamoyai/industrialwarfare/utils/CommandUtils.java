@@ -43,7 +43,7 @@ public class CommandUtils {
 		Collections.shuffle(list);
 		Optional<BlockPos> optional = list.stream()
 				.filter(pos -> world.loadedAndEntityCanStandOn(pos, npc))
-				.filter(pos -> world.noCollision(npc))
+				.filter(pos -> world.noCollision(npc, npc.getBoundingBox().move(pos.subtract(npc.blockPosition()))))
 				.findFirst();
 		if (!optional.isPresent()) {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());

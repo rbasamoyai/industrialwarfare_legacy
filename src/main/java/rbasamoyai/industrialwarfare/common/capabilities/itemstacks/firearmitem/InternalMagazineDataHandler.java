@@ -64,10 +64,9 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	public CompoundNBT serializeAmmo() {
 		CompoundNBT tag = new CompoundNBT();
 		ListNBT ammo = new ListNBT();
-		this.magazine
-				.stream()
-				.map(ItemStack::serializeNBT)
-				.forEach(ammo::add);
+		for (int i = 0; i < this.magazine.size(); ++i) {
+			ammo.add(this.magazine.get(i).serializeNBT());
+		}
 		tag.put(TAG_INTERNAL_MAGAZINE, ammo);
 		return tag;
 	}
