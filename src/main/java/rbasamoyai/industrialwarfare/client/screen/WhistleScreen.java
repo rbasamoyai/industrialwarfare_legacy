@@ -76,6 +76,10 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	private static final List<ITextComponent> FORM_CATEGORY_COLUMN_TOOLTIP = ImmutableList.of(
 			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString()).withStyle(TextFormatting.BOLD),
 			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString() + ".desc"));
+	
+	private static final List<ITextComponent> FORM_CATEGORY_NO_FORMATION_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.NO_FORMATION.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.NO_FORMATION.toString() + ".desc"));
 
 	private static final List<ITextComponent> STOP_NEARBY_TOOLTIP = ImmutableList.of(
 			new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_nearby").withStyle(TextFormatting.BOLD),
@@ -228,6 +232,20 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_COLUMN_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
+		this.typeMap.put(FormationCategory.NO_FORMATION, new HoldSelectImageButton(
+				this.leftPos + GRID_START_X + BUTTON_X_DIST * 2,
+				this.topPos + GRID_START_Y + BUTTON_Y_DIST,
+				BUTTON_WIDTH,
+				BUTTON_HEIGHT,
+				BUTTON_TEX_X_START + BUTTON_WIDTH,
+				BUTTON_TEX_Y_START + BUTTON_HEIGHT * 3,
+				WHISTLE_TAB_LOCATION,
+				256,
+				256,
+				button -> this.setSelectedCategory(FormationCategory.NO_FORMATION),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_NO_FORMATION_TOOLTIP, mouseX, mouseY),
+				StringTextComponent.EMPTY));
+		
 		Button stopAllNearbyFormationLeaders = new ImageButton(
 				this.leftPos + GRID_START_X + BUTTON_X_DIST * 5,
 				this.topPos + GRID_START_Y,
@@ -246,7 +264,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 			public void playDownSound(SoundHandler handler) {
 				handler.play(SimpleSound.forUI(SoundEvents.ANVIL_PLACE, 1.0f));
 			}
-		}; 
+		};
 		
 		Button stopActionButton = new ImageButton(
 				this.leftPos + GRID_START_X + BUTTON_X_DIST * 6,
@@ -375,6 +393,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 		
 		this.selectedTypes.put(FormationCategory.LINE, lineCatButtons);
 		this.selectedTypes.put(FormationCategory.COLUMN, new HashMap<>());
+		this.selectedTypes.put(FormationCategory.NO_FORMATION, new HashMap<>());
 		
 		this.formationTypePages.put(FormationCategory.LINE,
 				IScreenPage.builder(new BaseScreenPage(this))
@@ -451,6 +470,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 		
 		this.attackTypes.put(FormationCategory.LINE, lineAttackTypeButtons);
 		this.attackTypes.put(FormationCategory.COLUMN, new HashMap<>());
+		this.attackTypes.put(FormationCategory.NO_FORMATION, new HashMap<>());
 		
 		this.attackTypePages.put(FormationCategory.LINE,
 				IScreenPage.builder(new BaseScreenPage(this))

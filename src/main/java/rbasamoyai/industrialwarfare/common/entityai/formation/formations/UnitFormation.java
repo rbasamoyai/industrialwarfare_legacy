@@ -70,6 +70,11 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
 	public abstract void removeEntity(CreatureEntity entity);
 	
+	public boolean isInFormationWith(FormationLeaderEntity leader) {
+		return this.hasMatchingFormationLeader(leader)
+			|| this.follower instanceof FormationLeaderEntity && ((FormationLeaderEntity) this.follower).hasMatchingFormationLeader(leader);
+	}
+	
 	public abstract boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith);
 	
 	protected abstract void tick(FormationLeaderEntity leader);
@@ -174,10 +179,9 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	public abstract float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos);
 	
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
 		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, this);
 		leader.setPos(pos.x, pos.y, pos.z);
-		leader.yRot = facing;
 		leader.setState(UnitFormation.State.FORMED);
 		leader.setOwner(owner);
 		leader.getBrain().setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);

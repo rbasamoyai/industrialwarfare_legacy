@@ -353,6 +353,8 @@
 	"tooltip.industrialwarfare.whistle.formation_category.line.desc": "Form a line that is wider than it is deep. Wide attack area, but hard to maneuver.",
 	"tooltip.industrialwarfare.whistle.formation_category.column": "Column",
 	"tooltip.industrialwarfare.whistle.formation_category.column.desc": "Form a column that is deeper than it is wide. Good maneuverability, but attack power is heavily concentrated.",
+	"tooltip.industrialwarfare.whistle.formation_category.no_formation": "No Formation",
+	"tooltip.industrialwarfare.whistle.formation_category.no_formation.desc": "Units will simply move towards the selected position, and will not attack in formation.",
 	
 	"tooltip.industrialwarfare.whistle.stop_nearby": "Stop all nearby formations",
 	"tooltip.industrialwarfare.whistle.stop_nearby.desc": "Stops all nearby formations that you command.",

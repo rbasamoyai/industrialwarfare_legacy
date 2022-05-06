@@ -187,7 +187,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	}
 	
 	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
-		return this.equals(inFormationWith) || this.formation.hasMatchingFormationLeader(inFormationWith);
+		return this.equals(inFormationWith) || this.formation.isInFormationWith(inFormationWith);
 	}
 	
 	public void setFollower(CreatureEntity entity) {

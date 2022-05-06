@@ -130,6 +130,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
+			MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(),
 			MemoryModuleTypeInit.SHOOTING_POS.get(),
 			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),

@@ -50,12 +50,12 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
-		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 		
 		this.innerFormations
 		.stream()
-		.map(inner -> inner.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner))
+		.map(inner -> inner.spawnInnerFormationLeaders(level, pos, commandGroup, owner))
 		.forEach(leader::addEntity);
 		
 		return leader;

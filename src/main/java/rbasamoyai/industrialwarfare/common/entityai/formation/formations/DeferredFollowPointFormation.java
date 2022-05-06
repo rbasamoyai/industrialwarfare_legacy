@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -12,12 +13,14 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
 public class DeferredFollowPointFormation extends PointFormation {
 	
+	private UnitFormation deferredFormation;
 	private FormationLeaderEntity deferredLeader;
 	
 	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type, int formationRank) {
@@ -25,7 +28,8 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	public DeferredFollowPointFormation(UnitFormationType<? extends DeferredFollowPointFormation> type, Map<Point, Integer> positions, List<UnitFormation> innerFormations, Point deferredPoint, UnitFormation deferredFormation) {
-		super(type, joinPositions(positions, deferredPoint, deferredFormation), joinFormations(innerFormations, deferredFormation));
+		super(type, joinPositions(positions, deferredPoint, deferredFormation), innerFormations);
+		this.deferredFormation = deferredFormation;
 	}
 	
 	private static Map<Point, Integer> joinPositions(Map<Point, Integer> positions, Point deferredPoint, UnitFormation deferredFormation) {
@@ -36,15 +40,19 @@ public class DeferredFollowPointFormation extends PointFormation {
 		return result;
 	}
 	
-	private static List<UnitFormation> joinFormations(List<UnitFormation> innerFormations, UnitFormation deferredFormation) {
-		List<UnitFormation> result = new ArrayList<>(innerFormations.size() + 1);
-		result.addAll(innerFormations);
-		result.add(deferredFormation);
-		return result;
+	@Override
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
+		if (this.deferredFormation != null) {
+			this.deferredLeader = this.deferredFormation.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
+			leader.addEntity(this.deferredLeader);
+		}
+		return leader;
 	}
 	
 	public void setDeferredLeader(FormationLeaderEntity entity) {
 		this.deferredLeader = entity;
+		this.deferredFormation = this.deferredLeader.getFormation();
 	}
 	
 	@Override

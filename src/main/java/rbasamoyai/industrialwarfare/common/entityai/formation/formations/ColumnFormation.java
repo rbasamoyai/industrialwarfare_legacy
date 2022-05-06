@@ -63,14 +63,14 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
 		this.segmentFormations.clear();
 		this.segmentLeaders.clear();
 		
 		for (int i = 0; i < this.depth; ++i) {
 			SegmentFormation inner = new SegmentFormation(UnitFormationTypeInit.COLUMN_SEGMENT.get(), this.formationRank, this.width, i == this.depth - 1);
 			this.segmentFormations.add(inner);
-			this.segmentLeaders.add(inner.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner));
+			this.segmentLeaders.add(inner.spawnInnerFormationLeaders(level, pos, commandGroup, owner));
 		}
 		
 		for (int i = 0; i < this.depth; ++i) {
@@ -81,7 +81,7 @@ public class ColumnFormation extends UnitFormation {
 			}
 		}
 		
-		return super.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
+		return super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 	}
 	
 	private void moveUpUnits() {
