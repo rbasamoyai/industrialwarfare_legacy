@@ -16,6 +16,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NothingRenderer;
+import rbasamoyai.industrialwarfare.client.screen.MatchCoilScreen;
 import rbasamoyai.industrialwarfare.client.screen.NormalWorkstationScreen;
 import rbasamoyai.industrialwarfare.client.screen.TaskScrollShelfScreen;
 import rbasamoyai.industrialwarfare.client.screen.WhistleScreen;
@@ -42,6 +43,7 @@ public class ClientEvents {
 		ScreenManager.register(ContainerInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
 		ScreenManager.register(ContainerInit.DIPLOMACY.get(), DiplomacyScreen::new);
 		ScreenManager.register(ContainerInit.EDIT_LABEL.get(), EditLabelScreen::new);
+		ScreenManager.register(ContainerInit.MATCH_COIL.get(), MatchCoilScreen::new);
 		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
 		ScreenManager.register(ContainerInit.NPC_BASE.get(), NPCBaseScreen::new);
 		ScreenManager.register(ContainerInit.SCHEDULE.get(), EditScheduleScreen::new);
@@ -66,6 +68,11 @@ public class ClientEvents {
 			ItemModelsProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
 					(stack, level, living) -> {
 						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+					});
+			
+			ItemModelsProperties.register(ItemInit.MATCH_COIL.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"),
+					(stack, level, living) -> {
+						return (float) stack.getItem().getDurabilityForDisplay(stack) * 4.0f;
 					});
 		});
 	}

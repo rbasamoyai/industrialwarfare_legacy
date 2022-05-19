@@ -1,14 +1,26 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import java.util.UUID;
+
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.AttributeModifier.Operation;
+import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 
 public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 
+	private static final UUID PRIMED_MOVEMENT_SPEED_UUID = UUID.fromString("2e92d292-de54-4119-8f1b-3d05bdcbe624");
+	
 	private final int unprimingTime;
 	private final float slowdownFactor;
 	
@@ -24,25 +36,16 @@ public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
 		
-		if (level.isClientSide && shooter instanceof ClientPlayerEntity && !shooter.isPassenger()) {
-			getDataHandler(stack).ifPresent(h -> {
-				if (h.isCycled() && !h.isAiming()) {
-					((ClientPlayerEntity) shooter).input.forwardImpulse *= this.slowdownFactor;
-					((ClientPlayerEntity) shooter).input.leftImpulse *= this.slowdownFactor;
+		getDataHandler(stack).ifPresent(h -> {
+			if (!selected) {
+				h.setCycled(false);
+			} else {
+				if (h.isCycled()) {
+					h.setDisplaySprinting(false);
+					shooter.setSprinting(false);
 				}
-			});
-		} else {
-			getDataHandler(stack).ifPresent(h -> {
-				if (!selected) {
-					h.setCycled(false);
-				} else {
-					if (h.isCycled()) {
-						h.setDisplaySprinting(false);
-						if (shooter.isUsingItem());
-					}
-				}
-			});
-		}
+			}
+		});
 	}
 	
 	@Override
@@ -91,6 +94,14 @@ public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 			h.setCycled(true);
 			h.setAction(ActionType.NOTHING, 1);
 		});
+	}
+	
+	@Override
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack) {
+		if (getDataHandler(stack).map(IFirearmItemDataHandler::isCycled).orElse(false)) {
+			return ImmutableMultimap.of(Attributes.MOVEMENT_SPEED, new AttributeModifier(PRIMED_MOVEMENT_SPEED_UUID, "industrialwarfare.item.firearm.primed_movement_speed", (double) this.slowdownFactor, Operation.MULTIPLY_TOTAL));
+		}
+		return super.getAttributeModifiers(slot, stack);
 	}
 	
 	public abstract static class AbstractProperties<T extends AbstractProperties<T>> extends FirearmItem.AbstractProperties<T> {

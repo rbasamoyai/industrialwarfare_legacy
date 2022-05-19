@@ -1,0 +1,29 @@
+{
+  "parent": "industrialwarfare:block/match_coil0",
+  "overrides": [
+    {
+      "predicate": {
+        "industrialwarfare:coil_amount": 1.0
+      },
+      "model": "industrialwarfare:block/match_coil1"
+    },
+    {
+      "predicate": {
+        "industrialwarfare:coil_amount": 2.0
+      },
+      "model": "industrialwarfare:block/match_coil2"
+    },
+    {
+      "predicate": {
+        "industrialwarfare:coil_amount": 3.0
+      },
+      "model": "industrialwarfare:block/match_coil3"
+    },
+    {
+      "predicate": {
+        "industrialwarfare:coil_amount": 4.0
+      },
+      "model": "industrialwarfare:block/spool"
+    }
+  ]
+}

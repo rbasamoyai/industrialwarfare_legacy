@@ -19,7 +19,6 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.itemhandlers.UninsertableItemHandler;
 import rbasamoyai.industrialwarfare.common.tileentities.NormalWorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
@@ -54,7 +53,7 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 	private static final int PLAYERINV_INDEX_END = PLAYERINV_INDEX_START + HOTBAR_COUNT + INVENTORY_SLOT_COUNT + 1;
 	
 	public static NormalWorkstationContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		return new NormalWorkstationContainer(windowId, playerInv, BlockPos.ZERO, new ItemStackHandler(5), new UninsertableItemHandler(1), new DummyRecipeItemHandler(1), new IntArray(7), Optional.empty());
+		return new NormalWorkstationContainer(windowId, playerInv, BlockPos.ZERO, new ItemStackHandler(5), new ItemStackHandler(1), new DummyRecipeItemHandler(1), new IntArray(7), Optional.empty());
 	}
 	
 	public static IContainerProvider getServerContainerProvider(NormalWorkstationTileEntity te, BlockPos activationPos) {
@@ -75,7 +74,9 @@ public class NormalWorkstationContainer extends WorkstationContainer {
 				return RECIPE_MANUAL_ICON;
 			}
 		});
-		this.addSlot(new SlotItemHandler(output, 0, OUTPUT_SLOT_X, INPUT_SLOT_Y));
+		this.addSlot(new SlotItemHandler(output, 0, OUTPUT_SLOT_X, INPUT_SLOT_Y) {
+			@Override public boolean mayPlace(ItemStack stack) { return false; }
+		});
 		
 		// Player inventory slots
 		for (int i = 0; i < INVENTORY_ROWS; i++) {

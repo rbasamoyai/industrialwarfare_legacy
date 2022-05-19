@@ -8,6 +8,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
+import rbasamoyai.industrialwarfare.common.containers.MatchCoilContainer;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
@@ -28,6 +29,9 @@ public class ContainerInit {
 	
 	public static final RegistryObject<ContainerType<EditLabelContainer>> EDIT_LABEL = CONTAINER_TYPES.register("edit_label",
 			() -> IForgeContainerType.create(EditLabelContainer::getClientContainer));
+	
+	public static final RegistryObject<ContainerType<MatchCoilContainer>> MATCH_COIL = CONTAINER_TYPES.register("match_coil",
+			() -> IForgeContainerType.create(MatchCoilContainer::getClientContainer));
 	
 	public static final RegistryObject<ContainerType<NormalWorkstationContainer>> NORMAL_WORKSTATION = CONTAINER_TYPES.register("normal_workstation",
 			() -> IForgeContainerType.create(NormalWorkstationContainer::getClientContainer));

@@ -14,6 +14,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessage
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditLabelSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.SMatchCoilSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
 import rbasamoyai.industrialwarfare.core.network.messages.SSetProneMessage;
@@ -24,7 +25,7 @@ import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActi
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.10.1";
+	public static final String NETWORK_VERSION = "0.11.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -51,6 +52,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SWhistleScreenSync.class, WhistleScreenMessages.SWhistleScreenSync::encode, WhistleScreenMessages.SWhistleScreenSync::decode, WhistleScreenMessages.SWhistleScreenSync::handle);
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAction.class, WhistleScreenMessages.SStopAction::encode, WhistleScreenMessages.SStopAction::decode, WhistleScreenMessages.SStopAction::handle);
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAllFormationLeaders.class, WhistleScreenMessages.SStopAllFormationLeaders::encode, WhistleScreenMessages.SStopAllFormationLeaders::decode, WhistleScreenMessages.SStopAllFormationLeaders::handle);
+		CHANNEL.registerMessage(id++, SMatchCoilSyncMessage.class, SMatchCoilSyncMessage::encode, SMatchCoilSyncMessage::decode, SMatchCoilSyncMessage::handle);
 	}
 	
 	@SubscribeEvent

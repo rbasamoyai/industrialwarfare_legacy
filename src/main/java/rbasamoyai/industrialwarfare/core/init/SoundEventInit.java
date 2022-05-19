@@ -12,6 +12,7 @@ public class SoundEventInit {
 	public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, IndustrialWarfare.MOD_ID);
 	
 	public static final RegistryObject<SoundEvent> BREATHE_ON_MATCH = register("item.firearms.breathe_on_match");
+	public static final RegistryObject<SoundEvent> CUT_FROM_COIL = register("item.match_coil.cut");
 	public static final RegistryObject<SoundEvent> EXTINGUISH_MATCH = register("item.firearms.extinguish_match");
 	public static final RegistryObject<SoundEvent> HAMMER_CLICK = register("item.firearms.hammer_click");
 	public static final RegistryObject<SoundEvent> HEAVY_RIFLE_FIRED = register("item.heavy_rifle.fired");

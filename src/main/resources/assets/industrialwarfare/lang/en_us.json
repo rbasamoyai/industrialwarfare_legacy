@@ -79,6 +79,8 @@
 	"block.industrialwarfare.woodworker_workstation":	"Woodworking Table",
 	
 	"block.industrialwarfare.task_scroll_shelf":	"Task Scroll Shelf",
+	"block.industrialwarfare.match_coil": "Match Coil",
+	"block.industrialwarfare.spool": "Spool",
 	
 	"tile.industrialwarfare.armorer_workstation":		"Armory Table",
 	"tile.industrialwarfare.assembler_workstation":		"Assembly Table",
@@ -122,6 +124,7 @@
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	"item.industrialwarfare.colt_saa": "Colt Single Action Army Revolver",
 	"item.industrialwarfare.fishtail_matchlock": "Fishtail Matchlock Musket",
+	"item.industrialwarfare.tanegashima_matchlock": "Tanegashima Matchlock Musket",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -379,6 +382,12 @@
 	"attack_type.industrialwarfare.fire_by_file.desc": "Units fire one file at a time. Steady rate of fire and decent power, but limited attack area at a time.",
 	"attack_type.industrialwarfare.fire_by_rank": "Fire by rank",
 	"attack_type.industrialwarfare.fire_by_rank.desc": "Units fire by volley one rank at a time. Lots of attack area, but slower rate of fire.",
+	
+	"gui.industrialwarfare.match_coil": "Cut Match Coil",
+	"gui.industrialwarfare.match_coil.cut_length": "Cut length: %1$s m %2$s s",
+	"gui.industrialwarfare.match_coil.cut_length.ticks": "Cut length: %1$s ticks",
+	"gui.industrialwarfare.match_coil.remaining_coil": "Remaining coil: %1$s h %2$s m %3$s s",
+	"gui.industrialwarfare.match_coil.remaining_coil.ticks": "Remaining coil: : %1$s ticks",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",

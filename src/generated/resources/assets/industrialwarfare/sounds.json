@@ -240,5 +240,13 @@
         "attenuation_distance": 4
       }
     ]
+  },
+  "item.match_coil.cut": {
+    "sounds": [
+      {
+        "name": "mob/sheep/shear",
+        "attenuation_distance": 4
+      }
+    ]
   }
 }

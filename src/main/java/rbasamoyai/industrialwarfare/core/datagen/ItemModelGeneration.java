@@ -64,6 +64,25 @@ public class ItemModelGeneration extends ItemModelProvider {
 				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/match_cord_lit")))
 				.end();
 		
+		getBuilder("match_coil")
+		.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil0")))
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 1.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil1")))
+				.end()
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 2.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil2")))
+				.end()
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 3.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil3")))
+				.end()
+		.override()
+				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 4.0f)
+				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
+				.end();
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

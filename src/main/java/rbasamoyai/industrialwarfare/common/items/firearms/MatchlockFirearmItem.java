@@ -16,7 +16,7 @@ public abstract class MatchlockFirearmItem extends PrimingFirearmItem {
 	private int primingNoCordTime; 
 	
 	public MatchlockFirearmItem(Item.Properties itemProperties, MatchlockFirearmItem.Properties firearmProperties) {
-		super(itemProperties, firearmProperties.slowdownFactor(0.3f));
+		super(itemProperties, firearmProperties.slowdownFactor(-0.3f));
 		this.reloadUnprimingTime = firearmProperties.reloadUnprimingTime;
 		this.reloadUnprimingNoCordTime = firearmProperties.reloadUnprimingNoCordTime;
 		this.unprimingNoCordTime = firearmProperties.unprimingNoCordTime;

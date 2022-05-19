@@ -15,33 +15,17 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	protected int time;
 	
 	protected boolean selected = false;
-	protected boolean cycled;
-	protected boolean fired = false;
-	protected boolean meleeing = false;
-	protected boolean aiming;
-	protected boolean displaySprinting;
+	protected int state;
 	
 	public FirearmItemDataHandler(ItemStackHandler attachments) {
 		this.attachments = attachments;
 	}
 	
+	@Override public void setState(int state) { this.state = state; }
+	@Override public int getState() { return this.state; }
+	
 	@Override public void setSelected(boolean selected) { this.selected = selected; }
 	@Override public boolean isSelected() { return this.selected; }
-	
-	@Override public void setCycled(boolean cycled) { this.cycled = cycled; }
-	@Override public boolean isCycled() { return this.cycled; }
-	
-	@Override public void setFired(boolean fired) { this.fired = fired; }
-	@Override public boolean isFired() { return this.fired; }
-	
-	@Override public void setMelee(boolean melee) { this.meleeing = melee; }
-	@Override public boolean isMeleeing() { return this.meleeing; }	
-	
-	@Override public void setAiming(boolean aiming) { this.aiming = aiming; }
-	@Override public boolean isAiming() { return this.aiming; }
-	
-	@Override public void setDisplaySprinting(boolean displaySprinting) { this.displaySprinting = displaySprinting; }
-	@Override public boolean shouldDisplaySprinting() { return this.displaySprinting; }
 	
 	@Override
 	public void setAction(ActionType action, int time) {

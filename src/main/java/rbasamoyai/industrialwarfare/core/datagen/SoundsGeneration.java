@@ -195,7 +195,13 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 				.with(Sound.sound(innerLoc("minecraft:dig/stone2"), SoundDefinition.SoundType.SOUND)
 						.volume(1.0f)
 						.pitch(2.0f)
-						.attenuationDistance(4)));		
+						.attenuationDistance(4)));
+		
+		add(loc("item.match_coil.cut"), SoundDefinition.definition()
+				.with(Sound.sound(innerLoc("minecraft:mob/sheep/shear"), SoundDefinition.SoundType.SOUND)
+						.volume(1.0f)
+						.pitch(1.0f)
+						.attenuationDistance(4)));
 	}
 	
 	private ResourceLocation loc(String id) {

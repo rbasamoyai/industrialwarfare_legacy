@@ -81,7 +81,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.PAPER_CARTRIDGE),
 					getItemStack(ItemInit.INFINITE_PAPER_CARTRIDGE),
 					getItemStack(ItemInit.MATCH_CORD),
-					getItemStack(ItemInit.INFINITE_MATCH_CORD)
+					getItemStack(ItemInit.INFINITE_MATCH_CORD),
+					getItemStack(ItemInit.MATCH_COIL.get())
 					));
 		}
 		
@@ -112,7 +113,8 @@ public class IWItemGroups {
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.ASSEMBLER_WORKSTATION),
-					getItemStack(ItemInit.TASK_SCROLL_SHELF)
+					getItemStack(ItemInit.TASK_SCROLL_SHELF),
+					getItemStack(ItemInit.SPOOL)
 					));
 		}
 		
@@ -160,7 +162,8 @@ public class IWItemGroups {
 					FirearmItem.creativeStack(FirearmInit.VETTERLI.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		

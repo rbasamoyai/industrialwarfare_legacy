@@ -40,7 +40,7 @@ public class MatchCordItem extends Item {
 	@Override
 	public int getMaxDamage(ItemStack stack) {
 		CompoundNBT nbt = stack.getOrCreateTag();
-		if (!nbt.contains(TAG_MAX_DAMAGE, Constants.NBT.TAG_INT) || nbt.getInt(TAG_MAX_DAMAGE) <= 0) {
+		if (nbt.getInt(TAG_MAX_DAMAGE) <= 0) {
 			nbt.putInt(TAG_MAX_DAMAGE, DEFAULT_MAX_DURABILITY);
 		}
 		return nbt.getInt(TAG_MAX_DAMAGE);
