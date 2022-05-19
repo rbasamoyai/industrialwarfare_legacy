@@ -17,6 +17,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Brain.BrainCodec;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
+import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.RedstoneParticleData;
@@ -27,6 +28,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
@@ -46,6 +48,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_TARGET,
 			MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
@@ -58,6 +61,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private UnitFormation formation;
 	@Nullable
 	private PlayerIDTag owner;
+	@Nullable
+	private long orderLastReceived;
 	
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
 		this(type, level, UnitFormationTypeInit.LINE.get().getFormation(-1));
@@ -66,6 +71,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
 		super(type, level);
 		this.formation = formation;
+		this.updateOrderTime();
 		this.setPersistenceRequired();
 		this.setInvulnerable(true);
 	}
@@ -98,7 +104,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private static ImmutableList<Pair<Integer, ? extends Task<? super FormationLeaderEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d)),
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d, true)),
+				Pair.of(0, new LookTask(45, 90)),
 				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
 				Pair.of(2, new MoveToEngagementDistance(50))
 				);
@@ -146,6 +153,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		formationData.putString(TAG_TYPE, this.formation.getType().getRegistryName().toString());
 		formationData.put(TAG_DATA, this.formation.serializeNBT());
 		nbt.put(TAG_FORMATION, formationData);
+		if (this.owner != null) {
+			nbt.put("owner", this.owner.serializeNBT());
+		}
 	}
 	
 	@Override
@@ -155,6 +165,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
 		this.formation = type.getFormation(-1);
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
+		if (nbt.contains("owner", Constants.NBT.TAG_COMPOUND)) {
+			this.owner = PlayerIDTag.fromNBT(nbt.getCompound("owner"));
+		}
 	}
 	
 	/*
@@ -174,7 +187,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	}
 	
 	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
-		return this.equals(inFormationWith) || this.formation.hasMatchingFormationLeader(inFormationWith);
+		return this.equals(inFormationWith) || this.formation.isInFormationWith(inFormationWith);
 	}
 	
 	public void setFollower(CreatureEntity entity) {
@@ -199,6 +212,15 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	public Vector3d getFollowPosition() {
 		return this.formation.getFollowPosition(this);
+	}
+	
+	public void updateOrderTime() {
+		this.orderLastReceived = this.level.getGameTime();
+		if (this.formation != null) this.formation.updateOrderTime();
+	}
+	
+	public long getLastOrderTime() {
+		return this.orderLastReceived;
 	}
 	
 	@Override

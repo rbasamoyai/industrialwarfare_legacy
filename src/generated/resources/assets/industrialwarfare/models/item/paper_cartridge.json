@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "industrialwarfare:item/paper_cartridge_musket"
+  }
+}

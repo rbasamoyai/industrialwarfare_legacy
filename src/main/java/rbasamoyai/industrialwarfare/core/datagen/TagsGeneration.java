@@ -100,7 +100,7 @@ public class TagsGeneration {
 		@Override
 		protected void addTags() {
 			tag(IWItemTags.CHEAT_AMMO)
-					.add(ItemInit.INFINITE_AMMO_GENERIC.get());
+					.add(ItemInit.INFINITE_AMMO_GENERIC.get(), ItemInit.INFINITE_PAPER_CARTRIDGE.get());
 			
 			tag(IWItemTags.ENTRENCHING_TOOLS)
 					.add(Items.WOODEN_SHOVEL, Items.STONE_SHOVEL, Items.IRON_SHOVEL, Items.GOLDEN_SHOVEL, Items.DIAMOND_SHOVEL, Items.NETHERITE_SHOVEL);

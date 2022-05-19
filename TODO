@@ -1,20 +1,10 @@
 Current TODO:
-- Content drop?
-	- Matchlocks
-		- English matchlock
-		- Tanegashima (Japanese
-		matchlock)
-		- Slow match system
-	- Rewrite firearm class hierarchy?
-		
-- Rewrite attacking?
-	- Attack aiming?
-	
 - Work on formations
-	- Reforming when formation type
-	switches
+	- Formations joining other
+	formations
 	- Merging smaller formations
 	if possible
-	- Add unit classes
-	- Better column
-		- No segment entities
+	
+- Match coil
+	- Converting long enough
+	cord into coil

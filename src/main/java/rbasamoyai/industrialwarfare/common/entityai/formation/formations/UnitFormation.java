@@ -43,7 +43,7 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 
-	protected static final float RAD_TO_DEG = (float) Math.PI / 180.0f;
+	protected static final float DEG_TO_RAD = (float) Math.PI / 180.0f;
 	protected static final double CLOSE_ENOUGH = 0.1d;
 	protected static final double ORIENTATION_CALC_DIST = 1.0d;
 	
@@ -56,7 +56,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected FormationAttackType attackType = FormationAttackTypeInit.FIRE_AT_WILL.get();
 	
 	protected CreatureEntity follower;
-	private Float cachedAngle;
+	protected Float cachedAngle;
 	
 	protected Interval interval = Interval.T_1S;
 	
@@ -70,12 +70,23 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	public abstract <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity);
 	public abstract void removeEntity(CreatureEntity entity);
 	
+	public boolean isInFormationWith(FormationLeaderEntity leader) {
+		return this.hasMatchingFormationLeader(leader)
+			|| this.follower instanceof FormationLeaderEntity && ((FormationLeaderEntity) this.follower).hasMatchingFormationLeader(leader);
+	}
+	
 	public abstract boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith);
 	
 	protected abstract void tick(FormationLeaderEntity leader);
 	protected abstract void loadEntityData(CompoundNBT nbt, World level);
 	
 	public void setFollower(CreatureEntity entity) { this.follower = entity; }
+	
+	public void updateOrderTime() {
+		if (this.follower instanceof FormationLeaderEntity) {
+			((FormationLeaderEntity) this.follower).updateOrderTime();
+		}		
+	}
 	
 	public void setAttackType(FormationAttackType type) { 
 		if (this.type.checkAttackType(type)) this.attackType = type;
@@ -108,7 +119,8 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 		}
 		
 		boolean stopped = isStopped(leader);
-		Vector3d followPos = this.getFollowPosition(leader);	
+		Vector3d followPos = this.getFollowPosition(leader);
+		
 		boolean closeEnough = this.follower.position().closerThan(followPos, CLOSE_ENOUGH); 
 		
 		if (stopped && closeEnough) {
@@ -167,10 +179,9 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	
 	public abstract float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos);
 	
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
 		FormationLeaderEntity leader = new FormationLeaderEntity(EntityTypeInit.FORMATION_LEADER.get(), level, this);
 		leader.setPos(pos.x, pos.y, pos.z);
-		leader.yRot = facing;
 		leader.setState(UnitFormation.State.FORMED);
 		leader.setOwner(owner);
 		leader.getBrain().setMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), commandGroup);
@@ -186,7 +197,10 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	protected Vector3d tryFindingNewPosition(CreatureEntity unit, Vector3d precisePos) {
 		for (double y : Y_CHECKS) {
 			Vector3d newPos = precisePos.add(0.0d, y, 0.0d);
-			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)) return newPos;
+			if (unit.level.loadedAndEntityCanStandOn((new BlockPos(newPos)).below(), unit)
+				&& unit.level.noCollision(unit, unit.getBoundingBox().move(newPos.subtract(unit.position())))) {
+				return newPos;
+			}
 		}
 		return null;
 	}
@@ -200,7 +214,7 @@ public abstract class UnitFormation implements INBTSerializable<CompoundNBT> {
 	}
 	
 	public static boolean isSlotEmpty(FormationEntityWrapper<?> wrapper) {
-		if (wrapper == null) return true;
+		if (wrapper == null || wrapper == FormationEntityWrapper.EMPTY) return true;
 		CreatureEntity entity = wrapper.getEntity();
 		return entity == null || !entity.isAlive();
 	}

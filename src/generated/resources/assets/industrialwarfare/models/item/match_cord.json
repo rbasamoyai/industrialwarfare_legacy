@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "industrialwarfare:item/match_cord"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "industrialwarfare:is_lit": 1.0
+      },
+      "model": "industrialwarfare:item/match_cord_lit"
+    }
+  ]
+}

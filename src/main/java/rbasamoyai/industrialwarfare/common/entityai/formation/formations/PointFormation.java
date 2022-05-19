@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -49,12 +50,12 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
-		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 		
 		this.innerFormations
 		.stream()
-		.map(inner -> inner.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner))
+		.map(inner -> inner.spawnInnerFormationLeaders(level, pos, commandGroup, owner))
 		.forEach(leader::addEntity);
 		
 		return leader;
@@ -69,6 +70,12 @@ public abstract class PointFormation extends UnitFormation {
 		.map(FormationEntityWrapper::getEntity)
 		.filter(e -> e.getType() == EntityTypeInit.FORMATION_LEADER.get())
 		.forEach(Entity::kill);
+	}
+	
+	@Override
+	public void updateOrderTime() {
+		super.updateOrderTime();
+		this.streamLeadersFromUnits().forEach(FormationLeaderEntity::updateOrderTime);
 	}
 	
 	@Override
@@ -100,37 +107,19 @@ public abstract class PointFormation extends UnitFormation {
 	
 	@Override
 	public boolean hasMatchingFormationLeader(FormationLeaderEntity inFormationWith) {
-		return this.units.values()
-				.stream()
-				.filter(w -> !UnitFormation.isSlotEmpty(w))
-				.map(FormationEntityWrapper::getEntity)
-				.filter(u -> u instanceof FormationLeaderEntity)
-				.map(u -> (FormationLeaderEntity) u)
-				.anyMatch(f -> f.hasMatchingFormationLeader(inFormationWith));
+		return this.streamLeadersFromUnits().anyMatch(f -> f.hasMatchingFormationLeader(inFormationWith));
 	}
 	
 	@Override
 	public void setAttackInterval(Interval interval) {
 		super.setAttackInterval(interval);
-		
-		this.units.values()
-		.stream()
-		.filter(w -> !UnitFormation.isSlotEmpty(w))
-		.map(FormationEntityWrapper::getEntity)
-		.filter(u -> u instanceof FormationLeaderEntity)
-		.forEach(u -> ((FormationLeaderEntity) u).setAttackInterval(interval));
+		this.streamLeadersFromUnits().forEach(f -> f.setAttackInterval(interval));
 	}
 	
 	@Override
 	public void setAttackType(FormationAttackType type) {
-		super.setAttackType(type);
-		
-		this.units.values()
-		.stream()
-		.filter(w -> !UnitFormation.isSlotEmpty(w))
-		.map(FormationEntityWrapper::getEntity)
-		.filter(u -> u instanceof FormationLeaderEntity)
-		.forEach(u -> ((FormationLeaderEntity) u).setAttackType(type));
+		super.setAttackType(type);	
+		this.streamLeadersFromUnits().forEach(f -> f.setAttackType(type));
 	}
 	
 	@Override
@@ -140,7 +129,7 @@ public abstract class PointFormation extends UnitFormation {
 		boolean finishedForming = this.formationState == State.FORMING;
 		boolean stopped = UnitFormation.isStopped(leader);
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		
 		Brain<?> leaderBrain = leader.getBrain();
@@ -181,12 +170,6 @@ public abstract class PointFormation extends UnitFormation {
 				continue;
 			}
 			
-			if (this.attackType == FormationAttackTypeInit.NO_ATTACK.get()) {
-				unitBrain.eraseMemory(MemoryModuleTypeInit.CAN_ATTACK.get());
-			} else {
-				unitBrain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), true);
-			}
-			
 			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 			
 			if (unit.getType() == EntityTypeInit.FORMATION_LEADER.get()) {
@@ -201,28 +184,28 @@ public abstract class PointFormation extends UnitFormation {
 				}
 				
 				if (unit instanceof IWeaponRangedAttackMob
-					&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target.position(), MemoryModuleTypeInit.SHOOTING_POS.get())) {
-					if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.FINISHED_ATTACKING.get())) {
-						unitBrain.eraseMemory(MemoryModuleTypeInit.SHOOTING_POS.get());
-					} else if (unitBrain.hasMemoryValue(MemoryModuleTypeInit.CAN_ATTACK.get())) {
-						unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.position(), 40L);
-					}
+					&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target.getEyePosition(1.0f), MemoryModuleTypeInit.SHOOTING_POS.get())) {
+					unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.getEyePosition(1.0f), 40L);
 				} else {
 					unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 					continue;
 				}
-			} else if (unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+			} else if (!engagementFlag) {
 				unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
 			}
 			
-			Vector3d precisePos = leader.position().add(leaderForward.scale(p.z)).add(leaderRight.scale(p.x)).add(0.0d, unit.getY() - leader.getY(), 0.0d);
+			Vector3d precisePos =
+					leader.position()
+					.add(leaderForward.scale(p.z))
+					.add(leaderRight.scale(p.x));
+			
 			boolean closeEnough = unit.position().closerThan(precisePos, CLOSE_ENOUGH);
 			
 			if (unitBrain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED) && closeEnough) {
 				unitBrain.setMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), engagementFlag);
 			}
 			
-			if (this.formationState == State.FORMED && stopped && closeEnough) {
+			if (this.formationState == State.FORMED && stopped && closeEnough && !engagementFlag) {
 				// Stop and stay oriented
 				unit.yRot = leader.yRot;
 				unit.yHeadRot = leader.yRot;
@@ -234,6 +217,10 @@ public abstract class PointFormation extends UnitFormation {
 				unitBrain.eraseMemory(MemoryModuleType.MEETING_POINT);
 			} else {
 				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+				if (possiblePos == null) {
+					possiblePos = this.tryFindingNewPosition(unit, precisePos.add(0.0d, unit.getY() - leader.getY(), 0.0d));
+				}
+				
 				if (possiblePos != null && !unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) {
 					unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
 					unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
@@ -246,9 +233,18 @@ public abstract class PointFormation extends UnitFormation {
 		}
 	}
 	
+	private Stream<FormationLeaderEntity> streamLeadersFromUnits() {
+		return this.units.values()
+				.stream()
+				.filter(w -> !UnitFormation.isSlotEmpty(w))
+				.map(FormationEntityWrapper::getEntity)
+				.filter(FormationLeaderEntity.class::isInstance)
+				.map(FormationLeaderEntity.class::cast);
+	}
+	
 	@Override
 	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
 		
 		return this.units.entrySet()

@@ -1,8 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -49,20 +51,26 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
+	public void updateOrderTime() {
+		super.updateOrderTime();
+		this.segmentLeaders.forEach(FormationLeaderEntity::updateOrderTime);
+	}
+	
+	@Override
 	public void setFollower(CreatureEntity entity) {
 		if (this.segmentLeaders.isEmpty()) return;
 		this.segmentLeaders.get(this.segmentLeaders.size() - 1).setFollower(entity);
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, float facing, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
 		this.segmentFormations.clear();
 		this.segmentLeaders.clear();
 		
 		for (int i = 0; i < this.depth; ++i) {
 			SegmentFormation inner = new SegmentFormation(UnitFormationTypeInit.COLUMN_SEGMENT.get(), this.formationRank, this.width, i == this.depth - 1);
 			this.segmentFormations.add(inner);
-			this.segmentLeaders.add(inner.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner));
+			this.segmentLeaders.add(inner.spawnInnerFormationLeaders(level, pos, commandGroup, owner));
 		}
 		
 		for (int i = 0; i < this.depth; ++i) {
@@ -73,7 +81,7 @@ public class ColumnFormation extends UnitFormation {
 			}
 		}
 		
-		return super.spawnInnerFormationLeaders(level, pos, facing, commandGroup, owner);
+		return super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 	}
 	
 	private void moveUpUnits() {
@@ -134,6 +142,23 @@ public class ColumnFormation extends UnitFormation {
 	@Override
 	protected void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
+		
+		// Fixing units with multiple positions, since that seems to happen
+		if (leader.tickCount % 20 == 0) {
+			Set<CreatureEntity> units = new HashSet<>();
+			for (int rank = 0; rank < this.depth; ++rank) {
+				SegmentFormation segment = this.segmentFormations.get(rank);
+				for (int file = 0; file < this.width; ++file) {
+					CreatureEntity unit = segment.getEntityAtFile(file);
+					if (unit == null) continue;
+					if (units.contains(unit)) {
+						segment.removeEntityAtFile(file);
+					} else {
+						units.add(unit);
+					}
+				}
+			}
+		}
 		
 		this.moveUpUnits();
 	}

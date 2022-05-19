@@ -29,11 +29,13 @@ public class KeyBindingsInit {
 		return mc.options.toggleCrouch;
 	});
 	public static KeyBinding RELOAD_FIREARM = new KeyBinding(KEY_ROOT + ".reload_firearm", KeyEvent.VK_R, CATEGORY);
+	public static KeyBinding PREVIOUS_FIREARM_STAGE = new KeyBinding(KEY_ROOT + ".previous_firearm_stage", KeyEvent.VK_V, CATEGORY);
 	
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		ClientRegistry.registerKeyBinding(ITEM_SCREEN);
 		ClientRegistry.registerKeyBinding(DIPLOMACY_SCREEN);
+		ClientRegistry.registerKeyBinding(PREVIOUS_FIREARM_STAGE);
 		ClientRegistry.registerKeyBinding(PRONE);
 		ClientRegistry.registerKeyBinding(RELOAD_FIREARM);
 	}

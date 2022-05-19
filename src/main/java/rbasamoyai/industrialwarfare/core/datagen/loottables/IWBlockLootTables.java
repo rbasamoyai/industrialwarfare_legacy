@@ -5,6 +5,7 @@ import java.util.stream.StreamSupport;
 
 import net.minecraft.block.Block;
 import net.minecraft.data.loot.BlockLootTables;
+import net.minecraft.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
@@ -15,6 +16,8 @@ public class IWBlockLootTables extends BlockLootTables {
 	protected void addTables() {
 		this.dropSelf(BlockInit.ASSEMBLER_WORKSTATION.get());
 		this.dropSelf(BlockInit.TASK_SCROLL_SHELF.get());
+		this.dropOther(BlockInit.MATCH_COIL.get(), Items.AIR);
+		this.dropSelf(BlockInit.SPOOL.get());
 	}
 	
 	@Override

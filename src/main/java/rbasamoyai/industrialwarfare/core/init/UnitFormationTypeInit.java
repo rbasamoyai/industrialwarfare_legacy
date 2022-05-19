@@ -10,6 +10,7 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.formations.ColumnF
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.DeferredFollowPointFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.FollowPointFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.LineFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.formations.NoFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.SegmentFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.Point;
@@ -18,6 +19,12 @@ import rbasamoyai.industrialwarfare.common.items.WhistleItem.FormationCategory;
 public class UnitFormationTypeInit {
 
 	public static final DeferredRegister<UnitFormationType<?>> UNIT_FORMATION_TYPES = DeferredRegister.create(UnitFormationType.CLASS_GENERIC, IndustrialWarfare.MOD_ID);
+	
+	public static final RegistryObject<UnitFormationType<NoFormation>> NO_FORMATION = UNIT_FORMATION_TYPES.register("no_formation",
+			() -> new UnitFormationType<>(NoFormation::new, 0xF00BAFFF, FormationCategory.NO_FORMATION, ImmutableSet.of(
+					FormationAttackTypeInit.NO_ATTACK.get(),
+					FormationAttackTypeInit.FIRE_AT_WILL.get()
+					)));
 	
 	public static final RegistryObject<UnitFormationType<LineFormation>> LINE = UNIT_FORMATION_TYPES.register("line",
 			() -> new UnitFormationType<>(LineFormation::new, 0xF00BA000, FormationCategory.LINE, ImmutableSet.of(
@@ -35,7 +42,7 @@ public class UnitFormationTypeInit {
 					)));
 	
 	public static final RegistryObject<UnitFormationType<SegmentFormation>> COLUMN_SEGMENT = UNIT_FORMATION_TYPES.register("column_segment",
-			() -> new UnitFormationType<>(SegmentFormation::new, 0xF00BA011, FormationCategory.NO_WHISTLE, ImmutableSet.of(
+			() -> new UnitFormationType<>(SegmentFormation::new, 0xF00BA011, FormationCategory.NO_FORMATION, ImmutableSet.of(
 					FormationAttackTypeInit.NO_ATTACK.get(),
 					FormationAttackTypeInit.FIRE_AT_WILL.get()
 					)));

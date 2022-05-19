@@ -130,6 +130,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.JUMP_TO.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
+			MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(),
 			MemoryModuleTypeInit.SHOOTING_POS.get(),
 			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
@@ -267,6 +268,7 @@ public class NPCEntity extends CreatureEntity implements
 	@Override
 	protected void customServerAiStep() {
 		Brain<NPCEntity> brain = this.getBrain();
+		
 		brain.tick((ServerWorld) this.level, this);
 		
 		if (this.level.getGameTime() % 20 == 0) {
@@ -501,14 +503,28 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		
 		if (weaponItem instanceof FirearmItem) {
+			if (!FirearmItem.isCycled(weapon) && ((FirearmItem) weaponItem).needsCycle(weapon)) {
+				this.actionDelay = 0;
+				if (FirearmItem.isFinishedAction(weapon)) {
+					this.swing(Hand.MAIN_HAND);
+				}
+				return true;
+			}
+			
+			if (!FirearmItem.isFinishedAction(weapon)) {
+				this.actionDelay = 0;
+				boolean flag = this.brain.getMemory(MemoryModuleTypeInit.CAN_ATTACK.get()).orElse(false);
+				this.brain.setMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), flag);
+				return true;
+			}
+			
 			if (this.actionDelay <= 0) {
 				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
 			}
-			if (this.canAim()) {
-				if (!FirearmItem.isAiming(weapon)) {
-					((FirearmItem) weaponItem).startAiming(weapon, this);
-					this.actionDelay += 10;
-				}
+			if (this.canAim() && !FirearmItem.isAiming(weapon)) {
+				((FirearmItem) weaponItem).startAiming(weapon, this);
+				this.startUsingItem(Hand.MAIN_HAND);
+				this.actionDelay += 10;
 			}
 		} else if (this.actionDelay <= 0) {
 			this.actionDelay = MathHelper.ceil(60.0f * this.timeModifier);
@@ -643,9 +659,11 @@ public class NPCEntity extends CreatureEntity implements
 				case RELOADING: return ShootingStatus.RELOADING;
 				case CYCLING: return ShootingStatus.CYCLING;
 				case NOTHING:
-					if (h.isAiming() || !h.isFinishedAction()) return ShootingStatus.FIRED;
 					if (h.hasAmmo()) {
 						return ((FirearmItem) weaponItem).needsCycle(weapon) && h.isFired() ? ShootingStatus.CYCLING : ShootingStatus.READY_TO_FIRE;
+					}
+					if (h.isAiming() || !h.isFinishedAction()) {
+						return ShootingStatus.FIRED;
 					}
 					return ShootingStatus.RELOADING;
 				default: return ShootingStatus.FIRED;
@@ -665,12 +683,16 @@ public class NPCEntity extends CreatureEntity implements
 			if (FirearmItem.isFinishedAction(weapon)) {
 				if (FirearmItem.isAiming(weapon)) {
 					((FirearmItem) weaponItem).stopAiming(weapon, this);
+					this.stopUsingItem();
 					this.actionDelay = 11;
 				}
 			} else {
 				return true;
 			}
-			if (this.actionDelay <= 0) return false;
+			if (this.actionDelay <= 0) {
+				brain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
+				return false;
+			}
 			--this.actionDelay;
 			return true;
 		}

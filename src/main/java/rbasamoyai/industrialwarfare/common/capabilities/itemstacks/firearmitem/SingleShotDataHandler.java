@@ -2,15 +2,20 @@ package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraftforge.items.ItemStackHandler;
 
 public class SingleShotDataHandler extends FirearmItemDataHandler {
 
 	private ItemStack shot = ItemStack.EMPTY;
 	
+	public SingleShotDataHandler(ItemStackHandler handler) {
+		super(handler);
+	}
+	
 	@Override public void setMagazineSize(int size) {}
 	@Override public int getMagazineSize() { return 1; }
 
-	@Override 
+	@Override
 	public ItemStack insertAmmo(ItemStack ammo) {
 		if (!this.shot.isEmpty()) return ammo;
 		this.shot = ammo.split(1);

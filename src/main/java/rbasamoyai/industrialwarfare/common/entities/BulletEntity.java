@@ -111,8 +111,8 @@ public class BulletEntity extends ProjectileItemEntity {
 				IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) owner), new FirearmActionMessages.CNotifyHeadshot());
 			}
 		}
-		hit.hurt(new IndirectEntityDamageSource(DAMAGE_SOURCE_KEY, this, this.getOwner()), damage);
 		hit.invulnerableTime = 0;
+		hit.hurt(new IndirectEntityDamageSource(DAMAGE_SOURCE_KEY, this, this.getOwner()), damage);
 		this.remove();
 	}
 	

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "coil_amount=0": {
+      "model": "industrialwarfare:block/match_coil0"
+    },
+    "coil_amount=1": {
+      "model": "industrialwarfare:block/match_coil1"
+    },
+    "coil_amount=2": {
+      "model": "industrialwarfare:block/match_coil2"
+    },
+    "coil_amount=3": {
+      "model": "industrialwarfare:block/match_coil3"
+    },
+    "coil_amount=4": {
+      "model": "industrialwarfare:block/spool"
+    }
+  }
+}

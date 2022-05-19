@@ -19,8 +19,9 @@ public class PrepareForShootingTask<E extends MobEntity & IWeaponRangedAttackMob
 	
 	public PrepareForShootingTask(MemoryModuleType<?> noType) {
 		super(ImmutableMap.of(
-				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED));
+				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_ABSENT,
+				MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED,
+				noType, MemoryModuleStatus.VALUE_ABSENT));
 		this.noType = noType;
 	}
 
@@ -28,7 +29,7 @@ public class PrepareForShootingTask<E extends MobEntity & IWeaponRangedAttackMob
 	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
 		Brain<?> brain = entity.getBrain();
 		return !brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && !brain.hasMemoryValue(this.noType)
-			|| brain.getMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get()).orElse(false);
+				&& brain.getMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get()).orElse(true);
 	}
 	
 	@Override
@@ -38,6 +39,7 @@ public class PrepareForShootingTask<E extends MobEntity & IWeaponRangedAttackMob
 	
 	@Override
 	protected boolean canStillUse(ServerWorld level, E entity, long gameTime) {
+		if (!this.checkExtraStartConditions(level, entity)) return false;
 		return this.status == ShootingStatus.FIRED || this.status == ShootingStatus.CYCLING || this.status == ShootingStatus.RELOADING;
 	}
 	

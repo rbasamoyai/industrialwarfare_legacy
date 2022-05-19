@@ -24,7 +24,6 @@ import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAni
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.RevolverFirearmItem;
 import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
@@ -52,7 +51,7 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 							.durability(1200)
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
-					new FirearmItem.Properties()
+					new RevolverFirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(15.0f)
 							.headshotMultiplier(2.0f)
@@ -68,8 +67,7 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 							.reloadTime(20)
 							.reloadEndTime(30)
 							.projectileRange(20)
-							.fovModifier(0.75f),
-							6);
+							.cylinderSize(6));
 	}
 	
 	@Override
@@ -82,37 +80,22 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 		return null;
 	}
 	
-	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
-		getDataHandler(stack).ifPresent(h -> {
-			ActionType type = h.getAction();
-			boolean reloading = type == ActionType.RELOADING;
-			
-			int pos = h.getAmmoPosition();
-			float rot = (float)(pos + (reloading ? 2 : 0)) * -CYLINDER_ROT;
-			renderer.addToBoneRotation("cylinder", 0.0f, 0.0f, rot);
-			
-			if (type == ActionType.NOTHING) {
-				renderer.setBoneRotation("hammer", h.isCycled() ? HAMMER_ROT_CYCLED : 0.0f, 0.0f, 0.0f);
-			}
-			
-			for (int i = 0; i < h.getMagazineSize(); ++i) {
-				if (reloading && i == pos) continue;
-				ItemStack chamber = h.peekAmmo(i);
-				String num = Integer.toString(i + 1);
-				if (chamber.isEmpty()) {
-					renderer.hideBone("cartridge" + num, true);
-				} else {
-					renderer.hideBone("cartridge" + num, false);
-					renderer.hideBone("bullet" + num, chamber.getItem() == ItemInit.CARTRIDGE_CASE.get());
-				}
-			}
-		});
-	}
-	
 	/*
 	 * ANIMATION CONTROL METHODS
 	 */
+	
+	@Override
+	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
+		super.onSelect(firearm, shooter);
+		if (!shooter.level.isClientSide) {
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_SELECT_FIREARM);
+			
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>("select_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
+		}
+	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
@@ -139,7 +122,7 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>(isAiming ? "ads_firing" : "hip_firing", false));
 			upperBody.add(new Tuple<>(isAiming ? "ads_aiming" : "hip_aiming", true));
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f / getTimeModifier(shooter));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -161,14 +144,17 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			int animId = ANIM_HIP_AIMING;
-			String animStr = "hip_aiming";
+			int animId;
+			String animStr;
 			if (isAiming(firearm)) {
 				animId = ANIM_ADS_AIMING;
 				animStr = "ads_aiming";
 			} else if (shooter.isSprinting()) {
 				animId = ANIM_SPRINTING;
 				animStr = "sprinting";
+			} else {
+				animId = ANIM_HIP_AIMING;
+				animStr = "hip_aiming";
 			}
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
@@ -364,6 +350,36 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 	}
 	
 	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		
+		getDataHandler(stack).ifPresent(h -> {
+			ActionType type = h.getAction();
+			boolean reloading = type == ActionType.RELOADING;
+			
+			int pos = h.getAmmoPosition();
+			float rot = (float)(pos + (reloading ? 2 : 0)) * -CYLINDER_ROT;
+			renderer.addToBoneRotation("cylinder", 0.0f, 0.0f, rot);
+			
+			if (type == ActionType.NOTHING) {
+				renderer.setBoneRotation("hammer", h.isCycled() ? HAMMER_ROT_CYCLED : 0.0f, 0.0f, 0.0f);
+			}
+			
+			for (int i = 0; i < h.getMagazineSize(); ++i) {
+				if (reloading && i == pos) continue;
+				ItemStack chamber = h.peekAmmo(i);
+				String num = Integer.toString(i + 1);
+				if (chamber.isEmpty()) {
+					renderer.hideBone("cartridge" + num, true);
+				} else {
+					renderer.hideBone("cartridge" + num, false);
+					renderer.hideBone("bullet" + num, chamber.getItem() == ItemInit.CARTRIDGE_CASE.get());
+				}
+			}
+		});
+	}
+	
+	@Override
 	protected void interpretFirstPersonInstructions(List<String> tokens, FirearmRenderer renderer) {
 		super.interpretFirstPersonInstructions(tokens, renderer);
 		String firstTok = tokens.get(0);
@@ -499,10 +515,10 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 				ItemStack chamber = h.peekAmmo(i);
 				String num = Integer.toString(i + 1);
 				if (chamber.isEmpty()) {
-					renderer.setBoneVisibility("cartridge" + num, true);
+					renderer.hideBone("cartridge" + num, true);
 				} else {
-					renderer.setBoneVisibility("cartridge" + num, false);
-					renderer.setBoneVisibility("bullet" + num, chamber.getItem() == ItemInit.CARTRIDGE_CASE.get());
+					renderer.hideBone("cartridge" + num, false);
+					renderer.hideBone("bullet" + num, chamber.getItem() == ItemInit.CARTRIDGE_CASE.get());
 				}
 			}
 		});
@@ -532,6 +548,27 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 		return (new AnimationBuilder())
 				.addAnimation("select_firearm", false)
 				.addAnimation(getDataHandler(stack).map(IFirearmItemDataHandler::shouldDisplaySprinting).orElse(false) ? "sprinting" : "hip_aiming", true);
+	}
+	
+	@Override
+	public void interpretThirdPersonInstructions(List<String> tokens, ItemStack stack, ThirdPersonItemAnimRenderer renderer) {
+		super.interpretThirdPersonInstructions(tokens, stack, renderer);
+		String firstTok = tokens.get(0);
+		if (tokens.size() < 2) return;
+		
+		if (firstTok.equals("hide_current_cartridge")) {
+			boolean hide = Boolean.valueOf(tokens.get(1));
+			getDataHandler(stack).ifPresent(h -> {
+				int pos = h.getAmmoPosition() + 1;
+				renderer.hideBone("cartridge" + pos, hide);
+			});
+		} else if (firstTok.equals("hide_current_bullet")) {
+			boolean hide = Boolean.valueOf(tokens.get(1));
+			getDataHandler(stack).ifPresent(h -> {
+				int pos = h.getAmmoPosition() + 1;
+				renderer.hideBone("bullet" + pos, hide);
+			});
+		}
 	}
 
 }

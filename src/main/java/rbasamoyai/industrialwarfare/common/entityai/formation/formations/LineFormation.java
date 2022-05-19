@@ -1,9 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation.formations;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.UUID;
-import java.util.stream.IntStream;
-
-import com.google.common.collect.Streams;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -21,6 +23,7 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.Constants;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
@@ -38,7 +41,7 @@ public class LineFormation extends UnitFormation {
 	private int depth;
 	private int followSpacing;
 	
-	private FormationEntityWrapper<?>[][] lines;
+	private List<List<FormationEntityWrapper<?>>> dynamicLines;
 	
 	public LineFormation(UnitFormationType<? extends LineFormation> type, int formationRank) {
 		this(type, formationRank, 0, 0, 0);
@@ -54,7 +57,16 @@ public class LineFormation extends UnitFormation {
 		this.width = width;
 		this.depth = depth;
 		this.followSpacing = followSpacing;
-		this.lines = new FormationEntityWrapper<?>[this.depth][this.width];
+		this.dynamicLines = new ArrayList<>(this.depth);
+	}
+	
+	private void validateDimensions() {
+		if (this.depth <= 0 || this.width <= 0) {
+			this.width = 1;
+			this.depth = 1;
+			this.dynamicLines = new ArrayList<>(this.depth);
+			IndustrialWarfare.LOGGER.warn("Line Formation has dimension of zero or less; fixing dimensions to a line of 1 x 1");
+		}
 	}
 	
 	@Override
@@ -66,22 +78,43 @@ public class LineFormation extends UnitFormation {
 	}
 	
 	private <E extends CreatureEntity & IMovesInFormation> boolean insertEntityAtBack(E entity) {
-		for (int file = 0; file < this.width; ++file) {
-			FormationEntityWrapper<?> wrapper = this.lines[this.depth - 1][file];
+		this.validateDimensions();
+		
+		if (this.dynamicLines.isEmpty()) {
+			this.dynamicLines.add(Util.make(new ArrayList<>(), list -> list.add(new FormationEntityWrapper<>(entity))));
+			return true;
+		}
+		
+		List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(this.dynamicLines.size() - 1);
+		if (unitLine.isEmpty()) {
+			unitLine.add(new FormationEntityWrapper<>(entity));
+			return true;
+		}
+		
+		for (int file = 0; file < unitLine.size(); ++file) {
+			FormationEntityWrapper<?> wrapper = unitLine.get(file);
 			if (UnitFormation.isSlotEmpty(wrapper)) {
-				this.lines[this.depth - 1][file] = new FormationEntityWrapper<>(entity);
+				unitLine.set(file, new FormationEntityWrapper<>(entity));
 				return true;
 			}
 		}
-		return false;
+		if (unitLine.size() < this.width) {
+			unitLine.add(new FormationEntityWrapper<>(entity));
+			return true;
+		}
+		
+		if (this.dynamicLines.size() == this.depth) return false;
+		this.dynamicLines.add(Util.make(new ArrayList<>(), list -> list.add(new FormationEntityWrapper<>(entity))));
+		return true;
 	}
 	
 	@Override
 	public void removeEntity(CreatureEntity entity) {
-		for (int rank = 0; rank < this.depth; ++rank) {
-			for (int file = 0; file < this.width; ++file) {
-				if (UnitFormation.isSlotEmpty(this.lines[rank][file]) || this.lines[rank][file].getEntity() != entity) continue;
-				this.lines[rank][file] = null;
+		for (int rank = 0; rank < this.dynamicLines.size(); ++rank) {
+			List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(rank);
+			for (int file = 0; file < unitLine.size(); ++file) {
+				if (UnitFormation.isSlotEmpty(unitLine.get(file)) || unitLine.get(file).getEntity() != entity) continue;
+				unitLine.set(file, FormationEntityWrapper.EMPTY);
 				return;
 			}
 		}
@@ -99,10 +132,10 @@ public class LineFormation extends UnitFormation {
 		this.moveUpUnits();
 
 		boolean stopped = UnitFormation.isStopped(leader);
-		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		int formationMiddle = (int) Math.ceil((double) this.width * 0.5d) - 1;
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d) - 1));
+		Vector3d startPoint = leader.position().subtract(leaderRight.scale(formationMiddle));
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
@@ -121,32 +154,46 @@ public class LineFormation extends UnitFormation {
 		
 		boolean finishedForming = this.formationState == State.FORMING && !engagementFlag;
 		
-		int period = MathHelper.floor((double) leader.tickCount / (double) this.interval.getTime());
+		long time = leader.level.getGameTime() - leader.getLastOrderTime();
 		
-		int currentRank = period % this.depth;
-		int currentFile = period % this.width;
-		boolean newPeriod = leader.tickCount % this.interval.getTime() == 0;
+		int period = MathHelper.floor((double) time / (double) this.interval.getTime());
 		
-		for (int rank = 0; rank < this.depth; ++rank) {		
-			for (int file = 0; file < this.width; ++file) {
-				FormationEntityWrapper<?> wrapper = this.lines[rank][file];
-				if (UnitFormation.isSlotEmpty(wrapper)) {
-					this.lines[rank][file] = null;
-					continue;
+		int currentRank = period % (this.depth == 0 ? 1 : this.depth);
+		int currentFile = period % (this.width == 0 ? 1 : this.width);
+		boolean newPeriod = time % this.interval.getTime() == 0;
+		
+		for (int rank = 0; rank < this.dynamicLines.size(); ++rank) {
+			List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(rank);
+			
+			// Pruning back row
+			if (rank == this.dynamicLines.size() - 1) {
+				Iterator<FormationEntityWrapper<?>> startIter = unitLine.iterator();
+				while (startIter.hasNext() && UnitFormation.isSlotEmpty(startIter.next())) {
+					startIter.remove();
 				}
+				
+				ListIterator<FormationEntityWrapper<?>> endIter = unitLine.listIterator(unitLine.size());
+				while (endIter.hasPrevious() && UnitFormation.isSlotEmpty(endIter.previous())) {
+					endIter.remove();
+				}
+				if (unitLine.isEmpty()) {
+					this.dynamicLines.remove(rank);
+					break;
+				}
+			}
+			
+			int middle = (int) Math.ceil((double) unitLine.size() * 0.5d) - 1;
+			
+			for (int file = 0; file < unitLine.size(); ++file) {
+				FormationEntityWrapper<?> wrapper = unitLine.get(file);
+				if (UnitFormation.isSlotEmpty(wrapper)) continue;
 				CreatureEntity unit = wrapper.getEntity();
-				if (!UnitFormation.checkMemoriesForMovement(unit)) {
-					this.lines[rank][file] = null;
+				if (!UnitFormation.checkMemoriesForMovement(unit) || !UnitFormation.checkMemoriesForSameGroup(commandGroup, unit)) {
+					unitLine.set(file, FormationEntityWrapper.EMPTY);
 					continue;
 				}
 				
 				Brain<?> unitBrain = unit.getBrain();
-				
-				if (!UnitFormation.checkMemoriesForSameGroup(commandGroup, unit)) {
-					this.lines[rank][file] = null;
-					continue;
-				}
-				
 				unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 				
 				if (unitBrain.checkMemory(MemoryModuleTypeInit.CAN_ATTACK.get(), MemoryModuleStatus.VALUE_ABSENT)) {
@@ -171,11 +218,13 @@ public class LineFormation extends UnitFormation {
 					}
 				}
 				
+				int posFile = file - middle + formationMiddle;
+				
 				Vector3d firingPos =
 						startPoint
 						.add(leaderForward)
-						.add(leaderRight.scale(file))
-						.add(0.0d, unit.getEyeHeight(), 0.0d);				
+						.add(leaderRight.scale(posFile))
+						.add(0.0d, unit.getEyeHeight() + unit.getY() - startPoint.y, 0.0d);
 				
 				if (engagementFlag && UnitFormation.checkMemoriesForEngagement(unit)) {
 					// Engagement
@@ -196,28 +245,31 @@ public class LineFormation extends UnitFormation {
 						unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
 						continue;
 					}
-				} else if (unitBrain.checkMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), MemoryModuleStatus.REGISTERED)) {
+					
+				} else if (!engagementFlag) {
 					unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
 				}
 				
 				Vector3d precisePos =
 						startPoint
 						.subtract(leaderForward.scale(rank))
-						.add(leaderRight.scale(file))
-						.add(0.0d, unit.getY() - startPoint.y, 0.0d);
+						.add(leaderRight.scale(posFile));
 				
-				if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
+				// Position movement
+				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+				if (possiblePos == null) {
+					possiblePos = this.tryFindingNewPosition(unit, precisePos.add(0.0d, unit.getY() - startPoint.y, 0.0d));
+				}
+				if (possiblePos == null) continue;
+				if (this.formationState == State.FORMED && stopped && unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) {
 					// Stop and stay oriented if not attacking
 					unit.yRot = leader.yRot;
 					unit.yHeadRot = leader.yRot;
 					continue;
 				}
 				
-				// Position movement
-				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
-				if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
-				unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
-				unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
+				unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos, 80L);
+				unitBrain.setMemoryWithExpiry(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()), 80L);
 			}
 		}
 		
@@ -228,7 +280,7 @@ public class LineFormation extends UnitFormation {
 	
 	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		return leader.position()
 				.subtract(leaderForward.scale(this.depth + this.followSpacing))
 				.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
@@ -236,30 +288,88 @@ public class LineFormation extends UnitFormation {
 	
 	@Override
 	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
+		int formationMiddle = (int) Math.ceil((double) this.width * 0.5d) - 1;
+		Vector3d forward = new Vector3d(-MathHelper.sin(angle * DEG_TO_RAD), 0.0d, MathHelper.cos(angle * DEG_TO_RAD));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
-		Vector3d startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
+		Vector3d startPoint = pos.subtract(right.scale(formationMiddle));
 		
-		IntStream ranks = IntStream.range(0, this.depth);
-		IntStream files = IntStream.range(0, this.width);
+		int score = 0;
+		for (int rank = 0; rank < this.dynamicLines.size(); ++rank) {
+			List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(rank);
+			int middle = (int) Math.ceil((double) unitLine.size() * 0.5d) - 1;
+			
+			for (int file = 0; file < unitLine.size(); ++file) {
+				FormationEntityWrapper<?> wrapper = unitLine.get(file);
+				if (UnitFormation.isSlotEmpty(wrapper)) continue;
+				CreatureEntity unit = wrapper.getEntity();
+				
+				int posFile = file - middle + formationMiddle;
+				
+				Vector3d unitPos = startPoint.subtract(forward.scale(rank)).subtract(right.scale(posFile));
+				BlockPos blockPos = (new BlockPos(unitPos)).below();
+				if (level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos))) {
+					++score;
+				}
+			}
+		}
 		
-		return Streams.zip(ranks.boxed(), files.boxed(), (a, b) -> {
-			if (UnitFormation.isSlotEmpty(this.lines[a][b])) return 0;
-			CreatureEntity unit = this.lines[a][b].getEntity();
-			Vector3d unitPos = startPoint.subtract(forward.scale(a)).subtract(right.scale(b));
-			BlockPos blockPos = (new BlockPos(unitPos)).below();
-			return level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos)) ? 1 : 0;
-		}).reduce(Integer::sum).get();
+		return score;
 	}
 	
 	private void moveUpUnits() {
-		for (int rank = 0; rank < this.depth - 1; ++rank) {
-			for (int file = 0; file < this.width; ++file) {
-				if (UnitFormation.isSlotEmpty(this.lines[rank][file]) && !UnitFormation.isSlotEmpty(this.lines[rank + 1][file])) {
-					this.lines[rank][file] = this.lines[rank + 1][file];
-					this.lines[rank + 1][file] = null;
+		int formationMiddle = (int) Math.ceil((double) this.width * 0.5d) - 1;
+		for (int rank = 0; rank < this.dynamicLines.size() - 1; ++rank) {
+			List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(rank);
+			
+			// Padding
+			int ulsz = unitLine.size();
+			if (ulsz < this.width) {
+				int diff = this.width - ulsz;
+				int lpad = diff / 2;
+				int rpad = diff - lpad;
+				for (int i = 0; i < lpad; ++i) {
+					unitLine.add(0, FormationEntityWrapper.EMPTY);
+				}
+				for (int i = 0; i < rpad; ++i) {
+					unitLine.add(FormationEntityWrapper.EMPTY);
 				}
 			}
+			
+			List<FormationEntityWrapper<?>> nextLine = this.dynamicLines.get(rank + 1);
+			if (nextLine.isEmpty()) continue;
+			int nextMiddle = (int) Math.ceil((double) nextLine.size() * 0.5d) - 1;
+			for (int file = 0; file < this.width; ++file) {
+				if (!UnitFormation.isSlotEmpty(unitLine.get(file))) continue;
+				int nextFile = file - formationMiddle + nextMiddle;
+				if (nextFile < 0 || nextFile >= nextLine.size() || UnitFormation.isSlotEmpty(nextLine.get(nextFile))) continue;
+				FormationEntityWrapper<?> wrapper = nextLine.get(nextFile);
+				unitLine.set(file, wrapper);
+				nextLine.set(nextFile, FormationEntityWrapper.EMPTY);
+			}
+			
+			ListIterator<FormationEntityWrapper<?>> startIter = unitLine.listIterator();
+			ListIterator<FormationEntityWrapper<?>> fromLeftIter = nextLine.listIterator();
+			while (startIter.hasNext() && UnitFormation.isSlotEmpty(startIter.next())) {
+				if (!fromLeftIter.hasNext()) break;
+				FormationEntityWrapper<?> wrapper = fromLeftIter.next();
+				if (UnitFormation.isSlotEmpty(wrapper)) continue;
+				fromLeftIter.set(FormationEntityWrapper.EMPTY);
+				startIter.set(wrapper);
+			}
+			
+			ListIterator<FormationEntityWrapper<?>> endIter = unitLine.listIterator(unitLine.size());
+			ListIterator<FormationEntityWrapper<?>> fromRightIter = nextLine.listIterator(nextLine.size());
+			while (endIter.hasPrevious() && UnitFormation.isSlotEmpty(endIter.previous())) {
+				if (!fromRightIter.hasPrevious()) break;
+				FormationEntityWrapper<?> wrapper = fromRightIter.previous();
+				if (UnitFormation.isSlotEmpty(wrapper)) continue;
+				fromRightIter.set(FormationEntityWrapper.EMPTY);
+				endIter.set(wrapper);
+			}
+		}
+		
+		if (!this.dynamicLines.isEmpty() && !this.dynamicLines.get(this.dynamicLines.size() - 1).stream().anyMatch(w -> !UnitFormation.isSlotEmpty(w))) {
+			this.dynamicLines.remove(this.dynamicLines.size() - 1);
 		}
 	}
 
@@ -281,13 +391,20 @@ public class LineFormation extends UnitFormation {
 		nbt.putInt(TAG_FOLLOW_SPACING, this.followSpacing);
 		
 		ListNBT units = new ListNBT();
-		for (int rank = 0; rank < this.depth; ++rank) {
-			for (int file = 0; file < this.width; ++file) {
-				FormationEntityWrapper<?> wrapper = this.lines[rank][file];
+		int formationMiddle = (int) Math.ceil((double) this.width * 0.5d) - 1;
+		
+		for (int rank = 0; rank < this.dynamicLines.size(); ++rank) {
+			List<FormationEntityWrapper<?>> unitLine = this.dynamicLines.get(rank);
+			int middle = (int) Math.ceil((double) unitLine.size() * 0.5d) - 1;
+			
+			for (int file = 0; file < unitLine.size(); ++file) {
+				int posFile = file - middle + formationMiddle;
+				
+				FormationEntityWrapper<?> wrapper = unitLine.get(file);
 				if (UnitFormation.isSlotEmpty(wrapper)) continue;
 				CompoundNBT unitTag = new CompoundNBT();
 				unitTag.putInt(TAG_RANK, rank);
-				unitTag.putInt(TAG_FILE, file);
+				unitTag.putInt(TAG_FILE, posFile);
 				unitTag.putUUID(TAG_UUID, wrapper.getEntity().getUUID());
 				units.add(unitTag);
 			}
@@ -302,16 +419,27 @@ public class LineFormation extends UnitFormation {
 		super.deserializeNBT(nbt);
 		this.width = nbt.getInt(TAG_WIDTH);
 		this.depth = nbt.getInt(TAG_DEPTH);
+		this.validateDimensions();
 		this.formationRank = nbt.getInt(TAG_FORMATION_RANK);
 		this.followSpacing = nbt.getInt(TAG_FOLLOW_SPACING);
 		
-		this.lines = new FormationEntityWrapper<?>[this.depth][this.width];
+		this.dynamicLines = new ArrayList<>(this.depth);
 	}
 	
 	@Override
 	protected void loadEntityData(CompoundNBT nbt, World level) {
 		if (level.isClientSide) return;
 		ServerWorld slevel = (ServerWorld) level;
+		
+		this.dynamicLines.clear();
+		
+		for (int i = 0; i < this.depth; ++i) {
+			List<FormationEntityWrapper<?>> unitLine = new ArrayList<>(this.width);
+			for (int j = 0; j < this.width; ++j) {
+				unitLine.add(FormationEntityWrapper.EMPTY);
+			}
+			this.dynamicLines.add(unitLine);
+		}
 		
 		ListNBT units = nbt.getList(TAG_UNITS, Constants.NBT.TAG_COMPOUND);
 		for (int i = 0; i < units.size(); ++i) {
@@ -321,7 +449,8 @@ public class LineFormation extends UnitFormation {
 			if (!(0 <= rank && rank < this.depth && 0 <= file && file < this.width)) continue;
 			Entity unit = slevel.getEntity(unitTag.getUUID(TAG_UUID));
 			if (!(unit instanceof CreatureEntity && unit instanceof IMovesInFormation)) continue;
-			this.lines[rank][file] = new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) unit);
+			List<FormationEntityWrapper<?>> line = this.dynamicLines.get(rank);
+			line.set(file, new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) unit));
 		}
 	}
 	

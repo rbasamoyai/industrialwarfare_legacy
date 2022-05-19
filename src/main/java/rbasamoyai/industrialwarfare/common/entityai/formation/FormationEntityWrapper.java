@@ -12,4 +12,6 @@ public class FormationEntityWrapper<E extends CreatureEntity & IMovesInFormation
 	
 	public E getEntity() { return this.entity; }
 	
+	public static final FormationEntityWrapper<?> EMPTY = new FormationEntityWrapper<>(null);
+	
 }

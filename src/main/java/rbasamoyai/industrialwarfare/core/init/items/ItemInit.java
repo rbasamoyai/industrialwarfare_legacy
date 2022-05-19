@@ -10,7 +10,10 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
+import rbasamoyai.industrialwarfare.common.items.MatchCoilItem;
+import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem;
@@ -47,6 +50,7 @@ public class ItemInit {
 	
 	public static final RegistryObject<Item> ASSEMBLER_WORKSTATION = registerBlockItem(BlockInit.ASSEMBLER_WORKSTATION);
 	public static final RegistryObject<Item> TASK_SCROLL_SHELF = registerBlockItem(BlockInit.TASK_SCROLL_SHELF);
+	public static final RegistryObject<Item> SPOOL = registerBlockItem(BlockInit.SPOOL);
 	
 	public static final RegistryObject<Item> RECIPE_MANUAL = ITEMS.register("recipe_manual", RecipeItem::new);
 	
@@ -64,6 +68,18 @@ public class ItemInit {
 	
 	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case",
 			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
+	public static final RegistryObject<Item> PAPER_CARTRIDGE = ITEMS.register("paper_cartridge",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	
+	public static final RegistryObject<Item> INFINITE_PAPER_CARTRIDGE = ITEMS.register("infinite_paper_cartridge",
+			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).rarity(Rarity.EPIC)) {
+				@Override public boolean isFoil(ItemStack stack) { return true; }
+			});
+	
+	public static final RegistryObject<Item> MATCH_CORD = ITEMS.register("match_cord", MatchCordItem::new);
+	public static final RegistryObject<Item> INFINITE_MATCH_CORD = ITEMS.register("infinite_match_cord", InfiniteMatchCordItem::new);
+	public static final RegistryObject<Item> MATCH_COIL = ITEMS.register("match_coil", MatchCoilItem::new);
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

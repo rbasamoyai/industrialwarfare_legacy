@@ -20,12 +20,14 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 	private final MemoryModuleType<GlobalPos> memoryType;
 	
 	public FinishMovementCommandTask(MemoryModuleType<GlobalPos> memoryType) {
-		super(ImmutableMap.of(
-				memoryType, MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.VALUE_ABSENT,
-				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED));
+		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
+				.put(memoryType, MemoryModuleStatus.VALUE_PRESENT)
+				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.VALUE_ABSENT)
+				.put(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT)
+				.put(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(), MemoryModuleStatus.VALUE_ABSENT)
+				.build());
 		this.memoryType = memoryType;
 	}
 	
@@ -36,14 +38,17 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 		GlobalPos gpos = brain.getMemory(this.memoryType).get();
 		if (level.dimension() != gpos.dimension()) return true;
 		int closeEnoughDist = brain.getMemory(MemoryModuleType.WALK_TARGET).map(WalkTarget::getCloseEnoughDist).orElse(0);
-		if (entity.blockPosition().distManhattan(gpos.pos()) <= closeEnoughDist) return true;
+		if (entity.blockPosition().distManhattan(gpos.pos()) <= closeEnoughDist) {
+			return true;
+		}
 		
 		AxisAlignedBB checkAround = entity.getBoundingBox().inflate(1.0d, 1.0d, 1.0d);
 		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, checkAround)) {
 			Brain<?> brain1 = e.getBrain();
-			if (this.checkMemories(brain1) && getCommandGroup(brain).equals(getCommandGroup(brain1))) return true;
+			if (this.checkMemories(brain1) && getCommandGroup(brain).equals(getCommandGroup(brain1))) {
+				return true;
+			}
 		}
-		// TODO: try to clump around the spot?
 		return false;
 	}
 	
@@ -52,10 +57,13 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 		Brain<?> brain = entity.getBrain();
 		brain.eraseMemory(this.memoryType);
 		brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());
+		brain.setMemory(MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(), true);
 	}
 	
 	private boolean checkMemories(Brain<?> brain) {
-		return brain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get());
+		return brain.hasMemoryValue(MemoryModuleTypeInit.IN_COMMAND_GROUP.get())
+			&& !brain.hasMemoryValue(MemoryModuleTypeInit.IN_FORMATION.get())
+			&& brain.hasMemoryValue(MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get());
 	}
 	
 	private static UUID getCommandGroup(Brain<?> brain) {

@@ -18,13 +18,13 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	
 	private final Predicate<ItemStack> speedloaderPredicate;
 	
-	public InternalMagazineFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int magazineSize, Predicate<ItemStack> speedloaderPredicate) {
-		super(itemProperties, firearmProperties, () -> {
-			InternalMagazineDataHandler handler = new InternalMagazineDataHandler();
-			handler.setMagazineSize(magazineSize);
+	public InternalMagazineFirearmItem(Item.Properties itemProperties, InternalMagazineFirearmItem.Properties firearmProperties) {
+		super(itemProperties, firearmProperties, attachments -> {
+			InternalMagazineDataHandler handler = new InternalMagazineDataHandler(attachments);
+			handler.setMagazineSize(firearmProperties.magazineSize);
 			return handler;
 		});
-		this.speedloaderPredicate = speedloaderPredicate;
+		this.speedloaderPredicate = firearmProperties.speedloaderPredicate;
 	}
 	
 	@Override
@@ -126,6 +126,23 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	@Override
 	public Predicate<ItemStack> getSpeedloaderPredicate() {
 		return this.speedloaderPredicate;
+	}
+	
+	public static class Properties extends FirearmItem.AbstractProperties<Properties> {
+		private Predicate<ItemStack> speedloaderPredicate = s -> false;
+		private int magazineSize;
+		
+		@Override protected Properties getThis() { return this; }
+		
+		public Properties speedloaderPredicate(Predicate<ItemStack> speedloaderPredicate) {
+			this.speedloaderPredicate = speedloaderPredicate;
+			return this;
+		}
+		
+		public Properties magazineSize(int magazineSize) {
+			this.magazineSize = magazineSize; 
+			return this;
+		}
 	}
 	
 }

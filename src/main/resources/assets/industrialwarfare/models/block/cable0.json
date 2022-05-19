@@ -1,0 +1,16 @@
+{
+	"credit": "Made by rbasamoyai with Blockbench",
+	"elements": [
+		{
+			"from": [1, 1, 1],
+			"to": [15, 15, 15],
+			"color": 7,
+			"faces": {
+				"north": {"uv": [0, 0, 14, 13], "texture": "#texture"},
+				"east": {"uv": [0, 0, 14, 13], "texture": "#texture"},
+				"south": {"uv": [0, 0, 14, 13], "texture": "#texture"},
+				"west": {"uv": [0, 0, 14, 13], "texture": "#texture"}
+			}
+		}
+	]
+}

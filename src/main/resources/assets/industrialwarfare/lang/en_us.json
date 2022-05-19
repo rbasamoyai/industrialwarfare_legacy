@@ -15,6 +15,10 @@
 	"item.industrialwarfare.cartridge_case": "Cartridge Case",
 	"item.industrialwarfare.ammo_generic": "Generic Ammo",
 	"item.industrialwarfare.infinite_ammo_generic": "Infinite Generic Ammo",
+	"item.industrialwarfare.paper_cartridge": "Paper Cartridge",
+	"item.industrialwarfare.infinite_paper_cartridge": "Infinite Paper Cartridge",
+	"item.industrialwarfare.match_cord": "Match Cord",
+	"item.industrialwarfare.infinite_match_cord": "Infinite Match Cord",
 	
 	"item.industrialwarfare.hammer":	"Hammer",
 	"item.industrialwarfare.wand":		"Wand of Reanimation",
@@ -75,6 +79,8 @@
 	"block.industrialwarfare.woodworker_workstation":	"Woodworking Table",
 	
 	"block.industrialwarfare.task_scroll_shelf":	"Task Scroll Shelf",
+	"block.industrialwarfare.match_coil": "Match Coil",
+	"block.industrialwarfare.spool": "Spool",
 	
 	"tile.industrialwarfare.armorer_workstation":		"Armory Table",
 	"tile.industrialwarfare.assembler_workstation":		"Assembly Table",
@@ -117,6 +123,8 @@
 	"item.industrialwarfare.martini_henry":	"Martini-Henry Rifle",
 	"item.industrialwarfare.vetterli": "Vetterli Rifle",
 	"item.industrialwarfare.colt_saa": "Colt Single Action Army Revolver",
+	"item.industrialwarfare.fishtail_matchlock": "Fishtail Matchlock Musket",
+	"item.industrialwarfare.tanegashima_matchlock": "Tanegashima Matchlock Musket",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -348,13 +356,23 @@
 	"tooltip.industrialwarfare.whistle.formation_category.line.desc": "Form a line that is wider than it is deep. Wide attack area, but hard to maneuver.",
 	"tooltip.industrialwarfare.whistle.formation_category.column": "Column",
 	"tooltip.industrialwarfare.whistle.formation_category.column.desc": "Form a column that is deeper than it is wide. Good maneuverability, but attack power is heavily concentrated.",
+	"tooltip.industrialwarfare.whistle.formation_category.no_formation": "No Formation",
+	"tooltip.industrialwarfare.whistle.formation_category.no_formation.desc": "Units will simply move towards the selected position, and will not attack in formation.",
+	
+	"tooltip.industrialwarfare.whistle.stop_nearby": "Stop all nearby formations",
+	"tooltip.industrialwarfare.whistle.stop_nearby.desc": "Stops all nearby formations that you command.",
+	"tooltip.industrialwarfare.whistle.stop_nearby.warning": "Should only be used if your units are stuck between multiple formations; this action is irreversible.",
 	
 	"tooltip.industrialwarfare.whistle.stop_units": "Stop units",
 	"tooltip.industrialwarfare.whistle.back_to_main_page": "Back to main page",
-	"tooltip.industrialwarfare.whistle.interval1": "\u00A7lInterval", 
+	"tooltip.industrialwarfare.whistle.interval1": "Interval", 
 	"tooltip.industrialwarfare.whistle.interval2": "Current time between attack stages: %1$ss",
 	"tooltip.industrialwarfare.whistle.formation_types": "Formation patterns",
 	"tooltip.industrialwarfare.whistle.attack_types": "Formation attack patterns",
+	
+	"tooltip.industrialwarfare.match_cord.expired": "This match cord has burnt out while outside of inventory.",
+	"tooltip.industrialwarfare.match_cord.expired1": "It will be deleted if you put it in your inventory, or any other ticked inventory.",
+	"tooltip.industrialwarfare.infinite_match_cord.tooltip": "Never burns out! Also water resistant!",
 	
 	"attack_type.industrialwarfare.fire_at_will": "Fire at will",
 	"attack_type.industrialwarfare.fire_at_will.desc": "Units fire independently. Flexible, but not much power.",
@@ -364,6 +382,12 @@
 	"attack_type.industrialwarfare.fire_by_file.desc": "Units fire one file at a time. Steady rate of fire and decent power, but limited attack area at a time.",
 	"attack_type.industrialwarfare.fire_by_rank": "Fire by rank",
 	"attack_type.industrialwarfare.fire_by_rank.desc": "Units fire by volley one rank at a time. Lots of attack area, but slower rate of fire.",
+	
+	"gui.industrialwarfare.match_coil": "Cut Match Coil",
+	"gui.industrialwarfare.match_coil.cut_length": "Cut length: %1$s m %2$s s",
+	"gui.industrialwarfare.match_coil.cut_length.ticks": "Cut length: %1$s ticks",
+	"gui.industrialwarfare.match_coil.remaining_coil": "Remaining coil: %1$s h %2$s m %3$s s",
+	"gui.industrialwarfare.match_coil.remaining_coil.ticks": "Remaining coil: %1$s ticks",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",

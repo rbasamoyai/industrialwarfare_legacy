@@ -5,12 +5,17 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class RevolverDataHandler extends FirearmItemDataHandler {
 	
 	private int currentPosition;
 	private NonNullList<ItemStack> cylinder;
+	
+	public RevolverDataHandler(ItemStackHandler handler) {
+		super(handler);
+	}
 	
 	@Override public void setMagazineSize(int size) { this.cylinder = NonNullList.withSize(size, ItemStack.EMPTY); }
 	@Override public int getMagazineSize() { return this.cylinder.size(); }

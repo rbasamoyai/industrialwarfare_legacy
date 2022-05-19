@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "industrialwarfare:infinite_ammo_generic"
+    "industrialwarfare:infinite_ammo_generic",
+    "industrialwarfare:infinite_paper_cartridge"
   ]
 }

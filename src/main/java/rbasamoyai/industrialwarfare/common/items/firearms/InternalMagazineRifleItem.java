@@ -1,7 +1,5 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import java.util.function.Predicate;
-
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
@@ -26,8 +24,8 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 	
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	
-	public InternalMagazineRifleItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, int magazineSize, Predicate<ItemStack> speedloaderPredicate) {
-		super(itemProperties, firearmProperties, magazineSize, speedloaderPredicate);
+	public InternalMagazineRifleItem(Item.Properties itemProperties, InternalMagazineFirearmItem.Properties firearmProperties) {
+		super(itemProperties, firearmProperties);
 	}
 	
 	@Override
@@ -37,17 +35,18 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 			// TODO: process ammo stack
 			
 			float quality = h.getQuality();
-			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
+			float durability = 1.0f  - (float) firearm.getDamageValue() / (float) firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
+			float damage = this.baseDamage * (quality + durability) / 2.0f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
 			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
-			spread *= (2.0f - (0.5f * quality + 0.5f * durability + effectiveness) / 2.0f);
-			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, this.muzzleVelocity, spread);
+			spread *= 1.0f + (3.0f - (quality + durability + effectiveness) / 3.0f);
+			float velocity = this.muzzleVelocity * (quality + durability) / 2.0f;
+			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, velocity, spread);
 			
 			shooter.level.addFreshEntity(bullet);
 			

@@ -17,28 +17,34 @@ import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.
 
 public abstract class SingleShotFirearmItem extends FirearmItem {
 
-	public SingleShotFirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties) {
-		super(itemProperties, firearmProperties.needsCycle(false), SingleShotDataHandler::new);
+	public SingleShotFirearmItem(Item.Properties itemProperties, FirearmItem.AbstractProperties<?> firearmProperties) {
+		super(itemProperties, firearmProperties, SingleShotDataHandler::new);
 	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			ItemStack ammo = h.extractAmmo();
-			// TODO: process ammo stack
+			if (ammo.isEmpty()) {
+				h.setCycled(false);
+				this.startCycle(firearm, shooter);
+				this.setDamage(firearm, this.getDamage(firearm) - 1);
+				return;
+			}
 			
 			float quality = h.getQuality();
-			float durability = 1 - firearm.getDamageValue() / firearm.getMaxDamage();
+			float durability = 1.0f  - (float) firearm.getDamageValue() / (float) firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
-			float damage = this.baseDamage * (quality + 0.5f * durability) / 1.5f;
+			float damage = this.baseDamage * (quality + durability) / 2.0f;
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
 			Vector3d lookVector = shooter.getViewVector(1.0f);
-			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
-			spread *= (2.0f - (0.5f * quality + 0.5f * durability + effectiveness) / 2.0f);
-			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, this.muzzleVelocity, spread);
+			float spread = h.isAiming() ? this.spread : this.hipfireSpread;
+			spread *= 1.0f + (3.0f - (quality + durability + effectiveness) / 3.0f);
+			float velocity = this.muzzleVelocity * (quality + durability) / 2.0f;
+			bullet.shoot(lookVector.x, lookVector.y, lookVector.z, velocity, spread);
 			
 			shooter.level.addFreshEntity(bullet);
 			

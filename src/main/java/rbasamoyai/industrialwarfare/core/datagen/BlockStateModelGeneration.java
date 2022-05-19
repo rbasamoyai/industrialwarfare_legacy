@@ -14,6 +14,7 @@ import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.blocks.MatchCoilBlock;
 import rbasamoyai.industrialwarfare.common.blocks.TaskScrollShelfBlock;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 
@@ -31,23 +32,45 @@ public class BlockStateModelGeneration extends BlockStateProvider {
 		ItemModelProvider itemModels = itemModels();
 		
 		getVariantBuilder(BlockInit.ASSEMBLER_WORKSTATION.get())
-				.forAllStates(state -> {
-					return ConfiguredModel.builder()
-							.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")))
-							.build();
-				});
+		.forAllStates(state -> {
+			return ConfiguredModel.builder()
+					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")))
+					.build();
+		});
 		itemModels.getBuilder("assembler_workstation")
 				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")));
 		
 		getVariantBuilder(BlockInit.TASK_SCROLL_SHELF.get())
-				.forAllStates(state -> {
-					return ConfiguredModel.builder()
-							.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")))
-							.rotationY(((int) state.getValue(TaskScrollShelfBlock.HORIZONTAL_FACING).toYRot() + 180) % 360)
-							.build();
-				});
+		.forAllStates(state -> {
+			return ConfiguredModel.builder()
+					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")))
+					.rotationY(((int) state.getValue(TaskScrollShelfBlock.HORIZONTAL_FACING).toYRot() + 180) % 360)
+					.build();
+		});
 		itemModels.getBuilder("task_scroll_shelf")
 				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")));
+		
+		getVariantBuilder(BlockInit.MATCH_COIL.get())
+		.forAllStates(state -> {
+			int i = state.getValue(MatchCoilBlock.COIL_AMOUNT);
+			if (i == 4) {
+				return ConfiguredModel.builder()
+						.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
+						.build();
+			}
+			return ConfiguredModel.builder()
+					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil" + i)))
+					.build();
+		});
+		
+		getVariantBuilder(BlockInit.SPOOL.get())
+		.forAllStates(state -> {
+			return ConfiguredModel.builder()
+					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
+					.build();
+		});
+		itemModels.getBuilder("spool")
+				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")));
 		
 	}
 	

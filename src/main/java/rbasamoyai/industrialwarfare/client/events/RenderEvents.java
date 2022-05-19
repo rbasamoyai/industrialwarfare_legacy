@@ -19,8 +19,12 @@ import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggedOutEvent;
 import net.minecraftforge.client.event.FOVUpdateEvent;
@@ -29,6 +33,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.event.TickEvent.RenderTickEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -42,6 +47,8 @@ import rbasamoyai.industrialwarfare.common.items.IFovModifier;
 import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
 import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
 import rbasamoyai.industrialwarfare.common.items.IRenderOverlay;
+import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
@@ -59,15 +66,17 @@ public class RenderEvents {
 		ItemStack itemStack = event.getItemStack();
 		Item item = itemStack.getItem();
 		ItemStackTileEntityRenderer ister = itemStack.getItem().getItemStackTileEntityRenderer();
+		if (event.isCancelable() && event.getHand() == Hand.OFF_HAND && (ister instanceof IRendersPlayerArms || mc.player.getMainHandItem().getItem().getItemStackTileEntityRenderer() instanceof IRendersPlayerArms)) {
+			event.setCanceled(true);
+			return;
+		}
 		
 		if (ister instanceof IRendersPlayerArms) {
 			((IRendersPlayerArms) ister).setRenderArms(true);
 		}
 		
-		if (item instanceof IFirstPersonTransform) {
-			if (((IFirstPersonTransform) item).shouldTransform(itemStack, mc.player)) {
-				((IFirstPersonTransform) item).transformMatrixStack(itemStack, mc.player, event.getMatrixStack());
-			}
+		if (item instanceof IFirstPersonTransform && ((IFirstPersonTransform) item).shouldTransform(itemStack, mc.player)) {
+			((IFirstPersonTransform) item).transformMatrixStack(itemStack, mc.player, event.getMatrixStack());
 		}
 	}
 	
@@ -239,6 +248,36 @@ public class RenderEvents {
 			ENTITY_CACHE.remove(uuid);
 			ANIM_ENTITY_CACHE.remove(uuid);
 			RENDERER_CACHE.remove(uuid);
+		}
+	}
+	
+	private static final String TAG_LAST_UPDATED_TICK = MatchCordItem.TAG_LAST_UPDATED_TICK;
+	
+	private static final String MATCH_CORD_EXPIRED_KEY = "tooltip." + IndustrialWarfare.MOD_ID + ".match_cord.expired";
+	private static final ITextComponent MATCH_CORD_EXPIRED_TEXT = (new TranslationTextComponent(MATCH_CORD_EXPIRED_KEY)).withStyle(TextFormatting.RED);
+	private static final ITextComponent MATCH_CORD_EXPIRED_TEXT1 = (new TranslationTextComponent(MATCH_CORD_EXPIRED_KEY + "1")).withStyle(TextFormatting.RED);
+	
+	@SubscribeEvent
+	public static void onItemTooltip(ItemTooltipEvent event) {
+		List<ITextComponent> tooltip = event.getToolTip();
+		ItemStack stack = event.getItemStack();
+		CompoundNBT nbt = stack.getOrCreateTag();
+		Item item = stack.getItem();
+		
+		if (item == ItemInit.MATCH_CORD.get() && event.getFlags().isAdvanced() && stack.isDamaged() && MatchCordItem.isLit(stack)) {
+			int adjustedDamage = Math.min(stack.getMaxDamage(), (int)(event.getPlayer().level.getGameTime() - nbt.getLong(TAG_LAST_UPDATED_TICK) + stack.getDamageValue()));
+			
+			for (int i = tooltip.size() - 1; i >= 0; --i) {
+				ITextComponent line = tooltip.get(i);
+				if (line instanceof TranslationTextComponent && ((TranslationTextComponent) line).getKey().equals("item.durability")) {
+					tooltip.set(i, new TranslationTextComponent("item.durability", stack.getMaxDamage() - adjustedDamage, stack.getMaxDamage()));
+				}
+			}
+			
+			if (adjustedDamage >= stack.getMaxDamage()) {
+				tooltip.add(1, MATCH_CORD_EXPIRED_TEXT);
+				tooltip.add(2, MATCH_CORD_EXPIRED_TEXT1);
+			}
 		}
 	}
 	

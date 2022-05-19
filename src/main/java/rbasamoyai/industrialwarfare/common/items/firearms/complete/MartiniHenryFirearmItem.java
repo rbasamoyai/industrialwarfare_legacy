@@ -17,6 +17,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -60,7 +61,8 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 							.cooldownTime(20)
 							.drawTime(20)
 							.reloadTime(50)
-							.projectileRange(100));
+							.projectileRange(100)
+							.needsCycle(false));
 
 	}
 	
@@ -80,20 +82,14 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	private static final float PIN_ROT = (float) Math.toRadians(30.0d);
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
-		getDataHandler(stack).ifPresent(h -> {
-			if (h.getAction() == ActionType.NOTHING) {
-				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
-			}
-		});
-	}
-	
-	@Override
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
 		super.onSelect(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_SELECT_FIREARM);
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "select_firearm", true, 1.0f);
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>("select_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -101,14 +97,17 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			int animId = ANIM_HIP_AIMING;
-			String animStr = "hip_aiming";
+			int animId;
+			String animStr;
 			if (isAiming(firearm)) {
 				animId = ANIM_ADS_AIMING;
 				animStr = "ads_aiming";
 			} else if (shooter.isSprinting()) {
 				animId = ANIM_PORT_ARMS;
 				animStr = "port_arms";
+			} else {
+				animId = ANIM_HIP_AIMING;
+				animStr = "hip_aiming";
 			}
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
@@ -159,7 +158,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void startReload(ItemStack firearm, LivingEntity shooter) {
 		if (isAiming(firearm)) return;
 		super.startReload(firearm, shooter);
-		if (!shooter.level.isClientSide) {
+		if (!shooter.level.isClientSide) {			
 			boolean fired = isFired(firearm);
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, fired ? ANIM_RELOAD_EXTRACT : ANIM_RELOAD);
 			
@@ -212,6 +211,19 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	
 	private <E extends Item & IAnimatable> PlayState firstPersonPredicate(AnimationEvent<E> event) {
 		return PlayState.CONTINUE;
+	}
+	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		
+		getDataHandler(stack).ifPresent(h -> {
+			if (h.getAction() == ActionType.NOTHING) {
+				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+			}
+		});
+		float f = 1.0f / MathHelper.lerp(aimProgress, 1.0f, this.fovModifier);
+		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
 	public static final int ANIM_PORT_ARMS = 0;

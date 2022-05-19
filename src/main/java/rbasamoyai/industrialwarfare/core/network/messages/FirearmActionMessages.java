@@ -12,18 +12,55 @@ import rbasamoyai.industrialwarfare.core.network.handlers.FirearmActionCHandlers
 
 public class FirearmActionMessages {
 
-	public static class SReloadingFirearm {
-		public SReloadingFirearm() {}
-		public static void encode(SReloadingFirearm msg, PacketBuffer buf) {}
-		public static SReloadingFirearm decode(PacketBuffer buf) { return new SReloadingFirearm(); }
+	public static class SInputAction {
+		private Type type;
 		
-		public static void handle(SReloadingFirearm msg, Supplier<NetworkEvent.Context> contextSupplier) {
+		public SInputAction() {}
+		
+		public SInputAction(Type type) {
+			this.type = type;
+		}
+		
+		public static void encode(SInputAction msg, PacketBuffer buf) {
+			buf.writeVarInt(msg.type.id);			
+		}
+		
+		public static SInputAction decode(PacketBuffer buf) {
+			Type type = Type.fromId(buf.readVarInt());
+			return new SInputAction(type);
+		}
+		
+		public static void handle(SInputAction msg, Supplier<NetworkEvent.Context> contextSupplier) {
 			NetworkEvent.Context context = contextSupplier.get();
 			context.enqueueWork(() -> {
 				ServerPlayerEntity player = context.getSender();
-				FirearmItem.tryReloadFirearm(player.getMainHandItem(), player);
+				switch (msg.type) {
+				case RELOADING:
+					FirearmItem.tryReloadFirearm(player.getMainHandItem(), player);
+					break;
+				case PREVIOUS_STANCE:
+					FirearmItem.tryPreviousStance(player.getMainHandItem(), player);
+					break;
+				default: break;
+				}
 			});
 			context.setPacketHandled(true);
+		}
+		
+		public static enum Type {
+			NOTHING(0),
+			RELOADING(1),
+			PREVIOUS_STANCE(2);
+			
+			private int id;
+			
+			private Type(int id) {
+				this.id = id;
+			}
+			
+			public static Type fromId(int id) {
+				return 0 <= id && id < values().length ? values()[id] : NOTHING;
+			}
 		}
 	}
 	

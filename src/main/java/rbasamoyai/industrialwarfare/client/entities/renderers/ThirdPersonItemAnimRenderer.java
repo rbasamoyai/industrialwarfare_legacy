@@ -116,8 +116,8 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		return this.renderType;
 	}
 	
-	public void setBoneVisibility(String name, boolean isVisible) {
-		if (isVisible) {
+	public void hideBone(String name, boolean hide) {
+		if (hide) {
 			this.hiddenBones.add(name);
 		} else {
 			this.hiddenBones.remove(name);
@@ -143,6 +143,8 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	public void allowModification(String name) { this.suppressedBones.remove(name); }
 	
 	public static <E extends IAnimatable> void parse(CustomInstructionKeyframeEvent<E> event) {
+		if (!(event.getEntity() instanceof ThirdPersonItemAnimEntity)) return;
+		
 		List<String> instructions = Arrays.stream(event.instructions.split(";")).filter(s -> s.length() > 0).collect(Collectors.toList());
 		List<List<String>> instructionTokens =
 				instructions
@@ -156,36 +158,19 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		ThirdPersonItemAnimEntity animEntity = (ThirdPersonItemAnimEntity) event.getEntity();
 		ThirdPersonItemAnimRenderer renderer = RenderEvents.RENDERER_CACHE.get(animEntity.getUUID());
 		if (renderer == null) return;
+		LivingEntity entity = RenderEvents.ENTITY_CACHE.get(animEntity.getUUID());
+		if (entity == null) return;
 		
-		for (List<String> tokens : instructionTokens) {
-			String firstTok = tokens.get(0);
-			
-			if (tokens.size() < 2) continue;
-			
-			String boneName = tokens.get(1);
-			
-			if (firstTok.equals("set_hidden")) {
-				boolean hidden = Boolean.valueOf(tokens.get(2));
-				renderer.setBoneVisibility(boneName, hidden);
-			} else if (firstTok.equals("lock_limbs")) {
-				boolean lock = Boolean.valueOf(tokens.get(1));
-				renderer.lockLimbs(lock);
-			} else if (firstTok.equals("move")) {
-				float x = Float.valueOf(tokens.get(2));
-				float y = Float.valueOf(tokens.get(3));
-				float z = Float.valueOf(tokens.get(4));
-				renderer.setBonePosition(boneName, x, y, z);
-			} else if (firstTok.equals("rotate")) {
-				float x = Float.valueOf(tokens.get(2));
-				float y = Float.valueOf(tokens.get(3));
-				float z = Float.valueOf(tokens.get(4));
-				renderer.setBoneRotation(boneName, x, y, z);
-			}  else if (firstTok.equals("suppress_mod")) {
-				renderer.suppressModification(boneName);
-			} else if (firstTok.equals("allow_mod")) {
-				renderer.allowModification(boneName);
-			}
-		}
+		ItemStack stack = entity.getItemInHand(animEntity.getHand());
+		if (stack.isEmpty()) return;
+		Item item = stack.getItem();
+		if (!(item instanceof ISpecialThirdPersonRender)) return;
+		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
+		
+		instructionTokens
+		.stream()
+		.filter(tks -> !tks.isEmpty())
+		.forEach(tks -> stpr.interpretThirdPersonInstructions(tks, stack, renderer));
 	}
 	
 	@Override public boolean shouldShowName(Entity entity) { return false; }

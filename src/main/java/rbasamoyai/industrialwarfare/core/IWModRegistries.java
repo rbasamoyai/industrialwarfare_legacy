@@ -41,7 +41,7 @@ public class IWModRegistries {
 				.setName(KEY_FORMATION_ATTACK_TYPES.location())
 				.setMaxID(MAX_ID)
 				.setType(FormationAttackType.class)
-				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "no_attack"))
+				.setDefaultKey(new ResourceLocation(IndustrialWarfare.MOD_ID, "fire_at_will"))
 				.allowModification()
 				.create();
 		

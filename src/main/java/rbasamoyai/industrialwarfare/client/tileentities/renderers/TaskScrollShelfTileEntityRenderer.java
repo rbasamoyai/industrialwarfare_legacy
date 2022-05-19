@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3f;
@@ -53,11 +54,11 @@ public class TaskScrollShelfTileEntityRenderer extends TileEntityRenderer<TaskSc
 		
 		stack.pushPose();
 		Direction d = state.getValue(TaskScrollShelfBlock.HORIZONTAL_FACING);
-		float f = d.toYRot() + (d.getAxis() == Direction.Axis.X ? 0.0f : 180.0f);
+		float f = d.toYRot() + (d.getAxis() == Axis.X ? 0.0f : 180.0f);
 		
-		stack.translate(1.0d, 1.0d, 1.0d);
-		stack.mulPose(Vector3f.YN.rotationDegrees(f));
-		stack.translate(-1.0d, -1.0d, -1.0d);
+		stack.translate(0.5d, 0.5d, 0.5d);
+		stack.mulPose(Vector3f.YP.rotationDegrees(f));
+		stack.translate(-0.5d, -0.5d, -0.5d);
 		
 		for (int i = 0; i < handler.getSlots(); i++) {
 			ItemStack slotItem = handler.getStackInSlot(i);

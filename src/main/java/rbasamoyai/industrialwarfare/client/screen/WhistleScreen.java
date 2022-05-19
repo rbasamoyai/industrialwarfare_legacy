@@ -40,6 +40,7 @@ import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages.SStopAllFormationLeaders;
 import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages.SStopAction;
 
 public class WhistleScreen extends ContainerScreen<WhistleContainer> {
@@ -75,6 +76,15 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	private static final List<ITextComponent> FORM_CATEGORY_COLUMN_TOOLTIP = ImmutableList.of(
 			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString()).withStyle(TextFormatting.BOLD),
 			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.COLUMN.toString() + ".desc"));
+	
+	private static final List<ITextComponent> FORM_CATEGORY_NO_FORMATION_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.NO_FORMATION.toString()).withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(FORM_CATEGORY_KEY + FormationCategory.NO_FORMATION.toString() + ".desc"));
+
+	private static final List<ITextComponent> STOP_NEARBY_TOOLTIP = ImmutableList.of(
+			new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_nearby").withStyle(TextFormatting.BOLD),
+			new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_nearby.desc"),
+			new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_nearby.warning").withStyle(TextFormatting.RED));
 	
 	private static final ITextComponent STOP_UNITS_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".stop_units");
 	private static final ITextComponent FORMATION_TYPES_TEXT = new TranslationTextComponent(TRANSLATION_TEXT_KEY + ".formation_types");
@@ -222,6 +232,40 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_COLUMN_TOOLTIP, mouseX, mouseY),
 				StringTextComponent.EMPTY));
 		
+		this.typeMap.put(FormationCategory.NO_FORMATION, new HoldSelectImageButton(
+				this.leftPos + GRID_START_X + BUTTON_X_DIST * 2,
+				this.topPos + GRID_START_Y + BUTTON_Y_DIST,
+				BUTTON_WIDTH,
+				BUTTON_HEIGHT,
+				BUTTON_TEX_X_START + BUTTON_WIDTH,
+				BUTTON_TEX_Y_START + BUTTON_HEIGHT * 3,
+				WHISTLE_TAB_LOCATION,
+				256,
+				256,
+				button -> this.setSelectedCategory(FormationCategory.NO_FORMATION),
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, FORM_CATEGORY_NO_FORMATION_TOOLTIP, mouseX, mouseY),
+				StringTextComponent.EMPTY));
+		
+		Button stopAllNearbyFormationLeaders = new ImageButton(
+				this.leftPos + GRID_START_X + BUTTON_X_DIST * 5,
+				this.topPos + GRID_START_Y,
+				BUTTON_WIDTH,
+				BUTTON_HEIGHT,
+				BUTTON_TEX_X2_START + BUTTON_WIDTH * 6,
+				BUTTON_TEX_Y2_START,
+				BUTTON_HEIGHT,
+				WHISTLE_TAB_LOCATION,
+				256,
+				256,
+				this::stopAllNearbyFormationLeaders,
+				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, STOP_NEARBY_TOOLTIP, mouseX, mouseY),
+				StringTextComponent.EMPTY) {
+			@Override
+			public void playDownSound(SoundHandler handler) {
+				handler.play(SimpleSound.forUI(SoundEvents.ANVIL_PLACE, 1.0f));
+			}
+		};
+		
 		Button stopActionButton = new ImageButton(
 				this.leftPos + GRID_START_X + BUTTON_X_DIST * 6,
 				this.topPos + GRID_START_Y,
@@ -292,6 +336,7 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				.add(p -> new WidgetCollectionDecorator(p, Util.make(new ArrayList<>(), list -> {
 					list.addAll(this.modeMap.values());
 					list.addAll(this.typeMap.values());
+					list.add(stopAllNearbyFormationLeaders);
 					list.add(stopActionButton);
 					list.add(openFormationTypesButton);
 					list.add(openAttackTypesButton);
@@ -347,6 +392,8 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				StringTextComponent.EMPTY));
 		
 		this.selectedTypes.put(FormationCategory.LINE, lineCatButtons);
+		this.selectedTypes.put(FormationCategory.COLUMN, new HashMap<>());
+		this.selectedTypes.put(FormationCategory.NO_FORMATION, new HashMap<>());
 		
 		this.formationTypePages.put(FormationCategory.LINE,
 				IScreenPage.builder(new BaseScreenPage(this))
@@ -422,6 +469,8 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 				));
 		
 		this.attackTypes.put(FormationCategory.LINE, lineAttackTypeButtons);
+		this.attackTypes.put(FormationCategory.COLUMN, new HashMap<>());
+		this.attackTypes.put(FormationCategory.NO_FORMATION, new HashMap<>());
 		
 		this.attackTypePages.put(FormationCategory.LINE,
 				IScreenPage.builder(new BaseScreenPage(this))
@@ -518,6 +567,10 @@ public class WhistleScreen extends ContainerScreen<WhistleContainer> {
 	
 	private void stopWhistle(Button button) {
 		IWNetwork.CHANNEL.sendToServer(new SStopAction());
+	}
+	
+	private void stopAllNearbyFormationLeaders(Button button) {
+		IWNetwork.CHANNEL.sendToServer(new SStopAllFormationLeaders());
 	}
 	
 	private void setCurrentPage(IScreenPage page) {

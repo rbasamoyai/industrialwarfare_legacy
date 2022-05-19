@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -13,6 +14,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -58,6 +60,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
@@ -94,9 +97,9 @@ import software.bernie.geckolib3.util.RenderUtils;
 public abstract class FirearmItem extends ShootableItem implements
 		ISimultaneousUseAndAttack,
 		IFovModifier,
-		IFirstPersonTransform,
 		IHideCrosshair,
 		IItemWithScreen,
+		IFirstPersonTransform,
 		IAnimatable,
 		ISyncable,
 		ISpecialThirdPersonRender {
@@ -111,19 +114,21 @@ public abstract class FirearmItem extends ShootableItem implements
 	protected final int reloadStartTime;
 	protected final int reloadTime;
 	protected final float baseDamage;
-	protected final float fovModifier;
 	protected final float headshotMultiplier;
 	protected final float hipfireSpread;
 	protected final float muzzleVelocity;
 	protected final float spread;
+	protected final float fovModifier;
 	protected final Function<LivingEntity, Float> horizontalRecoilSupplier;
 	protected final Function<LivingEntity, Float> verticalRecoilSupplier;
 	protected final Predicate<ItemStack> ammoPredicate;
-	protected final Supplier<IFirearmItemDataHandler> dataHandlerSupplier;
+	protected final Function<ItemStackHandler, IFirearmItemDataHandler> dataHandlerSupplier;
+	protected final Supplier<ItemStackHandler> attachmentsHandler;
 	
 	public AnimationFactory factory = new AnimationFactory(this);
 	
-	public FirearmItem(Item.Properties itemProperties, FirearmItem.Properties firearmProperties, Supplier<IFirearmItemDataHandler> dataHandlerSupplier) {
+	public FirearmItem(Item.Properties itemProperties, FirearmItem.AbstractProperties<?> firearmProperties,
+			Function<ItemStackHandler, IFirearmItemDataHandler> dataHandlerSupplier) {
 		super(itemProperties);
 		
 		this.needsCycle = firearmProperties.needsCycle;
@@ -136,14 +141,15 @@ public abstract class FirearmItem extends ShootableItem implements
 		this.reloadStartTime = firearmProperties.reloadStartTime;
 		this.reloadTime = firearmProperties.reloadTime;
 		this.baseDamage = firearmProperties.baseDamage;
-		this.fovModifier = firearmProperties.fovModifier;
 		this.headshotMultiplier = firearmProperties.headshotMultiplier;
 		this.hipfireSpread = firearmProperties.hipfireSpread;
 		this.muzzleVelocity = firearmProperties.muzzleVelocity;
 		this.spread = firearmProperties.spread;
+		this.fovModifier = firearmProperties.fovModifier;
 		this.horizontalRecoilSupplier = firearmProperties.horizontalRecoilSupplier;
 		this.verticalRecoilSupplier = firearmProperties.verticalRecoilSupplier;
 		this.ammoPredicate = firearmProperties.ammoPredicate;
+		this.attachmentsHandler = firearmProperties.attachmentsHandler;
 		this.dataHandlerSupplier = dataHandlerSupplier;
 		
 		GeckoLibNetwork.registerSyncable(this);
@@ -151,7 +157,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
-		FirearmItemDataProvider provider = new FirearmItemDataProvider(this.dataHandlerSupplier.get());
+		FirearmItemDataProvider provider = new FirearmItemDataProvider(this.dataHandlerSupplier.apply(this.attachmentsHandler.get()));
 		provider.getCapability(FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY).ifPresent(h -> {
 			h.setAction(ActionType.NOTHING, 0);
 			h.setAiming(false);
@@ -218,7 +224,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			ItemStack ammo = entity.getProjectile(stack);
 			
-			if (h.hasAmmo() && (!this.needsCycle || h.isCycled())) {
+			if (h.hasAmmo() && this.canShoot(stack, entity)) {
 				this.shoot(stack, entity);
 				stack.hurtAndBreak(1, entity, e -> {
 					e.broadcastBreakEvent(entity.swingingArm);
@@ -230,6 +236,11 @@ public abstract class FirearmItem extends ShootableItem implements
 			}
 		});
 		return true;
+	}
+	
+	@Override
+	public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+		return stack.getMaxDamage() - stack.getDamageValue() > 1 ? super.damageItem(stack, amount, entity, onBroken) : 0;
 	}
 	
 	@Override
@@ -263,6 +274,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void shoot(ItemStack firearm, LivingEntity shooter);
 	
+	protected boolean canShoot(ItemStack firearm, LivingEntity shooter) {
+		return !this.needsCycle || isCycled(firearm);
+	}
+	
 	protected abstract void startCycle(ItemStack firearm, LivingEntity shooter);
 	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
@@ -271,6 +286,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		getDataHandler(firearm).ifPresent(h -> {
 			h.setAiming(true);
 		});
+		shooter.setSprinting(false);
 	}
 	
 	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
@@ -336,7 +352,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			case CYCLING: this.endCycle(firearm, shooter); break;
 			case RELOADING: this.reload(firearm, shooter); break;
 			case START_RELOADING: this.actuallyStartReloading(firearm, shooter); break;
-			case TOGGLE_MELEE: this.endToggleMelee(firearm, shooter);
+			case TOGGLE_MELEE: this.endToggleMelee(firearm, shooter); break;
+			case PREVIOUS_STANCE: this.actuallyDoPreviousStance(firearm, shooter); break;
 			}
 		});
 	}
@@ -354,6 +371,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {}
 	
+	protected void goToPreviousStance(ItemStack firearm, LivingEntity shooter) {}
+	
+	protected void actuallyDoPreviousStance(ItemStack firearm, LivingEntity shooter) {}
+	
 	public static void tryReloadFirearm(ItemStack firearm, LivingEntity shooter) {
 		if (shooter.level.isClientSide) return;
 		Item item = firearm.getItem();
@@ -365,6 +386,13 @@ public abstract class FirearmItem extends ShootableItem implements
 		getDataHandler(firearm).ifPresent(h -> {
 			if (h.isFinishedAction() && !h.isFull()) firearmItem.startReload(firearm, shooter);
 		});
+	}
+	
+	public static void tryPreviousStance(ItemStack firearm, LivingEntity shooter) {
+		if (shooter.level.isClientSide) return;
+		Item item = firearm.getItem(); 
+		if (!(item instanceof FirearmItem)) return;
+		((FirearmItem) item).goToPreviousStance(firearm, shooter);
 	}
 	
 	@Override
@@ -401,18 +429,17 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public float getFovModifier(ItemStack stack) {
-		//return isAiming(stack) ? this.fovModifier : 1.0f;
-		return 1.0f;
+		return isAiming(stack) ? this.fovModifier : 1.0f;
 	}
 	
 	@Override
 	public boolean shouldTransform(ItemStack stack, PlayerEntity player) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isAiming).orElse(false);
+		return true;
 	}
 	
 	@Override
 	public void transformMatrixStack(ItemStack itemStack, PlayerEntity player, MatrixStack matrixStack) {
-		matrixStack.scale(1.0f, 1.0f, 0.5f);
+		matrixStack.scale(1.0f, 1.0f, isAiming(itemStack) ? 0.5f : 1.0f);
 	}
 	
 	/*
@@ -441,9 +468,10 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (!(ister instanceof FirearmRenderer)) return;
 		FirearmRenderer renderer = (FirearmRenderer) ister;
 		
-		for (List<String> tokens : instructionTokens) {
-			if (!tokens.isEmpty()) this.interpretFirstPersonInstructions(tokens, renderer);
-		}
+		instructionTokens
+		.stream()
+		.filter(tks -> !tks.isEmpty())
+		.forEach(tks -> this.interpretFirstPersonInstructions(tks, renderer));
 	}
 	
 	protected void interpretFirstPersonInstructions(List<String> tokens, FirearmRenderer renderer) {
@@ -492,7 +520,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		return this.factory;
 	}
 	
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {}
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {}
 	
 	/*
 	 * THIRD-PERSON RENDERING METHODS
@@ -1004,6 +1032,11 @@ public abstract class FirearmItem extends ShootableItem implements
 		return PartItem.stackOf(item, quality, partCount, weight);
 	}
 	
+	public static boolean isSubmergedInWater(LivingEntity shooter) {
+		return shooter.level.getBlockState(new BlockPos(shooter.getEyePosition(1.0f))).getBlock() == Blocks.WATER
+				&& (!(shooter instanceof PlayerEntity) || !((PlayerEntity) shooter).isCreative());
+	}
+	
 	protected static float getEffectivenessFromEntity(LivingEntity entity) {
 		return entity instanceof IQualityModifier ? ((IQualityModifier) entity).getEffectiveness() : 1.0f;
 	}
@@ -1039,115 +1072,133 @@ public abstract class FirearmItem extends ShootableItem implements
 		});
 	}
 
-	public static class Properties {
-		public boolean needsCycle = true;
-		public int cooldownTime;
-		public int cycleTime;
-		public int drawTime;
-		public int meleeToggleTime;
-		public int projectileRange;
-		public int reloadEndTime;
-		public int reloadStartTime;
-		public int reloadTime;
-		public float baseDamage;
-		public float fovModifier = 1.0f;
-		public float headshotMultiplier;
-		public float hipfireSpread;
-		public float muzzleVelocity;
-		public float spread;
-		public Function<LivingEntity, Float> horizontalRecoilSupplier;
-		public Function<LivingEntity, Float> verticalRecoilSupplier;
-		public Predicate<ItemStack> ammoPredicate;
+	public abstract static class AbstractProperties<T extends AbstractProperties<T>> {
+		private boolean needsCycle = true;
+		private int cooldownTime;
+		private int cycleTime;
+		private int drawTime;
+		private int meleeToggleTime;
+		private int projectileRange;
+		private int reloadEndTime;
+		private int reloadStartTime;
+		private int reloadTime;
+		private float baseDamage;
+		private float headshotMultiplier;
+		private float hipfireSpread;
+		private float muzzleVelocity;
+		private float spread;
+		private float fovModifier = 1.0f;
+		private Function<LivingEntity, Float> horizontalRecoilSupplier;
+		private Function<LivingEntity, Float> verticalRecoilSupplier;
+		private Predicate<ItemStack> ammoPredicate;
+		private Supplier<ItemStackHandler> attachmentsHandler = ItemStackHandler::new;
 		
-		public Properties needsCycle(boolean needsCycle) {
+		protected final T thisObj;
+		
+		public AbstractProperties() {
+			this.thisObj = this.getThis();
+		}
+		
+		protected abstract T getThis();
+		
+		public T needsCycle(boolean needsCycle) {
 			this.needsCycle = needsCycle;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties cooldownTime(int cooldownTime) {
+		public T cooldownTime(int cooldownTime) {
 			this.cooldownTime = cooldownTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties cycleTime(int cycleTime) {
+		public T cycleTime(int cycleTime) {
 			this.cycleTime = cycleTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties drawTime(int drawTime) {
+		public T drawTime(int drawTime) {
 			this.drawTime = drawTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties meleeToggleTime(int meleeToggleTime) {
+		public T meleeToggleTime(int meleeToggleTime) {
 			this.meleeToggleTime = meleeToggleTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties projectileRange(int projectileRange) {
+		public T projectileRange(int projectileRange) {
 			this.projectileRange = projectileRange;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties reloadEndTime(int reloadEndTime) {
+		public T reloadEndTime(int reloadEndTime) {
 			this.reloadEndTime = reloadEndTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties reloadStartTime(int reloadStartTime) {
+		public T reloadStartTime(int reloadStartTime) {
 			this.reloadStartTime = reloadStartTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties reloadTime(int reloadTime) {
+		public T reloadTime(int reloadTime) {
 			this.reloadTime = reloadTime;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties baseDamage(float baseDamage) {
+		public T baseDamage(float baseDamage) {
 			this.baseDamage = baseDamage;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties fovModifier(float fovModifier) {
-			this.fovModifier = fovModifier;
-			return this;
-		}
-		
-		public Properties headshotMultiplier(float headshotMultiplier) {
+		public T headshotMultiplier(float headshotMultiplier) {
 			this.headshotMultiplier = headshotMultiplier;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties hipfireSpread(float hipfireSpread) {
+		public T hipfireSpread(float hipfireSpread) {
 			this.hipfireSpread = hipfireSpread;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties muzzleVelocity(float muzzleVelocity) {
+		public T muzzleVelocity(float muzzleVelocity) {
 			this.muzzleVelocity = muzzleVelocity;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties spread(float spread) {
+		public T spread(float spread) {
 			this.spread = spread;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties horizontalRecoil(Function<LivingEntity, Float> horizontalRecoil) {
+		public T horizontalRecoil(Function<LivingEntity, Float> horizontalRecoil) {
 			this.horizontalRecoilSupplier = horizontalRecoil;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties verticalRecoil(Function<LivingEntity, Float> verticalRecoil) {
+		public T verticalRecoil(Function<LivingEntity, Float> verticalRecoil) {
 			this.verticalRecoilSupplier = verticalRecoil;
-			return this;
+			return this.thisObj;
 		}
 		
-		public Properties ammoPredicate(Predicate<ItemStack> ammoPredicate) {
+		public T ammoPredicate(Predicate<ItemStack> ammoPredicate) {
 			this.ammoPredicate = ammoPredicate;
-			return this;
+			return this.thisObj;
 		}
+		
+		public T attachmentsHandler(Supplier<ItemStackHandler> supplier) {
+			this.attachmentsHandler = supplier;
+			return this.thisObj;
+		}
+		
+		public T fovModifier(float fovModifier) {
+			this.fovModifier = fovModifier;
+			return this.thisObj;
+		}
+	}
+	
+	public static class Properties extends AbstractProperties<Properties> {
+		@Override protected Properties getThis() { return this; }
 	}
 	
 	public static enum ActionType {
@@ -1155,7 +1206,8 @@ public abstract class FirearmItem extends ShootableItem implements
 		CYCLING(1),
 		RELOADING(2),
 		START_RELOADING(3),
-		TOGGLE_MELEE(4);
+		TOGGLE_MELEE(4),
+		PREVIOUS_STANCE(5);
 		
 		private static final ActionType[] BY_ID = Arrays.stream(values()).sorted(Comparator.comparingInt(ActionType::getId)).toArray(sz -> new ActionType[sz]);
 		

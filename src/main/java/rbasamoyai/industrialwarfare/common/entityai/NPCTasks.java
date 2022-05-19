@@ -59,7 +59,7 @@ public class NPCTasks {
 				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new WalkToTargetSpecialTask()),
-				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d)),
+				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d, false)),
 				Pair.of(0, new InteractWithDoorTask()),
 				Pair.of(0, new SwimTask(0.8f)),
 				Pair.of(1, new LookTask(45, 90)),
@@ -112,6 +112,7 @@ public class NPCTasks {
 	
 	private static boolean canFindNewTarget(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
+		
 		if (brain.hasMemoryValue(MemoryModuleTypeInit.DEFENDING_SELF.get())) return false;
 		
 		CombatMode mode = brain.getMemory(MemoryModuleTypeInit.COMBAT_MODE.get()).orElse(CombatMode.DONT_ATTACK);
@@ -192,7 +193,7 @@ public class NPCTasks {
 				break;
 			}
 			
-			if (e instanceof PlayerEntity && ((PlayerEntity) e).isCreative()) {
+			if (e instanceof PlayerEntity && !((PlayerEntity) e).isCreative()) {
 				PlayerIDTag otherPlayerTag = PlayerIDTag.of((PlayerEntity) e);
 				if (npcOwner.equals(otherPlayerTag)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((PlayerEntity) e));

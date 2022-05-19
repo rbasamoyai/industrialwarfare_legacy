@@ -10,6 +10,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.particles.RedstoneParticleData;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.util.math.MathHelper;
@@ -88,7 +89,7 @@ public class SegmentFormation extends UnitFormation {
 	protected void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
 		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
 		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
 		
@@ -137,15 +138,62 @@ public class SegmentFormation extends UnitFormation {
 	}
 	
 	@Override
+	protected void tickFollower(FormationLeaderEntity leader) {
+		if (this.follower == null) return;
+		if (!this.follower.isAlive() || !checkMemoriesForMovement(this.follower)) {
+			this.follower = null;
+			return;
+		} 
+		
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
+		
+		double halfLength = this.tailEnd ? 2.0d : 1.0d;
+		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
+		Vector3d secondSegment = joint.subtract(this.follower.position()).normalize();
+		this.cachedAngle = (float) -Math.toDegrees(MathHelper.atan2(secondSegment.x, secondSegment.z));
+		
+		super.tickFollower(leader);
+	}
+	
+	@Override
 	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * RAD_TO_DEG), 0.0d, MathHelper.cos(leader.yRot * RAD_TO_DEG));
-		Vector3d followPos = leader.position().subtract(leaderForward.scale(this.tailEnd ? 4 : 2));
-		return this.follower == null ? followPos : followPos.add(0.0d, this.follower.getY() - leader.getY(), 0.0d);
+		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
+		
+		if (this.follower == null) {
+			return leader.position().subtract(leaderForward.scale(this.tailEnd ? 4.0d : 2.0d));
+		}
+
+		double halfLength = this.tailEnd ? 2.0d : 1.0d;
+		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
+		Vector3d secondSegment = this.follower.position().subtract(joint).normalize().scale(halfLength);
+		
+		if (!leader.level.isClientSide) {
+			((ServerWorld) leader.level).sendParticles(new RedstoneParticleData(0.0f, 0.0f, 1.0f, 1.0f), joint.x, joint.y + 2.5d, joint.z, 1, 0.0d, 0.0d, 0.0d, 0.0d);
+		}
+		
+		float secondSegAngle = (float) Math.toDegrees(MathHelper.atan2(secondSegment.x, secondSegment.z));
+		float angularDiff = (secondSegAngle - leader.yRot + 180.0f) % 360.0f - 180.0f;
+		
+		if (angularDiff <= -135.0f || angularDiff >= 135.0f) {
+			return joint.add(secondSegment);
+		}
+		
+		float angularDiff1 = secondSegAngle - leader.yRot % 180.0f;
+		if (angularDiff1 < -180.0f) {
+			angularDiff1 += 360.0f;
+		}
+		if (angularDiff1 > 180.0f) {
+			angularDiff1 -= 360.0f;
+		}
+		
+		float newRot = leader.yRot + (angularDiff < 0.0f ? -135.0f : 135.0f);
+		Vector3d clampedSecondSegment = new Vector3d(-MathHelper.sin(newRot * DEG_TO_RAD), 0.0d, MathHelper.cos(newRot * DEG_TO_RAD));
+		return joint.add(clampedSecondSegment);
 	}
 
 	@Override
 	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(angle * RAD_TO_DEG), 0.0d, MathHelper.cos(angle * RAD_TO_DEG));
+		Vector3d forward = new Vector3d(-MathHelper.sin(angle * DEG_TO_RAD), 0.0d, MathHelper.cos(angle * DEG_TO_RAD));
 		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
 		Vector3d startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
 		

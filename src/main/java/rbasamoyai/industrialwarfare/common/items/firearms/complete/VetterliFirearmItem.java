@@ -22,7 +22,7 @@ import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAni
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
-import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.InternalMagazineRifleItem;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
@@ -44,7 +44,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.durability(1200)
 							.tab(IWItemGroups.TAB_WEAPONS)
 							.setISTER(() -> FirearmRenderer::new),
-					new FirearmItem.Properties()
+					new InternalMagazineFirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(10.0f)
 							.headshotMultiplier(3.0f)
@@ -60,21 +60,12 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 							.reloadTime(20)
 							.reloadEndTime(40)
 							.projectileRange(80)
-							.fovModifier(0.5f),
-							12,
-							s -> false);
+							.magazineSize(12));
 	}
 	
 	/*
 	 * ANIMATION CONTROL METHODS
 	 */
-	
-	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack) {
-		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
-			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
-		}
-	}
 	
 	@Override
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
@@ -112,7 +103,10 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		super.onSelect(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			AnimBroadcastUtils.syncItemStackAnim(firearm, shooter, this, ANIM_SELECT_FIREARM);
-			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", "select_firearm", true, 1.0f);
+			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
+			upperBody.add(new Tuple<>("select_firearm", false));
+			upperBody.add(new Tuple<>("hip_aiming", true));
+			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", upperBody, 1.0f);
 		}
 	}
 	
@@ -120,14 +114,17 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	protected void doNothing(ItemStack firearm, LivingEntity shooter) {
 		super.doNothing(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			int animId = ANIM_HIP_AIMING;
-			String animStr = "hip_aiming";
+			int animId;
+			String animStr;
 			if (isAiming(firearm)) {
 				animId = ANIM_ADS_AIMING;
 				animStr = "ads_aiming";
 			} else if (shooter.isSprinting()) {
 				animId = ANIM_PORT_ARMS;
 				animStr = "port_arms";
+			} else {
+				animId = ANIM_HIP_AIMING;
+				animStr = "hip_aiming";
 			}
 			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, animId);
 			AnimBroadcastUtils.broadcastThirdPersonAnim(firearm, shooter, "upper_body", animStr, true, 1.0f);
@@ -212,7 +209,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_START);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_start", false));
@@ -225,7 +222,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_STOP);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_stop", false));
@@ -252,6 +249,14 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		return PlayState.CONTINUE;
 	}
 	
+	@Override
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
+		if (renderer.getUniqueID(this).intValue() == -1) return;
+		if (getDataHandler(stack).map(IFirearmItemDataHandler::getAction).map(ActionType.NOTHING::equals).orElse(false)) {
+			renderer.setBonePosition("firing_pin", 0.0f, 0.0f, isCycled(stack) ? 0.25f : 0.0f);
+		}
+	}
+	
 	public static final int ANIM_PORT_ARMS = 0;
 	public static final int ANIM_TRAIL_ARMS = 1;
 	public static final int ANIM_HIP_AIMING = 2;
@@ -262,7 +267,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	public static final int ANIM_RELOAD_END = 7;
 	public static final int ANIM_ADS_AIMING = 8;
 	public static final int ANIM_ADS_AIMING_START = 9;
-	public static final int ANIM_ADS_AIMING_END = 10;
+	public static final int ANIM_ADS_AIMING_STOP = 10;
 	public static final int ANIM_ADS_FIRING = 11;
 	public static final int ANIM_RELOAD_END_EXTRACT = 12;
 	public static final int ANIM_SELECT_FIREARM = 13;
@@ -271,6 +276,7 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
+		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
 		
 		switch (state) {
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
@@ -307,9 +313,9 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			.addAnimation("ads_aiming_start", false)
 			.addAnimation("ads_aiming", true);
 			break;
-		case ANIM_ADS_AIMING_END:
+		case ANIM_ADS_AIMING_STOP:
 			builder
-			.addAnimation("ads_aiming_end", false)
+			.addAnimation("ads_aiming_stop", false)
 			.addAnimation("hip_aiming", true);
 			break;
 		case ANIM_ADS_FIRING:
@@ -334,7 +340,6 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 			break;
 		}
 		
-		final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, "controller");
 		controller.markNeedsReload();
 		controller.setAnimation(builder);
 	}

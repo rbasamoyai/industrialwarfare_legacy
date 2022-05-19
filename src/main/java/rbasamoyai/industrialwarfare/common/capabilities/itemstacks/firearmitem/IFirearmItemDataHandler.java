@@ -9,23 +9,32 @@ import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType
 
 public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 
+	public static final int FLAG_CYCLED = 1;
+	public static final int FLAG_FIRED = 2;
+	public static final int FLAG_MELEEING = 4;
+	public static final int FLAG_AIMING = 8;
+	public static final int FLAG_SPRINTING = 16;
+	
 	void setSelected(boolean selected);
 	boolean isSelected();
 	
-	void setCycled(boolean cycled);
-	boolean isCycled();
+	void setState(int state);
+	int getState();
 	
-	void setFired(boolean fired);
-	boolean isFired();
+	default void setCycled(boolean cycled) { this.setState(cycled ? this.getState() | FLAG_CYCLED : this.getState() & (0xFFFFFFFF ^ FLAG_CYCLED)); }
+	default boolean isCycled() { return (this.getState() & FLAG_CYCLED) == FLAG_CYCLED; }
 	
-	void setMelee(boolean melee);
-	boolean isMeleeing();
+	default void setFired(boolean fired) { this.setState(fired ? this.getState() | FLAG_FIRED : this.getState() & (0xFFFFFFFF ^ FLAG_FIRED)); }
+	default boolean isFired() { return (this.getState() & FLAG_FIRED) == FLAG_FIRED; }
 	
-	void setAiming(boolean aiming);
-	boolean isAiming();
+	default void setMelee(boolean melee) { this.setState(melee ? this.getState() | FLAG_MELEEING : this.getState() & (0xFFFFFFFF ^ FLAG_MELEEING)); }
+	default boolean isMeleeing() { return (this.getState() & FLAG_MELEEING) == FLAG_MELEEING; }
 	
-	void setDisplaySprinting(boolean displaySprinting);
-	boolean shouldDisplaySprinting();
+	default void setAiming(boolean aiming) { this.setState(aiming ? this.getState() | FLAG_AIMING : this.getState() & (0xFFFFFFFF ^ FLAG_AIMING)); }
+	default boolean isAiming() { return (this.getState() & FLAG_AIMING) == FLAG_AIMING; }
+	
+	default void setDisplaySprinting(boolean displaySprinting) { this.setState(displaySprinting ? this.getState() | FLAG_SPRINTING : this.getState() & (0xFFFFFFFF ^ FLAG_SPRINTING)); }
+	default boolean shouldDisplaySprinting() { return (this.getState() & FLAG_SPRINTING) == FLAG_SPRINTING; }
 	
 	void setAction(FirearmItem.ActionType action, int time);
 	ActionType getAction();

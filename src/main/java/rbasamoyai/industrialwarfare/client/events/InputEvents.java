@@ -18,6 +18,7 @@ import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
+import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.SInputAction.Type;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class InputEvents {
@@ -59,7 +60,13 @@ public class InputEvents {
 		}
 		
 		if (KeyBindingsInit.RELOAD_FIREARM.isDown()) {
-			IWNetwork.CHANNEL.sendToServer(new FirearmActionMessages.SReloadingFirearm());
+			IWNetwork.CHANNEL.sendToServer(new FirearmActionMessages.SInputAction(Type.RELOADING));
+			return;
+		}
+		
+		if (KeyBindingsInit.PREVIOUS_FIREARM_STAGE.isDown()) {
+			IWNetwork.CHANNEL.sendToServer(new FirearmActionMessages.SInputAction(Type.PREVIOUS_STANCE));
+			return;
 		}
 	}
 	
