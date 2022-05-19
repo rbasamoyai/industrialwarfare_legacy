@@ -24,6 +24,7 @@ can fight stuff.
 * Rudimentary formation movement
 
 ### """planned""" features:
+* Defensive combat, with entrenchment stations, artillery, and other heavy weapons
 * Indirect NPC command
 * Generated structures with NPCs
 * Research trees
@@ -32,10 +33,10 @@ can fight stuff.
 * Weapon attachments
 
 ### Currently working on (or not)
-* NPC Combat
-   * Smarter attack and formation movement
-   * NPC attack orders
-   * NPC drills for easy command chains
+* IT'S THE ECONOMY STUPID
+   * More workstations
+   * Actually fleshing out professions
+   * Crafting trees
 
 ---
 
