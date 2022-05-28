@@ -20,7 +20,9 @@ public class NPCComplaintInit {
 	public static final RegistryObject<NPCComplaint> INVALID_ORDER = COMPLAINTS.register("invalid_order", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> NO_DATA_HANDLER = COMPLAINTS.register("no_data_handler", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> NOTHING_HERE = COMPLAINTS.register("nothing_here", NPCComplaint::new);
+	public static final RegistryObject<NPCComplaint> NOT_ENOUGH_SUPPLIES = COMPLAINTS.register("not_enough_supplies", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> TIME_STOPPED = COMPLAINTS.register("time_stopped", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> TOO_FAR = COMPLAINTS.register("too_far", NPCComplaint::new);
+	public static final RegistryObject<NPCComplaint> WRONG_TOOL = COMPLAINTS.register("wrong_tool", NPCComplaint::new);
 	
 }

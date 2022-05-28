@@ -12,8 +12,10 @@ public abstract class NPCProfession extends ForgeRegistryEntry<NPCProfession> {
 	
 	public abstract boolean checkMemories(NPCEntity npc);
 	
-	public abstract Optional<BlockPos> getWorkingArea(World world, BlockPos pos, NPCEntity npc);
+	public abstract Optional<BlockPos> getWorkingArea(World level, BlockPos pos, NPCEntity npc);
 	
-	public abstract void work(World world, NPCEntity npc, long gameTime, TaskScrollOrder order);
+	public abstract void work(World level, NPCEntity npc, long gameTime, TaskScrollOrder order);
+	
+	public abstract void stopWorking(World level, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
 }

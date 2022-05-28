@@ -16,6 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
+import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 import rbasamoyai.industrialwarfare.common.entityai.navigation.PrecisePosCodec;
@@ -25,7 +26,10 @@ public class MemoryModuleTypeInit {
 
 	public static final DeferredRegister<MemoryModuleType<?>> MEMORY_MODULE_TYPES = DeferredRegister.create(ForgeRegistries.MEMORY_MODULE_TYPES, IndustrialWarfare.MOD_ID);
 	
-	public static final RegistryObject<MemoryModuleType<ActivityStatus>> ACTIVITY_STATUS = MEMORY_MODULE_TYPES.register("activity_status", () -> new MemoryModuleType<>(Optional.of(ActivityStatus.CODEC))); 
+	public static final RegistryObject<MemoryModuleType<ActivityStatus>> ACTIVITY_STATUS = MEMORY_MODULE_TYPES.register("activity_status", () -> new MemoryModuleType<>(Optional.of(ActivityStatus.CODEC)));
+	public static final RegistryObject<MemoryModuleType<BlockInteraction>> BLOCK_INTERACTION = MEMORY_MODULE_TYPES.register("block_interaction", () -> new MemoryModuleType<>(Optional.empty()));
+	public static final RegistryObject<MemoryModuleType<BlockInteraction>> BLOCK_INTERACTION_FAILED = MEMORY_MODULE_TYPES.register("block_interaction_failed", () -> new MemoryModuleType<>(Optional.empty()));
+	public static final RegistryObject<MemoryModuleType<Integer>> BLOCK_INTERACTION_COOLDOWN = MEMORY_MODULE_TYPES.register("block_interaction_cooldown", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
 	public static final RegistryObject<MemoryModuleType<GlobalPos>> CACHED_POS = MEMORY_MODULE_TYPES.register("cached_pos", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Boolean>> CAN_ATTACK = MEMORY_MODULE_TYPES.register("can_attack", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<CombatMode>> COMBAT_MODE = MEMORY_MODULE_TYPES.register("combat_mode", () -> new MemoryModuleType<>(Optional.of(CombatMode.CODEC)));
@@ -33,6 +37,7 @@ public class MemoryModuleTypeInit {
 	public static final RegistryObject<MemoryModuleType<TaskScrollOrder>> CURRENT_ORDER = MEMORY_MODULE_TYPES.register("current_order", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> CURRENT_ORDER_INDEX = MEMORY_MODULE_TYPES.register("current_order_index", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> DEFENDING_SELF = MEMORY_MODULE_TYPES.register("defending_self", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
+	public static final RegistryObject<MemoryModuleType<Boolean>> DEPOSITING_ITEMS = MEMORY_MODULE_TYPES.register("depositing_items", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> ENGAGING_COMPLETED = MEMORY_MODULE_TYPES.register("engaging_target", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> EXECUTING_INSTRUCTION = MEMORY_MODULE_TYPES.register("executing_instruction", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> FINISHED_ATTACKING = MEMORY_MODULE_TYPES.register("finished_attacking", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));

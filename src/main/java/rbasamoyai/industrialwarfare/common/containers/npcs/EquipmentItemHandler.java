@@ -110,6 +110,12 @@ public class EquipmentItemHandler extends ItemStackHandler {
 		}
 	}
 	
+	public void update() {
+		EQUIPMENT_SLOT_TYPE_MAP.forEach((k, v) -> {
+			this.setStackInSlot(v, this.entity.getItemBySlot(k));
+		});
+	}
+	
 	public static EquipmentSlotType getSlotType(int slot) {
 		EquipmentSlotType result = EQUIPMENT_TYPE_SLOT_MAP.get(slot);
 		return result == null ? EquipmentSlotType.MAINHAND : result;

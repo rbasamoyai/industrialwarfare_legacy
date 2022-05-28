@@ -1,10 +1,20 @@
 Current TODO:
+- Fluid removal
+
+- Formulate an economy
+	- Resource gathering
+		- Quarry
+		- Forestry
+		- Agriculture
+	- Resource refining
+		- Metal smelting
+		- Woodworking
+	- Resource processing
+		- Base parts
+		- Assembly
+
 - Work on formations
 	- Formations joining other
 	formations
 	- Merging smaller formations
 	if possible
-	
-- Match coil
-	- Converting long enough
-	cord into coil

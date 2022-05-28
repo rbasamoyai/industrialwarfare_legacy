@@ -42,7 +42,7 @@ import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
  * <ul>
  * 		Contains weapon items, melee, ranged, etc.
  * </ul>
- * {@code TAB_ARMOR} - Armor items - <b>TODO: NOT IMPLEMENTED</b>
+ * {@code TAB_ARMOR} - Armor items
  * <ul>
  * 		Contains armor items.
  * </ul>
@@ -114,7 +114,9 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.ASSEMBLER_WORKSTATION),
 					getItemStack(ItemInit.TASK_SCROLL_SHELF),
-					getItemStack(ItemInit.SPOOL)
+					getItemStack(ItemInit.SPOOL),
+					getItemStack(ItemInit.QUARRY),
+					getItemStack(ItemInit.WORKER_SUPPORT)
 					));
 		}
 		
@@ -171,6 +173,20 @@ public class IWItemGroups {
 		public ItemStack makeIcon() {
 			return getItemStack(Items.IRON_SWORD);
 		}	
+	};
+	
+	public static final ItemGroup TAB_ARMOR = new ItemGroup(groupId++, "industrialwarfare.armor") {
+		@Override
+		public void fillItemList(NonNullList<ItemStack> items) {
+			items.addAll(Arrays.asList(
+					getItemStack(ItemInit.PITH_HELMET)
+					));
+		}
+		
+		@Override
+		public ItemStack makeIcon() {
+			return getItemStack(ItemInit.PITH_HELMET);
+		}
 	};
 	
 	private static ItemStack getItemStack(Item item) {

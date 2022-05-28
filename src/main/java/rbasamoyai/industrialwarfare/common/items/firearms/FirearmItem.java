@@ -3,7 +3,9 @@ package rbasamoyai.industrialwarfare.common.items.firearms;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -57,6 +59,7 @@ import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
@@ -883,111 +886,134 @@ public abstract class FirearmItem extends ShootableItem implements
 				RenderUtils.moveBackFromPivot(bone, stack);
 			}
 			
-			RenderUtils.translate(bone, stack);
-			RenderUtils.moveToPivot(bone, stack);
-			RenderUtils.rotate(bone, stack);
-			stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
-			RenderUtils.scale(bone, stack);
-			RenderUtils.moveBackFromPivot(bone, stack);
-			
-			ModelRenderer bodyPart = null;
-			ModelRenderer garment = null;
-			ModelRenderer armorPart = null;
-			
-			EquipmentSlotType slot = EquipmentSlotType.CHEST;
-			
-			if (isBody) {
-				bodyPart = bmodel.body;
-				if (pmodel != null) garment = pmodel.jacket;
-				if (armor != null) armorPart = armor.outerModel.body;
-				stack.translate(0.0f, -0.75f, 0.0f);
-			} else if (name.equals("arm_left")) {
-				bodyPart = bmodel.leftArm;
-				if (pmodel != null) garment = pmodel.leftSleeve;
-				if (armor != null) armorPart = armor.outerModel.leftArm;
-				stack.translate(-0.0625f, 0.0f, 0.0f);
-			} else if (name.equals("arm_right")) {
-				bodyPart = bmodel.rightArm;
-				if (pmodel != null) garment = pmodel.rightSleeve;
-				if (armor != null) armorPart = armor.outerModel.rightArm;
-				stack.translate(0.0625f, 0.0f, 0.0f);
-			} else if (name.equals("head")) {
-				bodyPart = bmodel.head;
-				garment = bmodel.hat;
-				if (armor != null) {
-					armorPart = armor.outerModel.head;
-					slot = EquipmentSlotType.HEAD;
+			if (isBody || isBodyChild) {
+				RenderUtils.translate(bone, stack);
+				RenderUtils.moveToPivot(bone, stack);
+				RenderUtils.rotate(bone, stack);
+				stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
+				RenderUtils.scale(bone, stack);
+				RenderUtils.moveBackFromPivot(bone, stack);
+				
+				ModelRenderer bodyPart = null;
+				ModelRenderer garment = null;
+				
+				switch (name) {
+				case "body":
+					bodyPart = bmodel.body;
+					if (pmodel != null) garment = pmodel.jacket;
+					stack.translate(0.0f, -0.75f, 0.0f);
+					break;
+				case "arm_left":
+					bodyPart = bmodel.leftArm;
+					if (pmodel != null) garment = pmodel.leftSleeve;
+					stack.translate(-0.0625f, 0.0f, 0.0f);
+					break;
+				case "arm_right":
+					bodyPart = bmodel.rightArm;
+					if (pmodel != null) garment = pmodel.rightSleeve;
+					stack.translate(0.0625f, 0.0f, 0.0f);
+					break;
+				case "head":
+					bodyPart = bmodel.head;
+					garment = bmodel.hat;
 				}
-			}
-			
-			IVertexBuilder entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
-			
-			float skinAlpha = 1.0f;
-			if (entity.isInvisible()) skinAlpha = entity == mc.player ? 0.15f : 0.0f;
-			
-			if (bodyPart != null) {
-				bodyPart.visible = true;
-				AnimUtils.renderPartOverBone(bodyPart, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);				
-				bodyPart.visible = false;
-			}
-			if (garment != null) {
-				garment.visible = true;
-				AnimUtils.renderPartOverBone(garment, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);			
-				garment.visible = false;
-			}
-			if (armorPart != null) {
-				ItemStack armorStack = entity.getItemBySlot(slot);
-				Item stackItem = armorStack.getItem();
-				if (stackItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, armorStack, slot, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
-					
-					if (stackItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) armorStack.getItem()).getColor(armorStack);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
+				
+				IVertexBuilder entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+				
+				float skinAlpha = 1.0f;
+				if (entity.isInvisible()) skinAlpha = entity == mc.player ? 0.15f : 0.0f;
+				
+				if (bodyPart != null) {
+					bodyPart.visible = true;
+					AnimUtils.renderPartOverBone(bodyPart, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);				
+					bodyPart.visible = false;
+				}
+				
+				if (garment != null) {
+					garment.visible = true;
+					AnimUtils.renderPartOverBone(garment, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);			
+					garment.visible = false;
+				}
+				
+				Map<EquipmentSlotType, BipedModel<?>> armorModels = new HashMap<>();
+				
+				EquipmentSlotType[] slots;
+				switch (name) {
+				case "body":
+					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST, EquipmentSlotType.LEGS };
+					break;
+				case "head":
+					slots = new EquipmentSlotType[] { EquipmentSlotType.HEAD };
+					break;
+				default:
+					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST };
+				}
+				
+				for (EquipmentSlotType slot : slots) {
+					ItemStack slotItem = entity.getItemBySlot(slot);
+					BipedModel<?> defaultModel = slot == EquipmentSlotType.LEGS ? armor.innerModel : armor.outerModel;
+					BipedModel<?> moddedModel = ForgeHooksClient.getArmorModel(entity, slotItem, slot, defaultModel);
+					moddedModel.young = entity.isBaby();
+					moddedModel.setAllVisible(false);
+					switch (slot) {
+					case HEAD:
+						moddedModel.head.visible = true;
+						moddedModel.hat.visible = true;
+						AnimUtils.setupModelFromBone(moddedModel.head, bone);
+						AnimUtils.setupModelFromBone(moddedModel.hat, bone);
+						break;
+					case CHEST:
+						switch (name) {
+						case "body":
+							moddedModel.body.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.body, bone);
+							break;
+						case "arm_left":
+							moddedModel.leftArm.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.leftArm, bone);
+							break;
+						case "arm_right":
+							moddedModel.rightArm.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.rightArm, bone);
+						}
+						break;
+					case LEGS:
+						moddedModel.body.visible = true;
+						AnimUtils.setupModelFromBone(moddedModel.body, bone);
+						break;
+					default:
+					}
+					armorModels.put(slot, moddedModel);
+				}
+				
+				for (Map.Entry<EquipmentSlotType, BipedModel<?>> entry : armorModels.entrySet()) {
+					ItemStack armorStack = entity.getItemBySlot(entry.getKey());
+					Item stackItem = armorStack.getItem();
+					if (stackItem instanceof ArmorItem) {
+						ResourceLocation armorLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), null);
+						IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
 						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, slot, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					} else {
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
+						if (stackItem instanceof IDyeableArmorItem) {
+							int color = ((IDyeableArmorItem) armorStack.getItem()).getColor(armorStack);
+							float r = (float)(color >> 16 & 255) / 255.0F;
+							float g = (float)(color >> 8 & 255) / 255.0F;
+							float b = (float)(color & 255) / 255.0F;
+							
+							entry.getValue().renderToBuffer(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
+							
+							ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), "overlay");
+							IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
+							
+							entry.getValue().renderToBuffer(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+						} else {
+							entry.getValue().renderToBuffer(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+						}
 					}
 				}
 			}
-			
-			if (isBody) {
-				armorPart = armor.innerModel.body;
-				ItemStack legs = entity.getItemBySlot(EquipmentSlotType.LEGS);
-				Item legsItem = legs.getItem();
-				if (legsItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, legs, EquipmentSlotType.LEGS, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, legs.hasFoil());
-					
-					if (legsItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) legsItem.getItem()).getColor(legs);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, legs, slot, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, legs.hasFoil());
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					} else {
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					}
-				}
-			}
-			
+				
 			stack.popPose();
-			
+				
 			if (!lockedLimbs && isFreeBone) {
 				stack.translate(0.0f, 1.375f, 0.0f);
 				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));

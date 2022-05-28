@@ -27,6 +27,7 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.schedule.Activity;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
@@ -116,6 +117,9 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
+			MemoryModuleTypeInit.BLOCK_INTERACTION.get(),
+			MemoryModuleTypeInit.BLOCK_INTERACTION_FAILED.get(),
+			MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
 			MemoryModuleTypeInit.CAN_ATTACK.get(),
 			MemoryModuleTypeInit.COMBAT_MODE.get(),
@@ -123,6 +127,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.CURRENT_ORDER.get(),
 			MemoryModuleTypeInit.CURRENT_ORDER_INDEX.get(),
 			MemoryModuleTypeInit.DEFENDING_SELF.get(),
+			MemoryModuleTypeInit.DEPOSITING_ITEMS.get(),
 			MemoryModuleTypeInit.EXECUTING_INSTRUCTION.get(),
 			MemoryModuleTypeInit.FINISHED_ATTACKING.get(),
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
@@ -179,6 +184,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextEffectiveness();
 		
 		this.setPersistenceRequired();
+		this.setCanPickUpLoot(true);
 	}
 	
 	public static AttributeModifierMap.MutableAttribute setAttributes() {
@@ -195,6 +201,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	public EquipmentItemHandler getEquipmentItemHandler() {
+		this.equipmentItemHandler.update();
 		return this.equipmentItemHandler;
 	}
 	
@@ -274,6 +281,16 @@ public class NPCEntity extends CreatureEntity implements
 		if (this.level.getGameTime() % 20 == 0) {
 			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get()), this.blockPosition()); 
 			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
+		}
+		
+		if (brain.hasMemoryValue(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get())) {
+			int cooldown = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get()).get();
+			cooldown -= 1;
+			if (cooldown <= 0) {
+				brain.eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get());
+			} else {
+				brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), cooldown);
+			}
 		}
 		
 		super.customServerAiStep();
@@ -440,6 +457,44 @@ public class NPCEntity extends CreatureEntity implements
 				predicate.or(s -> s.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent()),
 				b -> b,
 				() -> false);
+	}
+	
+	@Override
+	public boolean wantsToPickUp(ItemStack stack) {
+		return true;
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	protected void pickUpItem(ItemEntity entity) {
+		super.pickUpItem(entity);
+		if (!this.level.isClientSide) {
+			ItemStack stack = entity.getItem();
+			if (entity.removed || stack.isEmpty() || entity.hasPickUpDelay()) return;
+			int sz = stack.getCount();
+			for (int i = 0; i < this.inventoryItemHandler.getSlots(); ++i) {
+				stack = this.inventoryItemHandler.insertItem(i, stack, false);
+				if (stack.isEmpty()) {
+					break;
+				}
+			}
+			if (stack.getCount() < sz) {
+				this.onItemPickup(entity);
+				this.take(entity, sz);
+				if (stack.isEmpty()) {
+					entity.remove();
+					stack.setCount(sz);
+				}
+			} else {
+				this.brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
+			}
+		}
+	}
+	
+	@Override
+	public void onItemPickup(ItemEntity item) {
+		super.onItemPickup(item);
+		this.equipmentItemHandler.update();
 	}
 	
 	@Override

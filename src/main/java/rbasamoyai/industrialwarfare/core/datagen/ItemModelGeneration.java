@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DirectoryCache;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
@@ -52,36 +51,38 @@ public class ItemModelGeneration extends ItemModelProvider {
 		
 		simpleBuilder("match_cord")
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"), 1.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/match_cord_lit")))
+				.predicate(modLoc("is_lit"), 1.0f)
+				.model(new UncheckedModelFile(modLoc("item/match_cord_lit")))
 				.end();
 		
 		simpleBuilder("match_cord_lit");
 		
 		simpleBuilder("infinite_match_cord", "match_cord")
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"), 1.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/match_cord_lit")))
+				.predicate(modLoc("is_lit"), 1.0f)
+				.model(new UncheckedModelFile(modLoc("item/match_cord_lit")))
 				.end();
 		
 		getBuilder("match_coil")
-		.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil0")))
+		.parent(new UncheckedModelFile(modLoc("block/match_coil0")))
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 1.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil1")))
+				.predicate(modLoc("coil_amount"), 1.0f)
+				.model(new UncheckedModelFile(modLoc("block/match_coil1")))
 				.end()
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 2.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil2")))
+				.predicate(modLoc("coil_amount"), 2.0f)
+				.model(new UncheckedModelFile(modLoc("block/match_coil2")))
 				.end()
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 3.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil3")))
+				.predicate(modLoc("coil_amount"), 3.0f)
+				.model(new UncheckedModelFile(modLoc("block/match_coil3")))
 				.end()
 		.override()
-				.predicate(new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"), 4.0f)
-				.model(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
+				.predicate(modLoc("coil_amount"), 4.0f)
+				.model(new UncheckedModelFile(modLoc("block/spool")))
 				.end();
+		
+		simpleBuilder("pith_helmet");
 		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
@@ -94,7 +95,7 @@ public class ItemModelGeneration extends ItemModelProvider {
 	private ItemModelBuilder simpleBuilder(String itemId, String textureId) {
 		return getBuilder(itemId)
 				.parent(new UncheckedModelFile("item/generated"))
-				.texture("layer0", new ResourceLocation(IndustrialWarfare.MOD_ID, "item/" + textureId));
+				.texture("layer0", modLoc("item/" + textureId));
 	}
 	
 	@Override

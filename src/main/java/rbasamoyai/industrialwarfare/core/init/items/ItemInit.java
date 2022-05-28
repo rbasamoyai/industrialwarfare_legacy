@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.core.init.items;
 
 import net.minecraft.block.Block;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -10,10 +11,12 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.IWArmorMaterial;
 import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.MatchCoilItem;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.common.items.PithHelmetItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem;
@@ -51,6 +54,8 @@ public class ItemInit {
 	public static final RegistryObject<Item> ASSEMBLER_WORKSTATION = registerBlockItem(BlockInit.ASSEMBLER_WORKSTATION);
 	public static final RegistryObject<Item> TASK_SCROLL_SHELF = registerBlockItem(BlockInit.TASK_SCROLL_SHELF);
 	public static final RegistryObject<Item> SPOOL = registerBlockItem(BlockInit.SPOOL);
+	public static final RegistryObject<Item> QUARRY = registerBlockItem(BlockInit.QUARRY);
+	public static final RegistryObject<Item> WORKER_SUPPORT = registerBlockItem(BlockInit.WORKER_SUPPORT);
 	
 	public static final RegistryObject<Item> RECIPE_MANUAL = ITEMS.register("recipe_manual", RecipeItem::new);
 	
@@ -80,6 +85,9 @@ public class ItemInit {
 	public static final RegistryObject<Item> MATCH_CORD = ITEMS.register("match_cord", MatchCordItem::new);
 	public static final RegistryObject<Item> INFINITE_MATCH_CORD = ITEMS.register("infinite_match_cord", InfiniteMatchCordItem::new);
 	public static final RegistryObject<Item> MATCH_COIL = ITEMS.register("match_coil", MatchCoilItem::new);
+	
+	public static final RegistryObject<Item> PITH_HELMET = ITEMS.register("pith_helmet",
+			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_BLOCKS)));
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

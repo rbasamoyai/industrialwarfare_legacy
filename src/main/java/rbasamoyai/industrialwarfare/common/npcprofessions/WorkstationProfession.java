@@ -14,9 +14,14 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
+import net.minecraft.entity.ai.brain.memory.WalkTarget;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPosWrapper;
+import net.minecraft.util.math.GlobalPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.IWorkstationDataHandler;
@@ -54,43 +59,52 @@ public class WorkstationProfession extends NPCProfession {
 	}
 
 	@Override
-	public Optional<BlockPos> getWorkingArea(World world, BlockPos pos, NPCEntity npc) {
-		if (!this.workstations.contains(world.getBlockState(pos).getBlock())) return Optional.empty();
+	public Optional<BlockPos> getWorkingArea(World level, BlockPos pos, NPCEntity npc) {
+		if (!this.workstations.contains(level.getBlockState(pos).getBlock())) return Optional.empty();
 		
 		List<BlockPos> positions = Arrays.asList(pos.below().north(), pos.below().east(), pos.below().south(), pos.below().west());
 		return positions.stream()
-					.filter(p -> world.loadedAndEntityCanStandOn(p, npc))
-					.filter(p -> world.noCollision(npc))
+					.filter(p -> level.loadedAndEntityCanStandOn(p, npc))
+					.filter(p -> level.noCollision(npc.getBoundingBox().move(Vector3d.ZERO.subtract(npc.getPosition(1.0f))).move(p)))
 					.sorted((pa, pb) -> Double.compare(pa.distSqr(npc.blockPosition()), pb.distSqr(npc.blockPosition())))
 					.findFirst();
 	}
 	
 	@Override
-	public void work(World world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void work(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		// Stay at workstation to do work
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().get();
+		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2));
 		
-		TileEntity te = world.getBlockEntity(pos);
+		if (!box.contains(npc.position())) {
+			if (npc.getNavigation().isDone()) {
+				BlockPos cachedPos = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get()).map(GlobalPos::pos).orElse(pos.below());
+				brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(cachedPos, 3.0f, 0));
+			}
+			return;
+		}
+		
+		TileEntity te = level.getBlockEntity(pos);
 		if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
 		if (!(te instanceof WorkstationTileEntity)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
 		WorkstationTileEntity workstation = (WorkstationTileEntity) te;
 		
 		LazyOptional<IWorkstationDataHandler> lzop = workstation.getDataHandler();
 		if (!lzop.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
 		lzop.ifPresent(h -> {
 			if (h.hasWorker()) {
 				if (!h.getWorkerUUID().equals(npc.getUUID())) {
-					brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get());
+					brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 					return;
 				}
 			} else {
@@ -102,6 +116,13 @@ public class WorkstationProfession extends NPCProfession {
 			}
 		});
 		
+	}
+	
+	@Override
+	public void stopWorking(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+		TileEntity te = level.getBlockEntity(order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
+		if (!(te instanceof WorkstationTileEntity)) return;
+		((WorkstationTileEntity) te).setRecipe(ItemStack.EMPTY, false);
 	}
 
 }

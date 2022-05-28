@@ -81,17 +81,17 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		
 		Optional<GlobalPos> gpOptional = brain.getMemory(this.posMemoryType);
 		if (!gpOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
 			return false;
 		}
 		GlobalPos gp = gpOptional.get();
 		
 		if (gp.dimension() != world.dimension()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
 			return false;
 		}
 		if (!gp.pos().closerThan(npc.position(), (double) this.maxDistanceFromPoi)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get(), 200L);
 			return false;
 		}
 		
@@ -113,7 +113,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		Brain<?> brain = npc.getBrain();
 		Optional<GlobalPos> gp = brain.getMemory(this.posMemoryType);
 		if (!gp.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
 			return;
 		}
 		BlockPos pos = gp.get().pos();
@@ -127,7 +127,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		
 		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get(), 200L);
 		}
 	
 		ItemStack schedule = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.SCHEDULE_ITEM_INDEX);
@@ -142,7 +142,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 		
 		LazyOptional<IItemHandler> blockInvOptional = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
 		if (!blockInvOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get(), 200L);
 			return;
 		}
 		IItemHandler blockInv = blockInvOptional.resolve().get();
@@ -166,7 +166,7 @@ public class GoToWorkTask extends Task<NPCEntity> {
 			}
 		}
 		if (!matches) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get(), 200L);
 		}
 	}
 	

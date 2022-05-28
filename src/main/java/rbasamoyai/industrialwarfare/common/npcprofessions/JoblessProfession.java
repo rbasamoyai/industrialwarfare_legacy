@@ -22,5 +22,9 @@ public class JoblessProfession extends NPCProfession {
 	@Override
 	public void work(World world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 	}
+	
+	@Override
+	public void stopWorking(World world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	}
 
 }

@@ -33,6 +33,7 @@ import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.BlockInteractionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndDiplomacyAttackTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndPatrolAttackTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndWhistleAttackTask;
@@ -80,7 +81,8 @@ public class NPCTasks {
 	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
 		return ImmutableList.of(
 				Pair.of(0, new RunCommandFromTaskScrollTask()),
-				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget))
+				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
+				Pair.of(1, new BlockInteractionTask(4))
 				);
 	}
 	

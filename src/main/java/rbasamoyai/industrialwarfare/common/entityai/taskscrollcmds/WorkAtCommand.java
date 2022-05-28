@@ -8,9 +8,6 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.server.ServerWorld;
@@ -21,7 +18,6 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.C
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
-import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.utils.CommandUtils;
@@ -44,22 +40,22 @@ public class WorkAtCommand extends TaskScrollCommand {
 	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
 		LazyOptional<INPCDataHandler> lzop = npc.getDataHandler();
 		if (!lzop.isPresent()) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get(), 200L);
 			return false;
 		}
-		if (!lzop.resolve().get().getProfession().checkMemories(npc)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
+		if (lzop.map(INPCDataHandler::getProfession).map(p -> !p.checkMemories(npc)).get()) {
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get(), 200L);
 			return false;
 		}
 		
 		Optional<BlockPos> optional = order.getWrappedArg(POS_ARG_INDEX).getPos();
 		if (!optional.isPresent()) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get(), 200L);
 			return false;
 		}
 		BlockPos pos = optional.get();
 		if (!pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get(), 200L);
 			return false;
 		}
 		
@@ -72,7 +68,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		
 		LazyOptional<INPCDataHandler> lzop = npc.getDataHandler();
 		if (!lzop.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get(), 200L);
 			return;
 		}
 		INPCDataHandler handler = lzop.resolve().get();
@@ -81,7 +77,7 @@ public class WorkAtCommand extends TaskScrollCommand {
 		BlockPos target = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
 		Optional<BlockPos> posOptional = profession.getWorkingArea(world, target, npc);
 		if (!posOptional.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
 			return;
 		}
 		
@@ -94,23 +90,14 @@ public class WorkAtCommand extends TaskScrollCommand {
 	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		
-		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().get();
-		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2));
-		
-		if (!box.contains(npc.position())) {
-			if (npc.getNavigation().isDone()) {
-				BlockPos cachedPos = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get()).map(GlobalPos::pos).orElse(pos.below());
-				brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(cachedPos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST));
-			}
-			return;
-		}
-		
 		LazyOptional<INPCDataHandler> lzop = npc.getDataHandler();
 		if (!lzop.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NO_DATA_HANDLER.get(), 200L);
 			return;
 		}
-		lzop.resolve().get().getProfession().work(world, npc, gameTime, order);
+		lzop.ifPresent(h -> {
+			h.getProfession().work(world, npc, gameTime, order);
+		});
 		
 		WaitMode workMode = WaitMode.fromId(order.getWrappedArg(WORK_MODE_ARG_INDEX).getArgNum());
 		if (workMode != WaitMode.HEARD_BELL && !brain.hasMemoryValue(MemoryModuleTypeInit.WAIT_FOR.get())) {
@@ -129,11 +116,11 @@ public class WorkAtCommand extends TaskScrollCommand {
 		}
 		brain.eraseMemory(MemoryModuleTypeInit.CACHED_POS.get());
 		brain.eraseMemory(MemoryModuleTypeInit.WAIT_FOR.get());
+		brain.eraseMemory(MemoryModuleType.HEARD_BELL_TIME);
 		
-		TileEntity te = world.getBlockEntity(order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
-		if (te == null) return;
-		if (!(te instanceof WorkstationTileEntity)) return;
-		((WorkstationTileEntity) te).setRecipe(ItemStack.EMPTY, false);
+		npc.getDataHandler().ifPresent(h -> {
+			h.getProfession().stopWorking(world, npc, gameTime, order);
+		});
 	}
 
 }

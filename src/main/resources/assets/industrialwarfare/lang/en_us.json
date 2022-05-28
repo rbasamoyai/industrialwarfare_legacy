@@ -81,6 +81,8 @@
 	"block.industrialwarfare.task_scroll_shelf":	"Task Scroll Shelf",
 	"block.industrialwarfare.match_coil": "Match Coil",
 	"block.industrialwarfare.spool": "Spool",
+	"block.industrialwarfare.quarry": "Quarry",
+	"block.industrialwarfare.worker_support": "Worker Support",
 	
 	"tile.industrialwarfare.armorer_workstation":		"Armory Table",
 	"tile.industrialwarfare.assembler_workstation":		"Assembly Table",
@@ -126,12 +128,15 @@
 	"item.industrialwarfare.fishtail_matchlock": "Fishtail Matchlock Musket",
 	"item.industrialwarfare.tanegashima_matchlock": "Tanegashima Matchlock Musket",
 	
+	"item.industrialwarfare.pith_helmet": "Pith Helmet",
+	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
 	"itemGroup.industrialwarfare.blocks":	"Industrial Warfare Blocks",
 	"itemGroup.industrialwarfare.parts":	"Industrial Warfare Assembly Parts",
 	"itemGroup.industrialwarfare.recipes":	"Industrial Warfare Recipe Items",
 	"itemGroup.industrialwarfare.weapons":	"Industrial Warfare Weapons",
+	"itemGroup.industrialwarfare.armor": "Industrial Warfare Armor",
 	
 	"key.industrialwarfare.category":	"Industrial Warfare",
 	"key.industrialwarfare.item_screen": "Open Item Screen If Possible",
@@ -413,8 +418,10 @@
 	"complaint.industrialwarfare.invalid_order":	"I can't read this order.",
 	"complaint.industrialwarfare.no_data_handler":	"Reality break - I don't have a data handler. What happened?",
 	"complaint.industrialwarfare.nothing_here":		"There is nothing to access here.",
+	"complaint.industrialwarfare.not_enough_supplies": "I don't have enough supplies.",
 	"complaint.industrialwarfare.time_stopped":		"For some reason it just feels like time isn't running.",
 	"complaint.industrialwarfare.too_far":			"I can't reach that place, it's too far away.",
+	"complaint.industrialwarfare.wrong_tool": "I don't have the right tool for the job.",
 	
 	"formation.industrialwarfare.line_10w3d": "Line, 10 wide \u00D7 3 deep",
 	"formation.industrialwarfare.line_15w2d": "Line, 15 wide \u00D7 2 deep",

@@ -2,6 +2,8 @@ package rbasamoyai.industrialwarfare.client.events;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.entity.SpriteRenderer;
 import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
@@ -28,6 +30,7 @@ import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
@@ -74,6 +77,9 @@ public class ClientEvents {
 					(stack, level, living) -> {
 						return (float) stack.getItem().getDurabilityForDisplay(stack) * 4.0f;
 					});
+			
+			RenderTypeLookup.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
+			
 		});
 	}
 	

@@ -5,6 +5,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.npcprofessions.JoblessProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
+import rbasamoyai.industrialwarfare.common.npcprofessions.QuarrierProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.WorkstationProfession;
 
 public class NPCProfessionInit {
@@ -14,7 +15,8 @@ public class NPCProfessionInit {
 	public static final RegistryObject<NPCProfession> ASSEMBLER = PROFESSIONS.register("assembler",
 			() -> new WorkstationProfession(BlockInit.ASSEMBLER_WORKSTATION.get()));
 	
-	public static final RegistryObject<NPCProfession> JOBLESS = PROFESSIONS.register("jobless",
-			() -> new JoblessProfession());
+	public static final RegistryObject<NPCProfession> JOBLESS = PROFESSIONS.register("jobless", JoblessProfession::new);
+	
+	public static final RegistryObject<NPCProfession> QUARRIER = PROFESSIONS.register("quarrier", QuarrierProfession::new);
 	
 }
