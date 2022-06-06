@@ -12,7 +12,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
-import rbasamoyai.industrialwarfare.common.itemhandlers.ImmovableGuiItemSlot;
+import rbasamoyai.industrialwarfare.common.containers.ImmovableGuiItemSlot;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 

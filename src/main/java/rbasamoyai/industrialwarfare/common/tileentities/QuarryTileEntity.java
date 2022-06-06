@@ -1,34 +1,21 @@
 package rbasamoyai.industrialwarfare.common.tileentities;
 
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.blocks.QuarryBlock;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
@@ -36,24 +23,11 @@ import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
-public class QuarryTileEntity extends TileEntity implements ITickableTileEntity {
+public class QuarryTileEntity extends ResourceStationTileEntity {
 
-	public static final String TAG_BUFFER = "buffer";
-	public static final String TAG_SUPPLIES = "supplies";
-	public static final String TAG_RUNNING = "running";
 	public static final String TAG_Y_LEVEL = "yLevel";
-	
-	protected final ItemStackHandler buffer = new ItemStackHandler(18);
-	protected final ItemStackHandler supplies = new ItemStackHandler(27);
-	
-	protected final LazyOptional<IItemHandler> bufferOptional = LazyOptional.of(() -> this.buffer);
-	protected final LazyOptional<IItemHandler> suppliesOptional = LazyOptional.of(() -> this.supplies);
-	
-	protected final Map<BlockPos, BlockInteraction> posCache = new LinkedHashMap<>();
-	protected final BiMap<BlockPos, LivingEntity> currentTasks = HashBiMap.create();
-	protected int clockTicks;
+
 	protected int currentYLevel;
-	protected boolean isRunning = true;
 	
 	public QuarryTileEntity() {
 		this(TileEntityTypeInit.QUARRY.get());
@@ -69,75 +43,18 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
 	}
 	
 	@Override
-	public void setRemoved() {
-		super.setRemoved();
-		this.bufferOptional.invalidate();
-		this.suppliesOptional.invalidate();
-	}
-	
-	@Override
-	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
-			return side.getAxis().isVertical()
-					? this.bufferOptional.cast()
-					: this.suppliesOptional.cast();
-		}
-		return super.getCapability(cap, side);
-	}
-	
-	@Override
-	public CompoundNBT getUpdateTag() {
-		return this.save(new CompoundNBT());
-	}
-	
-	@Override
-	public void handleUpdateTag(BlockState state, CompoundNBT tag) {
-		super.handleUpdateTag(state, tag);
-	}
-	
-	@Override
-	public SUpdateTileEntityPacket getUpdatePacket() {
-		return new SUpdateTileEntityPacket(this.worldPosition, 0, this.save(new CompoundNBT()));
-	}
-	
-	@Override
-	public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-		BlockState state = this.level.getBlockState(pkt.getPos());
-		this.load(state, pkt.getTag());
-	}
-
-	@Override
 	public CompoundNBT save(CompoundNBT nbt) {
-		nbt.put(TAG_BUFFER, this.buffer.serializeNBT());
-		nbt.put(TAG_SUPPLIES, this.supplies.serializeNBT());
-		nbt.putBoolean(TAG_RUNNING, this.isRunning);
 		nbt.putInt(TAG_Y_LEVEL, this.currentYLevel);
 		return super.save(nbt);
 	}
 	
 	@Override
 	public void load(BlockState state, CompoundNBT nbt) {
-		super.load(state, nbt);
-		this.buffer.deserializeNBT(nbt.getCompound(TAG_BUFFER));
-		this.supplies.deserializeNBT(nbt.getCompound(TAG_SUPPLIES));
-		this.isRunning = nbt.getBoolean(TAG_RUNNING);
 		this.currentYLevel = nbt.getInt(TAG_Y_LEVEL);
+		super.load(state, nbt);
 	}
 	
 	@Override
-	public void tick() {
-		++this.clockTicks;
-		if (this.clockTicks >= 20) {
-			this.clockTicks = 0;
-			
-			for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-				if (entry.getValue().isDeadOrDying()) {
-					this.currentTasks.remove(entry.getKey());
-				}
-			}
-		}
-	}
-	
 	@Nullable
 	public BlockInteraction getInteraction(LivingEntity entity) {
 		if (!this.isRunning) {
@@ -266,14 +183,6 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
 				}
 			}
 		}
-	}
-	
-	public void stopWorking(LivingEntity entity) {
-		this.currentTasks.inverse().remove(entity);
-	}
-	
-	public boolean isRunning() {
-		return this.isRunning;
 	}
 	
 	public static void placeSupportAction(World level, BlockPos pos) {

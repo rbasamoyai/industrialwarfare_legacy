@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.core.init.items;
 
 import net.minecraft.block.Block;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ArmorMaterial;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -11,6 +12,7 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.AmericanKepiItem;
 import rbasamoyai.industrialwarfare.common.items.IWArmorMaterial;
 import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
@@ -87,7 +89,10 @@ public class ItemInit {
 	public static final RegistryObject<Item> MATCH_COIL = ITEMS.register("match_coil", MatchCoilItem::new);
 	
 	public static final RegistryObject<Item> PITH_HELMET = ITEMS.register("pith_helmet",
-			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_BLOCKS)));
+			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+	
+	public static final RegistryObject<Item> AMERICAN_KEPI = ITEMS.register("american_kepi",
+			() -> new AmericanKepiItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

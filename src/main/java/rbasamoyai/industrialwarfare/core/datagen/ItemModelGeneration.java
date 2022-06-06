@@ -84,6 +84,11 @@ public class ItemModelGeneration extends ItemModelProvider {
 		
 		simpleBuilder("pith_helmet");
 		
+		getBuilder("american_kepi")
+		.parent(new UncheckedModelFile("item/generated"))
+		.texture("layer0", modLoc("item/american_kepi"))
+		.texture("layer1", modLoc("item/american_kepi_overlay"));
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -28,9 +29,9 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	private static final int SHEARS_BUTTON_HEIGHT = 15;
 	private static final int SHEARS_GUI_Y = 22;
 	private static final int CORD_TEX_X = 0;
-	private static final int CORD_TEX_Y = 168;
+	private static final int CORD_TEX_Y = 166;
 	private static final int CORD_DARK_TEX_X = 0;
-	private static final int CORD_DARK_TEX_Y = 180;
+	private static final int CORD_DARK_TEX_Y = 178;
 	private static final int CORD_WIDTH = 100;
 	private static final int CORD_HEIGHT = 12;
 	private static final int CORD_GUI_X = 17;
@@ -56,8 +57,6 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	
 	public MatchCoilScreen(MatchCoilContainer container, PlayerInventory playerInv, ITextComponent title) {
 		super(container, playerInv, title);
-		this.imageWidth = 176;
-		this.imageHeight = 168;
 		this.scrollOffs = (float) this.menu.getCutLength() / (float) TOTAL_CORD_LENGTH;
 	}
 	
@@ -73,8 +72,11 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+		
 		TextureManager texManager = this.minecraft.textureManager;
 		texManager.bind(MATCH_COIL_SCREEN);
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);

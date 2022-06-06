@@ -118,7 +118,6 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
 			MemoryModuleTypeInit.BLOCK_INTERACTION.get(),
-			MemoryModuleTypeInit.BLOCK_INTERACTION_FAILED.get(),
 			MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(),
 			MemoryModuleTypeInit.CACHED_POS.get(),
 			MemoryModuleTypeInit.CAN_ATTACK.get(),
@@ -139,6 +138,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleTypeInit.SHOOTING_POS.get(),
 			MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(),
 			MemoryModuleTypeInit.STOP_EXECUTION.get(),
+			MemoryModuleTypeInit.SUPPLY_REQUESTS.get(),
 			MemoryModuleTypeInit.WAIT_FOR.get()
 			);
 	protected static final Supplier<List<SensorType<? extends Sensor<? super NPCEntity>>>> SENSOR_TYPES = () -> ImmutableList.of(

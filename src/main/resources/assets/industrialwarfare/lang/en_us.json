@@ -129,6 +129,7 @@
 	"item.industrialwarfare.tanegashima_matchlock": "Tanegashima Matchlock Musket",
 	
 	"item.industrialwarfare.pith_helmet": "Pith Helmet",
+	"item.industrialwarfare.american_kepi": "American Kepi",
 	
 	"itemGroup.industrialwarfare.general":	"Industrial Warfare General Items",
 	"itemGroup.industrialwarfare.debug":	"Industrial Warfare Debug Items",
@@ -393,6 +394,8 @@
 	"gui.industrialwarfare.match_coil.cut_length.ticks": "Cut length: %1$s ticks",
 	"gui.industrialwarfare.match_coil.remaining_coil": "Remaining coil: %1$s h %2$s m %3$s s",
 	"gui.industrialwarfare.match_coil.remaining_coil.ticks": "Remaining coil: %1$s ticks",
+	
+	"gui.industrialwarfare.quarry": "Quarry",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",

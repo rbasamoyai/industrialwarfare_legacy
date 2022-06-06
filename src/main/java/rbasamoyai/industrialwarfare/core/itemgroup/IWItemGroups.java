@@ -179,7 +179,8 @@ public class IWItemGroups {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.PITH_HELMET)
+					getItemStack(ItemInit.PITH_HELMET),
+					getItemStack(ItemInit.AMERICAN_KEPI)
 					));
 		}
 		

@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.client.entities.models;
+package rbasamoyai.industrialwarfare.client.items.models;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.LivingEntity;
 
 public class PithHelmetModel extends BipedModel<LivingEntity> {
+	
 	public ModelRenderer helmet;
 
 	public PithHelmetModel(float inflate) {
@@ -38,12 +39,6 @@ public class PithHelmetModel extends BipedModel<LivingEntity> {
 		matrixStack.translate(-this.head.x / 16.0f, -this.head.y / 16.0f, -this.head.z / 16.0f);
 		super.renderToBuffer(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 		matrixStack.popPose();
-	}
-	
-	@Override
-	public void setupAnim(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-		super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-		this.setRotationAngle(this.helmet, -0.0873F, 0.0F, 0.0F);
 	}
 
 	public void setRotationAngle(ModelRenderer modelRenderer, float x, float y, float z) {

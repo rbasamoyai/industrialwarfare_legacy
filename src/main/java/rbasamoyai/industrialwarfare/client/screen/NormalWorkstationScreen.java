@@ -52,8 +52,6 @@ public class NormalWorkstationScreen extends ContainerScreen<NormalWorkstationCo
 	
 	public NormalWorkstationScreen(NormalWorkstationContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
 		super(container, playerInv, localTitle);
-
-		this.imageWidth = 176;
 		this.imageHeight = 186;
 		this.inventoryLabelY = this.imageHeight - 94;
 	}

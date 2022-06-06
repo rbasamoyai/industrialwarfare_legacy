@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.itemhandlers;
+package rbasamoyai.industrialwarfare.common.containers;
 
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;

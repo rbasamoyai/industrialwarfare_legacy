@@ -17,8 +17,6 @@ public class TaskScrollShelfScreen extends ContainerScreen<TaskScrollShelfContai
 
 	public TaskScrollShelfScreen(TaskScrollShelfContainer container, PlayerInventory playerInv, ITextComponent title) {
 		super(container, playerInv, title);
-		
-		this.imageWidth = 176;
 		this.imageHeight = 186;
 		this.inventoryLabelY = this.imageHeight - 94;
 	}

@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.utils;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +13,7 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.server.ServerWorld;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
@@ -40,10 +40,9 @@ public class CommandUtils {
 		if (box.contains(npc.position())) return;
 		
 		List<BlockPos> list = BlockPos.betweenClosedStream(target.offset(-1, -2, -1), target.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
-		Collections.shuffle(list);
 		Optional<BlockPos> optional = list.stream()
 				.filter(pos -> world.loadedAndEntityCanStandOn(pos, npc))
-				.filter(pos -> world.noCollision(npc))
+				.filter(p -> world.noCollision(npc.getBoundingBox().move(Vector3d.ZERO.subtract(npc.getPosition(1.0f))).move(p).move(0.5d, 0.0d, 0.5d)))
 				.findFirst();
 		if (!optional.isPresent()) {
 			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);

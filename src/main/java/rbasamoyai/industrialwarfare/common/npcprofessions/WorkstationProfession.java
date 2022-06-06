@@ -62,12 +62,20 @@ public class WorkstationProfession extends NPCProfession {
 	public Optional<BlockPos> getWorkingArea(World level, BlockPos pos, NPCEntity npc) {
 		if (!this.workstations.contains(level.getBlockState(pos).getBlock())) return Optional.empty();
 		
-		List<BlockPos> positions = Arrays.asList(pos.below().north(), pos.below().east(), pos.below().south(), pos.below().west());
+		List<BlockPos> positions = Arrays.asList(pos.north(), pos.east(), pos.south(), pos.west());
 		return positions.stream()
-					.filter(p -> level.loadedAndEntityCanStandOn(p, npc))
-					.filter(p -> level.noCollision(npc.getBoundingBox().move(Vector3d.ZERO.subtract(npc.getPosition(1.0f))).move(p)))
+					.filter(p -> level.loadedAndEntityCanStandOn(p.below(), npc))
+					.filter(p -> noCollision(level, p, npc))
 					.sorted((pa, pb) -> Double.compare(pa.distSqr(npc.blockPosition()), pb.distSqr(npc.blockPosition())))
 					.findFirst();
+	}
+	
+	private static boolean noCollision(World level, BlockPos pos, NPCEntity npc) {
+		return level.noCollision(
+				npc.getBoundingBox()
+				.move(Vector3d.ZERO.subtract(npc.getPosition(1.0f)))
+				.move(pos)
+				.move(0.5d, 0.0d, 0.5d));
 	}
 	
 	@Override

@@ -17,15 +17,16 @@ import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessa
 import rbasamoyai.industrialwarfare.core.network.messages.SMatchCoilSyncMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
+import rbasamoyai.industrialwarfare.core.network.messages.SResourceStationMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.SSetProneMessage;
 import rbasamoyai.industrialwarfare.core.network.messages.STaskScrollSyncMessage;
-import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.SWorkstationPlayerActionMessage;
+import rbasamoyai.industrialwarfare.core.network.messages.WhistleScreenMessages;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class IWNetwork {
 
-	public static final String NETWORK_VERSION = "0.11.0";
+	public static final String NETWORK_VERSION = "0.12.0";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
 			new ResourceLocation(IndustrialWarfare.MOD_ID, "network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals,
@@ -53,6 +54,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAction.class, WhistleScreenMessages.SStopAction::encode, WhistleScreenMessages.SStopAction::decode, WhistleScreenMessages.SStopAction::handle);
 		CHANNEL.registerMessage(id++, WhistleScreenMessages.SStopAllFormationLeaders.class, WhistleScreenMessages.SStopAllFormationLeaders::encode, WhistleScreenMessages.SStopAllFormationLeaders::decode, WhistleScreenMessages.SStopAllFormationLeaders::handle);
 		CHANNEL.registerMessage(id++, SMatchCoilSyncMessage.class, SMatchCoilSyncMessage::encode, SMatchCoilSyncMessage::decode, SMatchCoilSyncMessage::handle);
+		CHANNEL.registerMessage(id++, SResourceStationMessage.class, SResourceStationMessage::encode, SResourceStationMessage::decode, SResourceStationMessage::handle);
 	}
 	
 	@SubscribeEvent

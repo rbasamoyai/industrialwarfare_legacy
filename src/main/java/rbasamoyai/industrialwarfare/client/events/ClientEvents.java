@@ -4,10 +4,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.client.renderer.color.ItemColors;
 import net.minecraft.client.renderer.entity.SpriteRenderer;
+import net.minecraft.item.IDyeableArmorItem;
 import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -26,6 +29,7 @@ import rbasamoyai.industrialwarfare.client.screen.attachmentitems.AttachmentsRif
 import rbasamoyai.industrialwarfare.client.screen.diplomacy.DiplomacyScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
+import rbasamoyai.industrialwarfare.client.screen.resource_station.ResourceStationScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
@@ -49,6 +53,7 @@ public class ClientEvents {
 		ScreenManager.register(ContainerInit.MATCH_COIL.get(), MatchCoilScreen::new);
 		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
 		ScreenManager.register(ContainerInit.NPC_BASE.get(), NPCBaseScreen::new);
+		ScreenManager.register(ContainerInit.RESOURCE_STATION.get(), ResourceStationScreen::new);
 		ScreenManager.register(ContainerInit.SCHEDULE.get(), EditScheduleScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL.get(), TaskScrollScreen::new);
 		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
@@ -91,6 +96,14 @@ public class ClientEvents {
 		event.addSprite(new ResourceLocation(IndustrialWarfare.MOD_ID, "item/recipe_manual_icon"));
 		
 		event.addSprite(new ResourceLocation(IndustrialWarfare.MOD_ID, "entity/task_scroll"));
+	}
+	
+	@SubscribeEvent
+	public static void onColorHandlerItem(ColorHandlerEvent.Item event) {
+		ItemColors itemColors = event.getItemColors();
+		itemColors.register((stack, layer) -> {
+			return layer > 0 ? -1 : ((IDyeableArmorItem) stack.getItem()).getColor(stack);
+		}, ItemInit.AMERICAN_KEPI.get());
 	}
 	
 }
