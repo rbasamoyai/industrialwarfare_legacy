@@ -1,17 +1,23 @@
 package rbasamoyai.industrialwarfare.common.tileentities;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 import net.minecraft.world.World;
@@ -29,6 +35,8 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 
 	public static final String TAG_Y_LEVEL = "yLevel";
 
+	protected final BiMap<BlockPos, LivingEntity> currentTasks = HashBiMap.create();
+	protected final Map<BlockPos, BlockInteraction> posCache = new LinkedHashMap<>();
 	protected int currentYLevel;
 	
 	public QuarryTileEntity() {
@@ -66,9 +74,25 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 	}
 	
 	@Override
+	protected void purgeEntries() {
+		super.purgeEntries();
+		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
+			if (entry.getValue().isDeadOrDying()) {
+				this.currentTasks.remove(entry.getKey());
+			}
+		}
+	}
+	
+	@Override
+	public void stopWorking(LivingEntity entity) {
+		super.stopWorking(entity);
+		this.currentTasks.inverse().remove(entity);
+	}
+	
+	@Override
 	@Nullable
 	public BlockInteraction getInteraction(LivingEntity entity) {
-		if (!this.isRunning) {
+		if (!this.isRunning()) {
 			return null;
 		}
 		
@@ -84,9 +108,14 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 			this.generateCache();
 		}
 		if (this.posCache.isEmpty()) {
+			this.findItemsToPickUp();
+			if (!this.itemsToPickUp.isEmpty()) {
+				return null;
+			}
+			
 			this.setYLevel(this.currentYLevel - 1);
 			if (this.isFinished()) {
-				this.isRunning = false;
+				this.setRunning(false);
 				return null;
 			}
 			this.generateCache();
@@ -190,6 +219,54 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 				}
 			}
 		}
+	}
+	
+	@Override	
+	@SuppressWarnings("deprecation")
+	protected void findItemsToPickUp() {
+		this.itemsToPickUp.clear();
+		int startX;
+		int startZ;
+		int signX;
+		int signZ;
+		
+		Direction direction = this.getBlockState().getValue(QuarryBlock.FACING);	
+		
+		switch (direction) {
+		case WEST:
+			startX = this.worldPosition.getX() + 1;
+			startZ = this.worldPosition.getZ() - 8;
+			signX = 1;
+			signZ = 1;
+			break;
+		case EAST:
+			startX = this.worldPosition.getX() - 1;
+			startZ = this.worldPosition.getZ() + 8;
+			signX = -1;
+			signZ = -1;
+			break;
+		case SOUTH:
+			startX = this.worldPosition.getX() - 8;
+			startZ = this.worldPosition.getZ() - 1;
+			signX = 1;
+			signZ = -1;
+			break;
+		default:
+			startX = this.worldPosition.getX() + 8;
+			startZ = this.worldPosition.getZ() + 1;
+			signX = -1;
+			signZ = 1;
+			break;
+		}
+		
+		BlockPos startPos = new BlockPos(startX, this.currentYLevel, startZ);
+		BlockPos endPos = new BlockPos(startX + 17 * signX, this.currentYLevel + 2, startZ + 17 * signZ);
+		AxisAlignedBB pickupArea = new AxisAlignedBB(startPos, endPos);
+		
+		this.itemsToPickUp.addAll(this.level.getEntities(EntityType.ITEM, pickupArea, item -> {
+			BlockPos pos = item.blockPosition();
+			return item.level.getBlockState(pos).isAir() && item.level.getBlockState(pos.above()).isAir();
+		}));
 	}
 	
 	@Override

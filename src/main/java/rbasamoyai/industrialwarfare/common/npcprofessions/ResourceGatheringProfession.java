@@ -14,6 +14,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.memory.WalkTarget;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
@@ -51,6 +52,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 	public boolean checkMemories(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
 		return brain.checkMemory(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleStatus.REGISTERED)
 			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), MemoryModuleStatus.REGISTERED)
 			&& brain.checkMemory(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
 			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), MemoryModuleStatus.REGISTERED)
@@ -79,6 +81,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 				.move(0.5d, 0.0d, 0.5d));
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void work(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
@@ -94,9 +97,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 		AxisAlignedBB jobSiteBox = new AxisAlignedBB(jobSitePos.offset(-1, 0, -1), jobSitePos.offset(2, 3, 2));
 		
 		if (!resourceStation.isRunning()) {
-			if (!jobSiteBox.contains(npc.position())) {
-				brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
-			}
+			brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
 		}
 		
 		if (brain.getMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get()).map(List::isEmpty).orElse(true)) {
@@ -170,7 +171,14 @@ public class ResourceGatheringProfession extends NPCProfession {
 			BlockInteraction interaction = resourceStation.getInteraction(npc);
 			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), Optional.ofNullable(interaction));
 			if (interaction == null) {
-				brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
+				if (!brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
+					ItemEntity item = resourceStation.getItemToPickup(npc);
+					if (item != null && !item.removed && !item.getItem().isEmpty()) {
+						brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, item);
+					} else {
+						brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
+					}
+				}
 			}
 		} else if (brain.hasMemoryValue(MemoryModuleTypeInit.BLOCK_INTERACTION.get())) {
 			BlockInteraction interaction = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get()).get();

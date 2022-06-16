@@ -112,6 +112,7 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
+			MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM,
 			MemoryModuleType.LIVING_ENTITIES,
 			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
@@ -494,6 +495,10 @@ public class NPCEntity extends CreatureEntity implements
 	public void onItemPickup(ItemEntity item) {
 		super.onItemPickup(item);
 		this.equipmentItemHandler.update();
+		if (this.brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)
+			&& this.brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get().equals(item)) {
+			this.brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM);
+		}
 	}
 	
 	@Override

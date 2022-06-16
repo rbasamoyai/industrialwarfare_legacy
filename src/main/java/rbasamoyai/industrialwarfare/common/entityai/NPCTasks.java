@@ -22,9 +22,11 @@ import net.minecraft.entity.ai.brain.task.InteractWithDoorTask;
 import net.minecraft.entity.ai.brain.task.LookAtEntityTask;
 import net.minecraft.entity.ai.brain.task.LookTask;
 import net.minecraft.entity.ai.brain.task.MoveToTargetTask;
+import net.minecraft.entity.ai.brain.task.PickupWantedItemTask;
 import net.minecraft.entity.ai.brain.task.SwimTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -82,7 +84,8 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new RunCommandFromTaskScrollTask()),
 				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
-				Pair.of(1, new BlockInteractionTask())
+				Pair.of(1, new BlockInteractionTask()),
+				Pair.of(2, new PickupWantedItemTask<>(NPCTasks::pickUpPredicate, 3.0f, true, 16))
 				);
 	}
 	
@@ -248,6 +251,16 @@ public class NPCTasks {
 	
 	private static boolean isViableTargetingTarget(MobEntity targeter) {
 		return true;
+	}
+	
+	@SuppressWarnings("deprecation")
+	private static boolean pickUpPredicate(LivingEntity entity) {
+		Brain<?> brain = entity.getBrain();
+		if (!brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
+			return false;
+		}
+		ItemEntity item = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get();
+		return item != null && !item.removed;
 	}
 	
 }

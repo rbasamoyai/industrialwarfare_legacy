@@ -1,7 +1,6 @@
 Current TODO:
 
 - Extra supplies
-- Item pickup
 
 - Formulate an economy
 	- Resource gathering
@@ -16,16 +15,12 @@ Current TODO:
 		- Woodworking
 		- Base parts
 		- Assembly
+		- Chemistry
 		- Commodities
 			- Clothes/uniforms
-			
-
-- Improve tree caching damnit
+			- Food
 
 - Fluid removal
 
 - Possible restructuring
 of folder hierarchy?
-
-- Content drop
-	- Pickelhaube

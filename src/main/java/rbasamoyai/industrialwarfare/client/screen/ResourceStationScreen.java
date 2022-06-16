@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.client.screen.resourcestation;
+package rbasamoyai.industrialwarfare.client.screen;
 
 import java.util.ArrayList;
 import java.util.List;

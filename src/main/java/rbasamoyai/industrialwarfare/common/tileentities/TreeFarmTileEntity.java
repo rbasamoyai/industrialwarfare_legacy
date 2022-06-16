@@ -1,11 +1,14 @@
 package rbasamoyai.industrialwarfare.common.tileentities;
 
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -41,6 +44,9 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 	
 	private BlockPos startingCorner;
 	private BlockPos endingCorner;
+	
+	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();
+	private int searchCooldown = 0;
 	
 	public TreeFarmTileEntity() {
 		this(TileEntityTypeInit.TREE_FARM.get());
@@ -115,89 +121,120 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 			this.trySettingBounds(null, null, startPos, endPos);
 		}
 	}
+	
+	@Override
+	public void setRunning(boolean running) {
+		super.setRunning(running);
+		this.searchCooldown = 0;
+	}
+	
+	@Override
+	protected void purgeEntries() {
+		super.purgeEntries();
+		for (LivingEntity worker : this.treeWorkers.keySet()) {
+			if (worker.isDeadOrDying()) {
+				this.treeWorkers.remove(worker);
+			}
+		}
+	}
 
 	@Nullable
 	@Override
 	public BlockInteraction getInteraction(LivingEntity entity) {
-		if (!this.isRunning()) return null;
+		if (!this.isRunning() || this.searchCooldown > 0) return null;
 		
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-			if (entry.getValue() == entity) {
-				this.posCache.remove(entry.getKey());
-				this.currentTasks.remove(entry.getKey());
-				break;
+		if (!this.treeWorkers.containsKey(entity)) {
+			Tree result = this.findTree();
+			if (result == null) {
+				this.searchCooldown = 600;
+				return null;
 			}
+			this.treeWorkers.put(entity, result);
 		}
 		
-		if (this.posCache.isEmpty()) {
-			this.generateCache();
+		Tree tree = this.treeWorkers.get(entity);
+		if (tree.interactions().isEmpty()) {
+			return this.getFinalInteraction(tree);
+		} else {
+			return tree.interactions().poll();
 		}
-		if (this.posCache.isEmpty()) return null;
-		
-		BlockInteraction interaction = null;
-		Iterator<BlockInteraction> iter = this.posCache.values().iterator();
-		while (iter.hasNext()) {
-			BlockInteraction newInteraction = iter.next();
-			if (this.currentTasks.keySet().contains(newInteraction.pos().pos())) continue;
-			interaction = newInteraction;
-			break;
-		}
-		if (interaction == null) return null;
-		this.currentTasks.put(interaction.pos().pos(), entity);
-		return interaction;
 	}
 	
-	private void generateCache() {
-		if (!this.hasCornersSetUp()) return;
-		AxisAlignedBB box = new AxisAlignedBB(this.startingCorner, this.endingCorner);
-		BlockPos.betweenClosedStream(box)
-		.filter(p -> this.level.getBlockState(p).is(BlockTags.LOGS))
-		.filter(p -> !this.level.getBlockState(p.below()).is(Blocks.COBBLESTONE))
-		.filter(p -> !this.level.getBlockState(p.below()).is(BlockTags.LOGS))
-		.findAny()
-		.ifPresent(this::addTreeInteractions);
-	}
-	
-	private void addTreeInteractions(BlockPos pos) {
-		BlockState state = this.level.getBlockState(pos);
+	private BlockInteraction getFinalInteraction(Tree tree) {
+		BlockPos pos = tree.pos().immutable();
 		BlockState stateBelow = this.level.getBlockState(pos.below());
-		BlockPos immutable = pos.immutable();
 		
+		if (stateBelow.is(IWBlockTags.CAN_PLANT_SAPLING)) {
+			return BlockInteraction.placeBlockAtAs(
+					GlobalPos.of(this.level.dimension(), pos),
+					new SupplyRequestPredicate(ItemTags.SAPLINGS, null, IntBound.ANY, null, IntBound.ANY),
+					this::placeSapling,
+					this::isSapling);
+		}
+		if (stateBelow.is(IWBlockTags.CAN_PLANT_FUNGUS)) {
+			return BlockInteraction.placeBlockAtAs(
+					GlobalPos.of(this.level.dimension(), pos),
+					new SupplyRequestPredicate(IWItemTags.FUNGUS, null, IntBound.ANY, null, IntBound.ANY),
+					this::placeFungus,
+					this::isFungus);
+		}
+		return null;
+	}
+	
+	private Tree findTree() {
+		if (!this.hasCornersSetUp()) {
+			return null;
+		}
+		AxisAlignedBB box = new AxisAlignedBB(this.startingCorner, this.endingCorner);
+		return BlockPos.betweenClosedStream(box)
+				.filter(p -> this.level.getBlockState(p).is(BlockTags.LOGS))
+				.filter(p -> !this.level.getBlockState(p.below()).is(Blocks.COBBLESTONE))
+				.filter(p -> !this.level.getBlockState(p.below()).is(BlockTags.LOGS))
+				.filter(p -> !this.hasTreeAt(p))
+				.findAny()
+				.map(this::addTreeInteractions)
+				.orElse(null);
+	}
+	
+	private Tree addTreeInteractions(BlockPos pos) {
 		VoxelShape box = VoxelShapes.create(new AxisAlignedBB(this.startingCorner, this.endingCorner.offset(1, 32, 1)));
-		VoxelShape box1 = VoxelShapes.create(new AxisAlignedBB(pos.offset(-5, -1, -5), pos.offset(6, 32, 6)));
+		VoxelShape box1 = VoxelShapes.create(new AxisAlignedBB(pos.offset(-4, -1, -4), pos.offset(5, 32, 5)));
 		VoxelShape limit = VoxelShapes.join(box, box1, IBooleanFunction.AND);
-		if (limit.isEmpty()) return;
-		TreeBlockIterator iter = new TreeBlockIterator(this.level, pos, limit.bounds());
+		if (limit.isEmpty()) {
+			return null;
+		}
 		
+		TreeBlockIterator iter = new TreeBlockIterator(this.level, pos, limit.bounds());
+		Queue<BlockInteraction> interactions = new LinkedList<>();
+		BlockPos immutable = pos.immutable();
 		iter.findBlockInteractions()
 		.stream()
-		.sorted((p1, p2) -> this.comparePos(p1.pos().pos(), p2.pos().pos(), immutable))
-		.forEach(b -> {
-			this.posCache.put(b.pos().pos(), b);
-		});
+		.sorted((b1, b2) -> comparePos(b1.pos().pos(), b2.pos().pos(), immutable))
+		.forEach(interactions::offer);
 		
-		if (state.is(BlockTags.LOGS_THAT_BURN) && stateBelow.is(IWBlockTags.CAN_PLANT_SAPLING)) {
-			this.posCache.put(immutable, BlockInteraction.placeBlockAtAs(
-					GlobalPos.of(this.level.dimension(), immutable),
-					new SupplyRequestPredicate(ItemTags.SAPLINGS, null, IntBound.ANY, null, IntBound.ANY),
-					TreeFarmTileEntity::placeSapling,
-					TreeFarmTileEntity::isSapling));
-		} else if (stateBelow.is(IWBlockTags.CAN_PLANT_FUNGUS)) {
-			this.posCache.put(immutable, BlockInteraction.placeBlockAtAs(
-					GlobalPos.of(this.level.dimension(), immutable),
-					new SupplyRequestPredicate(IWItemTags.FUNGUS, null, IntBound.ANY, null, IntBound.ANY),
-					TreeFarmTileEntity::placeFungus,
-					TreeFarmTileEntity::isFungus));
-		}
-		
+		return interactions.isEmpty() ? null : new Tree(immutable, interactions);
 	}
 	
-	private int comparePos(BlockPos p1, BlockPos p2, BlockPos src) {
+	private static int comparePos(BlockPos p1, BlockPos p2, BlockPos src) {
 		return Integer.compare(p1.distManhattan(src), p2.distManhattan(src));
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	protected void findItemsToPickUp() {
+		AxisAlignedBB pickupArea = new AxisAlignedBB(this.startingCorner.offset(-5, 0, -5), this.endingCorner.offset(6, 1, 6));
+		this.itemsToPickUp.addAll(this.level.getEntities(EntityType.ITEM, pickupArea, item -> {
+			BlockPos pos = item.blockPosition();
+			return item.level.getBlockState(pos).isAir() && item.level.getBlockState(pos.above()).isAir();
+		}));
 	}
 	
 	private boolean hasCornersSetUp() {
 		return this.startingCorner != null && this.endingCorner != null;
+	}
+	
+	private boolean hasTreeAt(BlockPos pos) {
+		return this.treeWorkers.values().stream().map(Tree::pos).anyMatch(pos::equals);
 	}
 	
 	@Override
@@ -206,9 +243,12 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 		if (!this.hasCornersSetUp()) {
 			this.setRunning(false);
 		}
+		if (this.searchCooldown > 0) {
+			--this.searchCooldown;
+		}
 	}
 	
-	private static void placeSapling(World level, BlockPos pos, LivingEntity entity) {
+	private void placeSapling(World level, BlockPos pos, LivingEntity entity) {
 		ItemStack stack = entity.getOffhandItem();
 		Item item = stack.getItem();
 		if (item.is(ItemTags.SAPLINGS) && item instanceof BlockItem) {
@@ -216,11 +256,15 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 		}
 	}
 	
-	private static boolean isSapling(World level, BlockPos pos, LivingEntity entity) {
-		return level.getBlockState(pos).is(BlockTags.SAPLINGS);
+	private boolean isSapling(World level, BlockPos pos, LivingEntity entity) {
+		if (level.getBlockState(pos).is(BlockTags.SAPLINGS)) {
+			this.treeWorkers.remove(entity);
+			return true;
+		}
+		return false;
 	}
 	
-	private static void placeFungus(World level, BlockPos pos, LivingEntity entity) {
+	private void placeFungus(World level, BlockPos pos, LivingEntity entity) {
 		ItemStack stack = entity.getOffhandItem();
 		Item item = stack.getItem();
 		if (item.is(IWItemTags.FUNGUS) && item instanceof BlockItem) {
@@ -228,8 +272,25 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 		}
 	}
 	
-	private static boolean isFungus(World level, BlockPos pos, LivingEntity entity) {
-		return level.getBlockState(pos).is(IWBlockTags.FUNGUS);
+	private boolean isFungus(World level, BlockPos pos, LivingEntity entity) {
+		if (level.getBlockState(pos).is(IWBlockTags.FUNGUS)) {
+			this.treeWorkers.remove(entity);
+			return true;
+		}
+		return false;
+	}
+	
+	private static class Tree {
+		private final BlockPos start;
+		private final Queue<BlockInteraction> interactions;
+		
+		public Tree(BlockPos start, Queue<BlockInteraction> interactions) {
+			this.start = start;
+			this.interactions = interactions;
+		}
+		
+		public BlockPos pos() { return this.start; }
+		public Queue<BlockInteraction> interactions() { return this.interactions; }
 	}
 	
 }

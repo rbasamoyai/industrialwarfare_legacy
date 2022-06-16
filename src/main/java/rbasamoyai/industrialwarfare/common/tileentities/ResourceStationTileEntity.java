@@ -1,18 +1,19 @@
 package rbasamoyai.industrialwarfare.common.tileentities;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -21,7 +22,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -47,8 +47,8 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	protected final LazyOptional<IItemHandler> bufferOptional = LazyOptional.of(() -> this.buffer);
 	protected final LazyOptional<IItemHandler> suppliesOptional = LazyOptional.of(() -> this.supplies);
 	
-	protected final Map<BlockPos, BlockInteraction> posCache = new LinkedHashMap<>();
-	protected final BiMap<BlockPos, LivingEntity> currentTasks = HashBiMap.create();
+	protected final Set<ItemEntity> itemsToPickUp = new HashSet<>();
+	
 	protected final Map<LivingEntity, List<SupplyRequestPredicate>> requests = new LinkedHashMap<>();
 	protected final List<SupplyRequestPredicate> additionalSupplies = new ArrayList<>();
 	
@@ -120,24 +120,34 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		if (this.clockTicks >= 20) {
 			this.clockTicks = 0;
 			
-			for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-				if (entry.getValue().isDeadOrDying()) {
-					this.currentTasks.remove(entry.getKey());
-				}
-			}
+			this.purgeEntries();
 		}
 	}
+	
+	protected void purgeEntries() {}
 	
 	@Nullable
 	public abstract BlockInteraction getInteraction(LivingEntity entity);
 	
-	public void stopWorking(LivingEntity entity) {
-		this.currentTasks.inverse().remove(entity);
+	@Nullable
+	public ItemEntity getItemToPickup(LivingEntity entity) {
+		if (this.itemsToPickUp.isEmpty()) {
+			this.findItemsToPickUp();
+		}
+		for (Iterator<ItemEntity> iter = this.itemsToPickUp.iterator(); iter.hasNext(); ) {
+			ItemEntity item = iter.next();
+			iter.remove();
+			return item;
+		}
+		return null;
 	}
+	
+	protected abstract void findItemsToPickUp();
+	
+	public void stopWorking(LivingEntity entity) {}
 	
 	public void setRunning(boolean running) {
 		this.isRunning = running;
-		if (!running) this.posCache.clear();
 		this.setChanged();
 	}
 	

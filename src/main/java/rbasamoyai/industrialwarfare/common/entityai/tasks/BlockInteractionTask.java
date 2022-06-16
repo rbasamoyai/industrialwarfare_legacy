@@ -20,6 +20,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPosWrapper;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.items.ItemStackHandler;
@@ -79,7 +80,7 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		BlockPos pos = interaction.pos().pos();
 		int reachDistance = interaction.reachDistance();
 		
-		if (pos.closerThan(entity.position(), (double) reachDistance)) {
+		if (Vector3d.atCenterOf(pos).closerThan(entity.position(), (double) reachDistance + 1.0d)) {
 			this.breakProgress = 0.0f;
 			this.lastBreakProgress = -1;
 		} else {
@@ -105,7 +106,7 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		
 		brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
 		
-		if (!pos.closerThan(entity.position(), (double) reachDistance)) {
+		if (!Vector3d.atCenterOf(pos).closerThan(entity.position(), (double) reachDistance + 1.0d)) {
 			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, 3.0f, Math.max(reachDistance, 2)));
 			this.breakProgress = 0.0f;
 			this.lastBreakProgress = -1;
