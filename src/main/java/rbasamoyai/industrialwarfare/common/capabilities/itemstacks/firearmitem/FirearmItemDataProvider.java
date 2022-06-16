@@ -22,7 +22,7 @@ public class FirearmItemDataProvider implements ICapabilitySerializable<Compound
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

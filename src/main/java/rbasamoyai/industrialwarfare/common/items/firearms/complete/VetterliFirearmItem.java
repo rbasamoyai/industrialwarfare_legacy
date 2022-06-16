@@ -377,12 +377,6 @@ public class VetterliFirearmItem extends InternalMagazineRifleItem {
 		return MODEL_LOC;
 	}
 
-	private static final ResourceLocation TEXTURE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/item/vetterli.png");
-	@Override
-	public ResourceLocation getTextureLocation(ItemStack stack, LivingEntity entity) {
-		return TEXTURE_LOC;
-	}
-
 	@Override
 	public AnimationBuilder getDefaultAnimation(ItemStack stack, LivingEntity entity, AnimationController<?> controller) {
 		return (new AnimationBuilder())

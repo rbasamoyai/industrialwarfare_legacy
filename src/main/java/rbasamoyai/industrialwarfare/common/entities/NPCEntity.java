@@ -349,7 +349,7 @@ public class NPCEntity extends CreatureEntity implements
 				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
 					buf.writeVarInt(this.inventoryItemHandler.getSlots());
 					buf.writeBoolean(this.getDataHandler().map(INPCDataHandler::canWearEquipment).orElse(false));
-					// TODO: implement professions and write job id
+					// TODO: write additional npc info
 				});
 				return ActionResultType.SUCCESS;
 			}
@@ -359,7 +359,6 @@ public class NPCEntity extends CreatureEntity implements
 	
 	protected ActionResultType checkAndHandleImportantInteractions(PlayerEntity player, Hand handIn) {
 		ItemStack handStack = player.getItemInHand(handIn);
-		//Item handItem = handStack.getItem();
 		return handStack.interactLivingEntity(player, this, handIn);
 	}
 

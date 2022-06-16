@@ -44,6 +44,28 @@ public class TagsGeneration {
 					.addTag(BlockTags.STAIRS)
 					.add(BlockInit.WORKER_SUPPORT.get())
 					.add(Blocks.BONE_BLOCK);
+			
+			tag(IWBlockTags.CAN_PLANT_SAPLING)
+					.add(Blocks.DIRT)
+					.add(Blocks.COARSE_DIRT)
+					.add(Blocks.GRASS_BLOCK)
+					.add(Blocks.PODZOL)
+					.add(Blocks.FARMLAND);
+			
+			tag(IWBlockTags.CAN_PLANT_FUNGUS)
+					.addTag(BlockTags.NYLIUM)
+					.add(Blocks.MYCELIUM)
+					.add(Blocks.SOUL_SOIL);
+			
+			tag(IWBlockTags.FORESTRY_HARVESTABLE)
+					.addTag(BlockTags.LEAVES)
+					.addTag(BlockTags.LOGS)
+					.addTag(BlockTags.WART_BLOCKS)
+					.add(Blocks.SHROOMLIGHT);
+			
+			tag(IWBlockTags.FUNGUS)
+					.add(Blocks.CRIMSON_FUNGUS)
+					.add(Blocks.WARPED_FUNGUS);
 		}
 		
 		@Override
@@ -71,6 +93,8 @@ public class TagsGeneration {
 					.add(Items.WOODEN_AXE, Items.STONE_AXE, Items.IRON_AXE, Items.GOLDEN_AXE, Items.DIAMOND_AXE, Items.NETHERITE_AXE);
 			
 			tag(IWItemTags.FIREARM_OPTIC_ATTACHMENTS);
+			
+			copy(IWBlockTags.FUNGUS, IWItemTags.FUNGUS);	
 		}
 		
 		@Override

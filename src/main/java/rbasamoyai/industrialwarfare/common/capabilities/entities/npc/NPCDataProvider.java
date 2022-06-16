@@ -20,7 +20,7 @@ public class NPCDataProvider implements ICapabilitySerializable<CompoundNBT> {
 	@Nonnull
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == NPCDataCapability.NPC_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

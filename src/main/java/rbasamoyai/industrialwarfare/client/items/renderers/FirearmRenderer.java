@@ -23,6 +23,7 @@ import net.minecraft.util.math.vector.Vector3f;
 import rbasamoyai.industrialwarfare.client.items.models.FirearmModel;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
+import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
@@ -157,6 +158,11 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 			stack.popPose();
 		}
 		super.renderRecursively(bone, stack, this.currentBuffer.getBuffer(this.renderType), packedLightIn, packedOverlayIn, red, green, blue, alpha);
+	}
+	
+	@Override
+	public ResourceLocation getTextureLocation(FirearmItem instance) {
+		return this.currentItemStack == null ? super.getTextureLocation(instance) : TextureUtils.getWeaponSkinTexture(this.currentItemStack);
 	}
 	
 	@Override

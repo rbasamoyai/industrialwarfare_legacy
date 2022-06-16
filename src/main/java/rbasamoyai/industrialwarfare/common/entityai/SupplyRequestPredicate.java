@@ -1,5 +1,9 @@
 package rbasamoyai.industrialwarfare.common.entityai;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.block.BlockState;
@@ -13,6 +17,8 @@ import net.minecraftforge.common.ToolType;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class SupplyRequestPredicate {
+	
+	public static final SupplyRequestPredicate ANY = new SupplyRequestPredicate();
 	
 	@Nullable
 	private final ITag<Item> tag;
@@ -65,6 +71,21 @@ public class SupplyRequestPredicate {
 		return stack.getToolTypes().contains(this.toolType) && this.harvestLevel.matches(stack.getHarvestLevel(this.toolType, null, null));
 	}
 	
+	public List<ItemStack> getItemsForDisplay() {
+		if (this.tag != null) return this.tag.getValues().stream().map(i -> new ItemStack(i)).collect(Collectors.toList());
+		if (this.item != null) return Arrays.asList(new ItemStack(this.item));
+		if (this.toolType == null) return Arrays.asList();
+		return ForgeRegistries.ITEMS.getValues().stream()
+				.map(i -> new ItemStack(i))
+				.filter(s -> s.getToolTypes().contains(this.toolType))
+				.filter(s -> this.harvestLevel.matches(s.getHarvestLevel(this.toolType, null, null)))
+				.collect(Collectors.toList());
+	}
+	
+	public int getMinCount(int noMinimum) {
+		return this.count.getMin() == null ? noMinimum : this.count.getMin();
+	}
+	
 	public int getMaxCount(int noMaximum) {
 		return this.count.getMax() == null ? noMaximum : this.count.getMax();
 	}
@@ -84,6 +105,14 @@ public class SupplyRequestPredicate {
 			buf.writeUtf(this.toolType.getName());
 		}
 		writeBound(buf, this.harvestLevel);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (!(obj instanceof SupplyRequestPredicate)) return false;
+		SupplyRequestPredicate pred = (SupplyRequestPredicate) obj;
+		return this.tag == pred.tag && this.item == pred.item && this.count.equals(pred.count) && this.toolType == pred.toolType && this.harvestLevel.equals(pred.harvestLevel);
 	}
 	
 	public static SupplyRequestPredicate fromNetwork(PacketBuffer buf) {
@@ -171,6 +200,15 @@ public class SupplyRequestPredicate {
 		
 		public static IntBound atLeast(int value) { return new IntBound(value, null); }
 		public static IntBound exactly(int value) { return new IntBound(value, value); }
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (!(obj instanceof IntBound)) return false;
+			IntBound other = (IntBound) obj;
+			if (this.min == null ? other.min != null : !this.min.equals(other.min)) return false;
+			return this.max == null ? other.max == null : this.max.equals(other.max);
+		}
 	}
 	
 }

@@ -17,7 +17,7 @@ public class LabelItemDataProvider implements ICapabilitySerializable<CompoundNB
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

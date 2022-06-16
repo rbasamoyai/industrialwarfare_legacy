@@ -33,6 +33,9 @@ public class BlockStateModelGeneration extends BlockStateProvider {
 		horizontalBlock(BlockInit.QUARRY.get(), new UncheckedModelFile(modLoc("block/quarry")));
 		simpleBlockItem(BlockInit.QUARRY.get(), new UncheckedModelFile(modLoc("block/quarry")));
 		
+		horizontalBlock(BlockInit.TREE_FARM.get(), new UncheckedModelFile(modLoc("block/tree_farm")));
+		simpleBlockItem(BlockInit.TREE_FARM.get(), new UncheckedModelFile(modLoc("block/tree_farm")));
+		
 		horizontalBlock(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
 		simpleBlockItem(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
 		

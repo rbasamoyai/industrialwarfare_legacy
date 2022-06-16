@@ -1,8 +1,9 @@
-package rbasamoyai.industrialwarfare.common.containers;
+package rbasamoyai.industrialwarfare.common.containers.resourcestation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,10 +14,14 @@ import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.IIntArray;
 import net.minecraft.util.IWorldPosCallable;
+import net.minecraft.util.IntArray;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.containers.ToggleableSlotItemHandler;
+import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 
@@ -46,23 +51,35 @@ public class ResourceStationContainer extends Container {
 	private final List<ToggleableSlotItemHandler> suppliesSlots = new ArrayList<>();
 	private int selectedTab = 0;
 	private final ItemStack icon;
+	private final List<SupplyRequestPredicate> requests = new ArrayList<>();
+	private final IIntArray data;	
+	
+	private boolean changed = false;
 	
 	public static IContainerProvider getServerContainerProvider(ResourceStationTileEntity te, BlockPos activationPos) {
 		return (windowId, playerInv, player) -> new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(),
-				windowId, playerInv, activationPos, te.getBuffer(), te.getSupplies(), Optional.of(te), ItemStack.EMPTY);
+				windowId, playerInv, activationPos, te.getBuffer(), te.getSupplies(), new ResourceStationData(te), ItemStack.EMPTY);
 	}
 	
 	public static ResourceStationContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		return new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(), windowId, playerInv,
-				buf.readBlockPos(), new ItemStackHandler(27), new ItemStackHandler(27), Optional.empty(), buf.readItem());
+		ResourceStationContainer ct = new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(), windowId, playerInv,
+				buf.readBlockPos(), new ItemStackHandler(27), new ItemStackHandler(27), new IntArray(2), buf.readItem());
+		ct.setRunning(buf.readBoolean());
+		List<SupplyRequestPredicate> predicates =
+				IntStream.range(0, buf.readVarInt()).boxed()
+				.map(i -> SupplyRequestPredicate.fromNetwork(buf))
+				.collect(Collectors.toCollection(ArrayList::new));
+		ct.setRequests(predicates);
+		return ct;
 	}
 	
 	protected ResourceStationContainer(ContainerType<? extends ResourceStationContainer> type, int windowId, PlayerInventory playerInv, BlockPos activationPos,
-			IItemHandler bufferHandler, IItemHandler suppliesHandler, Optional<? extends ResourceStationTileEntity> optionalTE, ItemStack icon) {
+			IItemHandler bufferHandler, IItemHandler suppliesHandler, IIntArray data, ItemStack icon) {
 		super(type, windowId);
 		this.canUse = IWorldPosCallable.create(playerInv.player.level, activationPos);
 		this.block = playerInv.player.level.getBlockState(activationPos).getBlock();
 		this.icon = icon;
+		this.data = data;
 		
 		for (int i = 0; i < BLOCK_INVENTORY_ROWS; ++i) {
 			for (int j = 0; j < BLOCK_INVENTORY_COLUMNS; ++j) {
@@ -100,6 +117,8 @@ public class ResourceStationContainer extends Container {
 			this.addSlot(new Slot(playerInv, i, x, HOTBAR_SLOT_Y));
 		}
 		
+		this.addDataSlots(data);
+		
 		this.setSelected(0);
 	}
 	
@@ -109,6 +128,25 @@ public class ResourceStationContainer extends Container {
 		this.bufferSlots.forEach(s -> s.setActive(this.selectedTab == 2));
 	}
 	public int getSelected() { return this.selectedTab; }
+	
+	public void setRequests(List<SupplyRequestPredicate> requests) {
+		this.requests.clear();
+		this.requests.addAll(requests);
+		this.setChanged(true);
+	}
+	
+	public List<SupplyRequestPredicate> getRequests() { return this.requests; }
+	
+	public void setChanged(boolean changed) {
+		this.changed = changed;
+	}
+	
+	public boolean isChanged() { return this.changed; }
+	
+	public void setRunning(boolean running) { this.data.set(0, running ? 1 : 0); }
+	public boolean isRunning() { return this.data.get(0) != 0; }
+	
+	public boolean isFinished() { return this.data.get(1) != 0; }
 	
 	@Override
 	public ItemStack quickMoveStack(PlayerEntity player, int index) {

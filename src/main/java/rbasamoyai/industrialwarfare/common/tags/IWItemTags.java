@@ -11,6 +11,7 @@ public class IWItemTags {
 	public static final ITag.INamedTag<Item> ENTRENCHING_TOOLS = bind("entrenching_tools");
 	public static final ITag.INamedTag<Item> FIREARM_MELEE_ATTACHMENTS = bind("attachments/firearm/melee");
 	public static final ITag.INamedTag<Item> FIREARM_OPTIC_ATTACHMENTS = bind("attachments/firearm/optic");
+	public static final ITag.INamedTag<Item> FUNGUS = bind("fungus");
 	
 	protected static final ITag.INamedTag<Item> bind(String id) {
 		return ItemTags.bind(IndustrialWarfare.MOD_ID + ":" + id);

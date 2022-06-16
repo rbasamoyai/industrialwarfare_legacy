@@ -1,24 +1,19 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.fml.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
-import rbasamoyai.industrialwarfare.core.network.IWNetwork;
-import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.CApplyRecoil;
 
 public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmItem {
 	
@@ -50,20 +45,14 @@ public abstract class InternalMagazineRifleItem extends InternalMagazineFirearmI
 			
 			shooter.level.addFreshEntity(bullet);
 			
-			shooter.yRotO = shooter.yRot;
-			shooter.xRotO = shooter.xRot;
-			shooter.yRot = MathHelper.wrapDegrees(shooter.yRot + this.horizontalRecoilSupplier.apply(shooter));
-			shooter.xRot = MathHelper.wrapDegrees(shooter.xRot - this.verticalRecoilSupplier.apply(shooter));
-			
-			if (shooter instanceof ServerPlayerEntity) {
-				PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) shooter);
-				CApplyRecoil msg = new CApplyRecoil(shooter.xRot, shooter.yRot);
-				IWNetwork.CHANNEL.send(target, msg);
-			}
+			float recoilPitch = this.verticalRecoilSupplier.apply(shooter);
+			float recoilYaw = this.horizontalRecoilSupplier.apply(shooter);
 			
 			if (this.needsCycle) h.setCycled(false);
 			h.setFired(true);
 			h.setAction(ActionType.NOTHING, this.cooldownTime);
+			h.setRecoilTicks(0);
+			h.setRecoil(recoilPitch, recoilYaw);
 		});
 	}
 	

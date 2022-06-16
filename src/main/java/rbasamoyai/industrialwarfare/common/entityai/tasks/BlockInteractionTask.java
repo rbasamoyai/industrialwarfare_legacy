@@ -25,24 +25,23 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
+import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction.Type;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class BlockInteractionTask extends Task<NPCEntity> {
 
-	private final int reachDistance;
 	private float breakProgress;
 	private int lastBreakProgress;
 	private int breakTicks;
 	
-	public BlockInteractionTask(int reachDistance) {
+	public BlockInteractionTask() {
 		super(ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED,
 				MemoryModuleTypeInit.BLOCK_INTERACTION.get(), MemoryModuleStatus.VALUE_PRESENT,
 				MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), MemoryModuleStatus.VALUE_ABSENT),
 				1200);
-		this.reachDistance = reachDistance;
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -57,16 +56,16 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		BlockPos pos = interaction.pos().pos();
 		BlockState stateAt = level.getBlockState(pos);
 		
-		if (interaction.needsToBreakBlock(level) && (interaction.action() == Type.BREAK_BLOCK && stateAt.isAir() || stateAt.getDestroySpeed(level, pos) < 0.0f)) {
+		if (interaction.needsToBreakBlock(level, entity) && (interaction.action() == Type.BREAK_BLOCK && stateAt.isAir() || stateAt.getDestroySpeed(level, pos) < 0.0f)) {
 			entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 			return false;
 		}
 		if (interaction.action() == Type.PLACE_BLOCK) {
-			if (interaction.checkState(level)) {
+			if (interaction.checkState(level, entity)) {
 				entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 				return false;
 			}
-			if (!entity.has(s -> s.getItem() == interaction.item())) {
+			if (!entity.has(interaction.item()::matches)) {
 				return false;
 			}
 		}
@@ -78,12 +77,13 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		Brain<?> brain = entity.getBrain();
 		BlockInteraction interaction = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get()).get();
 		BlockPos pos = interaction.pos().pos();
+		int reachDistance = interaction.reachDistance();
 		
-		if (pos.closerThan(entity.position(), (double) this.reachDistance)) {
+		if (pos.closerThan(entity.position(), (double) reachDistance)) {
 			this.breakProgress = 0.0f;
 			this.lastBreakProgress = -1;
 		} else {
-			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, 3.0f, this.reachDistance));
+			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, 3.0f, Math.max(reachDistance, 2)));
 		}
 	}
 	
@@ -101,11 +101,12 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		Brain<?> brain = entity.getBrain();
 		BlockInteraction interaction = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get()).get();
 		BlockPos pos = interaction.pos().pos();
+		int reachDistance = interaction.reachDistance();
 		
 		brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
 		
-		if (!pos.closerThan(entity.position(), (double) this.reachDistance)) {
-			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, 3.0f, this.reachDistance - 1));
+		if (!pos.closerThan(entity.position(), (double) reachDistance)) {
+			brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, 3.0f, Math.max(reachDistance, 2)));
 			this.breakProgress = 0.0f;
 			this.lastBreakProgress = -1;
 			this.breakTicks = 0;
@@ -117,7 +118,7 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 		BlockState levelState = level.getBlockState(pos);
 		SoundType stateSound = levelState.getSoundType();
 		
-		if (interaction.needsToBreakBlock(level)) {
+		if (interaction.needsToBreakBlock(level, entity)) {
 			boolean justStarted = this.breakProgress == 0.0f;
 			this.breakProgress += this.getBlockBreakTime(entity, level, pos);
 			
@@ -148,8 +149,9 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 			}
 		} else {
 			Hand opposite = useHand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND;
-			if (entity.getItemInHand(opposite).getItem() != interaction.item()) {
-				ItemStack stack = entity.getMatching(s -> s.getItem() == interaction.item());
+			SupplyRequestPredicate pred = interaction.item();
+			if (!pred.matches(entity.getItemInHand(opposite))) {
+				ItemStack stack = entity.getMatching(pred::matches);
 				ItemStack oldStack = entity.getItemInHand(useHand);
 				entity.setItemInHand(useHand, stack.copy());
 				stack.shrink(stack.getCount());
@@ -160,7 +162,7 @@ public class BlockInteractionTask extends Task<NPCEntity> {
 			}
 			ItemStack useStack = entity.getItemInHand(opposite);
 			useStack.shrink(1);
-			interaction.executePlaceActionIfPossible(level);
+			interaction.executePlaceActionIfPossible(level, entity);
 			entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 6);
 		}

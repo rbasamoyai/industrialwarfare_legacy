@@ -60,6 +60,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
@@ -82,6 +83,8 @@ import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
+import rbasamoyai.industrialwarfare.utils.IWMiscUtils;
+import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -283,6 +286,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void startCycle(ItemStack firearm, LivingEntity shooter);
 	
+	protected int getCycleTime(ItemStack firearm, LivingEntity shooter) {
+		return this.cycleTime;
+	}
+	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
 	
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
@@ -318,7 +325,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (level.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) level);
 		
-		getDataHandler(stack).ifPresent(h -> {	
+		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isSelected() && selected) {
 				this.onSelect(stack, shooter);
 			}
@@ -329,8 +336,12 @@ public abstract class FirearmItem extends ShootableItem implements
 				h.setAction(ActionType.NOTHING, this.drawTime);
 				h.setAiming(false);
 				h.setMelee(false);
+				h.setRecoilTicks(0);
+				h.setRecoil(0.0f, 0.0f);
 				return;
 			}
+			
+			h.tickRecoil();
 			
 			if (h.getAction() == ActionType.NOTHING) {
 				boolean sprinting = entity.isSprinting();
@@ -849,7 +860,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			boolean isSneaking = bmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
 			boolean isBody = name.equals("body");
 			boolean isBodyChild = bone.parent != null && bone.parent.name.equals("body");
-			boolean isFreeBone = name.equals("firearm") || name.equals("cartridge");
+			boolean isFreeBone = name.equals("firearm") || name.length() >= 9 && name.substring(0, 9).equals("cartridge");
 			
 			if (isSneaking) {
 				if (isBody) {
@@ -1029,6 +1040,11 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
+	
+	@Override
+	public ResourceLocation getTextureLocation(ItemStack stack, LivingEntity entity) {
+		return TextureUtils.getWeaponSkinTexture(stack);
+	}
 	
 	/*
 	 * STATIC QUERY METHODS
@@ -1245,6 +1261,42 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		public int getId() { return this.id; }
 		public static ActionType fromId(int id) { return BY_ID[id]; }
+	}
+	
+	public void onCameraSetup(CameraSetup event) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		ItemStack stack = mc.player.getMainHandItem();
+		getDataHandler(stack).ifPresent(h -> {
+			float ticks = (float) h.getRecoilTicks() + (float) event.getRenderPartialTicks();
+			float oldTicks = Math.max(ticks - mc.getDeltaFrameTime(), 0.0f);
+			ticks *= 0.1f;
+			oldTicks *= 0.1f;
+			if (ticks >= 1.0f) return;
+			
+			float addPitch = h.getRecoilPitch() * (this.getVerticalRecoilScalar(ticks) - this.getVerticalRecoilScalar(oldTicks)); 
+			float addYaw = h.getRecoilYaw() * (this.getHorizontalRecoilScalar(ticks) - this.getHorizontalRecoilScalar(oldTicks));
+			
+			mc.player.turn((double) addYaw, (double) -addPitch);
+		});
+	}
+	
+	protected float getHorizontalRecoilScalar(float time) {
+		if (time <= 0.0f) {
+			return 0.0f;
+		}
+		if (time < 0.25f) {
+			return IWMiscUtils.quadEasingOut(time * 4.0f);
+		}
+		if (time <= 1.0f) {
+			float f = 1.0f / 3.0f;
+			return 1.0f - IWMiscUtils.quadEasingInOut(time * 4.0f * f - f);
+		}
+		return 0.0f;
+	}
+	
+	protected float getVerticalRecoilScalar(float time) {
+		return this.getHorizontalRecoilScalar(time);
 	}
 	
 }

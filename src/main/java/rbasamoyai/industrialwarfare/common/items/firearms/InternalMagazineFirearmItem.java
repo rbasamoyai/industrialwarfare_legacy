@@ -95,7 +95,7 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	@Override
 	protected void startCycle(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
-			h.setAction(ActionType.CYCLING, getTimeModifiedByEntity(shooter, this.cycleTime));
+			h.setAction(ActionType.CYCLING, getTimeModifiedByEntity(shooter, this.getCycleTime(firearm, shooter)));
 		});
 	}
 	
@@ -112,9 +112,13 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	protected void startReload(ItemStack firearm, LivingEntity shooter) {
 		getDataHandler(firearm).ifPresent(h -> {
 			if (h.isFull()) return;
-			h.setAction(ActionType.START_RELOADING, getTimeModifiedByEntity(shooter, this.reloadStartTime));
+			h.setAction(ActionType.START_RELOADING, getTimeModifiedByEntity(shooter, this.getReloadStartTime(firearm, shooter)));
 		});
 		// TODO: speedloaders
+	}
+	
+	protected int getReloadStartTime(ItemStack firearm, LivingEntity shooter) {
+		return this.reloadStartTime;
 	}
 	
 	@Override

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:leaves",
+    "#minecraft:logs",
+    "#minecraft:wart_blocks",
+    "minecraft:shroomlight"
+  ]
+}

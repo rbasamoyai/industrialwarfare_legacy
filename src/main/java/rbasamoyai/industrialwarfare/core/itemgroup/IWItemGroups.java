@@ -82,7 +82,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.INFINITE_PAPER_CARTRIDGE),
 					getItemStack(ItemInit.MATCH_CORD),
 					getItemStack(ItemInit.INFINITE_MATCH_CORD),
-					getItemStack(ItemInit.MATCH_COIL.get())
+					getItemStack(ItemInit.MATCH_COIL),
+					getItemStack(ItemInit.SURVEYORS_KIT)
 					));
 		}
 		
@@ -95,10 +96,14 @@ public class IWItemGroups {
 	public static final ItemGroup TAB_DEBUG = new ItemGroup(groupId++, "industrialwarfare.debug") {
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.JOB_SITE_POINTER.get()),
-					getItemStack(ItemInit.COMPLAINT_REMOVER.get()),
-					getItemStack(ItemInit.DEBUG_OWNER.get()),
-					getItemStack(ItemInit.NPC_SPAWN_EGG.get())
+					getItemStack(ItemInit.JOB_SITE_POINTER),
+					getItemStack(ItemInit.COMPLAINT_REMOVER),
+					getItemStack(ItemInit.DEBUG_OWNER),
+					getItemStack(ItemInit.NPC_SPAWN_EGG),
+					getItemStack(ItemInit.SET_PROFESSION_JOBLESS),
+					getItemStack(ItemInit.SET_PROFESSION_ASSEMBLER),
+					getItemStack(ItemInit.SET_PROFESSION_QUARRIER),
+					getItemStack(ItemInit.SET_PROFESSION_LOGGER)
 					));
 		}
 		
@@ -116,6 +121,7 @@ public class IWItemGroups {
 					getItemStack(ItemInit.TASK_SCROLL_SHELF),
 					getItemStack(ItemInit.SPOOL),
 					getItemStack(ItemInit.QUARRY),
+					getItemStack(ItemInit.TREE_FARM),
 					getItemStack(ItemInit.WORKER_SUPPORT)
 					));
 		}
@@ -165,7 +171,8 @@ public class IWItemGroups {
 					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		

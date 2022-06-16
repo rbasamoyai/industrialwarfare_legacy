@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -19,14 +20,18 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
+import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.CSyncRequests;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
 public abstract class ResourceStationTileEntity extends TileEntity implements ITickableTileEntity {
@@ -34,6 +39,7 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	public static final String TAG_BUFFER = "buffer";
 	public static final String TAG_SUPPLIES = "supplies";
 	public static final String TAG_RUNNING = "running";
+	public static final String TAG_ADDITIONAL_SUPPLIES = "additionalSupplies";
 	
 	protected final ItemStackHandler buffer = new ItemStackHandler(27);
 	protected final ItemStackHandler supplies = new ItemStackHandler(27);
@@ -43,9 +49,11 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	
 	protected final Map<BlockPos, BlockInteraction> posCache = new LinkedHashMap<>();
 	protected final BiMap<BlockPos, LivingEntity> currentTasks = HashBiMap.create();
+	protected final Map<LivingEntity, List<SupplyRequestPredicate>> requests = new LinkedHashMap<>();
+	protected final List<SupplyRequestPredicate> additionalSupplies = new ArrayList<>();
+	
 	protected int clockTicks;
 	protected boolean isRunning = true;
-	protected final List<SupplyRequestPredicate> requests = new ArrayList<>(); 
 	
 	public ResourceStationTileEntity(TileEntityType<? extends ResourceStationTileEntity> type) {
 		super(type);
@@ -127,6 +135,12 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		this.currentTasks.inverse().remove(entity);
 	}
 	
+	public void setRunning(boolean running) {
+		this.isRunning = running;
+		if (!running) this.posCache.clear();
+		this.setChanged();
+	}
+	
 	public boolean isRunning() {
 		return this.isRunning;
 	}
@@ -138,6 +152,38 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		
 		IWInventoryUtils.dropHandlerItems(this.buffer, x, y, z, this.level);
 		IWInventoryUtils.dropHandlerItems(this.supplies, x, y, z, this.level);
+		
+		this.setChanged();
 	}
+	
+	public void addRequest(LivingEntity requester, SupplyRequestPredicate predicate) {
+		if (this.requests.containsKey(requester)) {
+			this.removeRequest(requester, predicate);
+			this.requests.get(requester).add(predicate);
+		} else {
+			this.requests.put(requester, Util.make(new ArrayList<>(), list -> list.add(predicate)));
+		}
+		this.updatePlayerContainers();
+	}
+	
+	public void removeRequest(LivingEntity requester, SupplyRequestPredicate predicate) {
+		if (this.requests.containsKey(requester)) {
+			this.requests.get(requester).removeIf(predicate::equals);
+		}
+		this.updatePlayerContainers();
+	}
+	
+	public void clearRequests(LivingEntity requester) {
+		this.requests.clear();
+		this.updatePlayerContainers();
+	}
+	
+	public List<SupplyRequestPredicate> getRequests() { return this.requests.values().stream().flatMap(List::stream).collect(Collectors.toList()); }
+	
+	public void updatePlayerContainers() {
+		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> this.level.getChunkAt(this.worldPosition)), new CSyncRequests(this.getRequests()));
+	}
+	
+	public boolean isFinished() { return false; }
 	
 }

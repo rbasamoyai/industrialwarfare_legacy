@@ -64,35 +64,6 @@ public class FirearmActionMessages {
 		}
 	}
 	
-	public static class CApplyRecoil {
-		public float xRot;
-		public float yRot;
-		
-		public CApplyRecoil() {}
-		
-		public CApplyRecoil(float xRot, float yRot) {
-			this.xRot = xRot;
-			this.yRot = yRot;
-		}
-		
-		public static void encode(CApplyRecoil msg, PacketBuffer buf) {
-			buf.writeFloat(msg.xRot);
-			buf.writeFloat(msg.yRot);
-		}
-		
-		public static CApplyRecoil decode(PacketBuffer buf) {
-			return new CApplyRecoil(buf.readFloat(), buf.readFloat());
-		}
-		
-		public static void handle(CApplyRecoil msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FirearmActionCHandlers.handleCApplyRecoil(msg, contextSupplier));
-			});
-			context.setPacketHandled(true);
-		}
-	}
-	
 	public static class CNotifyHeadshot {
 		public CNotifyHeadshot() {}		
 		public static void encode(CNotifyHeadshot msg, PacketBuffer buf) {}

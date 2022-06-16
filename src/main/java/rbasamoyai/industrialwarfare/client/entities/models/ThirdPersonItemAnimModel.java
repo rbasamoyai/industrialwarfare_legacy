@@ -49,4 +49,14 @@ public class ThirdPersonItemAnimModel extends AnimatedGeoModel<IAnimatable> {
 		return ((ISpecialThirdPersonRender) item).getTextureLocation(stack, entity);
 	}
 	
+	@Override
+	public void setMolangQueries(IAnimatable animatable, double currentTick) {
+		/* I HATE NPES ON RESOURCE REFRESHES! I HATE NPES ON RESOURCE REFRESHES!
+		 *
+		 * - We've got you surrounded! Come read your
+		 * java.lang.NullPointerException: Rendering item
+		 * 			...
+		 */
+	}
+	
 }

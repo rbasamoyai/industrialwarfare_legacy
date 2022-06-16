@@ -1,19 +1,21 @@
 Current TODO:
-- Fluid removal
 
 - Formulate an economy
 	- Resource gathering
-		- Forestry
-		- Agriculture
+		- Tree farming
+		- Farming
+		- Mob resource gathering
+			- Rancher
+			- Shepherd(?)
 	- Resource refining
 		- Metal smelting
-		- Woodworking
+		- Sawyer
 	- Resource processing
+		- Woodworking
 		- Base parts
 		- Assembly
 
-- Work on formations
-	- Formations joining other
-	formations
-	- Merging smaller formations
-	if possible
+- Fluid removal
+
+- Possible restructuring
+of folder hierarchy?

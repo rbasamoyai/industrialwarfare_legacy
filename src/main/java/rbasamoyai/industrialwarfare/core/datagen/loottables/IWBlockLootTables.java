@@ -19,6 +19,7 @@ public class IWBlockLootTables extends BlockLootTables {
 		this.dropOther(BlockInit.MATCH_COIL.get(), Items.AIR);
 		this.dropSelf(BlockInit.SPOOL.get());
 		this.dropSelf(BlockInit.QUARRY.get());
+		this.dropSelf(BlockInit.TREE_FARM.get());
 		this.dropSelf(BlockInit.WORKER_SUPPORT.get());
 	}
 	

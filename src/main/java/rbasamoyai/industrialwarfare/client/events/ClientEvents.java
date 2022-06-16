@@ -12,12 +12,15 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NothingRenderer;
@@ -29,11 +32,12 @@ import rbasamoyai.industrialwarfare.client.screen.attachmentitems.AttachmentsRif
 import rbasamoyai.industrialwarfare.client.screen.diplomacy.DiplomacyScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
-import rbasamoyai.industrialwarfare.client.screen.resource_station.ResourceStationScreen;
+import rbasamoyai.industrialwarfare.client.screen.resourcestation.ResourceStationScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
 import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
@@ -67,6 +71,12 @@ public class ClientEvents {
 		
 		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);
 		
+		ForgeRegistries.ITEMS.forEach(i -> {
+			if (i instanceof FirearmItem) {
+				MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, ((FirearmItem) i)::onCameraSetup);
+			}
+		});
+		
 		event.enqueueWork(() -> {
 			ItemModelsProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
 					(stack, level, living) -> {
@@ -84,7 +94,6 @@ public class ClientEvents {
 					});
 			
 			RenderTypeLookup.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
-			
 		});
 	}
 	

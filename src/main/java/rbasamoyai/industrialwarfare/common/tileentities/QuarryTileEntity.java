@@ -18,6 +18,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.common.blocks.QuarryBlock;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
+import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
+import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
@@ -55,6 +57,15 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 	}
 	
 	@Override
+	public void setRunning(boolean running) {
+		if (this.isFinished()) {
+			super.setRunning(false);
+		} else {
+			super.setRunning(running);
+		}
+	}
+	
+	@Override
 	@Nullable
 	public BlockInteraction getInteraction(LivingEntity entity) {
 		if (!this.isRunning) {
@@ -67,18 +78,18 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 				this.currentTasks.remove(entry.getKey());
 				break;
 			}
-		}	
+		}
 		
 		if (this.posCache.isEmpty()) {
-			this.generateCache(false);
+			this.generateCache();
 		}
 		if (this.posCache.isEmpty()) {
 			this.setYLevel(this.currentYLevel - 1);
-			if (this.worldPosition.getY() - this.currentYLevel > 16 || this.currentYLevel <= 4 && (this.level.dimension() == World.OVERWORLD || this.level.dimension() == World.NETHER)) {
+			if (this.isFinished()) {
 				this.isRunning = false;
 				return null;
 			}
-			this.generateCache(false);
+			this.generateCache();
 		}
 		
 		if (this.posCache.isEmpty()) {
@@ -104,13 +115,9 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 	public static final int[] RAMP_END_J_TABLE		= new int[] { 02, 14, 16, 16, 14, 16, 16, 02, 02, 14, 16, 16, 14, 16, 16, 02 };
 	
 	@SuppressWarnings("deprecation")
-	protected void generateCache(boolean clear) {
+	protected void generateCache() {
 		if (World.isOutsideBuildHeight(this.currentYLevel)) {
 			return;
-		}
-		
-		if (clear) {
-			this.posCache.clear();
 		}
 		
 		int startX;
@@ -175,23 +182,28 @@ public class QuarryTileEntity extends ResourceStationTileEntity {
 				if (rampStartI <= i && i < rampEndI && rampStartJ <= j && j < rampEndJ) {
 					this.posCache.put(pos, BlockInteraction.placeBlockAtAs(
 							GlobalPos.of(this.level.dimension(), pos),
-							ItemInit.WORKER_SUPPORT.get(),
+							new SupplyRequestPredicate(null, ItemInit.WORKER_SUPPORT.get(), IntBound.ANY, null, IntBound.ANY),
 							QuarryTileEntity::placeSupportAction,
 							QuarryTileEntity::checkState));
 				} else if (!candidate.isAir()) {
-					this.posCache.put(pos, BlockInteraction.breakBlockAt(GlobalPos.of(this.level.dimension(), pos)));
+					this.posCache.put(pos, BlockInteraction.breakBlockAt(GlobalPos.of(this.level.dimension(), pos), 4));
 				}
 			}
 		}
 	}
 	
-	public static void placeSupportAction(World level, BlockPos pos) {
+	@Override
+	public boolean isFinished() {
+		return this.worldPosition.getY() - this.currentYLevel > 16 || this.currentYLevel <= 4 && (this.level.dimension() == World.OVERWORLD || this.level.dimension() == World.NETHER);
+	}
+	
+	public static void placeSupportAction(World level, BlockPos pos, LivingEntity entity) {
 		level.setBlock(pos, BlockInit.WORKER_SUPPORT.get().defaultBlockState(), Constants.BlockFlags.DEFAULT);
 		SoundType stateSound = level.getBlockState(pos).getSoundType();
 		level.playSound(null, pos, stateSound.getPlaceSound(), SoundCategory.NEUTRAL, stateSound.getVolume(), stateSound.getPitch());
 	}
 	
-	public static boolean checkState(World level, BlockPos pos) {
+	public static boolean checkState(World level, BlockPos pos, LivingEntity entity) {
 		return level.getBlockState(pos).getBlock() == BlockInit.WORKER_SUPPORT.get();
 	}
 	

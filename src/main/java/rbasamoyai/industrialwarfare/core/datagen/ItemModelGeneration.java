@@ -89,6 +89,13 @@ public class ItemModelGeneration extends ItemModelProvider {
 		.texture("layer0", modLoc("item/american_kepi"))
 		.texture("layer1", modLoc("item/american_kepi_overlay"));
 		
+		simpleBuilder("set_profession_jobless");
+		simpleBuilder("set_profession_assembler");
+		simpleBuilder("set_profession_quarrier");
+		simpleBuilder("set_profession_logger");
+		
+		simpleBuilder("surveyors_kit");
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

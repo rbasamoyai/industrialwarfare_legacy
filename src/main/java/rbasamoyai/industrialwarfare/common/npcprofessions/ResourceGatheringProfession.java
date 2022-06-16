@@ -2,10 +2,11 @@ package rbasamoyai.industrialwarfare.common.npcprofessions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -26,7 +27,6 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction.Type;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
-import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
@@ -39,7 +39,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 	private final Set<Block> workingAreas;
 	
 	public ResourceGatheringProfession(List<SupplyRequestPredicate> requiredItems, Block workingArea) {
-		this(requiredItems, Util.make(new HashSet<>(), set -> set.add(workingArea)));
+		this(requiredItems, ImmutableSet.of(workingArea));
 	}
 	
 	public ResourceGatheringProfession(List<SupplyRequestPredicate> requiredItems, Set<Block> workingAreas) {
@@ -93,18 +93,15 @@ public class ResourceGatheringProfession extends NPCProfession {
 		ResourceStationTileEntity resourceStation = (ResourceStationTileEntity) te;	
 		AxisAlignedBB jobSiteBox = new AxisAlignedBB(jobSitePos.offset(-1, 0, -1), jobSitePos.offset(2, 3, 2));
 		
-		if (brain.getMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get()).map(List::isEmpty).orElse(true)) {
-			this.populateRequestsWithRequiredItems(npc);
-		}
-		
 		if (!resourceStation.isRunning()) {
 			if (!jobSiteBox.contains(npc.position())) {
 				brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
-				if (npc.getNavigation().isDone()) {
-					brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(jobSitePos, 3.0f, 1));
-				}
 			}
 		}
+		
+		if (brain.getMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get()).map(List::isEmpty).orElse(true)) {
+			this.populateRequestsWithRequiredItems(npc, resourceStation);
+		}		
 		
 		if (brain.hasMemoryValue(MemoryModuleTypeInit.DEPOSITING_ITEMS.get())) {
 			brain.eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
@@ -157,7 +154,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 						supplies.insertItem(supplySlot, removeStack, false);
 					}
 					if (oldSz != newSz) {
-						supplyRequests.remove(requestNum);
+						resourceStation.removeRequest(npc, supplyRequests.remove(requestNum));
 					}
 					break;
 				}
@@ -166,22 +163,27 @@ public class ResourceGatheringProfession extends NPCProfession {
 				}
 			}
 			if (!supplyRequests.isEmpty()) {
+				supplyRequests.forEach(r -> resourceStation.addRequest(npc, r));
 				brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOT_ENOUGH_SUPPLIES.get(), 200L);
 			}
 		} else if (!brain.hasMemoryValue(MemoryModuleTypeInit.BLOCK_INTERACTION.get()) && !brain.hasMemoryValue(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get())) {
-			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), Optional.ofNullable(resourceStation.getInteraction(npc)));
+			BlockInteraction interaction = resourceStation.getInteraction(npc);
+			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), Optional.ofNullable(interaction));
+			if (interaction == null) {
+				brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
+			}
 		} else if (brain.hasMemoryValue(MemoryModuleTypeInit.BLOCK_INTERACTION.get())) {
 			BlockInteraction interaction = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get()).get();
 			BlockPos pos1 = interaction.pos().pos();
 			BlockInteraction.Type action = interaction.action();
 			Hand useHand = npc.getUsedItemHand();
 			
-			if (interaction.needsToBreakBlock(level)) {
+			if (interaction.needsToBreakBlock(level, npc)) {
 				BlockState state = level.getBlockState(pos1);
 				ItemStack tool = npc.getItemInHand(useHand);
 				SupplyRequestPredicate predicate = SupplyRequestPredicate.canBreak(state);
 				
-				if (state.requiresCorrectToolForDrops() && !tool.isCorrectToolForDrops(state) && !this.switchItem(npc, predicate, useHand)) {
+				if (!this.canBreakBlockWith(state, tool, npc) && !this.switchItem(npc, predicate, useHand)) {
 					brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 10);
 					resourceStation.stopWorking(npc);
 					
@@ -194,8 +196,8 @@ public class ResourceGatheringProfession extends NPCProfession {
 			} else if (action == Type.PLACE_BLOCK) {
 				Hand opposite = useHand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND;
 				ItemStack useStack = npc.getItemInHand(opposite);
-				SupplyRequestPredicate predicate = SupplyRequestPredicate.forItem(interaction.item(), IntBound.atLeast(1));
-				if (interaction.item() != useStack.getItem() && !this.switchItem(npc, predicate, opposite)) {
+				SupplyRequestPredicate predicate = interaction.item();
+				if (!interaction.item().matches(useStack) && !this.switchItem(npc, predicate, opposite)) {
 					resourceStation.stopWorking(npc);
 					brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 10);
 					
@@ -219,8 +221,12 @@ public class ResourceGatheringProfession extends NPCProfession {
 		((ResourceStationTileEntity) te).stopWorking(npc);
 	}
 	
-	private void populateRequestsWithRequiredItems(NPCEntity npc) {
-		for (SupplyRequestPredicate predicate : this.requiredItems) {
+	private void populateRequestsWithRequiredItems(NPCEntity npc, ResourceStationTileEntity te) {
+		List<SupplyRequestPredicate> allRequiredItems = new ArrayList<>();
+		allRequiredItems.addAll(this.requiredItems);
+		allRequiredItems.addAll(te.getRequests());
+		
+		for (SupplyRequestPredicate predicate : allRequiredItems) {
 			if (predicate.matches(npc.getMainHandItem()) || predicate.matches(npc.getOffhandItem())) continue;
 			ItemStackHandler inventory = npc.getInventoryItemHandler();
 			boolean hasItem = false;
@@ -282,6 +288,10 @@ public class ResourceGatheringProfession extends NPCProfession {
 			}
 		}
 		return spaceFreedUp;
+	}
+	
+	protected boolean canBreakBlockWith(BlockState state, ItemStack stack, NPCEntity npc) {
+		return !state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state);
 	}
 
 }

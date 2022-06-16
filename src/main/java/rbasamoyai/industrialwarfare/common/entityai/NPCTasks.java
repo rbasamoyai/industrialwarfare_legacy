@@ -82,7 +82,7 @@ public class NPCTasks {
 		return ImmutableList.of(
 				Pair.of(0, new RunCommandFromTaskScrollTask()),
 				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
-				Pair.of(1, new BlockInteractionTask(4))
+				Pair.of(1, new BlockInteractionTask())
 				);
 	}
 	
