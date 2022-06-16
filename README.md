@@ -25,6 +25,7 @@ can fight stuff.
 
 ### """planned""" features:
 * Defensive combat, with entrenchment stations, artillery, and other heavy weapons
+* JEI integration?
 * Indirect NPC command
 * Generated structures with NPCs
 * Research trees
