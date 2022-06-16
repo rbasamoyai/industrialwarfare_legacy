@@ -24,6 +24,7 @@ import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.SurveyorsKitItem;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem;
 import rbasamoyai.industrialwarfare.common.items.armor.AmericanKepiItem;
+import rbasamoyai.industrialwarfare.common.items.armor.PickelhaubeHighItem;
 import rbasamoyai.industrialwarfare.common.items.armor.PithHelmetItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
@@ -98,6 +99,9 @@ public class ItemInit {
 	
 	public static final RegistryObject<Item> AMERICAN_KEPI = ITEMS.register("american_kepi",
 			() -> new AmericanKepiItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+	
+	public static final RegistryObject<Item> PICKELHAUBE_HIGH = ITEMS.register("pickelhaube_high",
+			() -> new PickelhaubeHighItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
 	
 	public static final RegistryObject<Item> SET_PROFESSION_JOBLESS = ITEMS.register("set_profession_jobless", () -> setProfessionItem(NPCProfessionInit.JOBLESS));
 	public static final RegistryObject<Item> SET_PROFESSION_ASSEMBLER = ITEMS.register("set_profession_assembler", () -> setProfessionItem(NPCProfessionInit.ASSEMBLER));

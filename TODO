@@ -1,8 +1,10 @@
 Current TODO:
 
+- Extra supplies
+- Item pickup
+
 - Formulate an economy
 	- Resource gathering
-		- Tree farming
 		- Farming
 		- Mob resource gathering
 			- Rancher
@@ -14,8 +16,16 @@ Current TODO:
 		- Woodworking
 		- Base parts
 		- Assembly
+		- Commodities
+			- Clothes/uniforms
+			
+
+- Improve tree caching damnit
 
 - Fluid removal
 
 - Possible restructuring
 of folder hierarchy?
+
+- Content drop
+	- Pickelhaube

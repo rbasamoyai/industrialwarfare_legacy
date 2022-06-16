@@ -110,9 +110,14 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void onColorHandlerItem(ColorHandlerEvent.Item event) {
 		ItemColors itemColors = event.getItemColors();
+		
 		itemColors.register((stack, layer) -> {
 			return layer > 0 ? -1 : ((IDyeableArmorItem) stack.getItem()).getColor(stack);
 		}, ItemInit.AMERICAN_KEPI.get());
+		
+		itemColors.register((stack, layer) -> {
+			return layer > 0 ? -1 : ((IDyeableArmorItem) stack.getItem()).getColor(stack);
+		}, ItemInit.PICKELHAUBE_HIGH.get());
 	}
 	
 }

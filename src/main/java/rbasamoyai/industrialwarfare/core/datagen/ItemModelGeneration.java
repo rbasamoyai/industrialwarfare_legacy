@@ -89,6 +89,11 @@ public class ItemModelGeneration extends ItemModelProvider {
 		.texture("layer0", modLoc("item/american_kepi"))
 		.texture("layer1", modLoc("item/american_kepi_overlay"));
 		
+		getBuilder("pickelhaube_high")
+		.parent(new UncheckedModelFile("item/generated"))
+		.texture("layer0", modLoc("item/pickelhaube_high"))
+		.texture("layer1", modLoc("item/pickelhaube_high_overlay"));
+		
 		simpleBuilder("set_profession_jobless");
 		simpleBuilder("set_profession_assembler");
 		simpleBuilder("set_profession_quarrier");

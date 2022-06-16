@@ -7,29 +7,26 @@ import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.LivingEntity;
 
-public class AmericanKepiModel extends BipedModel<LivingEntity> {
-	
-	public ModelRenderer kepi;
-	public ModelRenderer cubeR1;
-	
-	public AmericanKepiModel(float inflate) {
+public class PickelhaubeHighModel extends BipedModel<LivingEntity> {
+
+	private ModelRenderer helmet;
+
+	public PickelhaubeHighModel(float inflate) {
 		super(inflate);
-		
 		this.texWidth = 64;
 		this.texHeight = 64;
 
-		this.kepi = new ModelRenderer(this);
-		this.kepi.setPos(0.0F, 0.75F, 0.0F);
-		this.kepi.texOffs(0, 32).addBox(-4.0F, -6.0F, -6.0F, 8.0F, 1.0F, 10.0F, 0.0F, false);
-		this.kepi.texOffs(0, 43).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 2.0F, 8.0F, 0.0F, false);
-
-		this.cubeR1 = new ModelRenderer(this);
-		this.cubeR1.setPos(0.0F, 0.0F, 0.0F);
-		this.kepi.addChild(this.cubeR1);
-		this.setRotationAngle(this.cubeR1, 0.1745F, 0.0F, 0.0F);
-		this.cubeR1.texOffs(0, 53).addBox(-3.5F, -9.75F, -2.5F, 7.0F, 3.0F, 7.0F, 0.0F, false);
+		this.helmet = new ModelRenderer(this);
+		this.helmet.setPos(0.0f, 0.5f, -0.25f);
+		this.helmet.texOffs(0, 32).addBox(-4.0F, -5.0F, -4.0F, 8.0F, 5.0F, 8.0F, 0.0F, false);
+		this.helmet.texOffs(0, 45).addBox(-4.5F, -5.0F, -5.0F, 9.0F, 3.0F, 10.0F, 0.0F, false);
+		this.helmet.texOffs(32, 32).addBox(-4.0F, -9.0F, -4.0F, 8.0F, 4.0F, 8.0F, 0.0F, false);
+		this.helmet.texOffs(28, 45).addBox(-3.0F, -11.0F, -3.0F, 6.0F, 2.0F, 6.0F, 0.0F, false);
+		this.helmet.texOffs(48, 58).addBox(-2.0F, -17.0F, 0.0F, 4.0F, 6.0F, 0.0F, 0.0F, false);
+		this.helmet.texOffs(56, 54).addBox(0.0F, -17.0F, -2.0F, 0.0F, 6.0F, 4.0F, 0.0F, false);
+		this.setRotationAngle(this.helmet, -0.0873F, 0.0F, 0.0F);
 		
-		this.head.addChild(this.kepi);
+		this.head.addChild(this.helmet);
 	}
 
 	@Override
@@ -44,7 +41,7 @@ public class AmericanKepiModel extends BipedModel<LivingEntity> {
 		super.renderToBuffer(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 		matrixStack.popPose();
 	}
-	
+
 	public void setRotationAngle(ModelRenderer modelRenderer, float x, float y, float z) {
 		modelRenderer.xRot = x;
 		modelRenderer.yRot = y;
