@@ -7,20 +7,18 @@ Current TODO:
 		- Farming
 		- Mob resource gathering
 			- Rancher
-			- Shepherd(?)
 	- Resource refining
 		- Metal smelting
 		- Sawyer
 	- Resource processing
 		- Woodworking
+		- Metalsmith
 		- Base parts
 		- Assembly
 		- Chemistry
 		- Commodities
 			- Clothes/uniforms
 			- Food
-
-- Fluid removal
 
 - Possible restructuring
 of folder hierarchy?

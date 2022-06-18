@@ -111,5 +111,99 @@ public class ResourceStationMessages {
 		}
 	}
 	
+	public static class SSetExtraStock {
+		private SupplyRequestPredicate extraStock;
+		private int index;
+		
+		public SSetExtraStock() {}
+		
+		public SSetExtraStock(SupplyRequestPredicate extraSupplies, int index) {
+			this.extraStock = extraSupplies;
+			this.index = index;
+		}
+		
+		public static void encode(SSetExtraStock msg, PacketBuffer buf) {
+			msg.extraStock.toNetwork(buf);
+			buf.writeVarInt(msg.index);
+		}
+		
+		public static SSetExtraStock decode(PacketBuffer buf) {
+			return new SSetExtraStock(SupplyRequestPredicate.fromNetwork(buf), buf.readVarInt());
+		}
+		
+		public static void handle(SSetExtraStock msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				ServerPlayerEntity sender = ctx.getSender();
+				Container ct = sender.containerMenu;
+				if (!(ct instanceof ResourceStationContainer)) return;
+				((ResourceStationContainer) ct).setOrAddExtraStock(msg.extraStock, msg.index);
+			});
+			ctx.setPacketHandled(true);
+		}
+	}
+	
+	public static class SRemoveExtraStock {
+		private int index;
+		
+		public SRemoveExtraStock() {}
+		
+		public SRemoveExtraStock(int index) {
+			this.index = index;
+		}
+		
+		public static void encode(SRemoveExtraStock msg, PacketBuffer buf) {
+			buf.writeVarInt(msg.index);
+		}
+		
+		public static SRemoveExtraStock decode(PacketBuffer buf) {
+			return new SRemoveExtraStock(buf.readVarInt());
+		}
+		
+		public static void handle(SRemoveExtraStock msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				ServerPlayerEntity sender = ctx.getSender();
+				Container ct = sender.containerMenu;
+				if (!(ct instanceof ResourceStationContainer)) return;
+				((ResourceStationContainer) ct).removeExtraStock(msg.index);
+			});
+			ctx.setPacketHandled(true);
+		}
+	}
+	
+	public static class CSyncExtraStock {
+		private List<SupplyRequestPredicate> extraStock;
+		
+		public CSyncExtraStock() {}
+		
+		public CSyncExtraStock(List<SupplyRequestPredicate> extraSupplies) {
+			this.extraStock = extraSupplies;
+		}
+		
+		public List<SupplyRequestPredicate> getExtraStock() { return this.extraStock; }
+		
+		public static void encode(CSyncExtraStock msg, PacketBuffer buf) {
+			buf.writeVarInt(msg.extraStock.size());
+			msg.extraStock.forEach(p -> p.toNetwork(buf));
+		}
+		
+		public static CSyncExtraStock decode(PacketBuffer buf) {
+			int sz = buf.readVarInt();
+			List<SupplyRequestPredicate> extraStock = new ArrayList<>(sz);
+			for (int i = 0; i < sz; ++i) {
+				extraStock.add(SupplyRequestPredicate.fromNetwork(buf));
+			}
+			return new CSyncExtraStock(extraStock);
+		}
+		
+		public static void handle(CSyncExtraStock msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ResourceStationCHandlers.handleCSyncExtraStock(msg));
+			});
+			ctx.setPacketHandled(true);
+		}
+	}
 	
 }

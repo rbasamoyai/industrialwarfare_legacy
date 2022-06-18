@@ -9,7 +9,7 @@ import net.minecraft.entity.LivingEntity;
 
 public class PickelhaubeHighModel extends BipedModel<LivingEntity> {
 
-	private ModelRenderer helmet;
+	public ModelRenderer helmet;
 
 	public PickelhaubeHighModel(float inflate) {
 		super(inflate);

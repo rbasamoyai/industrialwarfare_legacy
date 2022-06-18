@@ -57,6 +57,10 @@ public class TagsGeneration {
 					.add(Blocks.MYCELIUM)
 					.add(Blocks.SOUL_SOIL);
 			
+			tag(IWBlockTags.CAN_PLANT_FORESTRY)
+					.addTag(IWBlockTags.CAN_PLANT_SAPLING)
+					.addTag(IWBlockTags.CAN_PLANT_FUNGUS);
+			
 			tag(IWBlockTags.FORESTRY_HARVESTABLE)
 					.addTag(BlockTags.LEAVES)
 					.addTag(BlockTags.LOGS)

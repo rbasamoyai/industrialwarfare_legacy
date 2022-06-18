@@ -76,7 +76,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 	private static boolean noCollision(World level, BlockPos pos, NPCEntity npc) {
 		return level.noCollision(
 				npc.getBoundingBox()
-				.move(Vector3d.ZERO.subtract(npc.getPosition(1.0f)))
+				.move(Vector3d.ZERO.subtract(npc.position()))
 				.move(pos)
 				.move(0.5d, 0.0d, 0.5d));
 	}
@@ -134,6 +134,8 @@ public class ResourceGatheringProfession extends NPCProfession {
 			List<SupplyRequestPredicate> supplyRequests = brain.getMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get()).get();
 			
 			this.depositFromInventory(npc, resourceStation);
+			
+			supplyRequests.removeIf(p -> npc.has(p::matches));
 			
 			ItemStackHandler supplies = resourceStation.getSupplies();
 			for (int supplySlot = 0; supplySlot < supplies.getSlots(); ++supplySlot) {
@@ -232,7 +234,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 	private void populateRequestsWithRequiredItems(NPCEntity npc, ResourceStationTileEntity te) {
 		List<SupplyRequestPredicate> allRequiredItems = new ArrayList<>();
 		allRequiredItems.addAll(this.requiredItems);
-		allRequiredItems.addAll(te.getRequests());
+		allRequiredItems.addAll(te.getExtraStock());
 		
 		for (SupplyRequestPredicate predicate : allRequiredItems) {
 			if (predicate.matches(npc.getMainHandItem()) || predicate.matches(npc.getOffhandItem())) continue;
@@ -271,7 +273,10 @@ public class ResourceGatheringProfession extends NPCProfession {
 		ItemStackHandler buffer = resourceStation.getBuffer();
 		ItemStackHandler inventory = npc.getInventoryItemHandler();
 		boolean spaceFreedUp = false;
-		List<SupplyRequestPredicate> requiredCopy = Util.make(new ArrayList<>(), list -> list.addAll(this.requiredItems));
+		List<SupplyRequestPredicate> requiredCopy = Util.make(new ArrayList<>(), list -> {
+			list.addAll(this.requiredItems);
+			list.addAll(resourceStation.getExtraStock());
+		});
 		for (int i = 0; i < inventory.getSlots(); ++i) {
 			ItemStack testStack = inventory.getStackInSlot(i);
 			

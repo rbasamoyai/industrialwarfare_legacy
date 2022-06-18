@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tags.ITag;
 import net.minecraft.tags.TagCollectionManager;
@@ -99,12 +100,35 @@ public class SupplyRequestPredicate {
 		if (this.item != null) {
 			buf.writeRegistryIdUnsafe(ForgeRegistries.ITEMS, this.item);
 		}
-		writeBound(buf, this.count);
+		this.count.write(buf);
 		buf.writeBoolean(this.toolType != null);
 		if (this.toolType != null) {
 			buf.writeUtf(this.toolType.getName());
 		}
-		writeBound(buf, this.harvestLevel);
+		this.harvestLevel.write(buf);
+	}
+	
+	public static final String TAG_ITEM_TAG = "itemTag";
+	public static final String TAG_ITEM = "item";
+	public static final String TAG_COUNT = "count";
+	public static final String TAG_TOOL_TYPE = "toolType";
+	public static final String TAG_HARVEST_LEVEL = "harvestLevel";
+	
+	public CompoundNBT serializeNBT() {
+		CompoundNBT nbt = new CompoundNBT();
+		if (this.tag != null) {
+			nbt.putString(TAG_ITEM_TAG, TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).toString());
+		}
+		if (this.item != null) {
+			nbt.putString(TAG_ITEM, this.item.getRegistryName().toString());
+		}
+		nbt.put(TAG_COUNT, this.count.write(new CompoundNBT()));
+		if (this.toolType != null) {
+			nbt.putString(TAG_TOOL_TYPE, this.toolType.getName());
+		}
+		nbt.put(TAG_HARVEST_LEVEL, this.harvestLevel.write(new CompoundNBT()));
+		
+		return nbt;
 	}
 	
 	@Override
@@ -122,27 +146,19 @@ public class SupplyRequestPredicate {
 			tag = TagCollectionManager.getInstance().getItems().getTag(loc);
 		}
 		Item item = buf.readBoolean() ? buf.readRegistryIdUnsafe(ForgeRegistries.ITEMS) : null;
-		IntBound count = readBound(buf);
+		IntBound count = IntBound.readBound(buf);
 		ToolType toolType = buf.readBoolean() ? ToolType.get(buf.readUtf()) : null;
-		IntBound harvestLevel = readBound(buf);
+		IntBound harvestLevel = IntBound.readBound(buf);
 		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
 	}
 	
-	public static void writeBound(PacketBuffer buf, IntBound bound) {
-		buf.writeBoolean(bound.getMin() != null);
-		if (bound.getMin() != null) {
-			buf.writeVarInt(bound.getMin());
-		}
-		buf.writeBoolean(bound.getMax() != null);
-		if (bound.getMax() != null) {
-			buf.writeVarInt(bound.getMax());
-		}
-	}
-	
-	public static IntBound readBound(PacketBuffer buf) {
-		Integer min = buf.readBoolean() ? buf.readVarInt() : null;
-		Integer max = buf.readBoolean() ? buf.readVarInt() : null;
-		return new IntBound(min, max);
+	public static SupplyRequestPredicate fromNBT(CompoundNBT nbt) {
+		ITag<Item> tag = nbt.contains(TAG_ITEM_TAG) ? TagCollectionManager.getInstance().getItems().getTag(new ResourceLocation(nbt.getString(TAG_ITEM_TAG))) : null;
+		Item item = nbt.contains(TAG_ITEM) ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString(TAG_ITEM))) : null;
+		IntBound count = IntBound.readBound(nbt.getCompound(TAG_COUNT));
+		ToolType toolType = nbt.contains(TAG_TOOL_TYPE) ? ToolType.get(nbt.getString(TAG_TOOL_TYPE)) : null;
+		IntBound harvestLevel = IntBound.readBound(nbt.getCompound(TAG_HARVEST_LEVEL));
+		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
 	}
 	
 	@Override
@@ -171,6 +187,9 @@ public class SupplyRequestPredicate {
 	
 	public static class IntBound {
 		public static final IntBound ANY = new IntBound(null, null);
+		
+		public static final String TAG_MIN = "min";
+		public static final String TAG_MAX = "max";
 		
 		private final Integer min;
 		private final Integer max;
@@ -208,6 +227,35 @@ public class SupplyRequestPredicate {
 			IntBound other = (IntBound) obj;
 			if (this.min == null ? other.min != null : !this.min.equals(other.min)) return false;
 			return this.max == null ? other.max == null : this.max.equals(other.max);
+		}
+		
+		public void write(PacketBuffer buf) {
+			buf.writeBoolean(this.min != null);
+			if (this.min != null) {
+				buf.writeVarInt(this.min);
+			}
+			buf.writeBoolean(this.max != null);
+			if (this.max != null) {
+				buf.writeVarInt(this.max);
+			}
+		}
+		
+		public CompoundNBT write(CompoundNBT nbt) {
+			if (this.min != null) nbt.putInt(TAG_MIN, this.min.intValue());
+			if (this.max != null) nbt.putInt(TAG_MAX, this.max.intValue());
+			return nbt;
+		}
+		
+		public static IntBound readBound(PacketBuffer buf) {
+			Integer min = buf.readBoolean() ? buf.readVarInt() : null;
+			Integer max = buf.readBoolean() ? buf.readVarInt() : null;
+			return new IntBound(min, max);
+		}
+		
+		public static IntBound readBound(CompoundNBT nbt) {
+			Integer min = nbt.contains(TAG_MIN) ? nbt.getInt(TAG_MIN) : null;
+			Integer max = nbt.contains(TAG_MAX) ? nbt.getInt(TAG_MAX) : null;
+			return new IntBound(min, max);
 		}
 	}
 	

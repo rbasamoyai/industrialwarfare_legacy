@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.common.containers.resourcestation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,6 +25,9 @@ import rbasamoyai.industrialwarfare.common.containers.ToggleableSlotItemHandler;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
+import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SRemoveExtraStock;
+import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSetExtraStock;
 
 public class ResourceStationContainer extends Container {
 
@@ -47,39 +51,56 @@ public class ResourceStationContainer extends Container {
 	private final IWorldPosCallable canUse;
 	private final Block block;
 	
+	private final Optional<? extends ResourceStationTileEntity> optionalTE;
 	private final List<ToggleableSlotItemHandler> bufferSlots = new ArrayList<>();
 	private final List<ToggleableSlotItemHandler> suppliesSlots = new ArrayList<>();
 	private int selectedTab = 0;
 	private final ItemStack icon;
 	private final List<SupplyRequestPredicate> requests = new ArrayList<>();
-	private final IIntArray data;	
+	private final List<SupplyRequestPredicate> extraStock = new ArrayList<>();
+	private final IIntArray data;
+	private final PlayerInventory playerInv;
 	
 	private boolean changed = false;
 	
 	public static IContainerProvider getServerContainerProvider(ResourceStationTileEntity te, BlockPos activationPos) {
 		return (windowId, playerInv, player) -> new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(),
-				windowId, playerInv, activationPos, te.getBuffer(), te.getSupplies(), new ResourceStationData(te), ItemStack.EMPTY);
+				windowId, playerInv, activationPos, te.getBuffer(), te.getSupplies(), new ResourceStationData(te),
+				Optional.of(te), ItemStack.EMPTY);
 	}
 	
 	public static ResourceStationContainer getClientContainer(int windowId, PlayerInventory playerInv, PacketBuffer buf) {
-		ResourceStationContainer ct = new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(), windowId, playerInv,
-				buf.readBlockPos(), new ItemStackHandler(27), new ItemStackHandler(27), new IntArray(2), buf.readItem());
+		ResourceStationContainer ct = new ResourceStationContainer(ContainerInit.RESOURCE_STATION.get(), windowId,
+				playerInv, buf.readBlockPos(), new ItemStackHandler(27), new ItemStackHandler(27), new IntArray(2),
+				Optional.empty(), buf.readItem());
+		
 		ct.setRunning(buf.readBoolean());
+		
 		List<SupplyRequestPredicate> predicates =
 				IntStream.range(0, buf.readVarInt()).boxed()
 				.map(i -> SupplyRequestPredicate.fromNetwork(buf))
 				.collect(Collectors.toCollection(ArrayList::new));
 		ct.setRequests(predicates);
+		
+		List<SupplyRequestPredicate> extraSupplies =
+				IntStream.range(0, buf.readVarInt()).boxed()
+				.map(i -> SupplyRequestPredicate.fromNetwork(buf))
+				.collect(Collectors.toCollection(ArrayList::new));
+		ct.setExtraStock(extraSupplies);
+		
 		return ct;
 	}
 	
-	protected ResourceStationContainer(ContainerType<? extends ResourceStationContainer> type, int windowId, PlayerInventory playerInv, BlockPos activationPos,
-			IItemHandler bufferHandler, IItemHandler suppliesHandler, IIntArray data, ItemStack icon) {
+	protected ResourceStationContainer(ContainerType<? extends ResourceStationContainer> type, int windowId,
+			PlayerInventory playerInv, BlockPos activationPos, IItemHandler bufferHandler, IItemHandler suppliesHandler,
+			IIntArray data, Optional<? extends ResourceStationTileEntity> optionalTE, ItemStack icon) {
 		super(type, windowId);
 		this.canUse = IWorldPosCallable.create(playerInv.player.level, activationPos);
 		this.block = playerInv.player.level.getBlockState(activationPos).getBlock();
 		this.icon = icon;
 		this.data = data;
+		this.optionalTE = optionalTE;
+		this.playerInv = playerInv;
 		
 		for (int i = 0; i < BLOCK_INVENTORY_ROWS; ++i) {
 			for (int j = 0; j < BLOCK_INVENTORY_COLUMNS; ++j) {
@@ -123,7 +144,7 @@ public class ResourceStationContainer extends Container {
 	}
 	
 	public void setSelected(int tab) {
-		this.selectedTab = 0 <= tab && tab < 3 ? tab : 0;
+		this.selectedTab = 0 <= tab && tab < 4 ? tab : 0;
 		this.suppliesSlots.forEach(s -> s.setActive(this.selectedTab == 1));
 		this.bufferSlots.forEach(s -> s.setActive(this.selectedTab == 2));
 	}
@@ -140,6 +161,30 @@ public class ResourceStationContainer extends Container {
 	public void setChanged(boolean changed) {
 		this.changed = changed;
 	}
+	
+	public void setOrAddExtraStock(SupplyRequestPredicate request, int index) {
+		if (this.optionalTE.isPresent()) {
+			this.optionalTE.get().setOrAddExtraStock(request, index);
+		} else {
+			IWNetwork.CHANNEL.sendToServer(new SSetExtraStock(request, index));
+		}
+	}
+	
+	public void removeExtraStock(int index) {
+		if (this.optionalTE.isPresent()) {
+			this.optionalTE.get().removeExtraStock(index);
+		} else {
+			IWNetwork.CHANNEL.sendToServer(new SRemoveExtraStock(index));
+		}
+	}
+	
+	public void setExtraStock(List<SupplyRequestPredicate> extraSupplies) {
+		this.extraStock.clear();
+		this.extraStock.addAll(extraSupplies);
+		this.setChanged(true);
+	}
+	
+	public List<SupplyRequestPredicate> getExtraStock() { return this.extraStock; }
 	
 	public boolean isChanged() { return this.changed; }
 	
@@ -186,5 +231,7 @@ public class ResourceStationContainer extends Container {
 	}
 	
 	public ItemStack getIcon() { return this.icon; }
+	
+	public ItemStack getCarriedItem() { return this.playerInv.getCarried(); }
 
 }

@@ -10,7 +10,9 @@ import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.RegistryObject;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
+import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
@@ -72,9 +74,9 @@ public class IWItemGroups {
 					getItemStack(ItemInit.BODY_PART),
 					getItemStack(ItemInit.MAKESHIFT_BRAIN),
 					getItemStack(ItemInit.MAKESHIFT_HEAD),
-					getItemStack(ItemInit.TASK_SCROLL),
+					TaskScrollItem.creativeStack(),
 					getItemStack(ItemInit.LABEL),
-					getItemStack(ItemInit.SCHEDULE),
+					ScheduleItem.creativeStack(),
 					getItemStack(ItemInit.CARTRIDGE_CASE),
 					getItemStack(ItemInit.AMMO_GENERIC),
 					getItemStack(ItemInit.INFINITE_AMMO_GENERIC),

@@ -15,6 +15,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.ITickableTileEntity;
@@ -23,6 +24,7 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Util;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -31,6 +33,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
+import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.CSyncExtraStock;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.CSyncRequests;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
@@ -39,7 +42,7 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	public static final String TAG_BUFFER = "buffer";
 	public static final String TAG_SUPPLIES = "supplies";
 	public static final String TAG_RUNNING = "running";
-	public static final String TAG_ADDITIONAL_SUPPLIES = "additionalSupplies";
+	public static final String TAG_EXTRA_STOCK = "extraStock";
 	
 	protected final ItemStackHandler buffer = new ItemStackHandler(27);
 	protected final ItemStackHandler supplies = new ItemStackHandler(27);
@@ -50,7 +53,7 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	protected final Set<ItemEntity> itemsToPickUp = new HashSet<>();
 	
 	protected final Map<LivingEntity, List<SupplyRequestPredicate>> requests = new LinkedHashMap<>();
-	protected final List<SupplyRequestPredicate> additionalSupplies = new ArrayList<>();
+	protected final List<SupplyRequestPredicate> extraStock = new ArrayList<>();
 	
 	protected int clockTicks;
 	protected boolean isRunning = true;
@@ -103,6 +106,13 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		nbt.put(TAG_BUFFER, this.buffer.serializeNBT());
 		nbt.put(TAG_SUPPLIES, this.supplies.serializeNBT());
 		nbt.putBoolean(TAG_RUNNING, this.isRunning);
+		
+		ListNBT extraStockNBT = new ListNBT();
+		this.extraStock.forEach(r -> {
+			extraStockNBT.add(r.serializeNBT());
+		});
+		nbt.put(TAG_EXTRA_STOCK, extraStockNBT);
+		
 		return super.save(nbt);
 	}
 	
@@ -112,6 +122,13 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		this.buffer.deserializeNBT(nbt.getCompound(TAG_BUFFER));
 		this.supplies.deserializeNBT(nbt.getCompound(TAG_SUPPLIES));
 		this.isRunning = nbt.getBoolean(TAG_RUNNING);
+		
+		this.extraStock.clear();
+		
+		ListNBT extraStockNBT = nbt.getList(TAG_EXTRA_STOCK, Constants.NBT.TAG_COMPOUND);
+		for (int i = 0; i < extraStockNBT.size(); ++i) {
+			this.extraStock.add(SupplyRequestPredicate.fromNBT(extraStockNBT.getCompound(i)));
+		}
 	}
 	
 	@Override
@@ -129,6 +146,7 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 	@Nullable
 	public abstract BlockInteraction getInteraction(LivingEntity entity);
 	
+	@SuppressWarnings("deprecation")
 	@Nullable
 	public ItemEntity getItemToPickup(LivingEntity entity) {
 		if (this.itemsToPickUp.isEmpty()) {
@@ -137,7 +155,7 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		for (Iterator<ItemEntity> iter = this.itemsToPickUp.iterator(); iter.hasNext(); ) {
 			ItemEntity item = iter.next();
 			iter.remove();
-			return item;
+			if (item != null && !item.removed && !item.getItem().isEmpty()) return item;
 		}
 		return null;
 	}
@@ -173,25 +191,49 @@ public abstract class ResourceStationTileEntity extends TileEntity implements IT
 		} else {
 			this.requests.put(requester, Util.make(new ArrayList<>(), list -> list.add(predicate)));
 		}
-		this.updatePlayerContainers();
+		this.updateContainerRequests();
 	}
 	
 	public void removeRequest(LivingEntity requester, SupplyRequestPredicate predicate) {
 		if (this.requests.containsKey(requester)) {
 			this.requests.get(requester).removeIf(predicate::equals);
 		}
-		this.updatePlayerContainers();
+		this.updateContainerRequests();
 	}
 	
 	public void clearRequests(LivingEntity requester) {
 		this.requests.clear();
-		this.updatePlayerContainers();
+		this.updateContainerRequests();
 	}
 	
 	public List<SupplyRequestPredicate> getRequests() { return this.requests.values().stream().flatMap(List::stream).collect(Collectors.toList()); }
 	
-	public void updatePlayerContainers() {
+	public void updateContainerRequests() {
 		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> this.level.getChunkAt(this.worldPosition)), new CSyncRequests(this.getRequests()));
+	}
+	
+	public void setOrAddExtraStock(SupplyRequestPredicate predicate, int index) {
+		if (0 <= index && index < this.extraStock.size()) {
+			this.extraStock.set(index, predicate);
+		} else {
+			this.extraStock.add(predicate);
+		}
+		this.setChanged();
+		this.updateContainerExtraStock();
+	}
+	
+	public void removeExtraStock(int index) {
+		if (0 <= index && index < this.extraStock.size()) {
+			this.extraStock.remove(index);
+			this.setChanged();
+			this.updateContainerExtraStock();
+		}
+	}
+	
+	public List<SupplyRequestPredicate> getExtraStock() { return this.extraStock; }
+	
+	public void updateContainerExtraStock() {
+		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> this.level.getChunkAt(this.worldPosition)), new CSyncExtraStock(this.extraStock));
 	}
 	
 	public boolean isFinished() { return false; }

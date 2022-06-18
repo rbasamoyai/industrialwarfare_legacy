@@ -260,7 +260,7 @@ public class NPCTasks {
 			return false;
 		}
 		ItemEntity item = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get();
-		return item != null && !item.removed;
+		return item != null && !item.removed && !item.getItem().isEmpty();
 	}
 	
 }

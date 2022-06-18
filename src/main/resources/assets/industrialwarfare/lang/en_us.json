@@ -414,6 +414,8 @@
 	"gui.industrialwarfare.resource_station.buffer": "Drop-offs",
 	"gui.industrialwarfare.resource_station.start": "Start station",
 	"gui.industrialwarfare.resource_station.stop": "Stop station",
+	"gui.industrialwarfare.resource_station.extra_stock": "Extra Stock",
+	"gui.industrialwarfare.resource_station.remove_extra_stock": "Right click to remove",
 	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",

@@ -43,7 +43,7 @@ public class TreeBlockIterator {
 		while (!posToCheck.isEmpty()) {
 			BlockPos center = posToCheck.poll();
 			for (BlockPos pos : BlockPos.betweenClosed(center.offset(-1, -1, -1), center.offset(2, 2, 2))) {
-				if (World.isOutsideBuildHeight(pos) || this.knownPositions.contains(pos)) continue;
+				if (World.isOutsideBuildHeight(pos) || !this.limit.contains(Vector3d.atCenterOf(pos)) || this.knownPositions.contains(pos)) continue;
 				BlockState state = this.level.getBlockState(pos);
 				if (!state.is(IWBlockTags.FORESTRY_HARVESTABLE)) continue;
 				

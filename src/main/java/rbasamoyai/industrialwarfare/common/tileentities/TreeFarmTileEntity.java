@@ -27,7 +27,6 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.common.Tags.Blocks;
 import net.minecraftforge.common.util.Constants;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
@@ -45,7 +44,7 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 	private BlockPos startingCorner;
 	private BlockPos endingCorner;
 	
-	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();
+	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();;
 	private int searchCooldown = 0;
 	
 	public TreeFarmTileEntity() {
@@ -126,6 +125,9 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 	public void setRunning(boolean running) {
 		super.setRunning(running);
 		this.searchCooldown = 0;
+		if (!this.isRunning()) {
+			this.treeWorkers.clear();
+		}
 	}
 	
 	@Override
@@ -141,9 +143,10 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 	@Nullable
 	@Override
 	public BlockInteraction getInteraction(LivingEntity entity) {
-		if (!this.isRunning() || this.searchCooldown > 0) return null;
+		if (!this.isRunning()) return null;
 		
 		if (!this.treeWorkers.containsKey(entity)) {
+			if (this.searchCooldown > 0) return null;
 			Tree result = this.findTree();
 			if (result == null) {
 				this.searchCooldown = 600;
@@ -154,13 +157,13 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 		
 		Tree tree = this.treeWorkers.get(entity);
 		if (tree.interactions().isEmpty()) {
-			return this.getFinalInteraction(tree);
+			return this.getSaplingInteraction(tree);
 		} else {
 			return tree.interactions().poll();
 		}
 	}
 	
-	private BlockInteraction getFinalInteraction(Tree tree) {
+	private BlockInteraction getSaplingInteraction(Tree tree) {
 		BlockPos pos = tree.pos().immutable();
 		BlockState stateBelow = this.level.getBlockState(pos.below());
 		
@@ -185,11 +188,9 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 		if (!this.hasCornersSetUp()) {
 			return null;
 		}
-		AxisAlignedBB box = new AxisAlignedBB(this.startingCorner, this.endingCorner);
-		return BlockPos.betweenClosedStream(box)
+		return BlockPos.betweenClosedStream(this.startingCorner, this.endingCorner)
 				.filter(p -> this.level.getBlockState(p).is(BlockTags.LOGS))
-				.filter(p -> !this.level.getBlockState(p.below()).is(Blocks.COBBLESTONE))
-				.filter(p -> !this.level.getBlockState(p.below()).is(BlockTags.LOGS))
+				.filter(p -> this.level.getBlockState(p.below()).is(IWBlockTags.CAN_PLANT_FORESTRY))
 				.filter(p -> !this.hasTreeAt(p))
 				.findAny()
 				.map(this::addTreeInteractions)
@@ -197,8 +198,8 @@ public class TreeFarmTileEntity extends ResourceStationTileEntity implements ICo
 	}
 	
 	private Tree addTreeInteractions(BlockPos pos) {
-		VoxelShape box = VoxelShapes.create(new AxisAlignedBB(this.startingCorner, this.endingCorner.offset(1, 32, 1)));
-		VoxelShape box1 = VoxelShapes.create(new AxisAlignedBB(pos.offset(-4, -1, -4), pos.offset(5, 32, 5)));
+		VoxelShape box = VoxelShapes.create(new AxisAlignedBB(this.startingCorner, this.endingCorner.offset(1, 48, 1)));
+		VoxelShape box1 = VoxelShapes.create(new AxisAlignedBB(pos.offset(-5, -1, -5), pos.offset(6, 48, 6)));
 		VoxelShape limit = VoxelShapes.join(box, box1, IBooleanFunction.AND);
 		if (limit.isEmpty()) {
 			return null;

@@ -22,6 +22,7 @@ public class QuarrierProfession extends ResourceGatheringProfession {
 	
 	@Override
 	protected boolean canBreakBlockWith(BlockState state, ItemStack stack, NPCEntity npc) {
+		if (state.getHarvestTool() != ToolType.PICKAXE && state.getHarvestTool() != ToolType.SHOVEL) return true;
 		return stack.getToolTypes().stream().anyMatch(state::isToolEffective);
 	}
 	

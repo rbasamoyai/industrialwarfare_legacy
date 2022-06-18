@@ -1,5 +1,7 @@
 package rbasamoyai.industrialwarfare.common.blocks;
 
+import java.util.List;
+
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -20,6 +22,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationContainer;
+import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
 
 public abstract class ResourceStationBlock extends Block {
@@ -61,8 +64,13 @@ public abstract class ResourceStationBlock extends Block {
 			buf.writeItem(new ItemStack(this.asItem()));
 			buf.writeBoolean(resourceStation.isRunning());
 			
-			buf.writeVarInt(resourceStation.getRequests().size());
-			resourceStation.getRequests().forEach(p -> p.toNetwork(buf));
+			List<SupplyRequestPredicate> requests = resourceStation.getRequests();
+			buf.writeVarInt(requests.size());
+			requests.forEach(p -> p.toNetwork(buf));
+			
+			List<SupplyRequestPredicate> extraStock = resourceStation.getExtraStock();
+			buf.writeVarInt(extraStock.size());
+			extraStock.forEach(p -> p.toNetwork(buf));
 		});
 		return ActionResultType.CONSUME;
 	}

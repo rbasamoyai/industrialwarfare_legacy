@@ -73,7 +73,7 @@ public class WorkstationProfession extends NPCProfession {
 	private static boolean noCollision(World level, BlockPos pos, NPCEntity npc) {
 		return level.noCollision(
 				npc.getBoundingBox()
-				.move(Vector3d.ZERO.subtract(npc.getPosition(1.0f)))
+				.move(Vector3d.ZERO.subtract(npc.position()))
 				.move(pos)
 				.move(0.5d, 0.0d, 0.5d));
 	}

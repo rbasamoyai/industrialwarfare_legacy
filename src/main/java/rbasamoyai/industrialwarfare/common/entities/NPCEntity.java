@@ -273,6 +273,7 @@ public class NPCEntity extends CreatureEntity implements
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void customServerAiStep() {
 		Brain<NPCEntity> brain = this.getBrain();
@@ -291,6 +292,13 @@ public class NPCEntity extends CreatureEntity implements
 				brain.eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get());
 			} else {
 				brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), cooldown);
+			}
+		}
+		
+		if (brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
+			ItemEntity item = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get();
+			if (item == null || item.removed || item.getItem().isEmpty()) {
+				brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM);
 			}
 		}
 		
