@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "industrialwarfare:block/quarry"
+    },
+    "facing=south": {
+      "model": "industrialwarfare:block/quarry",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "industrialwarfare:block/quarry",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "industrialwarfare:block/quarry",
+      "y": 90
+    }
+  }
+}

@@ -13,7 +13,6 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.common.ToolType;
 
 public class SpoolBlock extends Block {
 
@@ -21,7 +20,7 @@ public class SpoolBlock extends Block {
 			.reduce((a, b) -> VoxelShapes.joinUnoptimized(a, b, IBooleanFunction.OR)).get();
 	
 	public SpoolBlock() {
-		super(AbstractBlock.Properties.of(Material.WOOL, MaterialColor.WOOD).strength(1.0f).harvestTool(ToolType.AXE).noOcclusion());
+		super(AbstractBlock.Properties.of(Material.WOOL, MaterialColor.WOOD).strength(1.0f).noOcclusion());
 	}
 	
 	@Override

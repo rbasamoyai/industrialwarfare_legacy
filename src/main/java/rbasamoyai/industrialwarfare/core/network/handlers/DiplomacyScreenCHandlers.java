@@ -13,7 +13,6 @@ public class DiplomacyScreenCHandlers {
 	public static void handleCBroadcastChanges(DiplomacyScreenMessages.CBroadcastChanges msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		Minecraft mc = Minecraft.getInstance();
 		Container ct = mc.player.containerMenu;
-		if (ct == null) return;
 		if (!(ct instanceof DiplomacyContainer)) return;
 		
 		DiplomacyContainer diplomacyCt = (DiplomacyContainer) ct;

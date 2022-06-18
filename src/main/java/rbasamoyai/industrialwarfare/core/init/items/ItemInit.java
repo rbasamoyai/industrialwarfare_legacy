@@ -1,6 +1,10 @@
 package rbasamoyai.industrialwarfare.core.init.items;
 
+import java.util.function.Supplier;
+
 import net.minecraft.block.Block;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ArmorMaterial;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -10,19 +14,27 @@ import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.items.IWArmorMaterial;
 import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 import rbasamoyai.industrialwarfare.common.items.MatchCoilItem;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
+import rbasamoyai.industrialwarfare.common.items.SurveyorsKitItem;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem;
+import rbasamoyai.industrialwarfare.common.items.armor.AmericanKepiItem;
+import rbasamoyai.industrialwarfare.common.items.armor.PickelhaubeHighItem;
+import rbasamoyai.industrialwarfare.common.items.armor.PithHelmetItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.ComplaintRemoverItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.DebugOwnerItem;
 import rbasamoyai.industrialwarfare.common.items.debugitems.JobSitePointerItem;
+import rbasamoyai.industrialwarfare.common.items.debugitems.SetProfessionItem;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
+import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 
 /*
@@ -51,6 +63,9 @@ public class ItemInit {
 	public static final RegistryObject<Item> ASSEMBLER_WORKSTATION = registerBlockItem(BlockInit.ASSEMBLER_WORKSTATION);
 	public static final RegistryObject<Item> TASK_SCROLL_SHELF = registerBlockItem(BlockInit.TASK_SCROLL_SHELF);
 	public static final RegistryObject<Item> SPOOL = registerBlockItem(BlockInit.SPOOL);
+	public static final RegistryObject<Item> QUARRY = registerBlockItem(BlockInit.QUARRY);
+	public static final RegistryObject<Item> TREE_FARM = registerBlockItem(BlockInit.TREE_FARM);
+	public static final RegistryObject<Item> WORKER_SUPPORT = registerBlockItem(BlockInit.WORKER_SUPPORT);
 	
 	public static final RegistryObject<Item> RECIPE_MANUAL = ITEMS.register("recipe_manual", RecipeItem::new);
 	
@@ -58,16 +73,14 @@ public class ItemInit {
 	public static final RegistryObject<Item> LABEL = ITEMS.register("label", LabelItem::new);
 	public static final RegistryObject<Item> SCHEDULE = ITEMS.register("schedule", ScheduleItem::new);
 	
-	public static final RegistryObject<Item> AMMO_GENERIC = ITEMS.register("ammo_generic",
-			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	public static final RegistryObject<Item> AMMO_GENERIC = ITEMS.register("ammo_generic", ItemInit::generalGenericItem);
 	
 	public static final RegistryObject<Item> INFINITE_AMMO_GENERIC = ITEMS.register("infinite_ammo_generic",
 			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL).rarity(Rarity.EPIC)) {
 				@Override public boolean isFoil(ItemStack stack) { return true; }
 			});
 	
-	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case",
-			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
+	public static final RegistryObject<Item> CARTRIDGE_CASE = ITEMS.register("cartridge_case", ItemInit::generalGenericItem);
 	
 	public static final RegistryObject<Item> PAPER_CARTRIDGE = ITEMS.register("paper_cartridge",
 			() -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
@@ -81,6 +94,22 @@ public class ItemInit {
 	public static final RegistryObject<Item> INFINITE_MATCH_CORD = ITEMS.register("infinite_match_cord", InfiniteMatchCordItem::new);
 	public static final RegistryObject<Item> MATCH_COIL = ITEMS.register("match_coil", MatchCoilItem::new);
 	
+	public static final RegistryObject<Item> PITH_HELMET = ITEMS.register("pith_helmet",
+			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+	
+	public static final RegistryObject<Item> AMERICAN_KEPI = ITEMS.register("american_kepi",
+			() -> new AmericanKepiItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+	
+	public static final RegistryObject<Item> PICKELHAUBE_HIGH = ITEMS.register("pickelhaube_high",
+			() -> new PickelhaubeHighItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+	
+	public static final RegistryObject<Item> SET_PROFESSION_JOBLESS = ITEMS.register("set_profession_jobless", () -> setProfessionItem(NPCProfessionInit.JOBLESS));
+	public static final RegistryObject<Item> SET_PROFESSION_ASSEMBLER = ITEMS.register("set_profession_assembler", () -> setProfessionItem(NPCProfessionInit.ASSEMBLER));
+	public static final RegistryObject<Item> SET_PROFESSION_QUARRIER = ITEMS.register("set_profession_quarrier", () -> setProfessionItem(NPCProfessionInit.QUARRIER));
+	public static final RegistryObject<Item> SET_PROFESSION_LOGGER = ITEMS.register("set_profession_logger", () -> setProfessionItem(NPCProfessionInit.LOGGER));
+	
+	public static final RegistryObject<Item> SURVEYORS_KIT = ITEMS.register("surveyors_kit", SurveyorsKitItem::new);
+	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));
 	}
@@ -91,5 +120,9 @@ public class ItemInit {
 	
 	private static RegistryObject<Item> registerBlockItem(RegistryObject<Block> blockObject) {
 		return ITEMS.register(blockObject.getId().getPath(), () -> new BlockItem(blockObject.get(), new Item.Properties().tab(IWItemGroups.TAB_BLOCKS)));
+	}
+	
+	private static Item setProfessionItem(Supplier<NPCProfession> sup) {
+		return new SetProfessionItem(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_DEBUG), sup);
 	}
 }

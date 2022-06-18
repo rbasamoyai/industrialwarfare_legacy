@@ -1,0 +1,262 @@
+package rbasamoyai.industrialwarfare.common.entityai;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.block.BlockState;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.tags.ITag;
+import net.minecraft.tags.TagCollectionManager;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.ToolType;
+import net.minecraftforge.registries.ForgeRegistries;
+
+public class SupplyRequestPredicate {
+	
+	public static final SupplyRequestPredicate ANY = new SupplyRequestPredicate();
+	
+	@Nullable
+	private final ITag<Item> tag;
+	@Nullable
+	private final Item item;
+	private final IntBound count;
+	@Nullable
+	private final ToolType toolType;
+	private final IntBound harvestLevel;
+	
+	private int hash = 0;
+	
+	public SupplyRequestPredicate() {
+		this.tag = null;
+		this.item = null;
+		this.count = IntBound.ANY;
+		this.toolType = null;
+		this.harvestLevel = IntBound.ANY;
+	}
+	
+	public SupplyRequestPredicate(@Nullable ITag<Item> tag, @Nullable Item item, IntBound count, @Nullable ToolType type, IntBound harvestLevel) {
+		this.tag = tag;
+		this.item = item;
+		this.count = count;
+		this.toolType = type;
+		this.harvestLevel = harvestLevel;
+	}
+	
+	public static SupplyRequestPredicate canBreak(BlockState state) {
+		return forTool(state.getHarvestTool(), IntBound.atLeast(state.getHarvestLevel()));
+	}
+	
+	public static SupplyRequestPredicate forTool(ToolType type, IntBound harvestLevel) {
+		return new SupplyRequestPredicate(null, null, IntBound.ANY, type, harvestLevel);
+	}
+	
+	public static SupplyRequestPredicate forItem(Item item, IntBound count) {
+		return new SupplyRequestPredicate(null, item, count, null, IntBound.ANY);
+	}
+	
+	public static SupplyRequestPredicate forItem(ITag<Item> tag, IntBound count) {
+		return new SupplyRequestPredicate(tag, null, count, null, IntBound.ANY);
+	}
+	
+	public boolean matches(ItemStack stack) {
+		if (this.tag != null && !this.tag.contains(stack.getItem())) return false;
+		if (this.item != null && this.item != stack.getItem()) return false;
+		if (!this.count.matches(stack.getCount())) return false;
+		if (this.toolType == null) return true;
+		return stack.getToolTypes().contains(this.toolType) && this.harvestLevel.matches(stack.getHarvestLevel(this.toolType, null, null));
+	}
+	
+	public List<ItemStack> getItemsForDisplay() {
+		if (this.tag != null) return this.tag.getValues().stream().map(i -> new ItemStack(i)).collect(Collectors.toList());
+		if (this.item != null) return Arrays.asList(new ItemStack(this.item));
+		if (this.toolType == null) return Arrays.asList();
+		return ForgeRegistries.ITEMS.getValues().stream()
+				.map(i -> new ItemStack(i))
+				.filter(s -> s.getToolTypes().contains(this.toolType))
+				.filter(s -> this.harvestLevel.matches(s.getHarvestLevel(this.toolType, null, null)))
+				.collect(Collectors.toList());
+	}
+	
+	public int getMinCount(int noMinimum) {
+		return this.count.getMin() == null ? noMinimum : this.count.getMin();
+	}
+	
+	public int getMaxCount(int noMaximum) {
+		return this.count.getMax() == null ? noMaximum : this.count.getMax();
+	}
+	
+	public void toNetwork(PacketBuffer buf) {
+		buf.writeBoolean(this.tag != null);
+		if (this.tag != null) {
+			buf.writeUtf(TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).toString());
+		}
+		buf.writeBoolean(this.item != null);
+		if (this.item != null) {
+			buf.writeRegistryIdUnsafe(ForgeRegistries.ITEMS, this.item);
+		}
+		this.count.write(buf);
+		buf.writeBoolean(this.toolType != null);
+		if (this.toolType != null) {
+			buf.writeUtf(this.toolType.getName());
+		}
+		this.harvestLevel.write(buf);
+	}
+	
+	public static final String TAG_ITEM_TAG = "itemTag";
+	public static final String TAG_ITEM = "item";
+	public static final String TAG_COUNT = "count";
+	public static final String TAG_TOOL_TYPE = "toolType";
+	public static final String TAG_HARVEST_LEVEL = "harvestLevel";
+	
+	public CompoundNBT serializeNBT() {
+		CompoundNBT nbt = new CompoundNBT();
+		if (this.tag != null) {
+			nbt.putString(TAG_ITEM_TAG, TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).toString());
+		}
+		if (this.item != null) {
+			nbt.putString(TAG_ITEM, this.item.getRegistryName().toString());
+		}
+		nbt.put(TAG_COUNT, this.count.write(new CompoundNBT()));
+		if (this.toolType != null) {
+			nbt.putString(TAG_TOOL_TYPE, this.toolType.getName());
+		}
+		nbt.put(TAG_HARVEST_LEVEL, this.harvestLevel.write(new CompoundNBT()));
+		
+		return nbt;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (!(obj instanceof SupplyRequestPredicate)) return false;
+		SupplyRequestPredicate pred = (SupplyRequestPredicate) obj;
+		return this.tag == pred.tag && this.item == pred.item && this.count.equals(pred.count) && this.toolType == pred.toolType && this.harvestLevel.equals(pred.harvestLevel);
+	}
+	
+	public static SupplyRequestPredicate fromNetwork(PacketBuffer buf) {
+		ITag<Item> tag = null;
+		if (buf.readBoolean()) {
+			ResourceLocation loc = new ResourceLocation(buf.readUtf());
+			tag = TagCollectionManager.getInstance().getItems().getTag(loc);
+		}
+		Item item = buf.readBoolean() ? buf.readRegistryIdUnsafe(ForgeRegistries.ITEMS) : null;
+		IntBound count = IntBound.readBound(buf);
+		ToolType toolType = buf.readBoolean() ? ToolType.get(buf.readUtf()) : null;
+		IntBound harvestLevel = IntBound.readBound(buf);
+		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
+	}
+	
+	public static SupplyRequestPredicate fromNBT(CompoundNBT nbt) {
+		ITag<Item> tag = nbt.contains(TAG_ITEM_TAG) ? TagCollectionManager.getInstance().getItems().getTag(new ResourceLocation(nbt.getString(TAG_ITEM_TAG))) : null;
+		Item item = nbt.contains(TAG_ITEM) ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString(TAG_ITEM))) : null;
+		IntBound count = IntBound.readBound(nbt.getCompound(TAG_COUNT));
+		ToolType toolType = nbt.contains(TAG_TOOL_TYPE) ? ToolType.get(nbt.getString(TAG_TOOL_TYPE)) : null;
+		IntBound harvestLevel = IntBound.readBound(nbt.getCompound(TAG_HARVEST_LEVEL));
+		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
+	}
+	
+	@Override
+	public int hashCode() {
+		if (this.hash == 0) {
+			if (this.tag != null) {
+				this.hash ^= TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).hashCode();
+			}
+			if (this.item != null) {
+				this.hash ^= this.item.getRegistryName().hashCode() * 64;
+			}
+			this.hash ^= this.count.hashCode();
+			if (this.toolType != null) {
+				this.hash ^= this.toolType.getName().hashCode() * 128;
+			}
+			this.hash ^= this.harvestLevel.hashCode() * 32;
+		}
+		return this.hash;
+	}
+	
+	/**
+	 * A recreation of {@link net.minecraft.advancements.criterion.MinMaxBounds.IntBound} but with less fluff as it does not get serialized to JSON.
+	 * 
+	 * @author rbasamoyai
+	 */
+	
+	public static class IntBound {
+		public static final IntBound ANY = new IntBound(null, null);
+		
+		public static final String TAG_MIN = "min";
+		public static final String TAG_MAX = "max";
+		
+		private final Integer min;
+		private final Integer max;
+		
+		public IntBound(@Nullable Integer min, @Nullable Integer max) {
+			if (min != null && max != null && min.intValue() > max.intValue()) {
+				this.max = min;
+				this.min = max;
+			} else {
+				this.min = min;
+				this.max = max;
+			}
+		}
+		
+		public boolean matches(int value) {
+			if (this.min != null && value < this.min) return false;
+			return this.max == null || this.max >= value;
+		}
+		
+		public Integer getMin() { return this.min; }
+		public Integer getMax() { return this.max; }
+		
+		@Override
+		public int hashCode() {
+			return (this.min == null ? 0 : this.min.intValue() * 32) ^ (this.max == null ? 0 : this.max.intValue());
+		}
+		
+		public static IntBound atLeast(int value) { return new IntBound(value, null); }
+		public static IntBound exactly(int value) { return new IntBound(value, value); }
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (!(obj instanceof IntBound)) return false;
+			IntBound other = (IntBound) obj;
+			if (this.min == null ? other.min != null : !this.min.equals(other.min)) return false;
+			return this.max == null ? other.max == null : this.max.equals(other.max);
+		}
+		
+		public void write(PacketBuffer buf) {
+			buf.writeBoolean(this.min != null);
+			if (this.min != null) {
+				buf.writeVarInt(this.min);
+			}
+			buf.writeBoolean(this.max != null);
+			if (this.max != null) {
+				buf.writeVarInt(this.max);
+			}
+		}
+		
+		public CompoundNBT write(CompoundNBT nbt) {
+			if (this.min != null) nbt.putInt(TAG_MIN, this.min.intValue());
+			if (this.max != null) nbt.putInt(TAG_MAX, this.max.intValue());
+			return nbt;
+		}
+		
+		public static IntBound readBound(PacketBuffer buf) {
+			Integer min = buf.readBoolean() ? buf.readVarInt() : null;
+			Integer max = buf.readBoolean() ? buf.readVarInt() : null;
+			return new IntBound(min, max);
+		}
+		
+		public static IntBound readBound(CompoundNBT nbt) {
+			Integer min = nbt.contains(TAG_MIN) ? nbt.getInt(TAG_MIN) : null;
+			Integer max = nbt.contains(TAG_MAX) ? nbt.getInt(TAG_MAX) : null;
+			return new IntBound(min, max);
+		}
+	}
+	
+}

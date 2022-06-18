@@ -7,15 +7,12 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DirectoryCache;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
-import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.blocks.MatchCoilBlock;
-import rbasamoyai.industrialwarfare.common.blocks.TaskScrollShelfBlock;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 
 public class BlockStateModelGeneration extends BlockStateProvider {
@@ -29,49 +26,37 @@ public class BlockStateModelGeneration extends BlockStateProvider {
 	@Override
 	protected void registerStatesAndModels() {
 		LOGGER.debug("Generating block states and models for rbasamoyai's Industrial Warfare mod");
-		ItemModelProvider itemModels = itemModels();
 		
-		getVariantBuilder(BlockInit.ASSEMBLER_WORKSTATION.get())
-		.forAllStates(state -> {
-			return ConfiguredModel.builder()
-					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")))
-					.build();
-		});
-		itemModels.getBuilder("assembler_workstation")
-				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/assembler_workstation")));
+		simpleBlock(BlockInit.ASSEMBLER_WORKSTATION.get(), new UncheckedModelFile(modLoc("block/assembler_workstation")));
+		simpleBlockItem(BlockInit.ASSEMBLER_WORKSTATION.get(), new UncheckedModelFile(modLoc("block/assembler_workstation")));
 		
-		getVariantBuilder(BlockInit.TASK_SCROLL_SHELF.get())
-		.forAllStates(state -> {
-			return ConfiguredModel.builder()
-					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")))
-					.rotationY(((int) state.getValue(TaskScrollShelfBlock.HORIZONTAL_FACING).toYRot() + 180) % 360)
-					.build();
-		});
-		itemModels.getBuilder("task_scroll_shelf")
-				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/task_scroll_shelf")));
+		horizontalBlock(BlockInit.QUARRY.get(), new UncheckedModelFile(modLoc("block/quarry")));
+		simpleBlockItem(BlockInit.QUARRY.get(), new UncheckedModelFile(modLoc("block/quarry")));
+		
+		horizontalBlock(BlockInit.TREE_FARM.get(), new UncheckedModelFile(modLoc("block/tree_farm")));
+		simpleBlockItem(BlockInit.TREE_FARM.get(), new UncheckedModelFile(modLoc("block/tree_farm")));
+		
+		horizontalBlock(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
+		simpleBlockItem(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
 		
 		getVariantBuilder(BlockInit.MATCH_COIL.get())
 		.forAllStates(state -> {
 			int i = state.getValue(MatchCoilBlock.COIL_AMOUNT);
 			if (i == 4) {
 				return ConfiguredModel.builder()
-						.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
+						.modelFile(new UncheckedModelFile(modLoc("block/spool")))
 						.build();
 			}
 			return ConfiguredModel.builder()
-					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/match_coil" + i)))
+					.modelFile(new UncheckedModelFile(modLoc("block/match_coil" + i)))
 					.build();
 		});
 		
-		getVariantBuilder(BlockInit.SPOOL.get())
-		.forAllStates(state -> {
-			return ConfiguredModel.builder()
-					.modelFile(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")))
-					.build();
-		});
-		itemModels.getBuilder("spool")
-				.parent(new UncheckedModelFile(new ResourceLocation(IndustrialWarfare.MOD_ID, "block/spool")));
+		simpleBlock(BlockInit.SPOOL.get(), new UncheckedModelFile(modLoc("block/spool")));
+		simpleBlockItem(BlockInit.SPOOL.get(), new UncheckedModelFile(modLoc("block/spool")));
 		
+		simpleBlock(BlockInit.WORKER_SUPPORT.get(), new UncheckedModelFile(modLoc("block/worker_support")));
+		simpleBlockItem(BlockInit.WORKER_SUPPORT.get(), new UncheckedModelFile(modLoc("block/worker_support")));
 	}
 	
 	@Override

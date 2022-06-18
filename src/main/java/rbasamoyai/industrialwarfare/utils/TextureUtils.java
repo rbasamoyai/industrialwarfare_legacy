@@ -9,6 +9,9 @@ import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.renderer.texture.SimpleTexture;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 
 public class TextureUtils {
@@ -42,6 +45,20 @@ public class TextureUtils {
 					return argb;
 				})
 				.collect(Collectors.toList());
+	}
+	
+	public static ResourceLocation getWeaponSkinTexture(ItemStack stack) {
+		CompoundNBT nbt = stack.getOrCreateTag();
+		int skin = nbt.getInt("weaponSkin");
+		ResourceLocation regName = stack.getItem().getRegistryName();
+		String path = String.format("textures/item/%s%s.png", regName.getPath(), skin > 0 ? Integer.toString(skin) : "");
+		ResourceLocation tex = new ResourceLocation(regName.getNamespace(), path);
+		
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.textureManager.getTexture(tex) == null) {
+			mc.textureManager.register(tex, new SimpleTexture(tex)); 
+		}
+		return mc.textureManager.getTexture(tex) == null ? new ResourceLocation(regName.getNamespace(), "textures/item/" + regName.getPath() + ".png") : tex;
 	}
 	
 }

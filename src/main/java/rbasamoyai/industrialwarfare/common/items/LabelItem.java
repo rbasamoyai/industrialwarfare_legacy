@@ -43,17 +43,16 @@ public class LabelItem extends Item {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		LabelItemDataProvider provider = new LabelItemDataProvider();
-		CompoundNBT tag = nbt;
-		if (nbt == null) tag = defaultNBT(new CompoundNBT());
-		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
-		provider.deserializeNBT(tag);
+		if (nbt == null) {
+			provider.getCapability(LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY).ifPresent(h -> {
+				h.setUUID(new UUID(0L, 0L));
+				h.setNumber((byte) 0);
+				h.cacheName(StringTextComponent.EMPTY);
+			});
+		} else {
+			provider.deserializeNBT(nbt.contains("Parent") ? nbt.getCompound("Parent") : nbt);
+		}
 		return provider;
-	}
-	
-	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
-		nbt.putUUID(LabelItemDataCapability.TAG_NPC_UUID, new UUID(0L, 0L));
-		nbt.putString(LabelItemDataCapability.TAG_CACHED_NAME, ITextComponent.Serializer.toJson(StringTextComponent.EMPTY));
-		return nbt;
 	}
 	
 	public static LazyOptional<ILabelItemDataHandler> getDataHandler(ItemStack stack) {

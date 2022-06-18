@@ -23,7 +23,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
-import rbasamoyai.industrialwarfare.common.itemhandlers.ImmovableGuiItemSlot;
 import rbasamoyai.industrialwarfare.common.itemhandlers.MatchCoilOutputItemHandler;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.core.init.ContainerInit;
@@ -36,10 +35,10 @@ public class MatchCoilContainer extends Container {
 	private static final int OUTPUT_SLOT_X = 134;
 	private static final int OUTPUT_SLOT_Y = 36;
 	private static final int INVENTORY_START_X = 8;
-	private static final int INVENTORY_START_Y = 86;
+	private static final int INVENTORY_START_Y = 84;
 	private static final int INVENTORY_ROWS = 3;
 	private static final int INVENTORY_COLUMNS = 9;
-	private static final int HOTBAR_SLOT_Y = 144;
+	private static final int HOTBAR_SLOT_Y = 142;
 	private static final int HOTBAR_COUNT = INVENTORY_COLUMNS;
 	
 	public static final int OUTPUT_SLOT_INDEX = 0;
@@ -93,6 +92,7 @@ public class MatchCoilContainer extends Container {
 			else this.addSlot(new Slot(this.playerInv, i, x, HOTBAR_SLOT_Y));
 		}
 		
+		// Offhand slot, used for tracking shears durability
 		this.addSlot(new ImmovableGuiItemSlot(this.playerInv, 40, 0, 0) {
 			@OnlyIn(Dist.CLIENT)
 			@Override

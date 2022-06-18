@@ -23,5 +23,21 @@ public class IWMiscUtils {
 		Block block = blockstate.getBlock();
 		return block.isAir(blockstate, level, pos);
 	}
+	
+	public static float quadEasingIn(float time) {
+		return time * time;
+	}
+	
+	public static float quadEasingOut(float time) {
+		float f = time - 1;
+		return 1 - f * f;
+	}
+	
+	public static float quadEasingInOut(float time) {
+		if (time < 0.5) {
+			return 2.0f * quadEasingIn(time);
+		}
+		return 2.0f * quadEasingOut(time) - 1.0f;
+	}
 
 }

@@ -18,6 +18,9 @@ public class FirearmItemDataCapability {
 	public static final String TAG_MAGAZINE_SIZE = "magazineSize";
 	public static final String TAG_MAGAZINE = "magazine";
 	public static final String TAG_MELEEING = "meleeing";
+	public static final String TAG_RECOIL_TICKS = "recoilTicks";
+	public static final String TAG_RECOIL_PITCH = "recoilPitch";
+	public static final String TAG_RECOIL_YAW = "recoilYaw";
 	public static final String TAG_STATE = "state";
 	
 	@CapabilityInject(IFirearmItemDataHandler.class)
@@ -37,6 +40,9 @@ public class FirearmItemDataCapability {
 			tag.putInt(TAG_MAGAZINE_SIZE, instance.getMagazineSize());
 			tag.put(TAG_MAGAZINE, instance.serializeAmmo());
 			tag.putBoolean(TAG_MELEEING, instance.isMeleeing());
+			tag.putInt(TAG_RECOIL_TICKS, instance.getRecoilTicks());
+			tag.putFloat(TAG_RECOIL_PITCH, instance.getRecoilPitch());
+			tag.putFloat(TAG_RECOIL_YAW, instance.getRecoilYaw());
 			tag.putInt(TAG_STATE, instance.getState());
 			return tag;
 		}
@@ -53,6 +59,8 @@ public class FirearmItemDataCapability {
 			if (instance.getAction() == ActionType.NOTHING && instance.isFinishedAction()) {
 				instance.setAction(ActionType.NOTHING, 1);
 			}
+			instance.setRecoilTicks(tag.getInt(TAG_RECOIL_TICKS));
+			instance.setRecoil(tag.getFloat(TAG_RECOIL_PITCH), tag.getFloat(TAG_RECOIL_YAW));
 			instance.setState(tag.getInt(TAG_STATE));
 		}
 	}

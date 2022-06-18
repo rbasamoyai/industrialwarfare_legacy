@@ -1,10 +1,24 @@
 Current TODO:
-- Work on formations
-	- Formations joining other
-	formations
-	- Merging smaller formations
-	if possible
-	
-- Match coil
-	- Converting long enough
-	cord into coil
+
+- Extra supplies
+
+- Formulate an economy
+	- Resource gathering
+		- Farming
+		- Mob resource gathering
+			- Rancher
+	- Resource refining
+		- Metal smelting
+		- Sawyer
+	- Resource processing
+		- Woodworking
+		- Metalsmith
+		- Base parts
+		- Assembly
+		- Chemistry
+		- Commodities
+			- Clothes/uniforms
+			- Food
+
+- Possible restructuring
+of folder hierarchy?

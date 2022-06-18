@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ToolType;
 import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
 
@@ -23,11 +22,11 @@ import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
  * should be overridden.
  */
 
-public class WorkstationBlock extends Block {
+public abstract class WorkstationBlock extends Block {
 
-	public static final AbstractBlock.Properties WORKSTATION_METAL	= AbstractBlock.Properties.of(Material.METAL, MaterialColor.METAL).harvestTool(ToolType.PICKAXE).strength(5f, 6f).harvestLevel(2).sound(SoundType.METAL).requiresCorrectToolForDrops();
-	public static final AbstractBlock.Properties WORKSTATION_STONE	= AbstractBlock.Properties.of(Material.STONE, MaterialColor.STONE).harvestTool(ToolType.PICKAXE).strength(3.5f, 3.5f).harvestLevel(1).sound(SoundType.STONE).requiresCorrectToolForDrops();
-	public static final AbstractBlock.Properties WORKSTATION_WOOD	= AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2.5f, 2.5f).sound(SoundType.WOOD);
+	public static final AbstractBlock.Properties WORKSTATION_METAL	= AbstractBlock.Properties.of(Material.METAL, MaterialColor.METAL).strength(5f, 6f).harvestLevel(2).sound(SoundType.METAL).requiresCorrectToolForDrops();
+	public static final AbstractBlock.Properties WORKSTATION_STONE	= AbstractBlock.Properties.of(Material.STONE, MaterialColor.STONE).strength(3.5f, 3.5f).harvestLevel(1).sound(SoundType.STONE).requiresCorrectToolForDrops();
+	public static final AbstractBlock.Properties WORKSTATION_WOOD	= AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).strength(2.5f, 2.5f).sound(SoundType.WOOD);
 	
 	public WorkstationBlock(AbstractBlock.Properties properties) {
 		super(properties);
@@ -55,15 +54,9 @@ public class WorkstationBlock extends Block {
 			
 			world.removeBlockEntity(pos);
 		}
-	}
+	}	
 	
-	
-	
-	@Deprecated
-	@Override
-	public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-		return null;
-	}
+	public abstract TileEntity createTileEntity(BlockState state, IBlockReader world);
 	
 	@Deprecated
 	@Override

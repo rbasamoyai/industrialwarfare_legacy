@@ -17,7 +17,7 @@ public class WorkstationDataProvider implements ICapabilitySerializable<Compound
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == WorkstationDataCapability.WORKSTATION_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

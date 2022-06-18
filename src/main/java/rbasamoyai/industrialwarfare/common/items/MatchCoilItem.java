@@ -67,7 +67,7 @@ public class MatchCoilItem extends BlockItem {
 	protected boolean updateCustomBlockEntityTag(BlockPos pos, World level, PlayerEntity player,
 			ItemStack stack, BlockState state) {
 		boolean flag = super.updateCustomBlockEntityTag(pos, level, player, stack, state);
-		if (!level.isClientSide && !flag) {
+		if (!level.isClientSide && flag) {
 			TileEntity te = level.getBlockEntity(pos);
 			if (te instanceof MatchCoilTileEntity) {
 				MatchCoilTileEntity coil = (MatchCoilTileEntity) te;

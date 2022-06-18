@@ -17,7 +17,7 @@ public class ScheduleItemDataProvider implements ICapabilitySerializable<Compoun
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

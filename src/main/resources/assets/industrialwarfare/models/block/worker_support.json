@@ -1,0 +1,12 @@
+{
+	"parent": "minecraft:block/cube",
+	"textures": {
+		"particle": "industrialwarfare:block/worker_support_top",
+		"north": "industrialwarfare:block/worker_support_side",
+		"south": "industrialwarfare:block/worker_support_side",
+		"west": "industrialwarfare:block/worker_support_side",
+		"east": "industrialwarfare:block/worker_support_side",
+		"up": "industrialwarfare:block/worker_support_top",
+		"down": "industrialwarfare:block/worker_support_side"
+	}
+}

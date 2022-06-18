@@ -8,7 +8,6 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.IContainerProvider;
@@ -33,7 +32,6 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ToolType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
@@ -63,7 +61,7 @@ public class TaskScrollShelfBlock extends Block {
 	}
 	
 	public TaskScrollShelfBlock() {
-		super(AbstractBlock.Properties.of(Material.WOOD, MaterialColor.WOOD).noOcclusion().harvestTool(ToolType.AXE).strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD));
+		super(AbstractBlock.Properties.of(Material.WOOD).noOcclusion().strength(2.5f, 2.5f).harvestLevel(1).sound(SoundType.WOOD));
 		
 		this.registerDefaultState(
 				this.stateDefinition.any()

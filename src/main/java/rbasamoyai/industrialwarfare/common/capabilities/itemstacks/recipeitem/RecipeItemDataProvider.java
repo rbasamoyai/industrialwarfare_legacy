@@ -13,7 +13,7 @@ public class RecipeItemDataProvider implements ICapabilitySerializable<CompoundN
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == RecipeItemDataCapability.RECIPE_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

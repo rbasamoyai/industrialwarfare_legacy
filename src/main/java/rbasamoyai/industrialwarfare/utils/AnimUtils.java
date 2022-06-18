@@ -23,11 +23,15 @@ public class AnimUtils {
 	
 	public static void renderPartOverBone(ModelRenderer model, GeoBone bone, MatrixStack stack, IVertexBuilder buffer,
 			int packedLightIn, int packedOverlayIn, float r, float g, float b, float a) {
+		setupModelFromBone(model, bone);
+		model.render(stack, buffer, packedLightIn, packedOverlayIn, r, g, b, a);
+	}
+	
+	public static void setupModelFromBone(ModelRenderer model, GeoBone bone) {
 		model.setPos(bone.rotationPointX, bone.rotationPointY, bone.rotationPointZ);
 		model.xRot = 0.0f;
 		model.yRot = 0.0f;
 		model.zRot = 0.0f;
-		model.render(stack, buffer, packedLightIn, packedOverlayIn, r, g, b, a);
 	}
 	
 	@SuppressWarnings("unchecked")

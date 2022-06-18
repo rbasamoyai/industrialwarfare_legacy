@@ -1,7 +1,6 @@
 package rbasamoyai.industrialwarfare.utils;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,13 +39,12 @@ public class CommandUtils {
 		if (box.contains(npc.position())) return;
 		
 		List<BlockPos> list = BlockPos.betweenClosedStream(target.offset(-1, -2, -1), target.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
-		Collections.shuffle(list);
 		Optional<BlockPos> optional = list.stream()
 				.filter(pos -> world.loadedAndEntityCanStandOn(pos, npc))
-				.filter(pos -> world.noCollision(npc, npc.getBoundingBox().move(pos.subtract(npc.blockPosition()))))
+				.filter(p -> world.noCollision(npc))
 				.findFirst();
 		if (!optional.isPresent()) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 100L);
 			return;
 		}
 		npc.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(optional.get(), speedModifier, closeEnoughDist));
@@ -66,7 +64,7 @@ public class CommandUtils {
 		}
 		BlockPos pos = optional.get();
 		if (!pos.closerThan(npc.position(), maxDistanceFromPoi)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get(), 200L);
 			return false;
 		}
 		return true;
@@ -82,7 +80,7 @@ public class CommandUtils {
 	public static boolean validateStandingPos(ServerWorld world, NPCEntity npc, Optional<BlockPos> optional, double maxDistanceFromPoi, NPCComplaint emptyComplaint) {
 		if (!validatePos(world, npc, optional, maxDistanceFromPoi, emptyComplaint)) return false;
 		if (!world.loadedAndEntityCanStandOn(optional.get(), npc) || !world.noCollision(npc)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
 			return false;
 		}
 		return true;
@@ -102,7 +100,7 @@ public class CommandUtils {
 			return false;
 		}
 		if (!world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get(), 200L);
 			return false;
 		}
 		return true;
@@ -142,7 +140,7 @@ public class CommandUtils {
 		
 		if (mode == WaitMode.DAY_TIME) {
 			if (!world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get());
+				brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TIME_STOPPED.get(), 200L);
 				return;
 			} else if ((world.getDayTime() + TimeUtils.TIME_OFFSET) % 24000L >= waitUntil) {
 				brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);

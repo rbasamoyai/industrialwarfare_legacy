@@ -1,4 +1,4 @@
-package rbasamoyai.industrialwarfare.common.itemhandlers;
+package rbasamoyai.industrialwarfare.common.containers;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;

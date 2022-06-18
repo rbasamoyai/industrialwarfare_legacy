@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,6 +22,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -30,6 +32,7 @@ import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.Ta
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
@@ -62,14 +65,15 @@ public class TaskScrollItem extends Item {
 	@Override
 	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
 		TaskScrollDataProvider provider = new TaskScrollDataProvider();
-		provider.deserializeNBT(nbt == null ? this.defaultNBT(new CompoundNBT()) : nbt);
+		if (nbt == null) {
+			provider.getCapability(TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY).ifPresent(h -> {
+				h.setList(new ArrayList<>());
+				h.setLabel(ItemStack.EMPTY);
+			});
+		} else {
+			provider.deserializeNBT(nbt.contains("Parent") ? nbt.getCompound("Parent") : nbt);
+		}
 		return provider;
-	}
-	
-	public CompoundNBT defaultNBT(CompoundNBT nbt) {
-		nbt.put(TaskScrollDataCapability.TAG_ORDER_LIST, new ListNBT());
-		nbt.put(TaskScrollDataCapability.TAG_LABEL_ITEM, ItemStack.EMPTY.serializeNBT());
-		return nbt;
 	}
 	
 	public static LazyOptional<ITaskScrollDataHandler> getDataHandler(ItemStack stack) {
@@ -80,7 +84,8 @@ public class TaskScrollItem extends Item {
 	public CompoundNBT getShareTag(ItemStack stack) {
 		CompoundNBT nbt = stack.getOrCreateTag();
 		getDataHandler(stack).ifPresent(h -> {
-			nbt.put("item_cap", TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.writeNBT(h, null));
+			if (TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY != null)
+				nbt.put("item_cap", TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.writeNBT(h, null));
 		});
 		return nbt;
 	}
@@ -89,11 +94,18 @@ public class TaskScrollItem extends Item {
 	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
 		super.readShareTag(stack, nbt);
 		
-		if (nbt != null) {
-			getDataHandler(stack).ifPresent(h -> {
-				TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-			});
+		if (nbt == null) return;
+		
+		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+			readCreativeData(stack, nbt.getCompound("creativeData"));
+			nbt.remove("creativeData");
+			return;
 		}
+		
+		getDataHandler(stack).ifPresent(h -> {
+			if (TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY != null)
+				TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
+		});
 	}
 
 	@Override
@@ -140,6 +152,42 @@ public class TaskScrollItem extends Item {
 					})
 					.orElse(TooltipUtils.NOT_AVAILABLE)
 				));
+	}
+	
+	public static ItemStack creativeStack() {
+		ItemStack stack = new ItemStack(ItemInit.TASK_SCROLL.get());
+		getDataHandler(stack).ifPresent(h -> {
+			h.setList(new ArrayList<>());
+			h.setLabel(ItemStack.EMPTY);
+		});
+		stack.getOrCreateTag().put("creativeData", getCreativeData(stack));
+		return stack;
+	}
+	
+	public static CompoundNBT getCreativeData(ItemStack stack) {
+		CompoundNBT nbt = new CompoundNBT();
+		getDataHandler(stack).ifPresent(h -> {
+			ListNBT orderList = new ListNBT();
+			h.getList().forEach(order -> orderList.add(order.serializeNBT()));
+			
+			nbt.put(TaskScrollDataCapability.TAG_ORDER_LIST, orderList);
+			nbt.put(TaskScrollDataCapability.TAG_LABEL_ITEM, h.getLabel().serializeNBT());
+		});
+		return nbt;
+	}
+	
+	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+		getDataHandler(stack).ifPresent(h -> {
+			ListNBT orderTags = nbt.getList(TaskScrollDataCapability.TAG_ORDER_LIST, Constants.NBT.TAG_COMPOUND);
+			List<TaskScrollOrder> orderList = orderTags.stream()
+					.map(ot -> {
+						TaskScrollOrder order = TaskScrollOrder.empty(TaskScrollCommandInit.MOVE_TO.get());
+						order.deserializeNBT((CompoundNBT) ot);
+						return order;
+					}).collect(Collectors.toList());
+			h.setList(orderList);
+			h.setLabel(ItemStack.of(nbt.getCompound(TaskScrollDataCapability.TAG_LABEL_ITEM)));
+		});
 	}
 	
 }

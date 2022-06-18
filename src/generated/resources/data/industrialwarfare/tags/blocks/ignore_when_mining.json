@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:planks",
+    "#minecraft:stone_bricks",
+    "#minecraft:fences",
+    "#minecraft:slabs",
+    "#minecraft:stairs",
+    "industrialwarfare:worker_support",
+    "minecraft:bone_block"
+  ]
+}

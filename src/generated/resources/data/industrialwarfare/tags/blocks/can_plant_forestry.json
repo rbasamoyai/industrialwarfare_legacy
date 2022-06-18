@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "#industrialwarfare:can_plant_sapling",
+    "#industrialwarfare:can_plant_fungus"
+  ]
+}

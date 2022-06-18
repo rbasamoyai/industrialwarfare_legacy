@@ -54,7 +54,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		if (mode == PosModes.GET_FROM_POS) {
 			Optional<BlockPos> optional = order.getWrappedArg(POS_ARG_INDEX).getPos();
 			if (!optional.isPresent()) {
-				brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
+				brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get(), 200L);
 				return false;
 			}
 			pos = optional.get();
@@ -62,7 +62,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 			pos = brain.getMemory(MemoryModuleType.JOB_SITE).get().pos();
 		}
 		if (!pos.closerThan(npc.position(), TaskScrollCommand.MAX_DISTANCE_FROM_POI)) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get(), 200L);
 			return false;
 		}
 		return true;
@@ -96,14 +96,14 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 		
 		TileEntity te = world.getBlockEntity(pos);
 		if (te == null) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get(), 200L);
 			return;
 		}
 		
 		Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
 		LazyOptional<IItemHandler> teLzop = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
 		if (!teLzop.isPresent()) {
-			brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get());
+			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get(), 200L);
 			return;
 		}
 		IItemHandler blockInv = teLzop.resolve().get();
@@ -133,7 +133,7 @@ public class SwitchOrderCommand extends TaskScrollCommand {
 			brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
 			return;
 		}
-		brain.setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get());
+		brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_GET_ITEM.get(), 200L);
 	}
 
 	@Override

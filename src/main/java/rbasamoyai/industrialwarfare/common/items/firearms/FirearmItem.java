@@ -3,7 +3,9 @@ package rbasamoyai.industrialwarfare.common.items.firearms;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -57,6 +59,8 @@ import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
@@ -79,6 +83,8 @@ import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
+import rbasamoyai.industrialwarfare.utils.IWMiscUtils;
+import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -280,6 +286,10 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	protected abstract void startCycle(ItemStack firearm, LivingEntity shooter);
 	
+	protected int getCycleTime(ItemStack firearm, LivingEntity shooter) {
+		return this.cycleTime;
+	}
+	
 	protected abstract void startReload(ItemStack firearm, LivingEntity shooter);
 	
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
@@ -315,7 +325,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (level.isClientSide) return;
 		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) level);
 		
-		getDataHandler(stack).ifPresent(h -> {	
+		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isSelected() && selected) {
 				this.onSelect(stack, shooter);
 			}
@@ -326,8 +336,12 @@ public abstract class FirearmItem extends ShootableItem implements
 				h.setAction(ActionType.NOTHING, this.drawTime);
 				h.setAiming(false);
 				h.setMelee(false);
+				h.setRecoilTicks(0);
+				h.setRecoil(0.0f, 0.0f);
 				return;
 			}
+			
+			h.tickRecoil();
 			
 			if (h.getAction() == ActionType.NOTHING) {
 				boolean sprinting = entity.isSprinting();
@@ -846,7 +860,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			boolean isSneaking = bmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
 			boolean isBody = name.equals("body");
 			boolean isBodyChild = bone.parent != null && bone.parent.name.equals("body");
-			boolean isFreeBone = name.equals("firearm") || name.equals("cartridge");
+			boolean isFreeBone = name.equals("firearm") || name.length() >= 9 && name.substring(0, 9).equals("cartridge");
 			
 			if (isSneaking) {
 				if (isBody) {
@@ -883,111 +897,134 @@ public abstract class FirearmItem extends ShootableItem implements
 				RenderUtils.moveBackFromPivot(bone, stack);
 			}
 			
-			RenderUtils.translate(bone, stack);
-			RenderUtils.moveToPivot(bone, stack);
-			RenderUtils.rotate(bone, stack);
-			stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
-			RenderUtils.scale(bone, stack);
-			RenderUtils.moveBackFromPivot(bone, stack);
-			
-			ModelRenderer bodyPart = null;
-			ModelRenderer garment = null;
-			ModelRenderer armorPart = null;
-			
-			EquipmentSlotType slot = EquipmentSlotType.CHEST;
-			
-			if (isBody) {
-				bodyPart = bmodel.body;
-				if (pmodel != null) garment = pmodel.jacket;
-				if (armor != null) armorPart = armor.outerModel.body;
-				stack.translate(0.0f, -0.75f, 0.0f);
-			} else if (name.equals("arm_left")) {
-				bodyPart = bmodel.leftArm;
-				if (pmodel != null) garment = pmodel.leftSleeve;
-				if (armor != null) armorPart = armor.outerModel.leftArm;
-				stack.translate(-0.0625f, 0.0f, 0.0f);
-			} else if (name.equals("arm_right")) {
-				bodyPart = bmodel.rightArm;
-				if (pmodel != null) garment = pmodel.rightSleeve;
-				if (armor != null) armorPart = armor.outerModel.rightArm;
-				stack.translate(0.0625f, 0.0f, 0.0f);
-			} else if (name.equals("head")) {
-				bodyPart = bmodel.head;
-				garment = bmodel.hat;
-				if (armor != null) {
-					armorPart = armor.outerModel.head;
-					slot = EquipmentSlotType.HEAD;
+			if (isBody || isBodyChild) {
+				RenderUtils.translate(bone, stack);
+				RenderUtils.moveToPivot(bone, stack);
+				RenderUtils.rotate(bone, stack);
+				stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
+				RenderUtils.scale(bone, stack);
+				RenderUtils.moveBackFromPivot(bone, stack);
+				
+				ModelRenderer bodyPart = null;
+				ModelRenderer garment = null;
+				
+				switch (name) {
+				case "body":
+					bodyPart = bmodel.body;
+					if (pmodel != null) garment = pmodel.jacket;
+					stack.translate(0.0f, -0.75f, 0.0f);
+					break;
+				case "arm_left":
+					bodyPart = bmodel.leftArm;
+					if (pmodel != null) garment = pmodel.leftSleeve;
+					stack.translate(-0.0625f, 0.0f, 0.0f);
+					break;
+				case "arm_right":
+					bodyPart = bmodel.rightArm;
+					if (pmodel != null) garment = pmodel.rightSleeve;
+					stack.translate(0.0625f, 0.0f, 0.0f);
+					break;
+				case "head":
+					bodyPart = bmodel.head;
+					garment = bmodel.hat;
 				}
-			}
-			
-			IVertexBuilder entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
-			
-			float skinAlpha = 1.0f;
-			if (entity.isInvisible()) skinAlpha = entity == mc.player ? 0.15f : 0.0f;
-			
-			if (bodyPart != null) {
-				bodyPart.visible = true;
-				AnimUtils.renderPartOverBone(bodyPart, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);				
-				bodyPart.visible = false;
-			}
-			if (garment != null) {
-				garment.visible = true;
-				AnimUtils.renderPartOverBone(garment, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);			
-				garment.visible = false;
-			}
-			if (armorPart != null) {
-				ItemStack armorStack = entity.getItemBySlot(slot);
-				Item stackItem = armorStack.getItem();
-				if (stackItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, armorStack, slot, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
-					
-					if (stackItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) armorStack.getItem()).getColor(armorStack);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
+				
+				IVertexBuilder entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+				
+				float skinAlpha = 1.0f;
+				if (entity.isInvisible()) skinAlpha = entity == mc.player ? 0.15f : 0.0f;
+				
+				if (bodyPart != null) {
+					bodyPart.visible = true;
+					AnimUtils.renderPartOverBone(bodyPart, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);				
+					bodyPart.visible = false;
+				}
+				
+				if (garment != null) {
+					garment.visible = true;
+					AnimUtils.renderPartOverBone(garment, bone, stack, entityBuilder, packedLightIn, packedOverlayIn, skinAlpha);			
+					garment.visible = false;
+				}
+				
+				Map<EquipmentSlotType, BipedModel<?>> armorModels = new HashMap<>();
+				
+				EquipmentSlotType[] slots;
+				switch (name) {
+				case "body":
+					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST, EquipmentSlotType.LEGS };
+					break;
+				case "head":
+					slots = new EquipmentSlotType[] { EquipmentSlotType.HEAD };
+					break;
+				default:
+					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST };
+				}
+				
+				for (EquipmentSlotType slot : slots) {
+					ItemStack slotItem = entity.getItemBySlot(slot);
+					BipedModel<?> defaultModel = slot == EquipmentSlotType.LEGS ? armor.innerModel : armor.outerModel;
+					BipedModel<?> moddedModel = ForgeHooksClient.getArmorModel(entity, slotItem, slot, defaultModel);
+					moddedModel.young = entity.isBaby();
+					moddedModel.setAllVisible(false);
+					switch (slot) {
+					case HEAD:
+						moddedModel.head.visible = true;
+						moddedModel.hat.visible = true;
+						AnimUtils.setupModelFromBone(moddedModel.head, bone);
+						AnimUtils.setupModelFromBone(moddedModel.hat, bone);
+						break;
+					case CHEST:
+						switch (name) {
+						case "body":
+							moddedModel.body.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.body, bone);
+							break;
+						case "arm_left":
+							moddedModel.leftArm.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.leftArm, bone);
+							break;
+						case "arm_right":
+							moddedModel.rightArm.visible = true;
+							AnimUtils.setupModelFromBone(moddedModel.rightArm, bone);
+						}
+						break;
+					case LEGS:
+						moddedModel.body.visible = true;
+						AnimUtils.setupModelFromBone(moddedModel.body, bone);
+						break;
+					default:
+					}
+					armorModels.put(slot, moddedModel);
+				}
+				
+				for (Map.Entry<EquipmentSlotType, BipedModel<?>> entry : armorModels.entrySet()) {
+					ItemStack armorStack = entity.getItemBySlot(entry.getKey());
+					Item stackItem = armorStack.getItem();
+					if (stackItem instanceof ArmorItem) {
+						ResourceLocation armorLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), null);
+						IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
 						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, slot, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					} else {
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
+						if (stackItem instanceof IDyeableArmorItem) {
+							int color = ((IDyeableArmorItem) armorStack.getItem()).getColor(armorStack);
+							float r = (float)(color >> 16 & 255) / 255.0F;
+							float g = (float)(color >> 8 & 255) / 255.0F;
+							float b = (float)(color & 255) / 255.0F;
+							
+							entry.getValue().renderToBuffer(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
+							
+							ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), "overlay");
+							IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
+							
+							entry.getValue().renderToBuffer(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+						} else {
+							entry.getValue().renderToBuffer(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+						}
 					}
 				}
 			}
-			
-			if (isBody) {
-				armorPart = armor.innerModel.body;
-				ItemStack legs = entity.getItemBySlot(EquipmentSlotType.LEGS);
-				Item legsItem = legs.getItem();
-				if (legsItem instanceof ArmorItem) {
-					ResourceLocation armorLoc = armor.getArmorResource(entity, legs, EquipmentSlotType.LEGS, null);
-					IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, legs.hasFoil());
-					
-					if (legsItem instanceof IDyeableArmorItem) {
-						int color = ((IDyeableArmorItem) legsItem.getItem()).getColor(legs);
-						float r = (float)(color >> 16 & 255) / 255.0F;
-						float g = (float)(color >> 8 & 255) / 255.0F;
-						float b = (float)(color & 255) / 255.0F;
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
-						
-						ResourceLocation overlayLoc = armor.getArmorResource(entity, legs, slot, "overlay");
-						IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, legs.hasFoil());
-						
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					} else {
-						AnimUtils.renderPartOverBone(armorPart, bone, stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f);
-					}
-				}
-			}
-			
+				
 			stack.popPose();
-			
+				
 			if (!lockedLimbs && isFreeBone) {
 				stack.translate(0.0f, 1.375f, 0.0f);
 				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
@@ -1003,6 +1040,11 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
+	
+	@Override
+	public ResourceLocation getTextureLocation(ItemStack stack, LivingEntity entity) {
+		return TextureUtils.getWeaponSkinTexture(stack);
+	}
 	
 	/*
 	 * STATIC QUERY METHODS
@@ -1219,6 +1261,42 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		public int getId() { return this.id; }
 		public static ActionType fromId(int id) { return BY_ID[id]; }
+	}
+	
+	public void onCameraSetup(CameraSetup event) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		ItemStack stack = mc.player.getMainHandItem();
+		getDataHandler(stack).ifPresent(h -> {
+			float ticks = (float) h.getRecoilTicks() + (float) event.getRenderPartialTicks();
+			float oldTicks = Math.max(ticks - mc.getDeltaFrameTime(), 0.0f);
+			ticks *= 0.1f;
+			oldTicks *= 0.1f;
+			if (ticks >= 1.0f) return;
+			
+			float addPitch = h.getRecoilPitch() * (this.getVerticalRecoilScalar(ticks) - this.getVerticalRecoilScalar(oldTicks)); 
+			float addYaw = h.getRecoilYaw() * (this.getHorizontalRecoilScalar(ticks) - this.getHorizontalRecoilScalar(oldTicks));
+			
+			mc.player.turn((double) addYaw, (double) -addPitch);
+		});
+	}
+	
+	protected float getHorizontalRecoilScalar(float time) {
+		if (time <= 0.0f) {
+			return 0.0f;
+		}
+		if (time < 0.25f) {
+			return IWMiscUtils.quadEasingOut(time * 4.0f);
+		}
+		if (time <= 1.0f) {
+			float f = 1.0f / 3.0f;
+			return 1.0f - IWMiscUtils.quadEasingInOut(time * 4.0f * f - f);
+		}
+		return 0.0f;
+	}
+	
+	protected float getVerticalRecoilScalar(float time) {
+		return this.getHorizontalRecoilScalar(time);
 	}
 	
 }

@@ -18,6 +18,14 @@ public interface IFirearmItemDataHandler extends IPartItemDataHandler {
 	void setSelected(boolean selected);
 	boolean isSelected();
 	
+	void setRecoilTicks(int ticks);
+	int getRecoilTicks();
+	default void tickRecoil() { this.setRecoilTicks(Math.min(this.getRecoilTicks() + 1, 10)); }
+	
+	void setRecoil(float recoilPitch, float recoilYaw);
+	float getRecoilPitch();
+	float getRecoilYaw();
+	
 	void setState(int state);
 	int getState();
 	

@@ -39,7 +39,7 @@ public class JumpToCommand extends TaskScrollCommand {
 		LazyOptional<ITaskScrollDataHandler> lzop = TaskScrollItem.getDataHandler(scroll);
 		
 		if (!lzop.map(h -> 0 <= jumpPos || jumpPos < h.getList().size()).orElse(false)) {
-			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get());
+			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get(), 200L);
 			return false;
 		} else {
 			return true;

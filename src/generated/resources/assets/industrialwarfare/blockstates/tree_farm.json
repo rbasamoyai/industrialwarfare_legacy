@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "industrialwarfare:block/tree_farm"
+    },
+    "facing=south": {
+      "model": "industrialwarfare:block/tree_farm",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "industrialwarfare:block/tree_farm",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "industrialwarfare:block/tree_farm",
+      "y": 90
+    }
+  }
+}

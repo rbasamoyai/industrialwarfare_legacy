@@ -11,6 +11,7 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
+import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class TagsGeneration {
@@ -33,57 +34,42 @@ public class TagsGeneration {
 					.addTag(BlockTags.IMPERMEABLE)
 					.addTag(BlockTags.ICE)
 					.addTag(Tags.Blocks.GLASS)
-					.addTag(Tags.Blocks.GLASS_WHITE)
-					.addTag(Tags.Blocks.GLASS_ORANGE)
-					.addTag(Tags.Blocks.GLASS_MAGENTA)
-					.addTag(Tags.Blocks.GLASS_LIGHT_BLUE)
-					.addTag(Tags.Blocks.GLASS_YELLOW)
-					.addTag(Tags.Blocks.GLASS_PINK)
-					.addTag(Tags.Blocks.GLASS_GRAY)
-					.addTag(Tags.Blocks.GLASS_LIGHT_GRAY)
-					.addTag(Tags.Blocks.GLASS_COLORLESS)
-					.addTag(Tags.Blocks.GLASS_CYAN)
-					.addTag(Tags.Blocks.GLASS_PURPLE)
-					.addTag(Tags.Blocks.GLASS_BLUE)
-					.addTag(Tags.Blocks.GLASS_BROWN)
-					.addTag(Tags.Blocks.GLASS_GREEN)
-					.addTag(Tags.Blocks.GLASS_RED)
-					.addTag(Tags.Blocks.GLASS_BLACK)
-					.addTag(Tags.Blocks.GLASS_PANES)
-					.addTag(Tags.Blocks.GLASS_PANES_WHITE)
-					.addTag(Tags.Blocks.GLASS_PANES_ORANGE)
-					.addTag(Tags.Blocks.GLASS_PANES_MAGENTA)
-					.addTag(Tags.Blocks.GLASS_PANES_LIGHT_BLUE)
-					.addTag(Tags.Blocks.GLASS_PANES_YELLOW)
-					.addTag(Tags.Blocks.GLASS_PANES_PINK)
-					.addTag(Tags.Blocks.GLASS_PANES_GRAY)
-					.addTag(Tags.Blocks.GLASS_PANES_LIGHT_GRAY)
-					.addTag(Tags.Blocks.GLASS_PANES_COLORLESS)
-					.addTag(Tags.Blocks.GLASS_PANES_CYAN)
-					.addTag(Tags.Blocks.GLASS_PANES_PURPLE)
-					.addTag(Tags.Blocks.GLASS_PANES_BLUE)
-					.addTag(Tags.Blocks.GLASS_PANES_BROWN)
-					.addTag(Tags.Blocks.GLASS_PANES_GREEN)
-					.addTag(Tags.Blocks.GLASS_PANES_RED)
-					.addTag(Tags.Blocks.GLASS_PANES_BLACK)
-					.add(
-							Blocks.GLASS_PANE,
-							Blocks.WHITE_STAINED_GLASS_PANE,
-							Blocks.ORANGE_STAINED_GLASS_PANE,
-							Blocks.MAGENTA_STAINED_GLASS_PANE,
-							Blocks.LIGHT_BLUE_STAINED_GLASS_PANE,
-							Blocks.YELLOW_STAINED_GLASS_PANE,
-							Blocks.PINK_STAINED_GLASS_PANE,
-							Blocks.GRAY_STAINED_GLASS_PANE,
-							Blocks.LIGHT_GRAY_STAINED_GLASS_PANE,
-							Blocks.LIME_STAINED_GLASS_PANE,
-							Blocks.CYAN_STAINED_GLASS_PANE,
-							Blocks.PURPLE_STAINED_GLASS_PANE,
-							Blocks.BLUE_STAINED_GLASS_PANE,
-							Blocks.BROWN_STAINED_GLASS_PANE,
-							Blocks.GREEN_STAINED_GLASS_PANE,
-							Blocks.RED_STAINED_GLASS_PANE,
-							Blocks.BLACK_STAINED_GLASS_PANE);
+					.addTag(Tags.Blocks.GLASS_PANES);
+			
+			tag(IWBlockTags.IGNORE_WHEN_MINING)
+					.addTag(BlockTags.PLANKS)
+					.addTag(BlockTags.STONE_BRICKS)
+					.addTag(BlockTags.FENCES)
+					.addTag(BlockTags.SLABS)
+					.addTag(BlockTags.STAIRS)
+					.add(BlockInit.WORKER_SUPPORT.get())
+					.add(Blocks.BONE_BLOCK);
+			
+			tag(IWBlockTags.CAN_PLANT_SAPLING)
+					.add(Blocks.DIRT)
+					.add(Blocks.COARSE_DIRT)
+					.add(Blocks.GRASS_BLOCK)
+					.add(Blocks.PODZOL)
+					.add(Blocks.FARMLAND);
+			
+			tag(IWBlockTags.CAN_PLANT_FUNGUS)
+					.addTag(BlockTags.NYLIUM)
+					.add(Blocks.MYCELIUM)
+					.add(Blocks.SOUL_SOIL);
+			
+			tag(IWBlockTags.CAN_PLANT_FORESTRY)
+					.addTag(IWBlockTags.CAN_PLANT_SAPLING)
+					.addTag(IWBlockTags.CAN_PLANT_FUNGUS);
+			
+			tag(IWBlockTags.FORESTRY_HARVESTABLE)
+					.addTag(BlockTags.LEAVES)
+					.addTag(BlockTags.LOGS)
+					.addTag(BlockTags.WART_BLOCKS)
+					.add(Blocks.SHROOMLIGHT);
+			
+			tag(IWBlockTags.FUNGUS)
+					.add(Blocks.CRIMSON_FUNGUS)
+					.add(Blocks.WARPED_FUNGUS);
 		}
 		
 		@Override
@@ -111,6 +97,8 @@ public class TagsGeneration {
 					.add(Items.WOODEN_AXE, Items.STONE_AXE, Items.IRON_AXE, Items.GOLDEN_AXE, Items.DIAMOND_AXE, Items.NETHERITE_AXE);
 			
 			tag(IWItemTags.FIREARM_OPTIC_ATTACHMENTS);
+			
+			copy(IWBlockTags.FUNGUS, IWItemTags.FUNGUS);	
 		}
 		
 		@Override

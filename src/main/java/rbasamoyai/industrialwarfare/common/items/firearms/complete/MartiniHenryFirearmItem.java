@@ -66,7 +66,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 
 	}
 	
-	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
+	@Override public boolean shouldHideCrosshair(ItemStack stack) { return super.shouldHideCrosshair(stack); }
 	@Override public boolean canOpenScreen(ItemStack stack) { return false; }
 
 	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
@@ -317,12 +317,6 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	@Override
 	public ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity) {
 		return MODEL_LOC;
-	}
-
-	private static final ResourceLocation TEXTURE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/item/martini_henry.png");
-	@Override
-	public ResourceLocation getTextureLocation(ItemStack stack, LivingEntity entity) {
-		return TEXTURE_LOC;
 	}
 
 	@Override

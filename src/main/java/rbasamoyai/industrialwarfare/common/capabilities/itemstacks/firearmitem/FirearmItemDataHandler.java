@@ -16,10 +16,25 @@ public abstract class FirearmItemDataHandler extends PartItemDataHandler impleme
 	
 	protected boolean selected = false;
 	protected int state;
+	protected int recoilTicks;
+	protected float recoilPitch;
+	protected float recoilYaw;
 	
 	public FirearmItemDataHandler(ItemStackHandler attachments) {
 		this.attachments = attachments;
 	}
+	
+	@Override public void setRecoilTicks(int ticks) { this.recoilTicks = ticks; }
+	@Override public int getRecoilTicks() { return this.recoilTicks; }
+	
+	@Override
+	public void setRecoil(float recoilPitch, float recoilYaw) {
+		this.recoilPitch = recoilPitch;
+		this.recoilYaw = recoilYaw;
+	}
+	
+	@Override public float getRecoilPitch() { return this.recoilPitch; }
+	@Override public float getRecoilYaw() { return this.recoilYaw; }
 	
 	@Override public void setState(int state) { this.state = state; }
 	@Override public int getState() { return this.state; }

@@ -17,7 +17,7 @@ public class PartItemDataProvider implements ICapabilitySerializable<CompoundNBT
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == PartItemDataCapability.PART_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
 import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationContainer;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
 import rbasamoyai.industrialwarfare.common.containers.workstations.NormalWorkstationContainer;
@@ -38,6 +39,9 @@ public class ContainerInit {
 	
 	public static final RegistryObject<ContainerType<NPCContainer>> NPC_BASE = CONTAINER_TYPES.register("npc_base",
 			() -> IForgeContainerType.create(NPCContainer::getClientContainer));
+	
+	public static final RegistryObject<ContainerType<ResourceStationContainer>> RESOURCE_STATION = CONTAINER_TYPES.register("resource_station",
+			() -> IForgeContainerType.create(ResourceStationContainer::getClientContainer));
 	
 	public static final RegistryObject<ContainerType<EditScheduleContainer>> SCHEDULE = CONTAINER_TYPES.register("schedule",
 			() -> IForgeContainerType.create(EditScheduleContainer::getClientContainer));

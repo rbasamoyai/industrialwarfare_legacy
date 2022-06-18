@@ -10,7 +10,9 @@ import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.RegistryObject;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
+import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
@@ -42,7 +44,7 @@ import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
  * <ul>
  * 		Contains weapon items, melee, ranged, etc.
  * </ul>
- * {@code TAB_ARMOR} - Armor items - <b>TODO: NOT IMPLEMENTED</b>
+ * {@code TAB_ARMOR} - Armor items
  * <ul>
  * 		Contains armor items.
  * </ul>
@@ -72,9 +74,9 @@ public class IWItemGroups {
 					getItemStack(ItemInit.BODY_PART),
 					getItemStack(ItemInit.MAKESHIFT_BRAIN),
 					getItemStack(ItemInit.MAKESHIFT_HEAD),
-					getItemStack(ItemInit.TASK_SCROLL),
+					TaskScrollItem.creativeStack(),
 					getItemStack(ItemInit.LABEL),
-					getItemStack(ItemInit.SCHEDULE),
+					ScheduleItem.creativeStack(),
 					getItemStack(ItemInit.CARTRIDGE_CASE),
 					getItemStack(ItemInit.AMMO_GENERIC),
 					getItemStack(ItemInit.INFINITE_AMMO_GENERIC),
@@ -82,7 +84,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.INFINITE_PAPER_CARTRIDGE),
 					getItemStack(ItemInit.MATCH_CORD),
 					getItemStack(ItemInit.INFINITE_MATCH_CORD),
-					getItemStack(ItemInit.MATCH_COIL.get())
+					getItemStack(ItemInit.MATCH_COIL),
+					getItemStack(ItemInit.SURVEYORS_KIT)
 					));
 		}
 		
@@ -95,10 +98,14 @@ public class IWItemGroups {
 	public static final ItemGroup TAB_DEBUG = new ItemGroup(groupId++, "industrialwarfare.debug") {
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
-					getItemStack(ItemInit.JOB_SITE_POINTER.get()),
-					getItemStack(ItemInit.COMPLAINT_REMOVER.get()),
-					getItemStack(ItemInit.DEBUG_OWNER.get()),
-					getItemStack(ItemInit.NPC_SPAWN_EGG.get())
+					getItemStack(ItemInit.JOB_SITE_POINTER),
+					getItemStack(ItemInit.COMPLAINT_REMOVER),
+					getItemStack(ItemInit.DEBUG_OWNER),
+					getItemStack(ItemInit.NPC_SPAWN_EGG),
+					getItemStack(ItemInit.SET_PROFESSION_JOBLESS),
+					getItemStack(ItemInit.SET_PROFESSION_ASSEMBLER),
+					getItemStack(ItemInit.SET_PROFESSION_QUARRIER),
+					getItemStack(ItemInit.SET_PROFESSION_LOGGER)
 					));
 		}
 		
@@ -114,7 +121,10 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.ASSEMBLER_WORKSTATION),
 					getItemStack(ItemInit.TASK_SCROLL_SHELF),
-					getItemStack(ItemInit.SPOOL)
+					getItemStack(ItemInit.SPOOL),
+					getItemStack(ItemInit.QUARRY),
+					getItemStack(ItemInit.TREE_FARM),
+					getItemStack(ItemInit.WORKER_SUPPORT)
 					));
 		}
 		
@@ -163,7 +173,8 @@ public class IWItemGroups {
 					FirearmItem.creativeStack(FirearmInit.MARTINI_HENRY.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		
@@ -171,6 +182,22 @@ public class IWItemGroups {
 		public ItemStack makeIcon() {
 			return getItemStack(Items.IRON_SWORD);
 		}	
+	};
+	
+	public static final ItemGroup TAB_ARMOR = new ItemGroup(groupId++, "industrialwarfare.armor") {
+		@Override
+		public void fillItemList(NonNullList<ItemStack> items) {
+			items.addAll(Arrays.asList(
+					getItemStack(ItemInit.PITH_HELMET),
+					getItemStack(ItemInit.AMERICAN_KEPI),
+					getItemStack(ItemInit.PICKELHAUBE_HIGH)
+					));
+		}
+		
+		@Override
+		public ItemStack makeIcon() {
+			return getItemStack(ItemInit.PITH_HELMET);
+		}
 	};
 	
 	private static ItemStack getItemStack(Item item) {

@@ -17,7 +17,7 @@ public class QualityItemDataProvider implements ICapabilitySerializable<Compound
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override

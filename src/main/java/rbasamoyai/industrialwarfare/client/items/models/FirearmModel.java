@@ -2,6 +2,7 @@ package rbasamoyai.industrialwarfare.client.items.models;
 
 import net.minecraft.util.ResourceLocation;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
 
 public class FirearmModel extends AnimatedGeoModel<FirearmItem> {
@@ -23,5 +24,7 @@ public class FirearmModel extends AnimatedGeoModel<FirearmItem> {
 		ResourceLocation loc = animatable.getRegistryName();
 		return new ResourceLocation(loc.getNamespace(), "animations/" + loc.getPath() + ".animation.json");
 	}
+	
+	@Override public void setMolangQueries(IAnimatable animatable, double currentTick) {}
 	
 }

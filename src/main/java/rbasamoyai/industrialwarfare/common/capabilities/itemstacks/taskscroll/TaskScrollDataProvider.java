@@ -17,7 +17,7 @@ public class TaskScrollDataProvider implements ICapabilitySerializable<CompoundN
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return this.dataOptional.cast();
+		return cap == TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override
