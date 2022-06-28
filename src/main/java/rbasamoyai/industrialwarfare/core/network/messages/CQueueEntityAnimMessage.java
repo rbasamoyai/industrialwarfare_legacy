@@ -4,20 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Tuple;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.core.network.handlers.CQueueEntityAnimHandler;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 
 public class CQueueEntityAnimMessage {
 
-	public int id;
-	public String controller;
-	public List<Tuple<String, Boolean>> anim;
-	public float speed;
+	private int id;
+	private String controller;
+	private List<Tuple<String, Boolean>> anim;
+	private float speed;
 	
 	public CQueueEntityAnimMessage() {}
 	
@@ -36,7 +36,11 @@ public class CQueueEntityAnimMessage {
 		return builder;
 	}
 	
-	public static void encode(CQueueEntityAnimMessage msg, PacketBuffer buf) {
+	public int id() { return this.id; }
+	public String controller() { return this.controller; }
+	public float speed() { return this.speed; }
+	
+	public static void encode(CQueueEntityAnimMessage msg, FriendlyByteBuf buf) {
 		buf
 				.writeVarInt(msg.id)
 				.writeUtf(msg.controller)
@@ -50,7 +54,7 @@ public class CQueueEntityAnimMessage {
 		}
 	}
 	
-	public static CQueueEntityAnimMessage decode(PacketBuffer buf) {
+	public static CQueueEntityAnimMessage decode(FriendlyByteBuf buf) {
 		int id = buf.readVarInt();
 		String controllerName = buf.readUtf();
 		float speed = buf.readFloat();

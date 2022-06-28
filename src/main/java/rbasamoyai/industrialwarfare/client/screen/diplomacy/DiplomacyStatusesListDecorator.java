@@ -8,16 +8,16 @@ import java.util.UUID;
 import org.lwjgl.glfw.GLFW;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
 import rbasamoyai.industrialwarfare.client.PlayerInfo;
 import rbasamoyai.industrialwarfare.client.screen.ScreenUtils;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
@@ -28,9 +28,9 @@ import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 
 public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implements IFetchDiplomacyData {
 	
-	private static final ITextComponent PLAYER = new TranslationTextComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".player");
-	private static final ITextComponent CLEAR_CHANGES = new TranslationTextComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".clear_changes");
-	private static final ITextComponent COMMIT_CHANGES = new TranslationTextComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".commit_changes");
+	private static final Component PLAYER = new TranslatableComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".player");
+	private static final Component CLEAR_CHANGES = new TranslatableComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".clear_changes");
+	private static final Component COMMIT_CHANGES = new TranslatableComponent(DiplomacyScreen.TRANSLATION_KEY_ROOT + ".commit_changes");
 	
 	private static final int DECORATOR_WIDTH = 206;
 	
@@ -62,7 +62,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 	private final int topPos;
 	
 	private final Minecraft mc = this.getScreen().getMinecraft();
-	private final FontRenderer font = this.mc.font;
+	private final Font font = this.mc.font;
 	
 	private final DiplomacyStatusWidget[][] dsWidgets;
 	
@@ -77,7 +77,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 	private int tick = 0;
 	private int loadingFrame = 0;
 	
-	public DiplomacyStatusesListDecorator(IScreenPage page, int maxRows, int leftPos, int topPos, IPressable pressable, Button.IPressable clearPressable, Button.IPressable commitPressable, INonScroll nonScroll) {
+	public DiplomacyStatusesListDecorator(IScreenPage page, int maxRows, int leftPos, int topPos, IPressable pressable, Button.OnPress clearPressable, Button.OnPress commitPressable, INonScroll nonScroll) {
 		super(page);
 		
 		this.maxRowsVisible = maxRows;
@@ -92,7 +92,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 		for (int i = 0; i < this.dsWidgets.length; i++) {
 			for (int j = 0; j < this.dsWidgets[i].length; j++) {
 				int x = this.leftPos;
-				DiplomacyStatusWidget.ITooltip dsWidget$tooltip;
+				DiplomacyStatusWidget.OnTooltip dsWidget$tooltip;
 				switch (j) {
 				case 1:
 					x += OUR_STATUS_CENTER_X - DiplomacyStatusWidget.WIDGET_LENGTH / 2;
@@ -134,7 +134,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
 		
 		stack.pushPose();
@@ -160,7 +160,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 			
 			PlayerIDTag tag = entry.getKey();
 			
-			ITextComponent tc;
+			Component tc;
 			if (tag.isPlayer()) {
 				GameProfile profile = PlayerInfo.get(tag.getUUID());
 				if (profile == null) {
@@ -169,9 +169,9 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 					String name = profile.getName();
 					tc = name == null
 							? DiplomacyScreen.COULD_NOT_LOAD.copy()
-							: new StringTextComponent(name);
+							: new TextComponent(name);
 				}
-				ScreenUtils.drawFace(tag, stack, 0, drawY, ICON_SCALE);				
+				ScreenUtils.drawFace(tag, stack, 0, drawY, ICON_SCALE);
 			} else {
 				// TODO: draw/render something related to the NPC faction
 				tc = DiplomacyScreen.DEBUG_NPC.copy();
@@ -225,7 +225,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 		double y2 = y1 + (double)(ENTRY_SPACING * this.maxRowsVisible + ENTRY_SPACING);
 		
 		if (x1 <= mouseX && mouseX < x2 && y1 <= mouseY && mouseY < y2) {
-			int i = MathHelper.floor(MathHelper.clamp((mouseY - y1) / (double) ENTRY_SPACING, 0.0d, (double) this.maxRowsVisible));
+			int i = Mth.floor(Mth.clamp((mouseY - y1) / (double) ENTRY_SPACING, 0.0d, (double) this.maxRowsVisible));
 			if (i < this.getVisibleRowCount()) {
 				this.pressable.onPress(this.sortedList.get(i + this.topIndex).getKey());
 				this.setButtonsActive(false);
@@ -285,7 +285,7 @@ public class DiplomacyStatusesListDecorator extends ScreenPageDecorator implemen
 	}
 	
 	private int getVisibleRowCount() {
-		return MathHelper.clamp(this.getSize() - this.topIndex, 0, this.maxRowsVisible);
+		return Mth.clamp(this.getSize() - this.topIndex, 0, this.maxRowsVisible);
 	}
 	
 	private void updateDecorator() {

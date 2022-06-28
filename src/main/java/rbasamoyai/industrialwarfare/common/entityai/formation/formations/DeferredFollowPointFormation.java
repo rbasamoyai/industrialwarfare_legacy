@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
@@ -41,7 +41,7 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(Level level, Vec3 pos, UUID commandGroup, PlayerIDTag owner) {
 		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 		if (this.deferredFormation != null) {
 			this.deferredLeader = this.deferredFormation.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
@@ -56,36 +56,36 @@ public class DeferredFollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public void setFollower(CreatureEntity entity) {
+	public void setFollower(PathfinderMob entity) {
 		if (this.deferredLeader != null && this.deferredLeader.isAlive()) {
 			this.deferredLeader.setFollower(entity);
 		}
 	}
 	
 	@Override
-	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
+	public Vec3 getFollowPosition(FormationLeaderEntity leader) {
 		return leader.position();
 	}
 	
 	private static final String TAG_DEFERRED_LEADER = "deferredLeader";
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = super.serializeNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = super.serializeNBT();
 		if (this.deferredLeader != null) {
-			nbt.putUUID(TAG_DEFERRED_LEADER, this.deferredLeader.getUUID());
+			tag.putUUID(TAG_DEFERRED_LEADER, this.deferredLeader.getUUID());
 		}
-		return nbt;
+		return tag;
 	}
 	
 	@Override
-	protected void loadEntityData(CompoundNBT nbt, World level) {
-		super.loadEntityData(nbt, level);
+	protected void loadEntityData(CompoundTag tag, Level level) {
+		super.loadEntityData(tag, level);
 		if (level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) level;
+		ServerLevel slevel = (ServerLevel) level;
 		
-		if (nbt.contains(TAG_DEFERRED_LEADER)) {
-			Entity e = slevel.getEntity(nbt.getUUID(TAG_DEFERRED_LEADER));
+		if (tag.contains(TAG_DEFERRED_LEADER)) {
+			Entity e = slevel.getEntity(tag.getUUID(TAG_DEFERRED_LEADER));
 			if (!(e instanceof FormationLeaderEntity)) return;
 			this.setDeferredLeader((FormationLeaderEntity) e);
 		}

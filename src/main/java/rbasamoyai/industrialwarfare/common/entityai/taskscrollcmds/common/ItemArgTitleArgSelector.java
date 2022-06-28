@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
 
 /**
  * Somewhat of a hack to add titling for ItemArgWidgets in TaskScrollScreen.
@@ -9,15 +9,15 @@ import net.minecraft.util.text.ITextComponent;
 
 public class ItemArgTitleArgSelector extends EmptyArgSelector {
 
-	public final ITextComponent title;
+	public final Component title;
 	
-	public ItemArgTitleArgSelector(ITextComponent title) {
+	public ItemArgTitleArgSelector(Component title) {
 		super();
 		this.title = title;
 	}
 
 	@Override
-	public ITextComponent getTitle() {
+	public Component getTitle() {
 		return this.title;
 	}
 

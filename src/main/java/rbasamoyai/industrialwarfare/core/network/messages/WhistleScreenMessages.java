@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
-import rbasamoyai.industrialwarfare.common.containers.WhistleContainer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraftforge.network.NetworkEvent;
+import rbasamoyai.industrialwarfare.common.containers.WhistleMenu;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
@@ -23,11 +23,11 @@ import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 public class WhistleScreenMessages {
 	
 	public static class SWhistleScreenSync {
-		public Interval interval;
-		public CombatMode mode;
-		public UnitFormationType<?> type;
-		public Map<FormationCategory, UnitFormationType<?>> formationCategories;
-		public Map<FormationCategory, FormationAttackType> attackTypes;
+		private Interval interval;
+		private CombatMode mode;
+		private UnitFormationType<?> type;
+		private Map<FormationCategory, UnitFormationType<?>> formationCategories;
+		private Map<FormationCategory, FormationAttackType> attackTypes;
 		
 		public SWhistleScreenSync() {}
 		
@@ -41,29 +41,29 @@ public class WhistleScreenMessages {
 			this.attackTypes = attackTypes;
 		}
 		
-		public static void encode(SWhistleScreenSync msg, PacketBuffer buf) {
+		public static void encode(SWhistleScreenSync msg, FriendlyByteBuf buf) {
 			buf
 			.writeVarInt(msg.interval.getId())
 			.writeVarInt(msg.mode.getId())
-			.writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES, msg.type);
+			.writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES.get(), msg.type);
 			
 			buf.writeVarInt(msg.formationCategories.size());
-			msg.formationCategories.forEach((k, v) -> buf.writeVarInt(k.getId()).writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES, v));
+			msg.formationCategories.forEach((k, v) -> buf.writeVarInt(k.getId()).writeRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES.get(), v));
 			
 			buf.writeVarInt(msg.attackTypes.size());
-			msg.attackTypes.forEach((k, v) -> buf.writeVarInt(k.getId()).writeRegistryIdUnsafe(IWModRegistries.FORMATION_ATTACK_TYPES, v));
+			msg.attackTypes.forEach((k, v) -> buf.writeVarInt(k.getId()).writeRegistryIdUnsafe(IWModRegistries.FORMATION_ATTACK_TYPES.get(), v));
 		}
 		
-		public static SWhistleScreenSync decode(PacketBuffer buf) {
+		public static SWhistleScreenSync decode(FriendlyByteBuf buf) {
 			Interval interval = Interval.fromId(buf.readVarInt());
 			CombatMode mode = CombatMode.fromId(buf.readVarInt());
-			UnitFormationType<?> type = buf.readRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES);
+			UnitFormationType<?> type = buf.readRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES.get());
 			
 			Map<FormationCategory, UnitFormationType<?>> formationCategories = new HashMap<>();
 			int sz = buf.readVarInt();
 			for (int i = 0; i < sz; ++i) {
 				FormationCategory cat = FormationCategory.fromId(buf.readVarInt());
-				UnitFormationType<?> catType = buf.readRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES);
+				UnitFormationType<?> catType = buf.readRegistryIdUnsafe(IWModRegistries.UNIT_FORMATION_TYPES.get());
 				formationCategories.put(cat, catType);
 			}
 			
@@ -71,7 +71,7 @@ public class WhistleScreenMessages {
 			int sz1 = buf.readVarInt();
 			for (int i = 0; i < sz1; ++i) {
 				FormationCategory cat = FormationCategory.fromId(buf.readVarInt());
-				FormationAttackType attackType = buf.readRegistryIdUnsafe(IWModRegistries.FORMATION_ATTACK_TYPES);
+				FormationAttackType attackType = buf.readRegistryIdUnsafe(IWModRegistries.FORMATION_ATTACK_TYPES.get());
 				attackTypes.put(cat, attackType);
 			}
 			
@@ -81,10 +81,10 @@ public class WhistleScreenMessages {
 		public static void handle(SWhistleScreenSync msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity player = ctx.getSender();
-				Container ct = player.containerMenu;
-				if (!(ct instanceof WhistleContainer)) return;
-				WhistleContainer whistleCt = (WhistleContainer) ct;
+				ServerPlayer player = ctx.getSender();
+				AbstractContainerMenu ct = player.containerMenu;
+				if (!(ct instanceof WhistleMenu)) return;
+				WhistleMenu whistleCt = (WhistleMenu) ct;
 				whistleCt.setInterval(msg.interval);
 				whistleCt.setMode(msg.mode);
 				whistleCt.setFormation(msg.type);
@@ -99,16 +99,16 @@ public class WhistleScreenMessages {
 	public static class SStopAction {
 		public SStopAction() {}
 		
-		public static void encode(SStopAction msg, PacketBuffer buf) {}
-		public static SStopAction decode(PacketBuffer buf) { return new SStopAction(); }
+		public static void encode(SStopAction msg, FriendlyByteBuf buf) {}
+		public static SStopAction decode(FriendlyByteBuf buf) { return new SStopAction(); }
 		
 		public static void handle(SStopAction msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity player = ctx.getSender();
-				Container ct = player.containerMenu;
-				if (!(ct instanceof WhistleContainer)) return;
-				WhistleContainer whistleCt = (WhistleContainer) ct;
+				ServerPlayer player = ctx.getSender();
+				AbstractContainerMenu ct = player.containerMenu;
+				if (!(ct instanceof WhistleMenu)) return;
+				WhistleMenu whistleCt = (WhistleMenu) ct;
 				whistleCt.stopWhistle(player);
 			});
 			ctx.setPacketHandled(true);
@@ -118,13 +118,13 @@ public class WhistleScreenMessages {
 	public static class SStopAllFormationLeaders {
 		public SStopAllFormationLeaders() {}
 		
-		public static void encode(SStopAllFormationLeaders msg, PacketBuffer buf) {}
-		public static SStopAllFormationLeaders decode(PacketBuffer buf) { return new SStopAllFormationLeaders(); }
+		public static void encode(SStopAllFormationLeaders msg, FriendlyByteBuf buf) {}
+		public static SStopAllFormationLeaders decode(FriendlyByteBuf buf) { return new SStopAllFormationLeaders(); }
 		
 		public static void handle(SStopAllFormationLeaders msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity player = ctx.getSender();
+				ServerPlayer player = ctx.getSender();
 				if (player.level.isClientSide) return;
 				PlayerIDTag owner = PlayerIDTag.of(player);
 				player.level.getEntities(EntityTypeInit.FORMATION_LEADER.get(), player.getBoundingBox().inflate(2.5d, 2.5d, 2.5d), e -> {

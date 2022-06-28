@@ -2,12 +2,12 @@ package rbasamoyai.industrialwarfare.client.screen.widgets.page;
 
 import java.awt.Point;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
 /**
@@ -23,7 +23,7 @@ public class BlitDecorator extends ScreenPageDecorator {
 	
 	protected Point pos;
 	
-	public BlitDecorator(IScreenPage page, AbstractGui gui, Properties properties) {
+	public BlitDecorator(IScreenPage page, GuiComponent gui, Properties properties) {
 		super(page);
 		
 		this.textureLocation = properties.textureLocation;
@@ -34,11 +34,11 @@ public class BlitDecorator extends ScreenPageDecorator {
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
+		RenderSystem.setShaderTexture(0, this.textureLocation);
+		
 		Screen screen = this.getScreen();
-		Minecraft mc = screen.getMinecraft();
-		mc.textureManager.bind(this.textureLocation);
 		screen.blit(stack, this.pos.x, this.pos.y, this.texPos.x, this.texPos.y, this.dimensions.x, this.dimensions.y);
 	}
 	

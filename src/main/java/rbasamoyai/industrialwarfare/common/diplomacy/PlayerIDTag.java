@@ -2,12 +2,12 @@ package rbasamoyai.industrialwarfare.common.diplomacy;
 
 import java.util.UUID;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.util.INBTSerializable;
 
-public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
+public class PlayerIDTag implements INBTSerializable<CompoundTag>{
 
 	public static final PlayerIDTag NO_OWNER = new PlayerIDTag(new UUID(0L, 0L), false);
 	
@@ -22,7 +22,7 @@ public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
 		this.isPlayer = isPlayer;
 	}
 	
-	public static PlayerIDTag of(PlayerEntity player) {
+	public static PlayerIDTag of(Player player) {
 		return new PlayerIDTag(player.getUUID(), true);
 	}
 	
@@ -32,7 +32,7 @@ public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
 		return new PlayerIDTag(other.getUUID(), other.isPlayer());
 	}
 	
-	public static PlayerIDTag fromNBT(CompoundNBT tag) {
+	public static PlayerIDTag fromNBT(CompoundTag tag) {
 		PlayerIDTag newTag = copy(NO_OWNER);
 		newTag.deserializeNBT(tag);
 		return newTag;
@@ -41,28 +41,28 @@ public class PlayerIDTag implements INBTSerializable<CompoundNBT>{
 	public UUID getUUID() { return this.uuid; }
 	public boolean isPlayer() { return this.isPlayer; }
 	
-	public void toNetwork(PacketBuffer buf) {
+	public void toNetwork(FriendlyByteBuf buf) {
 		buf
 				.writeUUID(this.uuid)
 				.writeBoolean(this.isPlayer);
 	}
 	
-	public static PlayerIDTag fromNetwork(PacketBuffer buf) {
+	public static PlayerIDTag fromNetwork(FriendlyByteBuf buf) {
 		UUID playerUuid = buf.readUUID();
 		boolean isPlayer = buf.readBoolean();
 		return new PlayerIDTag(playerUuid, isPlayer);
 	}
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT tag = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
 		tag.putUUID(TAG_PLAYER_UUID, this.uuid);
 		tag.putBoolean(TAG_IS_PLAYER, this.isPlayer);
 		return tag;
 	}
 	
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
+	public void deserializeNBT(CompoundTag nbt) {
 		this.uuid = nbt.getUUID(TAG_PLAYER_UUID);
 		this.isPlayer = nbt.getBoolean(TAG_IS_PLAYER);
 	}

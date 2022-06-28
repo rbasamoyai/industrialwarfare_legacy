@@ -1,20 +1,27 @@
 package rbasamoyai.industrialwarfare.common.entityai;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tags.ITag;
-import net.minecraft.tags.TagCollectionManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.ToolType;
+import com.google.common.collect.Streams;
+
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.TierSortingRegistry;
+import net.minecraftforge.common.ToolAction;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class SupplyRequestPredicate {
@@ -22,13 +29,16 @@ public class SupplyRequestPredicate {
 	public static final SupplyRequestPredicate ANY = new SupplyRequestPredicate();
 	
 	@Nullable
-	private final ITag<Item> tag;
+	private final TagKey<Item> tag;
 	@Nullable
 	private final Item item;
 	private final IntBound count;
 	@Nullable
-	private final ToolType toolType;
-	private final IntBound harvestLevel;
+	private final BlockState blockState;
+	@Nullable
+	private final ToolAction action;
+	@Nullable
+	private final Tier toolTier;
 	
 	private int hash = 0;
 	
@@ -36,51 +46,68 @@ public class SupplyRequestPredicate {
 		this.tag = null;
 		this.item = null;
 		this.count = IntBound.ANY;
-		this.toolType = null;
-		this.harvestLevel = IntBound.ANY;
+		this.blockState = null;
+		this.action = null;
+		this.toolTier = null;
 	}
 	
-	public SupplyRequestPredicate(@Nullable ITag<Item> tag, @Nullable Item item, IntBound count, @Nullable ToolType type, IntBound harvestLevel) {
+	public SupplyRequestPredicate(@Nullable TagKey<Item> tag, @Nullable Item item, IntBound count, @Nullable BlockState toBreak, @Nullable ToolAction action, @Nullable Tier toolTier) {
 		this.tag = tag;
 		this.item = item;
 		this.count = count;
-		this.toolType = type;
-		this.harvestLevel = harvestLevel;
+		this.blockState = toBreak;
+		this.action = action;
+		this.toolTier = toolTier;
 	}
 	
 	public static SupplyRequestPredicate canBreak(BlockState state) {
-		return forTool(state.getHarvestTool(), IntBound.atLeast(state.getHarvestLevel()));
-	}
-	
-	public static SupplyRequestPredicate forTool(ToolType type, IntBound harvestLevel) {
-		return new SupplyRequestPredicate(null, null, IntBound.ANY, type, harvestLevel);
+		return new SupplyRequestPredicate(null, null, IntBound.ANY, state, null, null);
 	}
 	
 	public static SupplyRequestPredicate forItem(Item item, IntBound count) {
-		return new SupplyRequestPredicate(null, item, count, null, IntBound.ANY);
+		return new SupplyRequestPredicate(null, item, count, null, null, null);
 	}
 	
-	public static SupplyRequestPredicate forItem(ITag<Item> tag, IntBound count) {
-		return new SupplyRequestPredicate(tag, null, count, null, IntBound.ANY);
+	public static SupplyRequestPredicate forItem(TagKey<Item> tag, IntBound count) {
+		return new SupplyRequestPredicate(tag, null, count, null, null, null);
+	}
+	
+	public static SupplyRequestPredicate forTool(ToolAction action, Tier atLeastTier) {
+		return new SupplyRequestPredicate(null, null, IntBound.ANY, null, action, atLeastTier);
 	}
 	
 	public boolean matches(ItemStack stack) {
-		if (this.tag != null && !this.tag.contains(stack.getItem())) return false;
-		if (this.item != null && this.item != stack.getItem()) return false;
+		if (this.tag != null && !stack.is(this.tag)) return false;
+		if (this.item != null && !stack.is(this.item)) return false;
 		if (!this.count.matches(stack.getCount())) return false;
-		if (this.toolType == null) return true;
-		return stack.getToolTypes().contains(this.toolType) && this.harvestLevel.matches(stack.getHarvestLevel(this.toolType, null, null));
+		if (this.blockState != null && !stack.isCorrectToolForDrops(this.blockState)) return false;
+		return this.action == null || stack.canPerformAction(this.action);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public List<ItemStack> getItemsForDisplay() {
-		if (this.tag != null) return this.tag.getValues().stream().map(i -> new ItemStack(i)).collect(Collectors.toList());
+		if (this.tag != null) {
+			return Streams.stream(Registry.ITEM.getTagOrEmpty(this.tag))
+					.map(Holder::value)
+					.map(ItemStack::new)
+					.collect(Collectors.toList());
+		}
 		if (this.item != null) return Arrays.asList(new ItemStack(this.item));
-		if (this.toolType == null) return Arrays.asList();
-		return ForgeRegistries.ITEMS.getValues().stream()
-				.map(i -> new ItemStack(i))
-				.filter(s -> s.getToolTypes().contains(this.toolType))
-				.filter(s -> this.harvestLevel.matches(s.getHarvestLevel(this.toolType, null, null)))
-				.collect(Collectors.toList());
+		if (this.blockState != null) {
+			return ForgeRegistries.ITEMS.getValues()
+					.stream()
+					.map(ItemStack::new)
+					.filter(s -> s.isCorrectToolForDrops(this.blockState))
+					.collect(Collectors.toList());
+		}
+		if (this.action != null) {
+			return ForgeRegistries.ITEMS.getValues()
+					.stream()
+					.map(ItemStack::new)
+					.filter(s -> s.getItem().canPerformAction(s, this.action))
+					.collect(Collectors.toList());
+		}
+		return new ArrayList<>();
 	}
 	
 	public int getMinCount(int noMinimum) {
@@ -91,44 +118,67 @@ public class SupplyRequestPredicate {
 		return this.count.getMax() == null ? noMaximum : this.count.getMax();
 	}
 	
-	public void toNetwork(PacketBuffer buf) {
+	@SuppressWarnings("deprecation")
+	public void toNetwork(FriendlyByteBuf buf) {
 		buf.writeBoolean(this.tag != null);
 		if (this.tag != null) {
-			buf.writeUtf(TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).toString());
+			buf.writeResourceLocation(this.tag.location());
 		}
 		buf.writeBoolean(this.item != null);
 		if (this.item != null) {
 			buf.writeRegistryIdUnsafe(ForgeRegistries.ITEMS, this.item);
 		}
 		this.count.write(buf);
-		buf.writeBoolean(this.toolType != null);
-		if (this.toolType != null) {
-			buf.writeUtf(this.toolType.getName());
+		buf.writeBoolean(this.blockState != null);
+		if (this.blockState != null) {
+			buf.writeVarInt(Block.BLOCK_STATE_REGISTRY.getId(this.blockState));
 		}
-		this.harvestLevel.write(buf);
+		buf.writeBoolean(this.action != null);
+		if (this.action != null) {
+			buf.writeUtf(this.action.name());
+		}
+		buf.writeBoolean(this.toolTier != null);
+		if (this.toolTier != null) {
+			buf.writeResourceLocation(TierSortingRegistry.getName(this.toolTier));
+		}
 	}
 	
-	public static final String TAG_ITEM_TAG = "itemTag";
-	public static final String TAG_ITEM = "item";
-	public static final String TAG_COUNT = "count";
-	public static final String TAG_TOOL_TYPE = "toolType";
-	public static final String TAG_HARVEST_LEVEL = "harvestLevel";
-	
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
 		if (this.tag != null) {
-			nbt.putString(TAG_ITEM_TAG, TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).toString());
+			tag.putString("tag", this.tag.location().toString());
 		}
 		if (this.item != null) {
-			nbt.putString(TAG_ITEM, this.item.getRegistryName().toString());
+			tag.putString("item", this.item.getRegistryName().toString());
 		}
-		nbt.put(TAG_COUNT, this.count.write(new CompoundNBT()));
-		if (this.toolType != null) {
-			nbt.putString(TAG_TOOL_TYPE, this.toolType.getName());
+		tag.put("count", this.count.write(new CompoundTag()));
+		if (this.action != null) {
+			tag.putString("toolAction", this.action.name());
 		}
-		nbt.put(TAG_HARVEST_LEVEL, this.harvestLevel.write(new CompoundNBT()));
-		
-		return nbt;
+		if (this.toolTier != null) {
+			tag.putString("toolTier", TierSortingRegistry.getName(this.toolTier).toString());
+		}
+		return tag;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static SupplyRequestPredicate fromNetwork(FriendlyByteBuf buf) {
+		TagKey<Item> tag = buf.readBoolean() ? ForgeRegistries.ITEMS.tags().createTagKey(buf.readResourceLocation()) : null;
+		Item item = buf.readBoolean() ? buf.readRegistryIdUnsafe(ForgeRegistries.ITEMS) : null;
+		IntBound count = IntBound.readBound(buf);
+		BlockState toBreak = buf.readBoolean() ? Block.BLOCK_STATE_REGISTRY.byId(buf.readVarInt()) : null;
+		ToolAction action = buf.readBoolean() ? ToolAction.get(buf.readUtf()) : null;
+		Tier tier = buf.readBoolean() ? TierSortingRegistry.byName(buf.readResourceLocation()) : null;
+		return new SupplyRequestPredicate(tag, item, count, toBreak, action, tier);
+	}
+	
+	public static SupplyRequestPredicate fromNBT(CompoundTag nbt) {
+		TagKey<Item> tag = nbt.contains("tag") ? ForgeRegistries.ITEMS.tags().createTagKey(new ResourceLocation(nbt.getString("tag"))) : null;
+		Item item = nbt.contains("item") ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString("count"))) : null;
+		IntBound count = IntBound.readBound(nbt.getCompound("count"));
+		ToolAction action = nbt.contains("toolAction") ? ToolAction.get(nbt.getString("toolAction")) : null;
+		Tier tier = nbt.contains("toolTier") ? TierSortingRegistry.byName(new ResourceLocation(nbt.getString("toolTier"))) : null;
+		return new SupplyRequestPredicate(tag, item, count, null, action, tier);
 	}
 	
 	@Override
@@ -136,45 +186,16 @@ public class SupplyRequestPredicate {
 		if (this == obj) return true;
 		if (!(obj instanceof SupplyRequestPredicate)) return false;
 		SupplyRequestPredicate pred = (SupplyRequestPredicate) obj;
-		return this.tag == pred.tag && this.item == pred.item && this.count.equals(pred.count) && this.toolType == pred.toolType && this.harvestLevel.equals(pred.harvestLevel);
-	}
-	
-	public static SupplyRequestPredicate fromNetwork(PacketBuffer buf) {
-		ITag<Item> tag = null;
-		if (buf.readBoolean()) {
-			ResourceLocation loc = new ResourceLocation(buf.readUtf());
-			tag = TagCollectionManager.getInstance().getItems().getTag(loc);
-		}
-		Item item = buf.readBoolean() ? buf.readRegistryIdUnsafe(ForgeRegistries.ITEMS) : null;
-		IntBound count = IntBound.readBound(buf);
-		ToolType toolType = buf.readBoolean() ? ToolType.get(buf.readUtf()) : null;
-		IntBound harvestLevel = IntBound.readBound(buf);
-		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
-	}
-	
-	public static SupplyRequestPredicate fromNBT(CompoundNBT nbt) {
-		ITag<Item> tag = nbt.contains(TAG_ITEM_TAG) ? TagCollectionManager.getInstance().getItems().getTag(new ResourceLocation(nbt.getString(TAG_ITEM_TAG))) : null;
-		Item item = nbt.contains(TAG_ITEM) ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString(TAG_ITEM))) : null;
-		IntBound count = IntBound.readBound(nbt.getCompound(TAG_COUNT));
-		ToolType toolType = nbt.contains(TAG_TOOL_TYPE) ? ToolType.get(nbt.getString(TAG_TOOL_TYPE)) : null;
-		IntBound harvestLevel = IntBound.readBound(nbt.getCompound(TAG_HARVEST_LEVEL));
-		return new SupplyRequestPredicate(tag, item, count, toolType, harvestLevel);
+		return this.tag == pred.tag && this.item == pred.item && this.count.equals(pred.count) && this.blockState == pred.blockState && this.action == pred.action && this.toolTier == pred.toolTier;
 	}
 	
 	@Override
 	public int hashCode() {
 		if (this.hash == 0) {
-			if (this.tag != null) {
-				this.hash ^= TagCollectionManager.getInstance().getItems().getIdOrThrow(this.tag).hashCode();
-			}
 			if (this.item != null) {
 				this.hash ^= this.item.getRegistryName().hashCode() * 64;
 			}
 			this.hash ^= this.count.hashCode();
-			if (this.toolType != null) {
-				this.hash ^= this.toolType.getName().hashCode() * 128;
-			}
-			this.hash ^= this.harvestLevel.hashCode() * 32;
 		}
 		return this.hash;
 	}
@@ -229,7 +250,7 @@ public class SupplyRequestPredicate {
 			return this.max == null ? other.max == null : this.max.equals(other.max);
 		}
 		
-		public void write(PacketBuffer buf) {
+		public void write(FriendlyByteBuf buf) {
 			buf.writeBoolean(this.min != null);
 			if (this.min != null) {
 				buf.writeVarInt(this.min);
@@ -240,19 +261,19 @@ public class SupplyRequestPredicate {
 			}
 		}
 		
-		public CompoundNBT write(CompoundNBT nbt) {
+		public CompoundTag write(CompoundTag nbt) {
 			if (this.min != null) nbt.putInt(TAG_MIN, this.min.intValue());
 			if (this.max != null) nbt.putInt(TAG_MAX, this.max.intValue());
 			return nbt;
 		}
 		
-		public static IntBound readBound(PacketBuffer buf) {
+		public static IntBound readBound(FriendlyByteBuf buf) {
 			Integer min = buf.readBoolean() ? buf.readVarInt() : null;
 			Integer max = buf.readBoolean() ? buf.readVarInt() : null;
 			return new IntBound(min, max);
 		}
 		
-		public static IntBound readBound(CompoundNBT nbt) {
+		public static IntBound readBound(CompoundTag nbt) {
 			Integer min = nbt.contains(TAG_MIN) ? nbt.getInt(TAG_MIN) : null;
 			Integer max = nbt.contains(TAG_MAX) ? nbt.getInt(TAG_MAX) : null;
 			return new IntBound(min, max);

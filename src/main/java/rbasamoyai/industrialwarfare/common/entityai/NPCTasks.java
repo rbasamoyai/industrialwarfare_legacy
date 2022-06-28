@@ -1,39 +1,40 @@
 package rbasamoyai.industrialwarfare.common.entityai;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.BrainUtil;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.task.AttackTargetTask;
-import net.minecraft.entity.ai.brain.task.EndAttackTask;
-import net.minecraft.entity.ai.brain.task.ForgetAttackTargetTask;
-import net.minecraft.entity.ai.brain.task.InteractWithDoorTask;
-import net.minecraft.entity.ai.brain.task.LookAtEntityTask;
-import net.minecraft.entity.ai.brain.task.LookTask;
-import net.minecraft.entity.ai.brain.task.MoveToTargetTask;
-import net.minecraft.entity.ai.brain.task.PickupWantedItemTask;
-import net.minecraft.entity.ai.brain.task.SwimTask;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.ai.brain.task.WalkTowardsPosTask;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
+import net.minecraft.world.entity.ai.behavior.GoToWantedItem;
+import net.minecraft.world.entity.ai.behavior.InteractWithDoor;
+import net.minecraft.world.entity.ai.behavior.LookAtTargetSink;
+import net.minecraft.world.entity.ai.behavior.MeleeAttack;
+import net.minecraft.world.entity.ai.behavior.SetLookAndInteract;
+import net.minecraft.world.entity.ai.behavior.SetWalkTargetFromAttackTargetIfTargetOutOfReach;
+import net.minecraft.world.entity.ai.behavior.StartAttacking;
+import net.minecraft.world.entity.ai.behavior.StartCelebratingIfTargetDead;
+import net.minecraft.world.entity.ai.behavior.StrollToPoi;
+import net.minecraft.world.entity.ai.behavior.Swim;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.schedule.Activity;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
-import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
+import rbasamoyai.industrialwarfare.common.entities.HasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.BlockInteractionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.EndDiplomacyAttackTask;
@@ -57,55 +58,55 @@ import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class NPCTasks {
 
-	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getCorePackage() {
+	public static ImmutableList<Pair<Integer, ? extends Behavior<? super NPCEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new GoToWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new LeaveWorkTask(MemoryModuleType.JOB_SITE, 3.0f, 1, 100)),
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.0d, 0.07d, false)),
-				Pair.of(0, new InteractWithDoorTask()),
-				Pair.of(0, new SwimTask(0.8f)),
-				Pair.of(1, new LookTask(45, 90)),
+				Pair.of(0, new InteractWithDoor()),
+				Pair.of(0, new Swim(0.8f)),
+				Pair.of(1, new LookAtTargetSink(45, 90)),
 				Pair.of(1, new JoinNearbyFormationTask<>()),
 				Pair.of(2, new FinishMovementCommandTask(MemoryModuleType.MEETING_POINT))
 				);
 	}
 	
-	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getIdlePackage() {
+	public static ImmutableList<Pair<Integer, ? extends Behavior<? super NPCEntity>>> getIdlePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
-				Pair.of(1, new LookAtEntityTask(4.0f)),
+				Pair.of(1, new SetLookAndInteract(EntityType.PLAYER, 4)),
 				Pair.of(2, new StartSelfDefenseTask<>())
-				//Pair.of(2, new WalkTowardsLookTargetTask(2.5f, 2))
+				//Pair.of(2, new SetWalkTargetFromLookTarget(2.5f, 2))
 				);
 	}
 	
-	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getWorkPackage() {
+	public static ImmutableList<Pair<Integer, ? extends Behavior<? super NPCEntity>>> getWorkPackage() {
 		return ImmutableList.of(
 				Pair.of(0, new RunCommandFromTaskScrollTask()),
-				Pair.of(1, new ForgetAttackTargetTask<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
+				Pair.of(1, new StartAttacking<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(1, new BlockInteractionTask()),
-				Pair.of(2, new PickupWantedItemTask<>(NPCTasks::pickUpPredicate, 3.0f, true, 16))
+				Pair.of(2, new GoToWantedItem<>(NPCTasks::pickUpPredicate, 3.0f, true, 32))
 				);
 	}
 	
-	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getRestPackage() {
-		return ImmutableList.of(Pair.of(0, new WalkTowardsPosTask(MemoryModuleType.HOME, 3.0f, 1, 100)));
+	public static ImmutableList<Pair<Integer, ? extends Behavior<? super NPCEntity>>> getRestPackage() {
+		return ImmutableList.of(Pair.of(0, new StrollToPoi(MemoryModuleType.HOME, 3.0f, 1, 100)));
 	}
 	
-	public static ImmutableList<Pair<Integer, ? extends Task<? super NPCEntity>>> getFightPackage() {
+	public static ImmutableList<Pair<Integer, ? extends Behavior<? super NPCEntity>>> getFightPackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 3.0f, 1, 100)),
-				Pair.of(1, new MoveToTargetTask(3.0f)),
+				Pair.of(1, new SetWalkTargetFromAttackTargetIfTargetOutOfReach(3.0f)),
 				Pair.of(1, new PrepareForShootingTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
 				Pair.of(2, new ExtendedShootTargetTask<>()),
 				Pair.of(2, new ShootPositionTask<>(MemoryModuleTypeInit.SHOOTING_POS.get())),
-				Pair.of(2, new ForgetAttackTargetTask<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
-				Pair.of(3, new EndAttackTask(0, (e1, e2) -> false)),
+				Pair.of(2, new StartAttacking<>(NPCTasks::canFindNewTarget, NPCTasks::findNearestValidAttackTarget)),
+				Pair.of(3, new StartCelebratingIfTargetDead(0, (e1, e2) -> false)),
 				Pair.of(3, new EndWhistleAttackTask()),
 				Pair.of(3, new EndDiplomacyAttackTask<>()),
 				Pair.of(3, new EndPatrolAttackTask()),
-				Pair.of(4, new AttackTargetTask(20)),
+				Pair.of(4, new MeleeAttack(20)),
 				Pair.of(5, new ReturnToWorkIfPatrollingTask()),
 				Pair.of(5, new StopSelfDefenseTask(Activity.IDLE))
 				);
@@ -132,26 +133,26 @@ public class NPCTasks {
 		
 		if (!brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) return true;
 		LivingEntity target = brain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
-		if (target instanceof PlayerEntity && (((PlayerEntity) target).isCreative() || ((PlayerEntity) target).isSpectator())) {
+		if (target instanceof Player && (((Player) target).isCreative() || ((Player) target).isSpectator())) {
 			return true;
 		}
 		
-		if (target instanceof IHasDiplomaticOwner) {
+		if (target instanceof HasDiplomaticOwner) {
 			PlayerIDTag npcOwner = npc.getDiplomaticOwner();
-			PlayerIDTag otherOwner = ((IHasDiplomaticOwner) target).getDiplomaticOwner();
+			PlayerIDTag otherOwner = ((HasDiplomaticOwner) target).getDiplomaticOwner();
 			if (npcOwner.equals(otherOwner)) return !npc.hasOwner();
 			DiplomacySaveData saveData = DiplomacySaveData.get(npc.level);
 			if (saveData.getDiplomaticStatus(npcOwner, otherOwner) == DiplomaticStatus.ALLY) return true;
 		}
 		
-		if (mode == CombatMode.STAND_GROUND && !BrainUtil.isWithinAttackRange(npc, target, 0)) return true;
+		if (mode == CombatMode.STAND_GROUND && !BehaviorUtils.isWithinAttackRange(npc, target, 0)) return true;
 		
 		if (mode == CombatMode.DEFEND) {
 			if (!brain.hasMemoryValue(MemoryModuleTypeInit.CACHED_POS.get())
 				|| !brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get()).get().dimension().equals(npc.level.dimension()))
 				brain.setMemory(MemoryModuleTypeInit.CACHED_POS.get(), GlobalPos.of(npc.level.dimension(), npc.blockPosition()));
 			BlockPos pos = brain.getMemory(MemoryModuleTypeInit.CACHED_POS.get()).get().pos();
-			if (!pos.closerThan(npc.position(), 10) || !BrainUtil.isWithinAttackRange(npc, target, 0)) return true;
+			if (!pos.closerToCenterThan(npc.position(), 10) || !BehaviorUtils.isWithinAttackRange(npc, target, 0)) return true;
 		}
 		
 		return target.isDeadOrDying();
@@ -174,12 +175,11 @@ public class NPCTasks {
 		
 		Optional<LivingEntity> targetOptional = Optional.empty();
 		
-		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(new ArrayList<>());
-		for (LivingEntity e : visibleEntities) {		
+		for (LivingEntity e : brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).map(nvle -> nvle.findAll(e -> true)).orElseGet(Lists::newArrayList)) {		
 			if (!e.blockPosition().closerThan(pos, pursuitDistance)) continue;
 			
-			if (e instanceof IHasDiplomaticOwner) {
-				PlayerIDTag otherOwner = ((IHasDiplomaticOwner) e).getDiplomaticOwner();
+			if (e instanceof HasDiplomaticOwner) {
+				PlayerIDTag otherOwner = ((HasDiplomaticOwner) e).getDiplomaticOwner();
 				if (npcOwner.equals(otherOwner)) continue;
 				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, otherOwner);
 				if (status == DiplomaticStatus.ENEMY || status != DiplomaticStatus.ALLY && isViableNonEnemyTarget(e)) {
@@ -193,15 +193,15 @@ public class NPCTasks {
 				targetOptional = Optional.of(e);
 				break;
 			}
-			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == npc && isViableTargetingTarget((MobEntity) e)) {
+			if (e instanceof Mob && ((Mob) e).getTarget() == npc && isViableTargetingTarget((Mob) e)) {
 				targetOptional = Optional.of(e);
 				break;
 			}
 			
-			if (e instanceof PlayerEntity && !((PlayerEntity) e).isCreative()) {
-				PlayerIDTag otherPlayerTag = PlayerIDTag.of((PlayerEntity) e);
+			if (e instanceof Player && !((Player) e).isCreative()) {
+				PlayerIDTag otherPlayerTag = PlayerIDTag.of((Player) e);
 				if (npcOwner.equals(otherPlayerTag)) continue;
-				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((PlayerEntity) e));
+				DiplomaticStatus status = saveData.getDiplomaticStatus(npcOwner, PlayerIDTag.of((Player) e));
 				
 				if (status == DiplomaticStatus.ENEMY || status != DiplomaticStatus.ALLY && isViableNonEnemyTarget(e)) {
 					targetOptional = Optional.of(e);
@@ -216,22 +216,22 @@ public class NPCTasks {
 		}
 		
 		// Assisting nearby allies with their attack targets
-		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.LIVING_ENTITIES).orElse(Arrays.asList());
+		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES).orElse(Arrays.asList());
 		for (LivingEntity e : nearbyEntities) {
-			if (!(e instanceof IHasDiplomaticOwner)) continue;
-			PlayerIDTag otherOwner = ((IHasDiplomaticOwner) e).getDiplomaticOwner();
+			if (!(e instanceof HasDiplomaticOwner)) continue;
+			PlayerIDTag otherOwner = ((HasDiplomaticOwner) e).getDiplomaticOwner();
 			if (!npcOwner.equals(otherOwner) && saveData.getDiplomaticStatus(npcOwner, otherOwner) != DiplomaticStatus.ALLY) continue;
 			Brain<?> allyBrain = e.getBrain();
 			if (allyBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) {
 				LivingEntity target = allyBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
-				if (BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
+				if (BehaviorUtils.canSee(npc, target) && BehaviorUtils.isWithinAttackRange(npc, target, 0)) {
 					targetOptional = Optional.of(e);
 					break;
 				}
 			}
-			if (e instanceof MobEntity) {
-				LivingEntity target = ((MobEntity) e).getTarget();
-				if (target != null && BrainUtil.canSee(npc, target) && BrainUtil.isWithinAttackRange(npc, target, 0)) {
+			if (e instanceof Mob) {
+				LivingEntity target = ((Mob) e).getTarget();
+				if (target != null && BehaviorUtils.canSee(npc, target) && BehaviorUtils.isWithinAttackRange(npc, target, 0)) {
 					targetOptional = Optional.of(e);
 					break;
 				}
@@ -249,18 +249,17 @@ public class NPCTasks {
 		return false;
 	}
 	
-	private static boolean isViableTargetingTarget(MobEntity targeter) {
+	private static boolean isViableTargetingTarget(Mob targeter) {
 		return true;
 	}
 	
-	@SuppressWarnings("deprecation")
 	private static boolean pickUpPredicate(LivingEntity entity) {
 		Brain<?> brain = entity.getBrain();
 		if (!brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
 			return false;
 		}
 		ItemEntity item = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get();
-		return item != null && !item.removed && !item.getItem().isEmpty();
+		return item != null && !item.isRemoved() && !item.getItem().isEmpty();
 	}
 	
 }

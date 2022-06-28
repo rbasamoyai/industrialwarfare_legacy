@@ -5,30 +5,30 @@ import java.util.UUID;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class JoinNearbyFormationTask<E extends CreatureEntity & IMovesInFormation> extends Task<E> {
+public class JoinNearbyFormationTask<E extends PathfinderMob & MovesInFormation> extends Behavior<E> {
 
 	private int remainingCooldown;
 	
 	public JoinNearbyFormationTask() {
 		super(ImmutableMap.of(
-				MemoryModuleType.LIVING_ENTITIES, MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.VALUE_ABSENT));
+				MemoryModuleType.NEAREST_LIVING_ENTITIES, MemoryStatus.VALUE_PRESENT,
+				MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryStatus.VALUE_PRESENT,
+				MemoryModuleTypeInit.IN_FORMATION.get(), MemoryStatus.VALUE_ABSENT));
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, E entity) {
 		if (this.remainingCooldown > 0) {
 			--this.remainingCooldown;
 			return false;
@@ -37,10 +37,10 @@ public class JoinNearbyFormationTask<E extends CreatureEntity & IMovesInFormatio
 	}
 	
 	@Override
-	protected void start(ServerWorld level, E entity, long gameTime) {
+	protected void start(ServerLevel level, E entity, long gameTime) {
 		Brain<?> brain = entity.getBrain();
 		UUID commandGroup = brain.getMemory(MemoryModuleTypeInit.IN_COMMAND_GROUP.get()).get();
-		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.LIVING_ENTITIES).get();
+		List<LivingEntity> nearbyEntities = brain.getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES).get();
 				
 		for (LivingEntity e : nearbyEntities) {
 			Brain<?> otherBrain = e.getBrain();

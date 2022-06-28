@@ -3,14 +3,14 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 import java.util.Arrays;
 import java.util.List;
 
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class EmptyArgSelector extends ArgSelector<Void> {
 
-	private static final List<ITextComponent> TOOLTIP = Arrays.asList(TooltipUtils.NOT_AVAILABLE);
+	private static final List<Component> TOOLTIP = Arrays.asList(TooltipUtils.NOT_AVAILABLE);
 	
 	protected EmptyArgSelector() {
 		super(null);
@@ -35,12 +35,12 @@ public class EmptyArgSelector extends ArgSelector<Void> {
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
+	public List<Component> getComponentTooltip() {
 		return TOOLTIP;
 	}
 
 	@Override
-	public ITextComponent getTitle() {
+	public Component getTitle() {
 		return TooltipUtils.NOT_AVAILABLE;
 	}
 

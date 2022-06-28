@@ -2,15 +2,14 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll.ITaskScrollData;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
@@ -27,16 +26,16 @@ public class JumpToCommand extends TaskScrollCommand {
 	
 	public JumpToCommand() {
 		super(CommandTrees.JUMP_TO, () -> ImmutableMap.of(
-				MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.JUMP_TO.get(), MemoryModuleStatus.REGISTERED
+				MemoryModuleType.HEARD_BELL_TIME, MemoryStatus.REGISTERED,
+				MemoryModuleTypeInit.JUMP_TO.get(), MemoryStatus.REGISTERED
 				));
 	}
 	
 	@Override
-	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
+	public boolean checkExtraStartConditions(ServerLevel level, NPCEntity npc, TaskScrollOrder order) {
 		int jumpPos = order.getWrappedArg(JUMP_POS_ARG_INDEX).getArgNum();
 		ItemStack scroll = npc.getEquipmentItemHandler().getStackInSlot(EquipmentItemHandler.TASK_ITEM_INDEX);
-		LazyOptional<ITaskScrollDataHandler> lzop = TaskScrollItem.getDataHandler(scroll);
+		LazyOptional<ITaskScrollData> lzop = TaskScrollItem.getDataHandler(scroll);
 		
 		if (!lzop.map(h -> 0 <= jumpPos || jumpPos < h.getList().size()).orElse(false)) {
 			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_ORDER.get(), 200L);
@@ -47,19 +46,19 @@ public class JumpToCommand extends TaskScrollCommand {
 	}
 
 	@Override
-	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void start(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		int condition = order.getWrappedArg(CONDITION_TYPE_INDEX).getArgNum();
 		
-		int dayTime = (int)(world.getDayTime() % 24000L);
+		int dayTime = (int)(level.getDayTime() % 24000L);
 		int dayTimeCondition = order.getWrappedArg(2).getArgNum();
 		
 		ItemStack filter = order.getWrappedArg(2).getItem().orElse(ItemStack.EMPTY);
 		int itemCount = 0;
 		boolean hasItems = false;
 		
-		ItemStack mainhand = npc.getItemInHand(Hand.MAIN_HAND);
-		ItemStack offhand = npc.getItemInHand(Hand.OFF_HAND);
+		ItemStack mainhand = npc.getMainHandItem();
+		ItemStack offhand = npc.getOffhandItem();
 		if (CommandUtils.filterMatches(filter, mainhand)) {
 			itemCount += mainhand.getCount();
 			hasItems = true;
@@ -103,11 +102,11 @@ public class JumpToCommand extends TaskScrollCommand {
 	}
 
 	@Override
-	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void tick(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 	}
 
 	@Override
-	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void stop(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 
 		int jumpIndex = brain.getMemory(MemoryModuleTypeInit.JUMP_TO.get()).orElse(0);

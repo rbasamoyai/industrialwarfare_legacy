@@ -1,13 +1,14 @@
 package rbasamoyai.industrialwarfare.core.init;
 
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 
 public class NPCComplaintInit {
 	
-	public static final DeferredRegister<NPCComplaint> COMPLAINTS = DeferredRegister.create(NPCComplaint.class, IndustrialWarfare.MOD_ID);
+	public static final DeferredRegister<NPCComplaint> COMPLAINTS = DeferredRegister.create(IWModRegistries.KEY_NPC_COMPLAINTS, IndustrialWarfare.MOD_ID);
 	
 	public static final RegistryObject<NPCComplaint> CANT_ACCESS = COMPLAINTS.register("cant_access", NPCComplaint::new);
 	public static final RegistryObject<NPCComplaint> CANT_DEPOSIT_ITEM = COMPLAINTS.register("cant_deposit_item", NPCComplaint::new);

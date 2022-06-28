@@ -13,61 +13,60 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Dynamic;
 
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.EntitySize;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.Brain.BrainCodec;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.sensor.Sensor;
-import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.entity.projectile.ProjectileHelper;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.BowItem;
-import net.minecraft.item.CrossbowItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ShootableItem;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.pathfinding.GroundPathNavigator;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Position;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.inventory.MenuConstructor;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ProjectileWeaponItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.NetworkHooks;
-import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCData;
 import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
 import rbasamoyai.industrialwarfare.common.containers.npcs.EquipmentItemHandler;
-import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import rbasamoyai.industrialwarfare.common.containers.npcs.NPCMenu;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.NPCTasks;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem.ActionType;
@@ -79,25 +78,25 @@ import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.CNPCBrainDataSyncMessage;
-import rbasamoyai.industrialwarfare.utils.IWInventoryUtils;
+import rbasamoyai.industrialwarfare.utils.ModInventoryUtils;
 
 /*
  * Base NPC entity class for rbasamoyai's Industrial Warfare.
  */
 
-public class NPCEntity extends CreatureEntity implements
+public class NPCEntity extends PathfinderMob implements
 		IWeaponRangedAttackMob,
 		IQualityModifier,
-		IHasDiplomaticOwner,
+		HasDiplomaticOwner,
 		IItemPredicateSearch,
-		IMovesInFormation {
+		MovesInFormation {
 	
-	/** Taken from {@link net.minecraft.entity.player.PlayerEntity#POSES}. */
-	private static final Map<Pose, EntitySize> POSES = ImmutableMap.<Pose, EntitySize>builder()
-			.put(Pose.FALL_FLYING, EntitySize.scalable(0.6F, 0.6F))
-			.put(Pose.SWIMMING, EntitySize.scalable(0.6F, 0.6F))
-			.put(Pose.SPIN_ATTACK, EntitySize.scalable(0.6F, 0.6F))
-			.put(Pose.CROUCHING, EntitySize.scalable(0.6F, 1.5F)).build();
+	/** Taken from {@link net.minecraft.entity.player.Player#POSES}. */
+	private static final Map<Pose, EntityDimensions> POSES = ImmutableMap.<Pose, EntityDimensions>builder()
+			.put(Pose.FALL_FLYING, EntityDimensions.scalable(0.6F, 0.6F))
+			.put(Pose.SWIMMING, EntityDimensions.scalable(0.6F, 0.6F))
+			.put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.6F, 0.6F))
+			.put(Pose.CROUCHING, EntityDimensions.scalable(0.6F, 1.5F)).build();
 	
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ANGRY_AT,
@@ -109,12 +108,13 @@ public class NPCEntity extends CreatureEntity implements
 			MemoryModuleType.DOORS_TO_CLOSE,
 			MemoryModuleType.HEARD_BELL_TIME,
 			MemoryModuleType.HOME,
+			MemoryModuleType.INTERACTION_TARGET,
 			MemoryModuleType.JOB_SITE,
 			MemoryModuleType.LOOK_TARGET,
 			MemoryModuleType.MEETING_POINT,
 			MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM,
-			MemoryModuleType.LIVING_ENTITIES,
-			MemoryModuleType.VISIBLE_LIVING_ENTITIES,
+			MemoryModuleType.NEAREST_LIVING_ENTITIES,
+			MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
 			MemoryModuleType.PATH,
 			MemoryModuleType.WALK_TARGET,
 			MemoryModuleTypeInit.ACTIVITY_STATUS.get(),
@@ -161,14 +161,14 @@ public class NPCEntity extends CreatureEntity implements
 	
 	protected int actionDelay;
 	
-	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn) {
+	public NPCEntity(EntityType<? extends NPCEntity> type, Level worldIn) {
 		this(type, worldIn, NPCProfessionInit.JOBLESS.get(), NPCCombatSkillInit.UNTRAINED.get(), null, 5, true);
 	}
 	
-	public NPCEntity(EntityType<? extends NPCEntity> type, World worldIn, NPCProfession profession, NPCCombatSkill combatSkill, @Nullable PlayerEntity owner, int initialInventoryCount, boolean canWearEquipment) {
+	public NPCEntity(EntityType<? extends NPCEntity> type, Level worldIn, NPCProfession profession, NPCCombatSkill combatSkill, @Nullable Player owner, int initialInventoryCount, boolean canWearEquipment) {
 		super(type, worldIn);
 		
-		this.setCustomName(new StringTextComponent("Unnamed NPC"));
+		this.setCustomName(new TextComponent("Unnamed NPC"));
 		
 		this.getDataHandler().ifPresent(h -> {
 			h.setCanWearEquipment(canWearEquipment);
@@ -180,7 +180,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.inventoryItemHandler = new ItemStackHandler(initialInventoryCount);		
 		this.equipmentItemHandler = new EquipmentItemHandler(this);
 		
-		((GroundPathNavigator) this.navigation).setCanOpenDoors(true);
+		((GroundPathNavigation) this.navigation).setCanOpenDoors(true);
 		
 		this.getNextEffectiveness();
 		
@@ -188,8 +188,8 @@ public class NPCEntity extends CreatureEntity implements
 		this.setCanPickUpLoot(true);
 	}
 	
-	public static AttributeModifierMap.MutableAttribute setAttributes() {
-		return CreatureEntity.createMobAttributes()
+	public static AttributeSupplier.Builder setAttributes() {
+		return PathfinderMob.createMobAttributes()
 				.add(Attributes.MAX_HEALTH, 20.0d)
 				.add(Attributes.MOVEMENT_SPEED, 0.1d)
 				.add(Attributes.ATTACK_DAMAGE, 2.0d)
@@ -206,8 +206,8 @@ public class NPCEntity extends CreatureEntity implements
 		return this.equipmentItemHandler;
 	}
 	
-	public LazyOptional<INPCDataHandler> getDataHandler() {
-		return this.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY);
+	public LazyOptional<INPCData> getDataHandler() {
+		return this.getCapability(NPCDataCapability.INSTANCE);
 	}
 	
 	public void resizeInventoryItemHandler(int newSize) {
@@ -223,7 +223,7 @@ public class NPCEntity extends CreatureEntity implements
 	 */
 	
 	@Override
-	protected BrainCodec<NPCEntity> brainProvider() {
+	protected Brain.Provider<NPCEntity> brainProvider() {
 		return Brain.provider(MEMORY_TYPES.get(), SENSOR_TYPES.get());
 	}
 	
@@ -273,15 +273,14 @@ public class NPCEntity extends CreatureEntity implements
 		brain.setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level.dimension(), new BlockPos(10, 55, 10)));
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void customServerAiStep() {
 		Brain<NPCEntity> brain = this.getBrain();
 		
-		brain.tick((ServerWorld) this.level, this);
+		brain.tick((ServerLevel) this.level, this);
 		
 		if (this.level.getGameTime() % 20 == 0) {
-			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get()), this.blockPosition()); 
+			CNPCBrainDataSyncMessage msg = new CNPCBrainDataSyncMessage(this.getId(), brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get())); 
 			IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), msg);
 		}
 		
@@ -297,7 +296,7 @@ public class NPCEntity extends CreatureEntity implements
 		
 		if (brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
 			ItemEntity item = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM).get();
-			if (item == null || item.removed || item.getItem().isEmpty()) {
+			if (item == null || item.isRemoved() || item.getItem().isEmpty()) {
 				brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM);
 			}
 		}
@@ -320,7 +319,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public EntitySize getDimensions(Pose pose) {
+	public EntityDimensions getDimensions(Pose pose) {
 		return POSES.containsKey(pose) ? POSES.get(pose) : super.getDimensions(pose);
 	}
 	
@@ -330,7 +329,7 @@ public class NPCEntity extends CreatureEntity implements
 	
 	@Override
 	public int getFormationRank() {
-		NPCCombatSkill skill = this.getDataHandler().map(INPCDataHandler::getCombatSkill).orElse(NPCCombatSkillInit.UNTRAINED.get());
+		NPCCombatSkill skill = this.getDataHandler().map(INPCData::getCombatSkill).orElse(NPCCombatSkillInit.UNTRAINED.get());
 		if (skill == NPCCombatSkillInit.UNTRAINED.get()) return 0;
 		
 		boolean isRanged = this.canUseRangedWeapon(this.getMainHandItem());
@@ -347,26 +346,26 @@ public class NPCEntity extends CreatureEntity implements
 	 */
 	
 	@Override
-	protected ActionResultType mobInteract(PlayerEntity player, Hand handIn) {
-		ActionResultType actionResultType = this.checkAndHandleImportantInteractions(player, handIn);
+	protected InteractionResult mobInteract(Player player, InteractionHand handIn) {
+		InteractionResult actionResultType = this.checkAndHandleImportantInteractions(player, handIn);
 		if (actionResultType.consumesAction()) {
 			return actionResultType;
 		} else {
-			if (!this.level.isClientSide && player instanceof ServerPlayerEntity) {
-				IContainerProvider containerProvider = NPCContainer.getServerContainerProvider(this);
-				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(containerProvider, this.getCustomName());
-				NetworkHooks.openGui((ServerPlayerEntity) player, namedProvider, buf -> {
+			if (!this.level.isClientSide && player instanceof ServerPlayer) {
+				MenuConstructor containerProvider = NPCMenu.getServerContainerProvider(this);
+				MenuProvider namedProvider = new SimpleMenuProvider(containerProvider, this.getCustomName());
+				NetworkHooks.openGui((ServerPlayer) player, namedProvider, buf -> {
 					buf.writeVarInt(this.inventoryItemHandler.getSlots());
-					buf.writeBoolean(this.getDataHandler().map(INPCDataHandler::canWearEquipment).orElse(false));
+					buf.writeBoolean(this.getDataHandler().map(INPCData::canWearEquipment).orElse(false));
 					// TODO: write additional npc info
 				});
-				return ActionResultType.SUCCESS;
+				return InteractionResult.SUCCESS;
 			}
 			return super.mobInteract(player, handIn);
 		}
 	}
 	
-	protected ActionResultType checkAndHandleImportantInteractions(PlayerEntity player, Hand handIn) {
+	protected InteractionResult checkAndHandleImportantInteractions(Player player, InteractionHand handIn) {
 		ItemStack handStack = player.getItemInHand(handIn);
 		return handStack.interactLivingEntity(player, this, handIn);
 	}
@@ -377,7 +376,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public void addAdditionalSaveData(CompoundNBT tag) {
+	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		
 		tag.put(TAG_WORKSTUFFS, this.equipmentItemHandler.serializeNBT());
@@ -385,7 +384,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public void readAdditionalSaveData(CompoundNBT tag) {
+	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		
 		this.equipmentItemHandler.deserializeNBT(tag);
@@ -402,7 +401,7 @@ public class NPCEntity extends CreatureEntity implements
 	
 	@Override
 	public PlayerIDTag getDiplomaticOwner() {
-		return this.getDataHandler().map(INPCDataHandler::getOwner).orElse(PlayerIDTag.NO_OWNER);
+		return this.getDataHandler().map(INPCData::getOwner).orElse(PlayerIDTag.NO_OWNER);
 	}
 	
 	/*
@@ -414,8 +413,8 @@ public class NPCEntity extends CreatureEntity implements
 		Item weaponItem = weapon.getItem();
 		Predicate<ItemStack> predicate = s -> false;
 		
-		if (weaponItem instanceof ShootableItem) {
-			predicate = predicate.or(((ShootableItem) weaponItem).getAllSupportedProjectiles());
+		if (weaponItem instanceof ProjectileWeaponItem) {
+			predicate = predicate.or(((ProjectileWeaponItem) weaponItem).getAllSupportedProjectiles());
 		}
 		if (weaponItem instanceof ISpeedloadable && ((ISpeedloadable) weaponItem).canSpeedload(weapon)) {
 			predicate = predicate.or(((ISpeedloadable) weaponItem).getSpeedloaderPredicate());
@@ -426,12 +425,12 @@ public class NPCEntity extends CreatureEntity implements
 	
 	@Override
 	public ItemStack getMatching(Predicate<ItemStack> predicate) {
-		for (Hand hand : Hand.values()) {
+		for (InteractionHand hand : InteractionHand.values()) {
 			ItemStack handstack = this.getItemInHand(hand);
 			if (predicate.test(handstack)) return handstack;
 		}
 		
-		return IWInventoryUtils.iterateAndApplyIf(
+		return ModInventoryUtils.iterateAndApplyIf(
 				this.inventoryItemHandler,
 				(handler, index) -> iterateDeeperIfContainer(
 						handler,
@@ -448,11 +447,11 @@ public class NPCEntity extends CreatureEntity implements
 	
 	@Override
 	public boolean has(Predicate<ItemStack> predicate) {
-		for (Hand hand : Hand.values()) {
+		for (InteractionHand hand : InteractionHand.values()) {
 			if (predicate.test(this.getItemInHand(hand))) return true;
 		}
 		
-		return IWInventoryUtils.iterateAndApplyIf(
+		return ModInventoryUtils.iterateAndApplyIf(
 				this.inventoryItemHandler,
 				(handler, index) -> iterateDeeperIfContainer(
 						handler,
@@ -472,13 +471,12 @@ public class NPCEntity extends CreatureEntity implements
 		return true;
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
 	protected void pickUpItem(ItemEntity entity) {
 		super.pickUpItem(entity);
 		if (!this.level.isClientSide) {
 			ItemStack stack = entity.getItem();
-			if (entity.removed || stack.isEmpty() || entity.hasPickUpDelay()) return;
+			if (entity.isRemoved() || stack.isEmpty() || entity.hasPickUpDelay()) return;
 			int sz = stack.getCount();
 			for (int i = 0; i < this.inventoryItemHandler.getSlots(); ++i) {
 				stack = this.inventoryItemHandler.insertItem(i, stack, false);
@@ -490,7 +488,7 @@ public class NPCEntity extends CreatureEntity implements
 				this.onItemPickup(entity);
 				this.take(entity, sz);
 				if (stack.isEmpty()) {
-					entity.remove();
+					entity.discard();
 					stack.setCount(sz);
 				}
 			} else {
@@ -510,7 +508,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public boolean canFireProjectileWeapon(ShootableItem weapon) {
+	public boolean canFireProjectileWeapon(ProjectileWeaponItem weapon) {
 		return this.canUseRangedWeapon(new ItemStack(weapon));
 	}
 	
@@ -523,7 +521,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextTimeModifier();
 		
 		if (weaponItem instanceof BowItem || weaponItem instanceof CrossbowItem) {
-			this.startUsingItem(Hand.MAIN_HAND);
+			this.startUsingItem(InteractionHand.MAIN_HAND);
 		} else if (weaponItem instanceof FirearmItem) {
 			FirearmItem.tryReloadFirearm(weapon, this);
 		}
@@ -573,7 +571,7 @@ public class NPCEntity extends CreatureEntity implements
 			if (!FirearmItem.isCycled(weapon) && ((FirearmItem) weaponItem).needsCycle(weapon)) {
 				this.actionDelay = 0;
 				if (FirearmItem.isFinishedAction(weapon)) {
-					this.swing(Hand.MAIN_HAND);
+					this.swing(InteractionHand.MAIN_HAND);
 				}
 				return true;
 			}
@@ -586,15 +584,15 @@ public class NPCEntity extends CreatureEntity implements
 			}
 			
 			if (this.actionDelay <= 0) {
-				this.actionDelay = MathHelper.ceil(30.0f * this.timeModifier);
+				this.actionDelay = Mth.ceil(30.0f * this.timeModifier);
 			}
 			if (this.canAim() && !FirearmItem.isAiming(weapon)) {
 				((FirearmItem) weaponItem).startAiming(weapon, this);
-				this.startUsingItem(Hand.MAIN_HAND);
+				this.startUsingItem(InteractionHand.MAIN_HAND);
 				this.actionDelay += 10;
 			}
 		} else if (this.actionDelay <= 0) {
-			this.actionDelay = MathHelper.ceil(60.0f * this.timeModifier);
+			this.actionDelay = Mth.ceil(60.0f * this.timeModifier);
 		}
 		
 		--this.actionDelay;
@@ -616,7 +614,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextTimeModifier();
 		
 		if (weaponItem instanceof BowItem) {
-			Vector3d targetPos = target.position().add(0.0d, target.getBbHeight() * ONE_THIRD, 0.0d);
+			Vec3 targetPos = target.position().add(0.0d, target.getBbHeight() * ONE_THIRD, 0.0d);
 			this.shootUsingBow(targetPos);
 			weapon.hurtAndBreak(1, this, npc -> this.broadcastBreakEvent(this.getUsedItemHand()));
 			this.stopUsingItem();
@@ -635,7 +633,7 @@ public class NPCEntity extends CreatureEntity implements
 	}
 	
 	@Override
-	public void performRangedAttack(IPosition target, float damage) {
+	public void performRangedAttack(Position target, float damage) {
 		if (target == null) return;
 		
 		ItemStack weapon = this.getMainHandItem();
@@ -666,12 +664,12 @@ public class NPCEntity extends CreatureEntity implements
 	private static final float ARROW_SPEED = 1.6f;
 	
 	/**
-	 * Code based on {@link net.minecraft.entity.monster.AbstractSkeletonEntity#performRangedAttack AbstractSkeletonEntity#performRangedAttack}
+	 * Code based on {@link net.minecraft.entity.monster.AbstractSkeleton#performRangedAttack AbstractSkeleton#performRangedAttack}
 	 */
-	private void shootUsingBow(IPosition target) {
-		ItemStack bow = this.getItemInHand(ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof BowItem));
+	private void shootUsingBow(Position target) {
+		ItemStack bow = this.getItemInHand(ProjectileUtil.getWeaponHoldingHand(this, BowItem.class::isInstance));
 		ItemStack projectile = this.getProjectile(bow).split(1);
-		AbstractArrowEntity arrow = ProjectileHelper.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
+		AbstractArrow arrow = ProjectileUtil.getMobArrow(this, projectile, BowItem.getPowerForTime(this.getTicksUsingItem()));
 		Item mainhandItem = this.getMainHandItem().getItem();
 		if (mainhandItem instanceof BowItem) {
 			arrow = ((BowItem) mainhandItem).customArrow(arrow);
@@ -679,7 +677,7 @@ public class NPCEntity extends CreatureEntity implements
 		
 		double dx = target.x() - this.getX();
 		double dz = target.z() - this.getZ();
-		double dyOffset = MathHelper.sqrt(dx * dx + dz * dz);
+		double dyOffset = Math.sqrt(dx * dx + dz * dz);
 		double dy = target.y() - arrow.getY() + dyOffset * 0.2d;
 		float spread = 14.0f - 12.0f * this.effectiveness;
 		arrow.shoot(dx, dy, dz, ARROW_SPEED, spread);
@@ -693,16 +691,16 @@ public class NPCEntity extends CreatureEntity implements
 	 * Code based on {@link net.minecraft.entity.ICrossbowUser#performCrossbowAttack ICrossbowUser#performCrossbowAttack}
 	 */
 	private void shootUsingCrossbow(LivingEntity target) {
-		Hand hand = ProjectileHelper.getWeaponHoldingHand(this, item -> item instanceof CrossbowItem);
+		InteractionHand hand = ProjectileUtil.getWeaponHoldingHand(this, item -> item instanceof CrossbowItem);
 		ItemStack crossbow = this.getItemInHand(hand);
-		if (this.isHolding(item -> item instanceof CrossbowItem)) {
+		if (this.isHolding(CrossbowItem.class::isInstance)) {
 			float spread = 14.0f - 12.0f * this.effectiveness;
 			CrossbowItem.performShooting(this.level, this, hand, crossbow, ARROW_SPEED, spread);
 		}
 	}
 	
 	private void shootUsingFirearm(LivingEntity target) {
-		this.swing(Hand.MAIN_HAND);
+		this.swing(InteractionHand.MAIN_HAND);
 	}
 	
 	@Override
@@ -776,7 +774,7 @@ public class NPCEntity extends CreatureEntity implements
 		this.getNextTimeModifier();
 		
 		if (weaponItem instanceof FirearmItem) {
-			this.swing(Hand.MAIN_HAND);
+			this.swing(InteractionHand.MAIN_HAND);
 		}
 	}
 	
@@ -790,7 +788,7 @@ public class NPCEntity extends CreatureEntity implements
 				FirearmItem.ActionType action = h.getAction();
 				
 				if (!h.isCycled() && action != FirearmItem.ActionType.CYCLING) {
-					this.swing(Hand.MAIN_HAND);
+					this.swing(InteractionHand.MAIN_HAND);
 					return true;
 				}
 				
@@ -807,7 +805,7 @@ public class NPCEntity extends CreatureEntity implements
 		if (!this.canUseRangedWeapon(weapon)) return false;
 		
 		Item weaponItem = weapon.getItem();
-		return weaponItem instanceof ShootableItem && this.has(((ShootableItem) weaponItem).getAllSupportedProjectiles());
+		return weaponItem instanceof ProjectileWeaponItem && this.has(((ProjectileWeaponItem) weaponItem).getAllSupportedProjectiles());
 	}
 	
 	@Override
@@ -842,14 +840,14 @@ public class NPCEntity extends CreatureEntity implements
 	
 	public boolean canUseRangedWeapon(ItemStack weapon) {
 		return this.getDataHandler()
-				.map(INPCDataHandler::getCombatSkill)
+				.map(INPCData::getCombatSkill)
 				.map(cs -> cs.canUseRangedWeapon(this, weapon))
 				.orElse(false);
 	}
 	
 	private float getNextEffectiveness() {
 		this.effectiveness = this.getDataHandler()
-				.map(INPCDataHandler::getCombatSkill)
+				.map(INPCData::getCombatSkill)
 				.map(cs -> cs.getEffectiveness(this))
 				.orElse(this.getRandom().nextFloat());
 		return this.effectiveness;
@@ -857,7 +855,7 @@ public class NPCEntity extends CreatureEntity implements
 	
 	private float getNextTimeModifier() {
 		this.timeModifier = this.getDataHandler()
-				.map(INPCDataHandler::getCombatSkill)
+				.map(INPCData::getCombatSkill)
 				.map(cs -> cs.getTimeModifier(this))
 				.orElse(this.getRandom().nextFloat());
 		return this.timeModifier;
@@ -874,7 +872,7 @@ public class NPCEntity extends CreatureEntity implements
 		ItemStack stack = handler.getStackInSlot(index);
 		LazyOptional<IItemHandler> lzop = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
 		return lzop.isPresent()
-				? IWInventoryUtils.iterateAndApplyIf(
+				? ModInventoryUtils.iterateAndApplyIf(
 						lzop.resolve().get(),
 						containerFunction,
 						containerPredicate,

@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.client.items.models;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.model.AnimatedGeoModel;

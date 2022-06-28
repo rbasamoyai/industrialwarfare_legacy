@@ -7,31 +7,29 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.math.Vector3f;
 import com.mojang.serialization.Dynamic;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.Brain.BrainCodec;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.task.LookTask;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.particles.RedstoneParticleData;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.LookAtTargetSink;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.MoveToEngagementDistance;
@@ -43,7 +41,7 @@ import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 
-public class FormationLeaderEntity extends CreatureEntity implements IMovesInFormation {
+public class FormationLeaderEntity extends PathfinderMob implements MovesInFormation {
 
 	protected static final Supplier<List<MemoryModuleType<?>>> MEMORY_TYPES = () -> ImmutableList.of(
 			MemoryModuleType.ATTACK_TARGET,
@@ -64,11 +62,11 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	@Nullable
 	private long orderLastReceived;
 	
-	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level) {
+	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, Level level) {
 		this(type, level, UnitFormationTypeInit.LINE.get().getFormation(-1));
 	}
 	
-	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, World level, UnitFormation formation) {
+	public FormationLeaderEntity(EntityType<? extends FormationLeaderEntity> type, Level level, UnitFormation formation) {
 		super(type, level);
 		this.formation = formation;
 		this.updateOrderTime();
@@ -76,8 +74,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		this.setInvulnerable(true);
 	}
 	
-	public static AttributeModifierMap.MutableAttribute setAttributes() {
-		return CreatureEntity.createMobAttributes()
+	public static AttributeSupplier.Builder setAttributes() {
+		return PathfinderMob.createMobAttributes()
 				.add(Attributes.MOVEMENT_SPEED, 0.1d)
 				.add(Attributes.MAX_HEALTH, 20.0d)
 				.add(Attributes.FOLLOW_RANGE, 100.0d);
@@ -88,7 +86,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	 */
 	
 	@Override
-	protected BrainCodec<FormationLeaderEntity> brainProvider() {
+	protected Brain.Provider<FormationLeaderEntity> brainProvider() {
 		return Brain.provider(MEMORY_TYPES.get(), ImmutableList.of());
 	}
 	
@@ -101,11 +99,11 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		return brain;
 	}
 	
-	private static ImmutableList<Pair<Integer, ? extends Task<? super FormationLeaderEntity>>> getCorePackage() {
+	private static ImmutableList<Pair<Integer, ? extends Behavior<? super FormationLeaderEntity>>> getCorePackage() {
 		return ImmutableList.of(
 				Pair.of(0, new WalkToTargetSpecialTask()),
 				Pair.of(0, new PreciseWalkToPositionTask(1.5f, 1.5d, 0.07d, true)),
-				Pair.of(0, new LookTask(45, 90)),
+				Pair.of(0, new LookAtTargetSink(45, 90)),
 				Pair.of(1, new WalkTowardsPosNoDelayTask(MemoryModuleType.MEETING_POINT, 2.0f, 1, 100)),
 				Pair.of(2, new MoveToEngagementDistance(50))
 				);
@@ -120,7 +118,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	@Override
 	protected void customServerAiStep() {
 		Brain<FormationLeaderEntity> brain = this.getBrain();
-		brain.tick((ServerWorld) this.level, this);
+		brain.tick((ServerLevel) this.level, this);
 		super.customServerAiStep();
 	}
 	
@@ -128,8 +126,8 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	public void tick() {
 		super.tick();
 		if (this.level.isClientSide) {
-			this.level.addParticle(new RedstoneParticleData(0.0f, 1.0f, 0.0f, 1.0f), this.getX(), this.getY() + this.getBbHeight() + 0.25d, this.getZ(), 0.0d, 0.0d, 0.0d);
-			this.level.addParticle(new RedstoneParticleData(1.0f, 0.0f, 0.0f, 1.0f), this.getX() - Math.sin(Math.toRadians(this.yRot)), this.getY() + this.getBbHeight() + 0.25d, this.getZ() + Math.cos(Math.toRadians(this.yRot)), 0.0d, 0.0d, 0.0d);
+			this.level.addParticle(new DustParticleOptions(new Vector3f(0.0f, 1.0f, 0.0f), 1.0f), this.getX(), this.getY() + this.getBbHeight() + 0.25d, this.getZ(), 0.0d, 0.0d, 0.0d);
+			this.level.addParticle(new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f), this.getX() - Math.sin(Math.toRadians(this.getYRot())), this.getY() + this.getBbHeight() + 0.25d, this.getZ() + Math.cos(Math.toRadians(this.getYRot())), 0.0d, 0.0d, 0.0d);
 		} else {
 			this.formation.doTick(this);
 		}
@@ -147,9 +145,9 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	private static final String TAG_DATA = "data";
 	
 	@Override
-	public void addAdditionalSaveData(CompoundNBT nbt) {
+	public void addAdditionalSaveData(CompoundTag nbt) {
 		super.addAdditionalSaveData(nbt);
-		CompoundNBT formationData = new CompoundNBT();
+		CompoundTag formationData = new CompoundTag();
 		formationData.putString(TAG_TYPE, this.formation.getType().getRegistryName().toString());
 		formationData.put(TAG_DATA, this.formation.serializeNBT());
 		nbt.put(TAG_FORMATION, formationData);
@@ -159,13 +157,13 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	}
 	
 	@Override
-	public void readAdditionalSaveData(CompoundNBT nbt) {
+	public void readAdditionalSaveData(CompoundTag nbt) {
 		super.readAdditionalSaveData(nbt);
-		CompoundNBT formationData = nbt.getCompound(TAG_FORMATION);
-		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
+		CompoundTag formationData = nbt.getCompound(TAG_FORMATION);
+		UnitFormationType<?> type = IWModRegistries.UNIT_FORMATION_TYPES.get().getValue(new ResourceLocation(formationData.getString(TAG_TYPE)));
 		this.formation = type.getFormation(-1);
 		this.formation.deserializeNBT(formationData.getCompound(TAG_DATA));
-		if (nbt.contains("owner", Constants.NBT.TAG_COMPOUND)) {
+		if (nbt.contains("owner", Tag.TAG_COMPOUND)) {
 			this.owner = PlayerIDTag.fromNBT(nbt.getCompound("owner"));
 		}
 	}
@@ -178,11 +176,11 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		return this.formation;
 	}
 	
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
+	public <E extends PathfinderMob & MovesInFormation> boolean addEntity(E entity) {
 		return this.formation.addEntity(entity);
 	}
 	
-	public void removeEntity(CreatureEntity entity) {
+	public void removeEntity(PathfinderMob entity) {
 		this.formation.removeEntity(entity);
 	}
 	
@@ -190,7 +188,7 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		return this.equals(inFormationWith) || this.formation.isInFormationWith(inFormationWith);
 	}
 	
-	public void setFollower(CreatureEntity entity) {
+	public void setFollower(PathfinderMob entity) {
 		this.formation.setFollower(entity);
 	}
 	
@@ -206,11 +204,11 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 		this.formation.setAttackType(attackType);
 	}
 	
-	public float scoreOrientationAngle(float angle, Vector3d pos) {
+	public float scoreOrientationAngle(float angle, Vec3 pos) {
 		return this.formation.scoreOrientationAngle(angle, this.level, this, pos);
 	}
 	
-	public Vector3d getFollowPosition() {
+	public Vec3 getFollowPosition() {
 		return this.formation.getFollowPosition(this);
 	}
 	
@@ -245,16 +243,12 @@ public class FormationLeaderEntity extends CreatureEntity implements IMovesInFor
 	
 	@Override protected void pushEntities() {}
 	@Override public boolean isPushable() { return false; }
-	@Override protected boolean isMovementNoisy() { return false; }
-	@Override protected SoundEvent getDeathSound() { return null; }
-	@Override protected SoundEvent getFallDamageSound(int dist) { return null; }
-	@Override protected SoundEvent getSwimSound() { return null; }
-	@Override protected SoundEvent getHurtSound(DamageSource source) { return null; }
-	@Override public boolean canBeAffected(EffectInstance effect) { return false; }
-	@Override public void knockback(float a, double b, double c) {}
+	@Override public boolean isSilent() { return true; }
+	@Override public boolean canBeAffected(MobEffectInstance effect) { return false; }
+	@Override public void knockback(double a, double b, double c) {}
 	@Override public boolean canSpawnSprintParticle() { return false; }
 	@Override public boolean isInvulnerable() { return true; }
-	@Override protected void tickDeath() { this.remove(false); }
+	@Override protected void tickDeath() { this.discard();; }
 	@Override public boolean isPickable() { return false; }
 	
 }

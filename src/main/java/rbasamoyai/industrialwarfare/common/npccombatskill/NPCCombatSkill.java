@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.common.npccombatskill;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 

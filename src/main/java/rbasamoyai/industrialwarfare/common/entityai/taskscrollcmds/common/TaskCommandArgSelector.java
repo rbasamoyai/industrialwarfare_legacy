@@ -3,10 +3,10 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
@@ -16,7 +16,7 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class TaskCommandArgSelector extends ArgSelector<TaskScrollCommand> {
 	
-	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent("selector.tooltip." + IndustrialWarfare.MOD_ID + ".command").withStyle(ArgSelector.HEADER_STYLE);
+	private static final MutableComponent TOOLTIP_HEADER = new TranslatableComponent("selector.tooltip." + IndustrialWarfare.MOD_ID + ".command").withStyle(ArgSelector.HEADER_STYLE);
 	
 	public TaskCommandArgSelector(List<TaskScrollCommand> possibleArgs, TaskScrollOrder order) {
 		super(possibleArgs, possibleArgs.indexOf(order.getCommand()));
@@ -33,14 +33,14 @@ public class TaskCommandArgSelector extends ArgSelector<TaskScrollCommand> {
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
-		List<ITextComponent> tooltip = new ArrayList<>();
+	public List<Component> getComponentTooltip() {
+		List<Component> tooltip = new ArrayList<>();
 		tooltip.add(TOOLTIP_HEADER);
 		
 		if (this.selectedArg < 0 || this.selectedArg >= this.possibleArgs.size()) this.warnInvalidSelection();
 		
 		for (int i = 0; i < this.possibleArgs.size(); i++) {
-			IFormattableTextComponent tc = (IFormattableTextComponent) getCmdLocalization(this.possibleArgs.get(i));
+			MutableComponent tc = (MutableComponent) getCmdLocalization(this.possibleArgs.get(i));
 			if (i == this.selectedArg) tc = ArgSelector.formatAsSelected(tc);
 			else tc = TooltipUtils.formatAsStyle(tc, ArgSelector.NOT_SELECTED_STYLE);
 			tooltip.add(tc);
@@ -50,13 +50,13 @@ public class TaskCommandArgSelector extends ArgSelector<TaskScrollCommand> {
 	}
 
 	@Override
-	public ITextComponent getTitle() {
+	public Component getTitle() {
 		return getCmdLocalization(this.possibleArgs.get(this.selectedArg));
 	}
 	
-	private static ITextComponent getCmdLocalization(TaskScrollCommand cmd) {
+	private static Component getCmdLocalization(TaskScrollCommand cmd) {
 		ResourceLocation registryName = cmd.getRegistryName();
-		return new TranslationTextComponent("command." + registryName.getNamespace() + "." + registryName.getPath());
+		return new TranslatableComponent("command." + registryName.getNamespace() + "." + registryName.getPath());
 	}
 
 }

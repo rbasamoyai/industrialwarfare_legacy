@@ -2,12 +2,12 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 
 import java.util.List;
 
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.Mth;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
@@ -19,13 +19,13 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public abstract class ArgSelector<T> {
 	
-	public static final Style HEADER_STYLE = Style.EMPTY.applyFormats(TextFormatting.ITALIC);
-	public static final Style NOT_SELECTED_STYLE = Style.EMPTY.applyFormats(TextFormatting.DARK_GRAY);
-	public static final Style CANNOT_SELECT_STYLE = Style.EMPTY.applyFormats(TextFormatting.RED, TextFormatting.ITALIC);
-	public static final Style SELECTED_STYLE = Style.EMPTY.applyFormats(TextFormatting.GOLD);
+	public static final Style HEADER_STYLE = Style.EMPTY.applyFormats(ChatFormatting.ITALIC);
+	public static final Style NOT_SELECTED_STYLE = Style.EMPTY.applyFormats(ChatFormatting.DARK_GRAY);
+	public static final Style CANNOT_SELECT_STYLE = Style.EMPTY.applyFormats(ChatFormatting.RED, ChatFormatting.ITALIC);
+	public static final Style SELECTED_STYLE = Style.EMPTY.applyFormats(ChatFormatting.GOLD);
 	
-	private static final StringTextComponent SELECTION_ARROW = new StringTextComponent("\u2192 ");
-	protected static final IFormattableTextComponent SPACER = new StringTextComponent(" ").withStyle(NOT_SELECTED_STYLE);
+	private static final TextComponent SELECTION_ARROW = new TextComponent("\u2192 ");
+	protected static final MutableComponent SPACER = new TextComponent(" ").withStyle(NOT_SELECTED_STYLE);
 	
 	protected final List<T> possibleArgs;
 	protected int selectedArg;
@@ -44,23 +44,23 @@ public abstract class ArgSelector<T> {
 	}
 	
 	public void scrollSelectedArg(double scrollDist) {
-		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg - scrollDist, 0.0d, (double)(this.possibleArgs.size() - 1)));
+		this.selectedArg = Mth.floor(Mth.clamp((double) this.selectedArg - scrollDist, 0.0d, (double)(this.possibleArgs.size() - 1)));
 	}
 	
 	public abstract ArgWrapper getSelectedArg();
 	
 	public abstract ArgWrapper getPossibleArg(int i);
 	
-	public abstract List<ITextComponent> getComponentTooltip();
+	public abstract List<Component> getComponentTooltip();
 	
-	public abstract ITextComponent getTitle();
+	public abstract Component getTitle();
 	
 	protected void warnInvalidSelection() {
 		IndustrialWarfare.LOGGER.warn("Invalid argument selection setting " + this.selectedArg + ", cannot properly display the tooltip! Setting to argIndex 0...");
 		this.selectedArg = 0;
 	}
 	
-	public static IFormattableTextComponent formatAsSelected(IFormattableTextComponent tc) {
+	public static MutableComponent formatAsSelected(MutableComponent tc) {
 		return TooltipUtils.formatAsStyle(SELECTION_ARROW.copy().append(tc.copy()), SELECTED_STYLE);
 	}
 	

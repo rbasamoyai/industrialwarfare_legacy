@@ -1,18 +1,17 @@
 package rbasamoyai.industrialwarfare.client.screen.attachmentitems;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
+import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleMenu;
 
-public class AttachmentsRifleScreen extends ContainerScreen<AttachmentsRifleContainer> {
+public class AttachmentsRifleScreen extends AbstractContainerScreen<AttachmentsRifleMenu> {
 
 	private static final ResourceLocation ATTACHMENTS_SLOTS_TEXTURE = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/attachment_slots.png");
 	
@@ -22,7 +21,7 @@ public class AttachmentsRifleScreen extends ContainerScreen<AttachmentsRifleCont
 	private static final int SLOT_WIDTH = 18;
 	private static final float ITEM_SCALE = 10.0f;
 	
-	public AttachmentsRifleScreen(AttachmentsRifleContainer container, PlayerInventory playerInv, ITextComponent title) {
+	public AttachmentsRifleScreen(AttachmentsRifleMenu container, Inventory playerInv, Component title) {
 		super(container, playerInv, title);
 		
 		this.imageWidth = 176;
@@ -36,40 +35,36 @@ public class AttachmentsRifleScreen extends ContainerScreen<AttachmentsRifleCont
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		TextureManager texManager = this.minecraft.textureManager;
-		texManager.bind(ATTACHMENTS_SLOTS_TEXTURE);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, ATTACHMENTS_SLOTS_TEXTURE);
+		
 		this.blit(stack, this.leftPos, this.topPos + this.imageHeight - INVENTORY_HEIGHT, 0, 0, this.imageWidth, INVENTORY_HEIGHT);
 		
 		this.fillGradient(stack, this.leftPos, this.topPos + this.titleLabelY + 10, this.leftPos + this.imageWidth, this.topPos + this.imageHeight - INVENTORY_HEIGHT, 0x3fffffff, 0x3fffffff);
 		
 		ItemStack selected = this.menu.getTargetStack();
 		
-		RenderSystem.pushMatrix();
+		stack.pushPose();
+		stack.translate(this.leftPos + ITEM_RENDER_X, this.topPos + ITEM_RENDER_Y, -100.0f);
+		stack.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
+		this.itemRenderer.renderGuiItem(selected, 0, 0);		
+		stack.popPose();
 		
-		RenderSystem.translatef(this.leftPos + ITEM_RENDER_X, this.topPos + ITEM_RENDER_Y, -100.0f);
-		RenderSystem.scalef(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
-		
-		this.itemRenderer.renderGuiItem(selected, 0, 0);
-		
-		RenderSystem.popMatrix();
-		
-		texManager.bind(ATTACHMENTS_SLOTS_TEXTURE);
+		RenderSystem.setShaderTexture(0, ATTACHMENTS_SLOTS_TEXTURE);
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		this.font.drawShadow(stack, this.title, this.titleLabelX, this.titleLabelY, 0xffffffff);
-		this.font.draw(stack, this.inventory.getDisplayName(), this.inventoryLabelX, this.inventoryLabelY, 4210752);
+		this.font.draw(stack, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752);
 	}
 	
 }

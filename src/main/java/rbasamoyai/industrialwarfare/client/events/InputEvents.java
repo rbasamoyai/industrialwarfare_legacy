@@ -1,9 +1,9 @@
 package rbasamoyai.industrialwarfare.client.events;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,8 +17,8 @@ import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
-import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages.SInputAction.Type;
+import rbasamoyai.industrialwarfare.core.network.messages.SOpenItemScreen;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class InputEvents {
@@ -26,12 +26,12 @@ public class InputEvents {
 	@SubscribeEvent
 	public static void onMouseInput(InputEvent.MouseInputEvent event) {
 		Minecraft mc = Minecraft.getInstance();
-		PlayerEntity player = mc.player;
+		Player player = mc.player;
 		
 		if (player == null || mc.screen != null) return;
 		
 		if (player.isUsingItem()) {
-			Hand hand = player.getUsedItemHand();
+			InteractionHand hand = player.getUsedItemHand();
 			ItemStack useStack = player.getUseItem();
 			if (!useStack.isEmpty()) {
 				if (useStack.getItem() instanceof ISimultaneousUseAndAttack) {
@@ -75,7 +75,7 @@ public class InputEvents {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 		
-		Hand hand = event.getHand();
+		InteractionHand hand = event.getHand();
 		ItemStack stack = mc.player.getItemInHand(hand);
 		if (event.isAttack()) {
 			if (stack.getItem() instanceof FirearmItem && !FirearmItem.isMeleeing(stack)) {

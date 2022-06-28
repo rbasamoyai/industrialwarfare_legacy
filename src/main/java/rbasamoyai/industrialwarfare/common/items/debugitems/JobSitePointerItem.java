@@ -1,27 +1,27 @@
 package rbasamoyai.industrialwarfare.common.items.debugitems;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.INPCData;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -32,64 +32,64 @@ public class JobSitePointerItem extends Item {
 	
 	private static final String TRANSLATION_ROOT_KEY = "gui." + IndustrialWarfare.MOD_ID + ".text";
 	private static final String SET_JOB_SITE_KEY = TRANSLATION_ROOT_KEY + ".set_job_site";
-	private static final ITextComponent NOT_OWNED_BY_YOU = new TranslationTextComponent(TRANSLATION_ROOT_KEY + ".not_owned_by_you").withStyle(TextFormatting.RED);
+	private static final Component NOT_OWNED_BY_YOU = new TranslatableComponent(TRANSLATION_ROOT_KEY + ".not_owned_by_you").withStyle(ChatFormatting.RED);
 	
 	public JobSitePointerItem() {
 		super(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_DEBUG));
 	}
 	
 	@Override
-	public ActionResultType useOn(ItemUseContext context) {
-		PlayerEntity player = context.getPlayer();
-		World world = context.getLevel();
+	public InteractionResult useOn(UseOnContext context) {
+		Player player = context.getPlayer();
+		Level level = context.getLevel();
 		
-		if (world.isClientSide) return ActionResultType.SUCCESS;
-		if (!(world instanceof ServerWorld)) return ActionResultType.SUCCESS;
+		if (level.isClientSide) return InteractionResult.SUCCESS;
+		if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
 		
-		CompoundNBT tag = context.getItemInHand().getOrCreateTag();
-		if (!tag.hasUUID(TAG_UUID)) return ActionResultType.FAIL;
+		CompoundTag tag = context.getItemInHand().getOrCreateTag();
+		if (!tag.hasUUID(TAG_UUID)) return InteractionResult.FAIL;
 		
-		Entity e = ((ServerWorld) world).getEntity(tag.getUUID(TAG_UUID));
+		Entity e = ((ServerLevel) level).getEntity(tag.getUUID(TAG_UUID));
 		tag.remove(TAG_UUID);
-		if (!(e instanceof NPCEntity)) return ActionResultType.FAIL;
+		if (!(e instanceof NPCEntity)) return InteractionResult.FAIL;
 		
 		NPCEntity npc = (NPCEntity) e;
 		Brain<?> brain = npc.getBrain();
-		if (!brain.checkMemory(MemoryModuleType.JOB_SITE, MemoryModuleStatus.REGISTERED)) return ActionResultType.FAIL;
+		if (!brain.checkMemory(MemoryModuleType.JOB_SITE, MemoryStatus.REGISTERED)) return InteractionResult.FAIL;
 		
-		RegistryKey<World> dimension = world.dimension();
+		ResourceKey<Level> dimension = level.dimension();
 		BlockPos pos = context.getClickedPos();
 		GlobalPos siteLocation = GlobalPos.of(dimension, pos);
 		brain.setMemory(MemoryModuleType.JOB_SITE, siteLocation);
 		
 		String locationString = dimension.location().toString() + " " + pos.getX() + " " + pos.getY() + " " + pos.getZ();
-		player.displayClientMessage(new TranslationTextComponent(SET_JOB_SITE_KEY, npc.getDisplayName(), locationString), true);
+		player.displayClientMessage(new TranslatableComponent(SET_JOB_SITE_KEY, npc.getDisplayName(), locationString), true);
 		
 		player.getCooldowns().addCooldown(this, 10);
 		
-		return ActionResultType.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 	
 	@Override
-	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
-		if (player.level.isClientSide) return ActionResultType.SUCCESS;
-		if (!entity.isAlive()) return ActionResultType.PASS;
-		if (!(entity instanceof NPCEntity)) return ActionResultType.PASS;
+	public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
+		if (player.level.isClientSide) return InteractionResult.SUCCESS;
+		if (!entity.isAlive()) return InteractionResult.PASS;
+		if (!(entity instanceof NPCEntity)) return InteractionResult.PASS;
 		
 		PlayerIDTag owner = ((NPCEntity) entity).getDataHandler()
-				.map(INPCDataHandler::getOwner)
+				.map(INPCData::getOwner)
 				.orElse(PlayerIDTag.NO_OWNER);
 		if (!PlayerIDTag.of(player).equals(owner)) {
 			player.displayClientMessage(NOT_OWNED_BY_YOU, true);
-			return ActionResultType.FAIL;
+			return InteractionResult.FAIL;
 		}
 		
-		CompoundNBT tag = stack.getOrCreateTag();
+		CompoundTag tag = stack.getOrCreateTag();
 		tag.putUUID(TAG_UUID, entity.getUUID());
 		
 		player.getCooldowns().addCooldown(this, 10);
 		
-		return ActionResultType.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 	
 	@Override

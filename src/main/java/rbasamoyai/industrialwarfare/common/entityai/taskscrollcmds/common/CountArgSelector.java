@@ -2,21 +2,21 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.List;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.Mth;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 
 public class CountArgSelector extends ArgSelector<Integer> {
 
-	private final List<ITextComponent> tooltip;
+	private final List<Component> tooltip;
 	private final int min;
 	private final int max;
 	private final double shiftModifier;
 	
-	public CountArgSelector(int i, int min, int max, int shiftModifier, List<ITextComponent> tooltip) {
+	public CountArgSelector(int i, int min, int max, int shiftModifier, List<Component> tooltip) {
 		super(null, i);
 		this.tooltip = tooltip;
 		this.min = min;
@@ -24,7 +24,7 @@ public class CountArgSelector extends ArgSelector<Integer> {
 		this.shiftModifier = (double) shiftModifier;
 	}
 	
-	public CountArgSelector(int i, int min, int max, List<ITextComponent> tooltip) {
+	public CountArgSelector(int i, int min, int max, List<Component> tooltip) {
 		this(i, min, max, 10, tooltip);
 	}
 	
@@ -40,17 +40,17 @@ public class CountArgSelector extends ArgSelector<Integer> {
 	
 	@Override
 	public void scrollSelectedArg(double scrollDist) {
-		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? this.shiftModifier : 1.0d), (double) this.min, (double) this.max));
+		this.selectedArg = Mth.floor(Mth.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? this.shiftModifier : 1.0d), (double) this.min, (double) this.max));
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
+	public List<Component> getComponentTooltip() {
 		return tooltip;
 	}
 
 	@Override
-	public ITextComponent getTitle() {
-		return new StringTextComponent(Integer.toString(this.selectedArg));
+	public Component getTitle() {
+		return new TextComponent(Integer.toString(this.selectedArg));
 	}
 
 }

@@ -8,21 +8,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
 
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.client.entities.models.ThirdPersonItemAnimModel;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
-import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
+import rbasamoyai.industrialwarfare.client.items.renderers.SpecialThirdPersonRender;
 import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
@@ -33,7 +33,7 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	
 	private LivingEntity entity;
 	private ThirdPersonItemAnimEntity currentAnimEntity;
-	private IRenderTypeBuffer currentBuffer;
+	private MultiBufferSource currentBuffer;
 	private RenderType renderType;
 	private float partialTicks;
 	
@@ -45,13 +45,13 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	
 	private boolean lockedLimbs = false;
 	
-	public ThirdPersonItemAnimRenderer(EntityRendererManager manager, ThirdPersonItemAnimEntity entity) {
-		super(manager, new ThirdPersonItemAnimModel(), entity);
+	public ThirdPersonItemAnimRenderer(EntityRendererProvider.Context context, ThirdPersonItemAnimEntity entity) {
+		super(context, new ThirdPersonItemAnimModel(), entity);
 	}
 	
 	@Override
-	public void render(Entity entity, IAnimatable animatable, float entityYaw, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn) {
+	public void render(Entity entity, IAnimatable animatable, float entityYaw, float partialTicks, PoseStack stack,
+			MultiBufferSource bufferIn, int packedLightIn) {
 		if (!(entity instanceof LivingEntity)) { // Check stolen from GeoReplacedEntityRenderer
 			throw (new RuntimeException("Replaced renderer was not an instanceof LivingEntity"));
 		}
@@ -65,14 +65,14 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 	}
 	
 	@Override
-	public void renderRecursively(GeoBone bone, MatrixStack stack, IVertexBuilder bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
+	public void renderRecursively(GeoBone bone, PoseStack stack, VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
 		stack.pushPose();
 		
 		ItemStack itemStack = this.entity.getItemInHand(this.currentAnimEntity.getHand());
 		Item item = itemStack.getItem();
 		
-		if (!(item instanceof ISpecialThirdPersonRender)) return;
-		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
+		if (!(item instanceof SpecialThirdPersonRender)) return;
+		SpecialThirdPersonRender stpr = (SpecialThirdPersonRender) item;
 		stpr.onRenderRecursively(itemStack, this.entity, this.partialTicks, bone, stack, this.currentBuffer, packedLightIn, packedOverlayIn, red, green, blue, alpha, this);
 		
 		String name = bone.getName();
@@ -101,17 +101,17 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 			}
 		}
 		
-		float boneAlpha = stpr.getBoneAlpha(itemStack, this.entity, bone, alpha);
-		super.renderRecursively(bone, stack, this.currentBuffer.getBuffer(this.renderType), packedLightIn, packedOverlayIn, red, green, blue, boneAlpha);
+		bone.setCubesHidden(stpr.shouldHideCubes(itemStack, this.entity, bone, alpha));
+		super.renderRecursively(bone, stack, this.currentBuffer.getBuffer(this.renderType), packedLightIn, packedOverlayIn, red, green, blue, alpha);
 		stack.popPose();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public RenderType getRenderType(Object animatable, float partialTicks, MatrixStack stack,
-			IRenderTypeBuffer renderTypeBuffer, IVertexBuilder vertexBuilder, int packedLightIn,
+	public RenderType getRenderType(Object animatable, float partialTicks, PoseStack stack,
+			MultiBufferSource bufSrc, VertexConsumer vertexCons, int packedLightIn,
 			ResourceLocation textureLocation) {
-		this.renderType = super.getRenderType(animatable, partialTicks, stack, renderTypeBuffer, vertexBuilder, packedLightIn,
+		this.renderType = super.getRenderType(animatable, partialTicks, stack, bufSrc, vertexCons, packedLightIn,
 				textureLocation);
 		return this.renderType;
 	}
@@ -164,8 +164,8 @@ public class ThirdPersonItemAnimRenderer extends GeoReplacedEntityRenderer<Third
 		ItemStack stack = entity.getItemInHand(animEntity.getHand());
 		if (stack.isEmpty()) return;
 		Item item = stack.getItem();
-		if (!(item instanceof ISpecialThirdPersonRender)) return;
-		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
+		if (!(item instanceof SpecialThirdPersonRender)) return;
+		SpecialThirdPersonRender stpr = (SpecialThirdPersonRender) item;
 		
 		instructionTokens
 		.stream()

@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.common.containers.workstations;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class DummyRecipeItemHandler extends ItemStackHandler {

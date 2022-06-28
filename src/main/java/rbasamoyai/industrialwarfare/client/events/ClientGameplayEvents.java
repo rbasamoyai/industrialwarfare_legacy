@@ -1,9 +1,9 @@
 package rbasamoyai.industrialwarfare.client.events;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Pose;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -50,11 +50,12 @@ public class ClientGameplayEvents {
 					if (isProning) {
 						KeyBindingsInit.PRONE.setDown(mc.options.toggleCrouch);
 					}
+					// TODO: better stand-up collision detection
 					if (IWMiscUtils.isTopSlabAt(mc.player.level, pos) || IWMiscUtils.isTopSlabAt(mc.player.level, pos.above())) {
 						mc.player.setPose(Pose.CROUCHING);
 						mc.player.setForcedPose(null);
-						mc.player.setDeltaMovement(new Vector3d(0.0d, -1.0d, 0.0d));
-					} else if (IWMiscUtils.isAirAt(mc.player.level, pos.above())) {
+						mc.player.setDeltaMovement(new Vec3(0.0d, -1.0d, 0.0d));
+					} else if (mc.player.level.getBlockState(pos).isAir()) {
 						mc.player.setPose(Pose.STANDING);
 						mc.player.setForcedPose(null);
 					}

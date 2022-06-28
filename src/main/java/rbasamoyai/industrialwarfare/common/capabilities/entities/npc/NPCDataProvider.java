@@ -2,16 +2,16 @@ package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class NPCDataProvider implements ICapabilitySerializable<CompoundNBT> {
+public class NPCDataProvider implements ICapabilitySerializable<CompoundTag> {
 	
 	private final NPCDataHandler dataHandler = new NPCDataHandler();
-	private final LazyOptional<INPCDataHandler> dataOptional = LazyOptional.of(() -> this.dataHandler);
+	private final LazyOptional<INPCData> dataOptional = LazyOptional.of(() -> this.dataHandler);
 	
 	public void invalidate() {
 		this.dataOptional.invalidate();
@@ -20,20 +20,19 @@ public class NPCDataProvider implements ICapabilitySerializable<CompoundNBT> {
 	@Nonnull
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return cap == NPCDataCapability.NPC_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
+		return cap == NPCDataCapability.INSTANCE? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		return NPCDataCapability.NPC_DATA_CAPABILITY == null
-				? new CompoundNBT()
-				: (CompoundNBT) NPCDataCapability.NPC_DATA_CAPABILITY.writeNBT(this.dataHandler, null);
+	public CompoundTag serializeNBT() {
+		return NPCDataCapability.INSTANCE.isRegistered() ? this.dataHandler.writeTag(new CompoundTag()) : new CompoundTag();
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		if (NPCDataCapability.NPC_DATA_CAPABILITY != null)
-			NPCDataCapability.NPC_DATA_CAPABILITY.readNBT(this.dataHandler, null, nbt);
+	public void deserializeNBT(CompoundTag nbt) {
+		if (NPCDataCapability.INSTANCE.isRegistered()) {
+			this.dataHandler.readTag(nbt);
+		}
 	}
 	
 }

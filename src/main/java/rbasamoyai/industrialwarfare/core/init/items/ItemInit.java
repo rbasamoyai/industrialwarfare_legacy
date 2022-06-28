@@ -2,17 +2,17 @@ package rbasamoyai.industrialwarfare.core.init.items;
 
 import java.util.function.Supplier;
 
-import net.minecraft.block.Block;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ArmorMaterial;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Rarity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ArmorMaterials;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.ForgeSpawnEggItem;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.IWArmorMaterial;
 import rbasamoyai.industrialwarfare.common.items.InfiniteMatchCordItem;
@@ -95,13 +95,13 @@ public class ItemInit {
 	public static final RegistryObject<Item> MATCH_COIL = ITEMS.register("match_coil", MatchCoilItem::new);
 	
 	public static final RegistryObject<Item> PITH_HELMET = ITEMS.register("pith_helmet",
-			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+			() -> new PithHelmetItem(IWArmorMaterial.WOOD, EquipmentSlot.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
 	
 	public static final RegistryObject<Item> AMERICAN_KEPI = ITEMS.register("american_kepi",
-			() -> new AmericanKepiItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+			() -> new AmericanKepiItem(ArmorMaterials.LEATHER, EquipmentSlot.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
 	
 	public static final RegistryObject<Item> PICKELHAUBE_HIGH = ITEMS.register("pickelhaube_high",
-			() -> new PickelhaubeHighItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
+			() -> new PickelhaubeHighItem(ArmorMaterials.LEATHER, EquipmentSlot.HEAD, new Item.Properties().tab(IWItemGroups.TAB_ARMOR)));
 	
 	public static final RegistryObject<Item> SET_PROFESSION_JOBLESS = ITEMS.register("set_profession_jobless", () -> setProfessionItem(NPCProfessionInit.JOBLESS));
 	public static final RegistryObject<Item> SET_PROFESSION_ASSEMBLER = ITEMS.register("set_profession_assembler", () -> setProfessionItem(NPCProfessionInit.ASSEMBLER));

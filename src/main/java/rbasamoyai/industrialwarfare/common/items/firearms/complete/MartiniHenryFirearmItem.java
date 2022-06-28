@@ -3,29 +3,29 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
-import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleContainer;
+import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleMenu;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.SingleShotFirearmItem;
@@ -47,8 +47,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		super(new Item.Properties()
 							.stacksTo(1)
 							.durability(1200)
-							.tab(IWItemGroups.TAB_WEAPONS)
-							.setISTER(() -> FirearmRenderer::new),
+							.tab(IWItemGroups.TAB_WEAPONS),
 					new FirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
 							.baseDamage(19.0f)
@@ -69,10 +68,10 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return super.shouldHideCrosshair(stack); }
 	@Override public boolean canOpenScreen(ItemStack stack) { return false; }
 
-	private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
+	private static final Component TITLE = new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".attachments_rifle");
 	@Override 
-	public INamedContainerProvider getItemContainerProvider(ItemStack stack) {
-		return new SimpleNamedContainerProvider(AttachmentsRifleContainer.getServerContainerProvider(stack), TITLE);
+	public MenuProvider getItemContainerProvider(ItemStack stack) {
+		return new SimpleMenuProvider(AttachmentsRifleMenu.getServerContainerProvider(stack), TITLE);
 	}
 	
 	/*
@@ -133,14 +132,14 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	protected void shoot(ItemStack firearm, LivingEntity shooter) {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			ServerWorld slevel = (ServerWorld) shooter.level;
-			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
+			ServerLevel slevel = (ServerLevel) shooter.level;
+			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundSource.MASTER, 5.0f, 1.0f);
 			
-			Vector3d viewVector = shooter.getViewVector(1.0f);
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
-			Vector3d smokeDelta = viewVector.scale(0.5d);
-			int count = 30 + random.nextInt(31);
-			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+			Vec3 viewVector = shooter.getViewVector(1.0f);
+			Vec3 smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vec3 smokeDelta = viewVector.scale(0.5d);
+			int count = 30 + shooter.getRandom().nextInt(31);
+			for (ServerPlayer splayer : slevel.getPlayers(p -> true)) {
 				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
 			}
 			
@@ -214,7 +213,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, PoseStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		
 		getDataHandler(stack).ifPresent(h -> {
@@ -222,7 +221,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
 			}
 		});
-		float f = 1.0f / MathHelper.lerp(aimProgress, 1.0f, this.fovModifier);
+		float f = 1.0f / Mth.lerp(aimProgress, 1.0f, this.fovModifier);
 		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
@@ -290,12 +289,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
-		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
+		return entity instanceof AbstractClientPlayer || entity instanceof NPCEntity;
 	}
 	
 	@Override
 	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+			PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
 		
 		ItemStack item = entity.getMainHandItem();

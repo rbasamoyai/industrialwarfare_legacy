@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.common.containers.taskscrollshelf;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
 

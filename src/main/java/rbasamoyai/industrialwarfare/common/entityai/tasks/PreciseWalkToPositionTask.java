@@ -2,17 +2,17 @@ package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.entityai.navigation.PosWrapper;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class PreciseWalkToPositionTask extends Task<CreatureEntity> {
+public class PreciseWalkToPositionTask extends Behavior<PathfinderMob> {
 
 	private final float speedModifier;
 	private final double precisionDistance;
@@ -21,9 +21,9 @@ public class PreciseWalkToPositionTask extends Task<CreatureEntity> {
 	
 	public PreciseWalkToPositionTask(float speedModifier, double precisionDistance, double closeEnough, boolean stabilizeLook) {
 		super(ImmutableMap.of(
-				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.VALUE_ABSENT,
-				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.VALUE_PRESENT));
+				MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT,
+				MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleTypeInit.PRECISE_POS.get(), MemoryStatus.VALUE_PRESENT));
 		this.speedModifier = speedModifier;
 		this.precisionDistance = precisionDistance;
 		this.closeEnough = closeEnough;
@@ -31,20 +31,20 @@ public class PreciseWalkToPositionTask extends Task<CreatureEntity> {
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, CreatureEntity entity) {
-		Vector3d precisePos = entity.getBrain().getMemory(MemoryModuleTypeInit.PRECISE_POS.get()).get();
+	protected boolean checkExtraStartConditions(ServerLevel level, PathfinderMob entity) {
+		Vec3 precisePos = entity.getBrain().getMemory(MemoryModuleTypeInit.PRECISE_POS.get()).get();
 		BlockPos blockPos = new BlockPos(precisePos);
 		if (!level.loadedAndEntityCanStandOn(blockPos.below(), entity)) return false;		
-		Vector3d entityPos = entity.position();
+		Vec3 entityPos = entity.position();
 		return precisePos.closerThan(entityPos, this.precisionDistance) && !precisePos.closerThan(entityPos, this.closeEnough);
 	}
 	
 	@Override
-	protected void start(ServerWorld level, CreatureEntity entity, long gameTime) {
-		Vector3d precisePos = entity.getBrain().getMemory(MemoryModuleTypeInit.PRECISE_POS.get()).get();
+	protected void start(ServerLevel level, PathfinderMob entity, long gameTime) {
+		Vec3 precisePos = entity.getBrain().getMemory(MemoryModuleTypeInit.PRECISE_POS.get()).get();
 		
 		if (this.stabilizeLook) {
-			Vector3d eyePos = entity.getEyePosition(1.0f).add(entity.getViewVector(1.0f).scale(2.0f));
+			Vec3 eyePos = entity.getEyePosition(1.0f).add(entity.getViewVector(1.0f).scale(2.0f));
 			entity.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new PosWrapper(eyePos));
 		}
 		

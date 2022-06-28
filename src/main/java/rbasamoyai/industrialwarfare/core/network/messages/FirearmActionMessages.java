@@ -2,11 +2,11 @@ package rbasamoyai.industrialwarfare.core.network.messages;
 
 import java.util.function.Supplier;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.core.network.handlers.FirearmActionCHandlers;
 
@@ -21,19 +21,19 @@ public class FirearmActionMessages {
 			this.type = type;
 		}
 		
-		public static void encode(SInputAction msg, PacketBuffer buf) {
+		public static void encode(SInputAction msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.type.id);			
 		}
 		
-		public static SInputAction decode(PacketBuffer buf) {
+		public static SInputAction decode(FriendlyByteBuf buf) {
 			Type type = Type.fromId(buf.readVarInt());
 			return new SInputAction(type);
 		}
 		
-		public static void handle(SInputAction msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
+		public static void handle(SInputAction msg, Supplier<NetworkEvent.Context> ctx) {
+			NetworkEvent.Context context = ctx.get();
 			context.enqueueWork(() -> {
-				ServerPlayerEntity player = context.getSender();
+				ServerPlayer player = context.getSender();
 				switch (msg.type) {
 				case RELOADING:
 					FirearmItem.tryReloadFirearm(player.getMainHandItem(), player);
@@ -66,13 +66,13 @@ public class FirearmActionMessages {
 	
 	public static class CNotifyHeadshot {
 		public CNotifyHeadshot() {}		
-		public static void encode(CNotifyHeadshot msg, PacketBuffer buf) {}
-		public static CNotifyHeadshot decode(PacketBuffer buf) { return new CNotifyHeadshot(); }
+		public static void encode(CNotifyHeadshot msg, FriendlyByteBuf buf) {}
+		public static CNotifyHeadshot decode(FriendlyByteBuf buf) { return new CNotifyHeadshot(); }
 		
-		public static void handle(CNotifyHeadshot msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
+		public static void handle(CNotifyHeadshot msg, Supplier<NetworkEvent.Context> ctx) {
+			NetworkEvent.Context context = ctx.get();
 			context.enqueueWork(() -> {
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FirearmActionCHandlers.handleCNotifyHeadshot(msg, contextSupplier));
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FirearmActionCHandlers.handleCNotifyHeadshot(msg, ctx));
 			});
 			context.setPacketHandled(true);
 		}

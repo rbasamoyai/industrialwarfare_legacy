@@ -8,29 +8,29 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.blockentities.ResourceStationBlockEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction.Type;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
@@ -51,17 +51,17 @@ public class ResourceGatheringProfession extends NPCProfession {
 	@Override
 	public boolean checkMemories(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		return brain.checkMemory(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), MemoryModuleStatus.REGISTERED)
-			&& brain.checkMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get(), MemoryModuleStatus.REGISTERED);
+		return brain.checkMemory(MemoryModuleType.WALK_TARGET, MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get(), MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.COMPLAINT.get(), MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), MemoryStatus.REGISTERED)
+			&& brain.checkMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get(), MemoryStatus.REGISTERED);
 	}
 
 	@Override
-	public Optional<BlockPos> getWorkingArea(World level, BlockPos pos, NPCEntity npc) {
+	public Optional<BlockPos> getWorkingArea(Level level, BlockPos pos, NPCEntity npc) {
 		if (!this.workingAreas.contains(level.getBlockState(pos).getBlock())) {
 			return Optional.empty();
 		}
@@ -73,28 +73,26 @@ public class ResourceGatheringProfession extends NPCProfession {
 					.findFirst();
 	}
 	
-	private static boolean noCollision(World level, BlockPos pos, NPCEntity npc) {
+	private static boolean noCollision(Level level, BlockPos pos, NPCEntity npc) {
 		return level.noCollision(
 				npc.getBoundingBox()
-				.move(Vector3d.ZERO.subtract(npc.position()))
-				.move(pos)
-				.move(0.5d, 0.0d, 0.5d));
+				.move(Vec3.ZERO.subtract(npc.position()))
+				.move(Vec3.atBottomCenterOf(pos)));
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public void work(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void work(Level level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		
 		BlockPos jobSitePos = order.getArgHolder(WorkAtCommand.POS_ARG_INDEX).getWrapper().getPos().get();
-		TileEntity te = level.getBlockEntity(jobSitePos);
+		BlockEntity te = level.getBlockEntity(jobSitePos);
 		
-		if (!(te instanceof ResourceStationTileEntity)) {
+		if (!(te instanceof ResourceStationBlockEntity)) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
-		ResourceStationTileEntity resourceStation = (ResourceStationTileEntity) te;	
-		AxisAlignedBB jobSiteBox = new AxisAlignedBB(jobSitePos.offset(-1, 0, -1), jobSitePos.offset(2, 3, 2));
+		ResourceStationBlockEntity resourceStation = (ResourceStationBlockEntity) te;	
+		AABB jobSiteBox = new AABB(jobSitePos.offset(-1, 0, -1), jobSitePos.offset(2, 3, 2));
 		
 		if (!resourceStation.isRunning()) {
 			brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
@@ -175,7 +173,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 			if (interaction == null) {
 				if (!brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM)) {
 					ItemEntity item = resourceStation.getItemToPickup(npc);
-					if (item != null && !item.removed && !item.getItem().isEmpty()) {
+					if (item != null && !item.isRemoved() && !item.getItem().isEmpty()) {
 						brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, item);
 					} else {
 						brain.setMemory(MemoryModuleTypeInit.DEPOSITING_ITEMS.get(), true);
@@ -186,7 +184,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 			BlockInteraction interaction = brain.getMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get()).get();
 			BlockPos pos1 = interaction.pos().pos();
 			BlockInteraction.Type action = interaction.action();
-			Hand useHand = npc.getUsedItemHand();
+			InteractionHand useHand = npc.getUsedItemHand();
 			
 			if (interaction.needsToBreakBlock(level, npc)) {
 				BlockState state = level.getBlockState(pos1);
@@ -204,7 +202,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 					}
 				}
 			} else if (action == Type.PLACE_BLOCK) {
-				Hand opposite = useHand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND;
+				InteractionHand opposite = useHand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
 				ItemStack useStack = npc.getItemInHand(opposite);
 				SupplyRequestPredicate predicate = interaction.item();
 				if (!interaction.item().matches(useStack) && !this.switchItem(npc, predicate, opposite)) {
@@ -222,16 +220,16 @@ public class ResourceGatheringProfession extends NPCProfession {
 	}
 	
 	@Override
-	public void stopWorking(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void stopWorking(Level level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		brain.eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 		brain.eraseMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get());
-		TileEntity te = level.getBlockEntity(order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
-		if (!(te instanceof ResourceStationTileEntity)) return;
-		((ResourceStationTileEntity) te).stopWorking(npc);
+		BlockEntity te = level.getBlockEntity(order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
+		if (!(te instanceof ResourceStationBlockEntity)) return;
+		((ResourceStationBlockEntity) te).stopWorking(npc);
 	}
 	
-	private void populateRequestsWithRequiredItems(NPCEntity npc, ResourceStationTileEntity te) {
+	private void populateRequestsWithRequiredItems(NPCEntity npc, ResourceStationBlockEntity te) {
 		List<SupplyRequestPredicate> allRequiredItems = new ArrayList<>();
 		allRequiredItems.addAll(this.requiredItems);
 		allRequiredItems.addAll(te.getExtraStock());
@@ -255,7 +253,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 		}
 	}
 	
-	private boolean switchItem(NPCEntity npc, SupplyRequestPredicate predicate, Hand hand) {
+	private boolean switchItem(NPCEntity npc, SupplyRequestPredicate predicate, InteractionHand hand) {
 		if (predicate.matches(npc.getItemInHand(hand))) return true;
 		ItemStackHandler inventory = npc.getInventoryItemHandler();
 		for (int i = 0; i < inventory.getSlots(); ++i) {
@@ -269,7 +267,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 		return false;
 	}
 	
-	private boolean depositFromInventory(NPCEntity npc, ResourceStationTileEntity resourceStation) {
+	private boolean depositFromInventory(NPCEntity npc, ResourceStationBlockEntity resourceStation) {
 		ItemStackHandler buffer = resourceStation.getBuffer();
 		ItemStackHandler inventory = npc.getInventoryItemHandler();
 		boolean spaceFreedUp = false;

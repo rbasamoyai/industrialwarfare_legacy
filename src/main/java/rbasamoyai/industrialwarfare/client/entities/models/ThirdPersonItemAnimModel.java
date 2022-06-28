@@ -1,12 +1,12 @@
 package rbasamoyai.industrialwarfare.client.entities.models;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
-import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
+import rbasamoyai.industrialwarfare.client.items.renderers.SpecialThirdPersonRender;
 import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -21,8 +21,8 @@ public class ThirdPersonItemAnimModel extends AnimatedGeoModel<IAnimatable> {
 		if (entity == null) return NO_MODEL_ANIM_FILE;
 		ItemStack stack = entity.getItemInHand(animEntity.getHand());
 		Item item = stack.getItem();
-		if (!(item instanceof ISpecialThirdPersonRender)) return NO_MODEL_ANIM_FILE;
-		return ((ISpecialThirdPersonRender) item).getAnimationFileLocation(stack, entity);
+		if (!(item instanceof SpecialThirdPersonRender)) return NO_MODEL_ANIM_FILE;
+		return ((SpecialThirdPersonRender) item).getAnimationFileLocation(stack, entity);
 	}
 
 	public static final ResourceLocation NO_MODEL_MODEL = new ResourceLocation(IndustrialWarfare.MOD_ID, "geo/third_person/no_model_t.geo.json");
@@ -33,8 +33,8 @@ public class ThirdPersonItemAnimModel extends AnimatedGeoModel<IAnimatable> {
 		if (entity == null) return NO_MODEL_MODEL;
 		ItemStack stack = entity.getItemInHand(animEntity.getHand());
 		Item item = stack.getItem();
-		if (!(item instanceof ISpecialThirdPersonRender)) return NO_MODEL_MODEL;
-		return ((ISpecialThirdPersonRender) item).getModelLocation(stack, entity);
+		if (!(item instanceof SpecialThirdPersonRender)) return NO_MODEL_MODEL;
+		return ((SpecialThirdPersonRender) item).getModelLocation(stack, entity);
 	}
 
 	public static final ResourceLocation NO_MODEL_TEXTURE = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/item/no_model.png");
@@ -45,8 +45,8 @@ public class ThirdPersonItemAnimModel extends AnimatedGeoModel<IAnimatable> {
 		if (entity == null) return NO_MODEL_TEXTURE;
 		ItemStack stack = entity.getItemInHand(animEntity.getHand());
 		Item item = stack.getItem();
-		if (!(item instanceof ISpecialThirdPersonRender)) return NO_MODEL_TEXTURE;
-		return ((ISpecialThirdPersonRender) item).getTextureLocation(stack, entity);
+		if (!(item instanceof SpecialThirdPersonRender)) return NO_MODEL_TEXTURE;
+		return ((SpecialThirdPersonRender) item).getTextureLocation(stack, entity);
 	}
 	
 	@Override

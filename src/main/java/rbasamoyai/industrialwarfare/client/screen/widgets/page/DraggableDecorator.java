@@ -4,10 +4,10 @@ import java.awt.Point;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.util.Mth;
 
 /**
  * Add a pseudo-widget that can be dragged around the screen within given
@@ -32,7 +32,7 @@ public class DraggableDecorator extends BlitDecorator {
 	
 	private int regularTexPosY;
 	
-	public DraggableDecorator(IScreenPage page, AbstractGui gui, Properties properties) {
+	public DraggableDecorator(IScreenPage page, GuiComponent gui, Properties properties) {
 		super(page, gui, properties);
 		
 		this.dragDimensions = properties.dragDimensions;
@@ -49,7 +49,7 @@ public class DraggableDecorator extends BlitDecorator {
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.isHovering = mouseX >= this.pos.x && mouseX < this.pos.x + this.dimensions.x && mouseY >= this.pos.y && mouseY < this.pos.y + this.dimensions.y;
 		this.texPos.y = this.isActive ? this.regularTexPosY : this.regularTexPosY + this.dimensions.y;
 		super.render(stack, mouseX, mouseY, partialTicks);
@@ -71,10 +71,10 @@ public class DraggableDecorator extends BlitDecorator {
 		}
 		
 		this.output.x = (float)(mouseX1 - (double) this.start.x) / (float) this.dragDimensions.x;
-		this.output.x = MathHelper.clamp(this.output.x, 0.0f, 1.0f);
+		this.output.x = Mth.clamp(this.output.x, 0.0f, 1.0f);
 		
 		this.output.y = (float)(mouseY1 - (double) this.start.y) / (float) this.dragDimensions.y;
-		this.output.y = MathHelper.clamp(this.output.y, 0.0f, 1.0f);
+		this.output.y = Mth.clamp(this.output.y, 0.0f, 1.0f);
 		
 		this.dragged.onDrag(this.output.x, this.output.y);	
 		this.recalculatePos();
@@ -91,8 +91,8 @@ public class DraggableDecorator extends BlitDecorator {
 	}
 	
 	private void recalculatePos() {
-		this.pos.x = this.start.x - MathHelper.floor((float) this.dimensions.x * 0.5f) + MathHelper.floor((float) this.dragDimensions.x * this.output.x);
-		this.pos.y = this.start.y - MathHelper.floor((float) this.dimensions.y * 0.5f) + MathHelper.floor((float) this.dragDimensions.y * this.output.y);
+		this.pos.x = this.start.x - Mth.floor((float) this.dimensions.x * 0.5f) + Mth.floor((float) this.dragDimensions.x * this.output.x);
+		this.pos.y = this.start.y - Mth.floor((float) this.dimensions.y * 0.5f) + Mth.floor((float) this.dragDimensions.y * this.output.y);
 	}
 	
 	public void setActive(boolean isActive) { this.isActive = isActive; }

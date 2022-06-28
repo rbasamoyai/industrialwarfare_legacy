@@ -1,10 +1,10 @@
 package rbasamoyai.industrialwarfare.core.init;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
 public class SoundEventInit {

@@ -1,20 +1,21 @@
 package rbasamoyai.industrialwarfare.common.tags;
 
-import net.minecraft.item.Item;
-import net.minecraft.tags.ITag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
 public class IWItemTags {
 
-	public static final ITag.INamedTag<Item> CHEAT_AMMO = bind("cheat_ammo");
-	public static final ITag.INamedTag<Item> ENTRENCHING_TOOLS = bind("entrenching_tools");
-	public static final ITag.INamedTag<Item> FIREARM_MELEE_ATTACHMENTS = bind("attachments/firearm/melee");
-	public static final ITag.INamedTag<Item> FIREARM_OPTIC_ATTACHMENTS = bind("attachments/firearm/optic");
-	public static final ITag.INamedTag<Item> FUNGUS = bind("fungus");
+	public static final TagKey<Item> CHEAT_AMMO = create("cheat_ammo");
+	public static final TagKey<Item> ENTRENCHING_TOOLS = create("entrenching_tools");
+	public static final TagKey<Item> FIREARM_MELEE_ATTACHMENTS = create("attachments/firearm/melee");
+	public static final TagKey<Item> FIREARM_OPTIC_ATTACHMENTS = create("attachments/firearm/optic");
+	public static final TagKey<Item> FUNGUS = create("fungus");
 	
-	protected static final ITag.INamedTag<Item> bind(String id) {
-		return ItemTags.bind(IndustrialWarfare.MOD_ID + ":" + id);
+	protected static final TagKey<Item> create(String id) {
+		return ItemTags.create(new ResourceLocation(IndustrialWarfare.MOD_ID, id));
 	}
 	
 }

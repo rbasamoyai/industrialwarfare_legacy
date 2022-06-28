@@ -1,11 +1,11 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.NonNullList;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 public class RevolverDataHandler extends FirearmItemDataHandler {
@@ -13,7 +13,7 @@ public class RevolverDataHandler extends FirearmItemDataHandler {
 	private int currentPosition;
 	private NonNullList<ItemStack> cylinder;
 	
-	public RevolverDataHandler(ItemStackHandler handler) {
+	public RevolverDataHandler(IItemHandlerModifiable handler) {
 		super(handler);
 	}
 	
@@ -65,41 +65,44 @@ public class RevolverDataHandler extends FirearmItemDataHandler {
 		return !this.cylinder.stream().anyMatch(this::isEmptyOrFired);
 	}
 
-	private static final String TAG_CYLINDER = "cylinder";
-	private static final String TAG_CURRENT_POSITION = "currentPosition";
-	private static final String TAG_SLOT = "slot";
-	private static final String TAG_ITEM = "item";
 	
 	@Override
-	public CompoundNBT serializeAmmo() {
-		CompoundNBT nbt = new CompoundNBT();
-		
-		ListNBT cylinderTag = new ListNBT();
-		for (int i = 0; i < this.cylinder.size(); ++i) {
-			ItemStack currentStack = this.cylinder.get(i);
-			if (currentStack.isEmpty()) continue;
-			CompoundNBT slotTag = new CompoundNBT();
-			slotTag.putInt(TAG_SLOT, i);
-			slotTag.put(TAG_ITEM, currentStack.serializeNBT());
-			cylinderTag.add(slotTag);
-		}
-		nbt.put(TAG_CYLINDER, cylinderTag);
-		
-		nbt.putInt(TAG_CURRENT_POSITION, this.currentPosition);
-		
-		return nbt;
+	public CompoundTag writeTag(CompoundTag tag) {
+		super.writeTag(tag);
+		this.serializeAmmo(tag);
+		return tag;
 	}
-
+	
 	@Override
-	public void deserializeAmmo(CompoundNBT nbt) {
-		ListNBT cylinderTag = nbt.getList(TAG_CYLINDER, Constants.NBT.TAG_COMPOUND);
+	public void readTag(CompoundTag tag) {
+		super.readTag(tag);
+		this.deserializeAmmo(tag);
+	}
+	
+	public CompoundTag serializeAmmo(CompoundTag tag) {	
+		ListTag cylinderTag = new ListTag();
+		for (int i = 0; i < this.cylinder.size(); ++i) {
+			ItemStack stack = this.cylinder.get(i);
+			if (stack.isEmpty()) continue;
+			CompoundTag itemTag = stack.serializeNBT();
+			itemTag.putByte("Slot", (byte) i);
+			cylinderTag.add(itemTag);
+		}
+		tag.put("cylinder", cylinderTag);
+		
+		tag.putByte("currentPosition", (byte) this.currentPosition);
+		return tag;
+	}
+	
+	public void deserializeAmmo(CompoundTag tag) {
+		ListTag cylinderTag = tag.getList("cylinder", Tag.TAG_COMPOUND);
 		for (int i = 0; i < cylinderTag.size(); ++i) {
-			CompoundNBT slotTag = cylinderTag.getCompound(i);
-			int slot = slotTag.getInt(TAG_SLOT);
-			ItemStack item = ItemStack.of(slotTag.getCompound(TAG_ITEM));
+			CompoundTag slotTag = cylinderTag.getCompound(i);
+			int slot = slotTag.getInt("Slot");
+			ItemStack item = ItemStack.of(slotTag);
 			this.cylinder.set(slot, item);
 		}
-		this.currentPosition = nbt.getInt(TAG_CURRENT_POSITION);
+		this.currentPosition = tag.getByte("currentPosition");
 	}
 
 	

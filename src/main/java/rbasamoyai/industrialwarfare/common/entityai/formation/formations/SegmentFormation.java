@@ -4,23 +4,26 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.particles.RedstoneParticleData;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.Constants;
+import com.mojang.math.Constants;
+import com.mojang.math.Vector3f;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
@@ -45,7 +48,7 @@ public class SegmentFormation extends UnitFormation {
 	}
 
 	@Override
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
+	public <E extends PathfinderMob & MovesInFormation> boolean addEntity(E entity) {
 		if (!entity.isLowLevelUnit() || entity.getFormationRank() != this.formationRank) return false;
 		for (int file = 0; file < this.width; ++file) {
 			if (this.addEntityAtFile(entity, file)) return true;
@@ -53,7 +56,7 @@ public class SegmentFormation extends UnitFormation {
 		return false;
 	}
 	
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntityAtFile(E entity, int file) {
+	public <E extends PathfinderMob & MovesInFormation> boolean addEntityAtFile(E entity, int file) {
 		if (entity == null || file < 0 || this.width <= file || !UnitFormation.isSlotEmpty(this.units[file])) return false;
 		if (!entity.isLowLevelUnit() || entity.getFormationRank() != this.formationRank) return false;
 		this.units[file] = new FormationEntityWrapper<>(entity);
@@ -61,7 +64,7 @@ public class SegmentFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void removeEntity(CreatureEntity entity) {
+	public void removeEntity(PathfinderMob entity) {
 		for (int file = 0; file < this.width; ++file) {
 			if (UnitFormation.isSlotEmpty(this.units[file]) || this.units[file].getEntity() != entity) continue;
 			this.units[file] = null;
@@ -80,7 +83,7 @@ public class SegmentFormation extends UnitFormation {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <E extends CreatureEntity & IMovesInFormation> E getEntityAtFile(int file) {
+	public <E extends PathfinderMob & MovesInFormation> E getEntityAtFile(int file) {
 		if (file < 0 || this.width <= file || UnitFormation.isSlotEmpty(this.units[file])) return null;
 		return (E) this.units[file].getEntity();
 	}
@@ -89,9 +92,9 @@ public class SegmentFormation extends UnitFormation {
 	protected void tick(FormationLeaderEntity leader) {
 		if (this.formationState == null || this.formationState == State.BROKEN) return;
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
-		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
-		Vector3d startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
+		Vec3 leaderForward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
+		Vec3 leaderRight = new Vec3(-leaderForward.z, 0.0d, leaderForward.x);
+		Vec3 startPoint = leader.position().subtract(leaderRight.scale(Math.ceil((double) this.width * 0.5d)));
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
@@ -106,7 +109,7 @@ public class SegmentFormation extends UnitFormation {
 				this.units[file] = null;
 				continue;
 			}
-			CreatureEntity unit = wrapper.getEntity();
+			PathfinderMob unit = wrapper.getEntity();
 			if (!UnitFormation.checkMemoriesForMovement(unit)) {
 				this.units[file] = null;
 				continue;
@@ -121,16 +124,16 @@ public class SegmentFormation extends UnitFormation {
 			
 			unitBrain.setMemory(MemoryModuleTypeInit.IN_FORMATION.get(), leader);
 			
-			Vector3d precisePos = startPoint.add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
+			Vec3 precisePos = startPoint.add(leaderRight.scale(file)).add(0.0d, unit.getY() - startPoint.y, 0.0d);
 			
 			if (this.formationState == State.FORMED && stopped && unit.position().closerThan(precisePos, CLOSE_ENOUGH)) {
 				// Stop and stay oriented if not attacking
-				unit.yRot = leader.yRot;
-				unit.yHeadRot = leader.yRot;
+				unit.setYRot(leader.getYRot());
+				unit.yHeadRot = leader.getYRot();
 				continue;
 			}
 			
-			Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+			Vec3 possiblePos = this.tryFindingNewPosition(unit, precisePos);
 			if (possiblePos == null || unit.position().closerThan(possiblePos, CLOSE_ENOUGH)) continue;
 			unitBrain.setMemory(MemoryModuleTypeInit.PRECISE_POS.get(), possiblePos);
 			unitBrain.setMemory(MemoryModuleType.MEETING_POINT, GlobalPos.of(leader.level.dimension(), (new BlockPos(possiblePos)).below()));
@@ -145,40 +148,40 @@ public class SegmentFormation extends UnitFormation {
 			return;
 		} 
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
+		Vec3 leaderForward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
 		
 		double halfLength = this.tailEnd ? 2.0d : 1.0d;
-		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
-		Vector3d secondSegment = joint.subtract(this.follower.position()).normalize();
-		this.cachedAngle = (float) -Math.toDegrees(MathHelper.atan2(secondSegment.x, secondSegment.z));
+		Vec3 joint = leader.position().subtract(leaderForward.scale(halfLength));
+		Vec3 secondSegment = joint.subtract(this.follower.position()).normalize();
+		this.cachedAngle = (float) -Math.toDegrees(Mth.atan2(secondSegment.x, secondSegment.z));
 		
 		super.tickFollower(leader);
 	}
 	
 	@Override
-	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
+	public Vec3 getFollowPosition(FormationLeaderEntity leader) {
+		Vec3 leaderForward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
 		
 		if (this.follower == null) {
 			return leader.position().subtract(leaderForward.scale(this.tailEnd ? 4.0d : 2.0d));
 		}
 
 		double halfLength = this.tailEnd ? 2.0d : 1.0d;
-		Vector3d joint = leader.position().subtract(leaderForward.scale(halfLength));
-		Vector3d secondSegment = this.follower.position().subtract(joint).normalize().scale(halfLength);
+		Vec3 joint = leader.position().subtract(leaderForward.scale(halfLength));
+		Vec3 secondSegment = this.follower.position().subtract(joint).normalize().scale(halfLength);
 		
 		if (!leader.level.isClientSide) {
-			((ServerWorld) leader.level).sendParticles(new RedstoneParticleData(0.0f, 0.0f, 1.0f, 1.0f), joint.x, joint.y + 2.5d, joint.z, 1, 0.0d, 0.0d, 0.0d, 0.0d);
+			((ServerLevel) leader.level).sendParticles(new DustParticleOptions(new Vector3f(0.0f, 0.0f, 1.0f), 1.0f), joint.x, joint.y + 2.5d, joint.z, 1, 0.0d, 0.0d, 0.0d, 0.0d);
 		}
 		
-		float secondSegAngle = (float) Math.toDegrees(MathHelper.atan2(secondSegment.x, secondSegment.z));
-		float angularDiff = (secondSegAngle - leader.yRot + 180.0f) % 360.0f - 180.0f;
+		float secondSegAngle = (float) Math.toDegrees(Mth.atan2(secondSegment.x, secondSegment.z));
+		float angularDiff = (secondSegAngle - leader.getYRot() + 180.0f) % 360.0f - 180.0f;
 		
 		if (angularDiff <= -135.0f || angularDiff >= 135.0f) {
 			return joint.add(secondSegment);
 		}
 		
-		float angularDiff1 = secondSegAngle - leader.yRot % 180.0f;
+		float angularDiff1 = secondSegAngle - leader.getYRot() % 180.0f;
 		if (angularDiff1 < -180.0f) {
 			angularDiff1 += 360.0f;
 		}
@@ -186,23 +189,23 @@ public class SegmentFormation extends UnitFormation {
 			angularDiff1 -= 360.0f;
 		}
 		
-		float newRot = leader.yRot + (angularDiff < 0.0f ? -135.0f : 135.0f);
-		Vector3d clampedSecondSegment = new Vector3d(-MathHelper.sin(newRot * DEG_TO_RAD), 0.0d, MathHelper.cos(newRot * DEG_TO_RAD));
+		float newRot = leader.getYRot() + (angularDiff < 0.0f ? -135.0f : 135.0f);
+		Vec3 clampedSecondSegment = new Vec3(-Mth.sin(newRot * Constants.DEG_TO_RAD), 0.0d, Mth.cos(newRot * Constants.DEG_TO_RAD));
 		return joint.add(clampedSecondSegment);
 	}
 
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(angle * DEG_TO_RAD), 0.0d, MathHelper.cos(angle * DEG_TO_RAD));
-		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
-		Vector3d startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
+	public float scoreOrientationAngle(float angle, Level level, PathfinderMob leader, Vec3 pos) {
+		Vec3 forward = new Vec3(-Mth.sin(angle * Constants.DEG_TO_RAD), 0.0d, Mth.cos(angle * Constants.DEG_TO_RAD));
+		Vec3 right = new Vec3(-forward.z, 0.0d, forward.x);
+		Vec3 startPoint = pos.subtract(right.scale(Math.ceil((double) this.width * 0.5d)));
 		
 		Stream<Integer> files = IntStream.range(0, this.width).boxed();
 		
 		return files.map(a -> {
 			if (UnitFormation.isSlotEmpty(this.units[a])) return 0;
-			CreatureEntity unit = this.units[a].getEntity();
-			Vector3d unitPos = startPoint.add(right.scale(a));
+			PathfinderMob unit = this.units[a].getEntity();
+			Vec3 unitPos = startPoint.add(right.scale(a));
 			BlockPos blockPos = (new BlockPos(unitPos)).below();
 			return level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos)) ? 1 : 0;
 		}).reduce(Integer::sum).get();
@@ -216,17 +219,17 @@ public class SegmentFormation extends UnitFormation {
 	private static final String TAG_UUID = "uuid";
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = super.serializeNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag nbt = super.serializeNBT();
 		
 		nbt.putInt(TAG_WIDTH, this.width);
 		nbt.putInt(TAG_FORMATION_RANK, this.formationRank);
 		nbt.putBoolean(TAG_TAIL_END, this.tailEnd);
 		
-		ListNBT unitTags = new ListNBT();
+		ListTag unitTags = new ListTag();
 		for (int file = 0; file < this.width; ++file) {
 			if (UnitFormation.isSlotEmpty(this.units[file])) continue;
-			CompoundNBT unitTag = new CompoundNBT();
+			CompoundTag unitTag = new CompoundTag();
 			unitTag.putInt(TAG_FILE, file);
 			unitTag.putUUID(TAG_UUID, this.units[file].getEntity().getUUID());
 			unitTags.add(unitTag);
@@ -238,7 +241,7 @@ public class SegmentFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
+	public void deserializeNBT(CompoundTag nbt) {
 		super.deserializeNBT(nbt);
 		
 		this.width = nbt.getInt(TAG_WIDTH);
@@ -248,24 +251,24 @@ public class SegmentFormation extends UnitFormation {
 	}
 	
 	@Override
-	protected void loadEntityData(CompoundNBT nbt, World level) {
+	protected void loadEntityData(CompoundTag nbt, Level level) {
 		if (level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) level;
+		ServerLevel slevel = (ServerLevel) level;
 		
-		if (nbt.contains(TAG_UNITS, Constants.NBT.TAG_LIST)) {
-			ListNBT unitTags = nbt.getList(TAG_UNITS, Constants.NBT.TAG_COMPOUND);
+		if (nbt.contains(TAG_UNITS, Tag.TAG_LIST)) {
+			ListTag unitTags = nbt.getList(TAG_UNITS, Tag.TAG_COMPOUND);
 			for (int i = 0; i < unitTags.size(); ++i) {
-				CompoundNBT unitTag = unitTags.getCompound(i);
+				CompoundTag unitTag = unitTags.getCompound(i);
 				if (!unitTag.hasUUID(TAG_UUID)) continue;
 				UUID uuid = unitTag.getUUID(TAG_UUID);
 				
 				Entity e = slevel.getEntity(uuid);
-				if (!(e instanceof CreatureEntity && e instanceof IMovesInFormation)) continue;
+				if (!(e instanceof PathfinderMob && e instanceof MovesInFormation)) continue;
 				
 				if (unitTag.contains(TAG_FILE)) {
-					this.addEntityAtFile((CreatureEntity & IMovesInFormation) e, unitTag.getInt(TAG_FILE));
+					this.addEntityAtFile((PathfinderMob & MovesInFormation) e, unitTag.getInt(TAG_FILE));
 				} else {
-					this.addEntity((CreatureEntity & IMovesInFormation) e);
+					this.addEntity((PathfinderMob & MovesInFormation) e);
 				}
 			}
 		}

@@ -2,9 +2,11 @@ package rbasamoyai.industrialwarfare.common.npcprofessions;
 
 import com.google.common.collect.ImmutableList;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.ToolType;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tiers;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.ToolActions;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
@@ -15,15 +17,17 @@ public class QuarrierProfession extends ResourceGatheringProfession {
 
 	public QuarrierProfession() {
 		super(ImmutableList.of(
-				SupplyRequestPredicate.forTool(ToolType.PICKAXE, IntBound.atLeast(1)),
+				SupplyRequestPredicate.forTool(ToolActions.PICKAXE_DIG, Tiers.WOOD),
 				SupplyRequestPredicate.forItem(ItemInit.WORKER_SUPPORT.get(), IntBound.atLeast(1))),
 				BlockInit.QUARRY.get());
 	}
 	
 	@Override
 	protected boolean canBreakBlockWith(BlockState state, ItemStack stack, NPCEntity npc) {
-		if (state.getHarvestTool() != ToolType.PICKAXE && state.getHarvestTool() != ToolType.SHOVEL) return true;
-		return stack.getToolTypes().stream().anyMatch(state::isToolEffective);
+		if (state.is(BlockTags.MINEABLE_WITH_PICKAXE) || state.is(BlockTags.MINEABLE_WITH_SHOVEL)) {
+			return stack.isCorrectToolForDrops(state);
+		}
+		return true;
 	}
 	
 }

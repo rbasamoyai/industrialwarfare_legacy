@@ -1,12 +1,13 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
@@ -27,7 +28,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 				return;
 			}
 			
-			float quality = h.getQuality();
+			float quality = QualityItem.getQuality(firearm);
 			float durability = 1.0f  - (float) firearm.getDamageValue() / (float) firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
@@ -35,7 +36,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
-			Vector3d lookVector = shooter.getViewVector(1.0f);
+			Vec3 lookVector = shooter.getViewVector(1.0f);
 			float spread = h.isAiming() ? this.spread : this.hipfireSpread;
 			spread *= 1.0f + (3.0f - (quality + durability + effectiveness) / 3.0f);
 			float velocity = this.muzzleVelocity * (quality + durability) / 2.0f;
@@ -89,7 +90,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 				return;
 			}
 			
-			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (ammo.is(IWItemTags.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
 				ammo = ammo.copy();
 			}
 			

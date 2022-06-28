@@ -4,23 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import net.minecraft.block.Block;
-import net.minecraft.client.resources.ReloadListener;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.block.Block;
 import rbasamoyai.industrialwarfare.core.init.RecipeInit;
 
-public class NormalWorkstationRecipeGetter extends ReloadListener<Void> {
+public class NormalWorkstationRecipeGetter extends SimplePreparableReloadListener<Void> {
 
 	public static final NormalWorkstationRecipeGetter INSTANCE = new NormalWorkstationRecipeGetter();
 	
 	private int currentGen = 0;
 	private int lastKnownGen = -1;
 	
-	private List<NormalWorkstationRecipe> cachedRecipes = new ArrayList<>();
+	private List<ManufactureRecipe> cachedRecipes = new ArrayList<>();
 	
-	public List<NormalWorkstationRecipe> getRecipes(RecipeManager manager, Block block) {
+	public List<ManufactureRecipe> getRecipes(RecipeManager manager, Block block) {
 		if (this.currentGen != this.lastKnownGen) {
 			this.cachedRecipes = manager.getAllRecipesFor(RecipeInit.NORMAL_WORKSTATION_RECIPE_TYPE)
 					.stream()
@@ -32,12 +32,12 @@ public class NormalWorkstationRecipeGetter extends ReloadListener<Void> {
 	}
 
 	@Override
-	protected Void prepare(IResourceManager manager, IProfiler profiler) {
+	protected Void prepare(ResourceManager manager, ProfilerFiller profiler) {
 		return null;
 	}
 
 	@Override
-	protected void apply(Void v, IResourceManager manager, IProfiler profiler) {
+	protected void apply(Void v, ResourceManager manager, ProfilerFiller profiler) {
 		this.currentGen++;
 	}
 	

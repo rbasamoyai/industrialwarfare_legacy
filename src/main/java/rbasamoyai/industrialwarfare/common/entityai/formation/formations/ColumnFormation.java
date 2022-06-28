@@ -8,19 +8,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
@@ -57,13 +57,13 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void setFollower(CreatureEntity entity) {
+	public void setFollower(PathfinderMob entity) {
 		if (this.segmentLeaders.isEmpty()) return;
 		this.segmentLeaders.get(this.segmentLeaders.size() - 1).setFollower(entity);
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(Level level, Vec3 pos, UUID commandGroup, PlayerIDTag owner) {
 		this.segmentFormations.clear();
 		this.segmentLeaders.clear();
 		
@@ -97,12 +97,12 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
-	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
+	public Vec3 getFollowPosition(FormationLeaderEntity leader) {
 		return leader.position();
 	}
 	
 	@Override
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
+	public <E extends PathfinderMob & MovesInFormation> boolean addEntity(E entity) {
 		if (this.segmentLeaders.isEmpty()) return false;
 		FormationLeaderEntity tail = this.segmentLeaders.get(this.segmentLeaders.size() - 1);
 		if (tail.addEntity(entity)) return true;
@@ -111,7 +111,7 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void removeEntity(CreatureEntity entity) {
+	public void removeEntity(PathfinderMob entity) {
 		if (this.segmentLeaders.isEmpty()) return;
 		// Try doing this quickly by using MemoryModuleTypeInit#IN_FORMATION		
 		Brain<?> brain = entity.getBrain();
@@ -145,11 +145,11 @@ public class ColumnFormation extends UnitFormation {
 		
 		// Fixing units with multiple positions, since that seems to happen
 		if (leader.tickCount % 20 == 0) {
-			Set<CreatureEntity> units = new HashSet<>();
+			Set<PathfinderMob> units = new HashSet<>();
 			for (int rank = 0; rank < this.depth; ++rank) {
 				SegmentFormation segment = this.segmentFormations.get(rank);
 				for (int file = 0; file < this.width; ++file) {
-					CreatureEntity unit = segment.getEntityAtFile(file);
+					PathfinderMob unit = segment.getEntityAtFile(file);
 					if (unit == null) continue;
 					if (units.contains(unit)) {
 						segment.removeEntityAtFile(file);
@@ -164,7 +164,7 @@ public class ColumnFormation extends UnitFormation {
 	}
 
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
+	public float scoreOrientationAngle(float angle, Level level, PathfinderMob leader, Vec3 pos) {
 		return this.segmentLeaders.isEmpty() ? 0.0f : this.segmentLeaders.get(0).scoreOrientationAngle(angle, pos);
 	}
 	
@@ -176,26 +176,26 @@ public class ColumnFormation extends UnitFormation {
 	private static final String TAG_COLUMN_SEGMENTS = "columnSegments";
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = super.serializeNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag nbt = super.serializeNBT();
 		
 		nbt.putInt(TAG_WIDTH, this.width);
 		nbt.putInt(TAG_DEPTH, this.depth);
 		nbt.putInt(TAG_FORMATION_RANK, this.formationRank);
 		
-		ListNBT columnSegments =
+		ListTag columnSegments =
 				this.segmentLeaders
 				.stream()
 				.map(Entity::getUUID)
-				.map(NBTUtil::createUUID)
-				.collect(Collectors.toCollection(ListNBT::new));
+				.map(NbtUtils::createUUID)
+				.collect(Collectors.toCollection(ListTag::new));
 		nbt.put(TAG_COLUMN_SEGMENTS, columnSegments);
 		
 		return nbt;
 	}
 	
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
+	public void deserializeNBT(CompoundTag nbt) {
 		super.deserializeNBT(nbt);
 		
 		this.width = nbt.getInt(TAG_WIDTH);
@@ -204,16 +204,16 @@ public class ColumnFormation extends UnitFormation {
 	}
 	
 	@Override
-	protected void loadEntityData(CompoundNBT nbt, World level) {
+	protected void loadEntityData(CompoundTag nbt, Level level) {
 		if (level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) level;
+		ServerLevel slevel = (ServerLevel) level;
 		
 		this.segmentLeaders.clear();
 		
-		ListNBT columnSegments = nbt.getList(TAG_COLUMN_SEGMENTS, Constants.NBT.TAG_INT_ARRAY);
+		ListTag columnSegments = nbt.getList(TAG_COLUMN_SEGMENTS, Tag.TAG_INT_ARRAY);
 		columnSegments
 		.stream()
-		.map(NBTUtil::loadUUID)
+		.map(NbtUtils::loadUUID)
 		.map(slevel::getEntity)
 		.filter(e -> e instanceof FormationLeaderEntity)
 		.map(e -> (FormationLeaderEntity) e)
@@ -232,14 +232,14 @@ public class ColumnFormation extends UnitFormation {
 	private static final String TAG_FOLLOWER = UnitFormation.TAG_FOLLOWER;
 	
 	@Override
-	protected void loadFollowerData(CompoundNBT nbt, World level) {
+	protected void loadFollowerData(CompoundTag nbt, Level level) {
 		if (level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) level;
+		ServerLevel slevel = (ServerLevel) level;
 		
 		if (nbt.hasUUID(TAG_FOLLOWER)) {
 			Entity e = slevel.getEntity(nbt.getUUID(TAG_FOLLOWER));
-			if (!(e instanceof CreatureEntity)) return;
-			this.follower = (CreatureEntity) e; // Direct setting due to setFollower() override
+			if (!(e instanceof PathfinderMob)) return;
+			this.follower = (PathfinderMob) e; // Direct setting due to setFollower() override
 		}
 	}
 	

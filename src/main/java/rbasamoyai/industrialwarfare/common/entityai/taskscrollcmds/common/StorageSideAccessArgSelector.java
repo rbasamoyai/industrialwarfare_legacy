@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
@@ -16,7 +16,7 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 public class StorageSideAccessArgSelector extends ArgSelector<Direction> {
 
 	private static final String TOOLTIP_TRANSLATION_KEY = "selector.tooltip." + IndustrialWarfare.MOD_ID + ".storage_side";
-	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
+	private static final MutableComponent TOOLTIP_HEADER = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
 	
 	public StorageSideAccessArgSelector(int index) {
 		super(Arrays.asList(Direction.values()), index); // Direction#values is only used for size
@@ -33,14 +33,14 @@ public class StorageSideAccessArgSelector extends ArgSelector<Direction> {
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
-		ArrayList<ITextComponent> tooltip = new ArrayList<>();
+	public List<Component> getComponentTooltip() {
+		ArrayList<Component> tooltip = new ArrayList<>();
 		tooltip.add(TOOLTIP_HEADER.copy());
 		
 		if (this.selectedArg < 0 || this.selectedArg >= this.possibleArgs.size()) this.warnInvalidSelection();
 		
 		this.possibleArgs.forEach(dir -> {
-			IFormattableTextComponent tc = getTooltip(dir);
+			MutableComponent tc = getTooltip(dir);
 			if (dir == Direction.from3DDataValue(this.selectedArg)) tc = ArgSelector.formatAsSelected(tc);
 			else tc = TooltipUtils.formatAsStyle(tc, ArgSelector.NOT_SELECTED_STYLE);
 			tooltip.add(tc);
@@ -50,12 +50,12 @@ public class StorageSideAccessArgSelector extends ArgSelector<Direction> {
 	}
 
 	@Override
-	public ITextComponent getTitle() {
+	public Component getTitle() {
 		return getTooltip(Direction.from3DDataValue(this.selectedArg));
 	}
 	
-	private static IFormattableTextComponent getTooltip(Direction dir) {
-		return new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + "." + dir.getName());
+	private static MutableComponent getTooltip(Direction dir) {
+		return new TranslatableComponent(TOOLTIP_TRANSLATION_KEY + "." + dir.getName());
 	}
 
 }

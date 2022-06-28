@@ -1,12 +1,15 @@
 package rbasamoyai.industrialwarfare.common.capabilities.entities.npc;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.npccombatskill.NPCCombatSkill;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
-public class NPCDataHandler implements INPCDataHandler {
+public class NPCDataHandler implements INPCData {
 	
 	private PlayerIDTag firstOwner;
 	private PlayerIDTag currentOwner;
@@ -45,5 +48,29 @@ public class NPCDataHandler implements INPCDataHandler {
 
 	@Override public void setSkill(float skill) { this.skill = skill; }
 	@Override public float getSkill() { return this.skill; }
+	
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		tag.putBoolean("canWearEquipment", this.canWearEquipment());
+		tag.putString("combatSkill", this.getCombatSkill().getRegistryName().toString());
+		tag.putString("profession", this.getProfession().getRegistryName().toString());
+		tag.put("firstOwner", this.getFirstOwner().serializeNBT());
+		tag.put("currentOwner", this.getOwner().serializeNBT());
+		ItemStack recipeItem = this.getRecipeItem();
+		tag.put("knownRecipe", recipeItem != null ? recipeItem.serializeNBT() : new CompoundTag());
+		tag.putFloat("currentRecipeSkill", this.getSkill());
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		this.setCanWearEquipment(tag.getBoolean("canWearEquipment"));
+		this.setCombatSkill(IWModRegistries.NPC_COMBAT_SKILLS.get().getValue(new ResourceLocation(tag.getString("combatSkill"))));
+		this.setProfession(IWModRegistries.NPC_PROFESSIONS.get().getValue(new ResourceLocation(tag.getString("profession"))));
+		this.setFirstOwner(PlayerIDTag.fromNBT(tag.getCompound("firstOwner")));
+		this.setOwner(PlayerIDTag.fromNBT(tag.getCompound("currentOwner")));
+		this.setRecipeItem(ItemStack.of(tag.getCompound("knownRecipe")));
+		this.setSkill(tag.getFloat("currentRecipeSkill"));
+	}
 	
 }

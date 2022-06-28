@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.network.play.ClientPlayNetHandler;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 
@@ -28,7 +28,7 @@ public interface DiplomacyListComparator extends Comparator<Entry<PlayerIDTag, P
 		};
 	}
 	
-	public static DiplomacyListComparator sortByName(ClientPlayNetHandler netHandler) {
+	public static DiplomacyListComparator sortByName(ClientPacketListener netHandler) {
 		return new DiplomacyListComparator() {	
 			@Override
 			public int compare(

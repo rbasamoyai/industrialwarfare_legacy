@@ -2,12 +2,11 @@ package rbasamoyai.industrialwarfare.core.network.messages;
 
 import java.util.function.Supplier;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.network.NetworkEvent;
-import rbasamoyai.industrialwarfare.common.containers.MatchCoilContainer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraftforge.network.NetworkEvent;
+import rbasamoyai.industrialwarfare.common.containers.matchcoil.MatchCoilMenu;
 
 public class SMatchCoilSyncMessage {
 
@@ -19,22 +18,21 @@ public class SMatchCoilSyncMessage {
 		this.cutLength = cutLength;
 	}
 	
-	public static void encode(SMatchCoilSyncMessage msg, PacketBuffer buf) {
+	public static void encode(SMatchCoilSyncMessage msg, FriendlyByteBuf buf) {
 		buf.writeVarInt(msg.cutLength);
 	}
 	
-	public static SMatchCoilSyncMessage decode(PacketBuffer buf) {
+	public static SMatchCoilSyncMessage decode(FriendlyByteBuf buf) {
 		return new SMatchCoilSyncMessage(buf.readVarInt());
 	}
 	
 	public static void handle(SMatchCoilSyncMessage msg, Supplier<NetworkEvent.Context> sup) {
 		NetworkEvent.Context ctx = sup.get();
 		ctx.enqueueWork(() -> {
-			ServerPlayerEntity sender = ctx.getSender();
-			Container ct = sender.containerMenu;
-			if (!(ct instanceof MatchCoilContainer)) return;
-			MatchCoilContainer coilCt = (MatchCoilContainer) ct;
-			coilCt.setCutLength(MathHelper.clamp(msg.cutLength, MatchCoilContainer.MINIMUM_CORD_LEFT, MatchCoilContainer.MAX_CORD_CUT));
+			AbstractContainerMenu ct = ctx.getSender().containerMenu;
+			if (!(ct instanceof MatchCoilMenu)) return;
+			MatchCoilMenu coilCt = (MatchCoilMenu) ct;
+			coilCt.setCutLength(Mth.clamp(msg.cutLength, MatchCoilMenu.MINIMUM_CORD_LEFT, MatchCoilMenu.MAX_CORD_CUT));
 			coilCt.updateOutput();
 		});
 		ctx.setPacketHandled(true);

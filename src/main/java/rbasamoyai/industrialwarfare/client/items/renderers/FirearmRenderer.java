@@ -5,21 +5,22 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.PlayerRenderer;
-import net.minecraft.client.renderer.entity.model.PlayerModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
+import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.client.items.models.FirearmModel;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
@@ -29,13 +30,13 @@ import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
 import software.bernie.geckolib3.util.RenderUtils;
 
-public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRendersPlayerArms {
+public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements RendersPlayerArms {
 
 	private static final float SCALE_RECIPROCAL = 1.0f / 16.0f;
 	
 	protected boolean renderArms = false;
 	
-	protected IRenderTypeBuffer currentBuffer;
+	protected MultiBufferSource currentBuffer;
 	protected RenderType renderType;
 	protected TransformType transformType;
 	
@@ -54,15 +55,15 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	}
 	
 	@Override
-	public void renderByItem(ItemStack itemStack, TransformType transformType, MatrixStack matrixStack, 
-			IRenderTypeBuffer bufferIn, int combinedLightIn, int p_239207_6_) {
+	public void renderByItem(ItemStack itemStack, TransformType transformType, PoseStack matrixStack, 
+			MultiBufferSource bufferIn, int combinedLightIn, int p_239207_6_) {
 		this.transformType = transformType;
 		super.renderByItem(itemStack, transformType, matrixStack, bufferIn, combinedLightIn, p_239207_6_);
 	}
 	
 	@Override
 	public void render(GeoModel model, FirearmItem animatable, float partialTicks, RenderType type,
-			MatrixStack matrixStackIn, IRenderTypeBuffer renderTypeBuffer, IVertexBuilder vertexBuilder,
+			PoseStack matrixStackIn, MultiBufferSource renderTypeBuffer, VertexConsumer vertexBuilder,
 			int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
 		
 		this.currentBuffer = renderTypeBuffer;
@@ -78,10 +79,10 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	}
 	
 	@Override
-	public void render(FirearmItem animatable, MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ItemStack itemStack) {
+	public void render(FirearmItem animatable, PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ItemStack itemStack) {
 		Minecraft mc = Minecraft.getInstance();
 		float sign = FirearmItem.isAiming(itemStack) ? 1.0f : -1.0f;
-		this.aimProgress = MathHelper.clamp(this.aimProgress + mc.getFrameTime() * sign * 0.1f, 0.0f, 1.0f);
+		this.aimProgress = Mth.clamp(this.aimProgress + mc.getFrameTime() * sign * 0.1f, 0.0f, 1.0f);
 		
 		stack.pushPose();
 		animatable.setupAnimationState(this, itemStack, stack, this.aimProgress);
@@ -90,7 +91,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	}
 	
 	@Override
-	public void renderRecursively(GeoBone bone, MatrixStack stack, IVertexBuilder bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
+	public void renderRecursively(GeoBone bone, PoseStack stack, VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		String name = bone.getName();
@@ -127,11 +128,11 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 		}
 		
 		if (this.renderArms && renderingArms && !mc.isPaused()) {
-			AbstractClientPlayerEntity player = mc.player;
+			AbstractClientPlayer player = mc.player;
 			
 			float armsAlpha = player.isInvisible() ? 0.15f : 1.0f;
 			PlayerRenderer playerRenderer = (PlayerRenderer) mc.getEntityRenderDispatcher().getRenderer(player);
-			PlayerModel<AbstractClientPlayerEntity> model = playerRenderer.getModel();
+			PlayerModel<AbstractClientPlayer> model = playerRenderer.getModel();
 			
 			stack.pushPose();
 			
@@ -142,8 +143,8 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 			RenderUtils.moveBackFromPivot(bone, stack);
 
 			ResourceLocation loc = player.getSkinTextureLocation();
-			IVertexBuilder armBuilder = this.currentBuffer.getBuffer(RenderType.entitySolid(loc));
-			IVertexBuilder sleeveBuilder = this.currentBuffer.getBuffer(RenderType.entityTranslucent(loc));
+			VertexConsumer armBuilder = this.currentBuffer.getBuffer(RenderType.entitySolid(loc));
+			VertexConsumer sleeveBuilder = this.currentBuffer.getBuffer(RenderType.entityTranslucent(loc));
 			
 			if (name.equals("arm_left")) {
 				stack.translate(-1.0f * SCALE_RECIPROCAL, 2.0f * SCALE_RECIPROCAL, 0.0f);
@@ -167,7 +168,7 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	
 	@Override
 	public Integer getUniqueID(FirearmItem animatable) {
-		if (this.transformType != TransformType.FIRST_PERSON_LEFT_HAND && this.transformType != TransformType.FIRST_PERSON_RIGHT_HAND) {
+		if (this.currentItemStack == null || this.transformType != TransformType.FIRST_PERSON_LEFT_HAND && this.transformType != TransformType.FIRST_PERSON_RIGHT_HAND) {
 			return -1;
 		}
 		return super.getUniqueID(animatable);
@@ -201,5 +202,10 @@ public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements IRe
 	}
 	
 	public ItemStack getCurrentItem() { return this.currentItemStack; }
+	
+	@Override
+	public boolean shouldAllowHandRender(ItemStack mainhand, ItemStack offhand, InteractionHand renderingHand) {
+		return renderingHand == InteractionHand.MAIN_HAND;
+	}
 	
 }

@@ -6,32 +6,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.LivingRenderer;
-import net.minecraft.client.renderer.entity.model.EntityModel;
-import net.minecraft.client.renderer.entity.model.PlayerModel;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.RenderProperties;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggedOutEvent;
-import net.minecraftforge.client.event.FOVUpdateEvent;
+import net.minecraftforge.client.event.FOVModifierEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.event.TickEvent.RenderTickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -39,17 +41,16 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
-import rbasamoyai.industrialwarfare.client.items.renderers.IRendersPlayerArms;
-import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
+import rbasamoyai.industrialwarfare.client.items.renderers.RendersPlayerArms;
+import rbasamoyai.industrialwarfare.client.items.renderers.SpecialThirdPersonRender;
 import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
-import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
-import rbasamoyai.industrialwarfare.common.items.IFovModifier;
-import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
-import rbasamoyai.industrialwarfare.common.items.IHighlighterItem;
-import rbasamoyai.industrialwarfare.common.items.IRenderOverlay;
+import rbasamoyai.industrialwarfare.common.items.EntityHighlighterItem;
+import rbasamoyai.industrialwarfare.common.items.FirstPersonTransform;
+import rbasamoyai.industrialwarfare.common.items.FovModifierItem;
+import rbasamoyai.industrialwarfare.common.items.HideCrosshair;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
+import rbasamoyai.industrialwarfare.common.items.RenderOverlay;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
-import software.bernie.geckolib3.renderers.geo.GeoReplacedEntityRenderer;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.FORGE, value = Dist.CLIENT)
 public class RenderEvents {
@@ -63,65 +64,69 @@ public class RenderEvents {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 		
-		ItemStack itemStack = event.getItemStack();
-		Item item = itemStack.getItem();
-		ItemStackTileEntityRenderer ister = itemStack.getItem().getItemStackTileEntityRenderer();
-		if (event.isCancelable() && event.getHand() == Hand.OFF_HAND && (ister instanceof IRendersPlayerArms || mc.player.getMainHandItem().getItem().getItemStackTileEntityRenderer() instanceof IRendersPlayerArms)) {
+		if (event.isCancelable() && !shouldRenderHand(mc.player.getMainHandItem(), mc.player.getOffhandItem(), event.getHand())) {
 			event.setCanceled(true);
 			return;
 		}
 		
-		if (ister instanceof IRendersPlayerArms) {
-			((IRendersPlayerArms) ister).setRenderArms(true);
+		BlockEntityWithoutLevelRenderer ister = RenderProperties.get(event.getItemStack()).getItemStackRenderer();
+		if (ister instanceof RendersPlayerArms) {
+			((RendersPlayerArms) ister).setRenderArms(true);
 		}
 		
-		if (item instanceof IFirstPersonTransform && ((IFirstPersonTransform) item).shouldTransform(itemStack, mc.player)) {
-			((IFirstPersonTransform) item).transformMatrixStack(itemStack, mc.player, event.getMatrixStack());
+		ItemStack itemstack = event.getItemStack();
+		Item item = itemstack.getItem();
+		if (item instanceof FirstPersonTransform && ((FirstPersonTransform) item).shouldTransform(itemstack, mc.player)) {
+			((FirstPersonTransform) item).transformPoseStack(itemstack, mc.player, event.getPoseStack());
 		}
 	}
 	
+	private static boolean shouldRenderHand(ItemStack mainhand, ItemStack offhand, InteractionHand renderHand) {
+		BlockEntityWithoutLevelRenderer mhister = RenderProperties.get(mainhand).getItemStackRenderer();
+		if (mhister instanceof RendersPlayerArms && !((RendersPlayerArms) mhister).shouldAllowHandRender(mainhand, offhand, renderHand)) {
+			return false;
+		}
+		BlockEntityWithoutLevelRenderer ohister = RenderProperties.get(offhand).getItemStackRenderer();
+		return !(ohister instanceof RendersPlayerArms) || ((RendersPlayerArms) ohister).shouldAllowHandRender(mainhand, offhand, renderHand);
+	}
+	
 	@SubscribeEvent
-	public static void onRenderOverlayPre(RenderGameOverlayEvent.Pre event) {
+	public static void onRenderOverlayPre(RenderGameOverlayEvent.PreLayer event) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
-		
-		ElementType type = event.getType();
 		
 		ItemStack weaponStack = mc.player.getMainHandItem();
 		Item item = weaponStack.getItem();
 		if (event.isCancelable()) {
-			if (type == ElementType.CROSSHAIRS
-				&& item instanceof IHideCrosshair
-				&& ((IHideCrosshair) item).shouldHideCrosshair(weaponStack)) {
+			if (event.getOverlay() == ForgeIngameGui.CROSSHAIR_ELEMENT
+				&& item instanceof HideCrosshair
+				&& ((HideCrosshair) item).shouldHideCrosshair(weaponStack)) {
 				event.setCanceled(true);
 			}
 		}
 	}
 	
 	@SubscribeEvent
-	public static void onRenderOverlayPost(RenderGameOverlayEvent.Post event) {
+	public static void onRenderOverlayPost(RenderGameOverlayEvent.PostLayer event) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
-		
-		ElementType type = event.getType();
 		
 		ItemStack itemStack = mc.player.getMainHandItem();
 		Item item = itemStack.getItem();
 		
-		if (type == ElementType.HOTBAR) {
-			if (item instanceof IRenderOverlay && mc.screen == null && !mc.options.hideGui) {
-				((IRenderOverlay) item).renderOverlay(event.getMatrixStack(), event.getPartialTicks());
+		if (event.getOverlay() == ForgeIngameGui.HOTBAR_ELEMENT) {
+			if (item instanceof RenderOverlay && mc.screen == null && !mc.options.hideGui) {
+				((RenderOverlay) item).renderOverlay(event.getMatrixStack(), event.getPartialTicks());
 			}
 		}
 	}
 	
 	@SubscribeEvent
-	public static void onFOVUpdate(FOVUpdateEvent event) {
-		PlayerEntity player = event.getEntity();
-		
+	public static void onFOVUpdate(FOVModifierEvent event) {
+		Player player = event.getEntity();
 		ItemStack stack = player.getMainHandItem();
 		Item item = stack.getItem();
-		float fovModifier = item instanceof IFovModifier ? ((IFovModifier) item).getFovModifier(stack) : 1.0f;
+		float fovModifier = item instanceof FovModifierItem ? ((FovModifierItem) item).getFovModifier(stack) : 1.0f;
 		event.setNewfov(event.getFov() * fovModifier);
 	}
 	
@@ -130,16 +135,16 @@ public class RenderEvents {
 		Minecraft mc = Minecraft.getInstance();
 		LivingEntity entity = event.getEntity();
 		
-		LivingRenderer<?, ?> renderer = event.getRenderer();
+		LivingEntityRenderer<?, ?> renderer = event.getRenderer();
 		EntityModel<?> model = renderer.getModel();
 		
-		float partialTick = event.getPartialRenderTick();
-		MatrixStack matrixStack = event.getMatrixStack();
-		IRenderTypeBuffer buffers = event.getBuffers();
-		int packedLight = event.getLight();
+		float partialTick = event.getPartialTick();
+		PoseStack matrixStack = event.getPoseStack();
+		MultiBufferSource buffers = event.getMultiBufferSource();
+		int packedLight = event.getPackedLight();
 		
-		if (entity instanceof PlayerEntity && model instanceof PlayerModel) {
-			Pose forced = ((PlayerEntity) entity).getForcedPose();
+		if (entity instanceof Player && model instanceof PlayerModel) {
+			Pose forced = ((Player) entity).getForcedPose();
 			if (forced != null && forced != Pose.CROUCHING && entity.isCrouching()) {
 				((PlayerModel<?>) model).crouching = false;
 				matrixStack.translate(0.0f, 0.125f, 0.0f);
@@ -148,8 +153,8 @@ public class RenderEvents {
 		
 		ItemStack mainhand = entity.getMainHandItem();
 		Item mainhandItem = mainhand.getItem();
-		if (mainhandItem instanceof ISpecialThirdPersonRender && (!(entity instanceof PlayerEntity) || !((PlayerEntity) entity).isSpectator())) {
-			ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) mainhandItem;
+		if (mainhandItem instanceof SpecialThirdPersonRender && (!(entity instanceof Player) || !((Player) entity).isSpectator())) {
+			SpecialThirdPersonRender stpr = (SpecialThirdPersonRender) mainhandItem;
 			if (!stpr.shouldSpecialRender(mainhand, entity)) return;
 			
 			UUID uuid = entity.getUUID();
@@ -159,21 +164,18 @@ public class RenderEvents {
 			}
 			
 			if (!ANIM_ENTITY_CACHE.containsKey(uuid)) {
-				ANIM_ENTITY_CACHE.put(uuid, new ThirdPersonItemAnimEntity(uuid, Hand.MAIN_HAND));
+				ANIM_ENTITY_CACHE.put(uuid, new ThirdPersonItemAnimEntity(uuid, InteractionHand.MAIN_HAND));
 			}
 			ThirdPersonItemAnimEntity animEntity = ANIM_ENTITY_CACHE.get(uuid);
 			
 			if (!RENDERER_CACHE.containsKey(uuid)) {
-				RENDERER_CACHE.put(uuid, new ThirdPersonItemAnimRenderer(mc.getEntityRenderDispatcher(), animEntity));
+				EntityRendererProvider.Context context = new EntityRendererProvider.Context(mc.getEntityRenderDispatcher(), mc.getItemRenderer(), mc.getResourceManager(), mc.getEntityModels(), mc.font);
+				RENDERER_CACHE.put(uuid, new ThirdPersonItemAnimRenderer(context, animEntity));
 			}
 			ThirdPersonItemAnimRenderer animRenderer = RENDERER_CACHE.get(uuid);
 			
-			if (GeoReplacedEntityRenderer.getRenderer(animEntity.getClass()) == null) {
-				GeoReplacedEntityRenderer.registerReplacedEntity(animEntity.getClass(), animRenderer);
-			}
-			
-			float headYaw = MathHelper.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
-			float bodyYaw = MathHelper.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+			float headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+			float bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
 			float dYaw = bodyYaw - headYaw;
 			
 			matrixStack.pushPose();
@@ -191,24 +193,24 @@ public class RenderEvents {
 		Minecraft mc = Minecraft.getInstance();
 		LivingEntity entity = event.getEntity();
 		
-		IRenderTypeBuffer buf = event.getBuffers();
-		float partialTick = event.getPartialRenderTick();
-		MatrixStack matrixStack = event.getMatrixStack();
-		IRenderTypeBuffer buffers = event.getBuffers();
-		int packedLight = event.getLight();
+		MultiBufferSource buf = event.getMultiBufferSource();
+		float partialTick = event.getPartialTick();
+		PoseStack poseStack = event.getPoseStack();
+		MultiBufferSource buffers = event.getMultiBufferSource();
+		int packedLight = event.getPackedLight();
 		
 		if (mc.player != null) {
-			ItemStack stack = mc.player.getItemInHand(Hand.MAIN_HAND);
+			ItemStack stack = mc.player.getMainHandItem();
 			
-			if (stack.getItem() instanceof IHighlighterItem && ((IHighlighterItem) stack.getItem()).shouldHighlightEntity(stack, entity)) {
-				((IHighlighterItem) stack.getItem()).renderHighlight(entity, stack, event.getMatrixStack(), buf);
+			if (stack.getItem() instanceof EntityHighlighterItem && ((EntityHighlighterItem) stack.getItem()).shouldHighlightEntity(stack, entity)) {
+				((EntityHighlighterItem) stack.getItem()).renderHighlight(entity, stack, event.getPoseStack(), buf);
 			}
 		}
 		
 		ItemStack mainhand = entity.getMainHandItem();
 		Item mainhandItem = mainhand.getItem();
-		if (mainhandItem instanceof ISpecialThirdPersonRender) {
-			ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) mainhandItem;
+		if (mainhandItem instanceof SpecialThirdPersonRender) {
+			SpecialThirdPersonRender stpr = (SpecialThirdPersonRender) mainhandItem;
 			UUID uuid = entity.getUUID();
 			
 			if (!ENTITY_CACHE.containsKey(uuid)) {
@@ -216,17 +218,18 @@ public class RenderEvents {
 			}
 
 			if (!ANIM_ENTITY_CACHE.containsKey(uuid)) {
-				ANIM_ENTITY_CACHE.put(uuid, new ThirdPersonItemAnimEntity(uuid, Hand.MAIN_HAND));
+				ANIM_ENTITY_CACHE.put(uuid, new ThirdPersonItemAnimEntity(uuid, InteractionHand.MAIN_HAND));
 			}
 			ThirdPersonItemAnimEntity animEntity = ANIM_ENTITY_CACHE.get(uuid);
 			
 			if (!RENDERER_CACHE.containsKey(uuid)) {
-				RENDERER_CACHE.put(uuid, new ThirdPersonItemAnimRenderer(mc.getEntityRenderDispatcher(), animEntity));
+				EntityRendererProvider.Context context = new EntityRendererProvider.Context(mc.getEntityRenderDispatcher(), mc.getItemRenderer(), mc.getResourceManager(), mc.getEntityModels(), mc.font);
+				RENDERER_CACHE.put(uuid, new ThirdPersonItemAnimRenderer(context, animEntity));
 			}
 			ThirdPersonItemAnimRenderer animRenderer = RENDERER_CACHE.get(uuid);
 			
-			float lerpYaw = MathHelper.lerp(partialTick, entity.yRotO, entity.yRot);
-			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, matrixStack, buffers, packedLight, animRenderer);
+			float lerpYaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
+			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, poseStack, buffers, packedLight, animRenderer);
 		}
 	}
 	
@@ -237,12 +240,11 @@ public class RenderEvents {
 		RENDERER_CACHE.clear();
 	}
 	
-	@SuppressWarnings("deprecation")
 	@SubscribeEvent
 	public static void onRenderTick(RenderTickEvent event) {
 		List<UUID> toRemove = new ArrayList<>();
 		ENTITY_CACHE.forEach((uuid, entity) -> {
-			if (entity == null || entity.removed) toRemove.add(uuid);
+			if (entity == null || entity.isRemoved()) toRemove.add(uuid);
 		});
 		for (UUID uuid : toRemove) {
 			ENTITY_CACHE.remove(uuid);
@@ -254,23 +256,23 @@ public class RenderEvents {
 	private static final String TAG_LAST_UPDATED_TICK = MatchCordItem.TAG_LAST_UPDATED_TICK;
 	
 	private static final String MATCH_CORD_EXPIRED_KEY = "tooltip." + IndustrialWarfare.MOD_ID + ".match_cord.expired";
-	private static final ITextComponent MATCH_CORD_EXPIRED_TEXT = (new TranslationTextComponent(MATCH_CORD_EXPIRED_KEY)).withStyle(TextFormatting.RED);
-	private static final ITextComponent MATCH_CORD_EXPIRED_TEXT1 = (new TranslationTextComponent(MATCH_CORD_EXPIRED_KEY + "1")).withStyle(TextFormatting.RED);
+	private static final Component MATCH_CORD_EXPIRED_TEXT = (new TranslatableComponent(MATCH_CORD_EXPIRED_KEY)).withStyle(ChatFormatting.RED);
+	private static final Component MATCH_CORD_EXPIRED_TEXT1 = (new TranslatableComponent(MATCH_CORD_EXPIRED_KEY + "1")).withStyle(ChatFormatting.RED);
 	
 	@SubscribeEvent
 	public static void onItemTooltip(ItemTooltipEvent event) {
-		List<ITextComponent> tooltip = event.getToolTip();
+		List<Component> tooltip = event.getToolTip();
 		ItemStack stack = event.getItemStack();
-		CompoundNBT nbt = stack.getOrCreateTag();
+		CompoundTag nbt = stack.getOrCreateTag();
 		Item item = stack.getItem();
 		
 		if (item == ItemInit.MATCH_CORD.get() && event.getFlags().isAdvanced() && stack.isDamaged() && MatchCordItem.isLit(stack)) {
 			int adjustedDamage = Math.min(stack.getMaxDamage(), (int)(event.getPlayer().level.getGameTime() - nbt.getLong(TAG_LAST_UPDATED_TICK) + stack.getDamageValue()));
 			
 			for (int i = tooltip.size() - 1; i >= 0; --i) {
-				ITextComponent line = tooltip.get(i);
-				if (line instanceof TranslationTextComponent && ((TranslationTextComponent) line).getKey().equals("item.durability")) {
-					tooltip.set(i, new TranslationTextComponent("item.durability", stack.getMaxDamage() - adjustedDamage, stack.getMaxDamage()));
+				Component line = tooltip.get(i);
+				if (line instanceof TranslatableComponent && ((TranslatableComponent) line).getKey().equals("item.durability")) {
+					tooltip.set(i, new TranslatableComponent("item.durability", stack.getMaxDamage() - adjustedDamage, stack.getMaxDamage()));
 				}
 			}
 			

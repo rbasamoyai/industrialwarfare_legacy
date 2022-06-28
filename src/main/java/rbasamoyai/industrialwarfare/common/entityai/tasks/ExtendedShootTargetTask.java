@@ -2,52 +2,52 @@ package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.BrainUtil;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob.ShootingStatus;
 
-public class ExtendedShootTargetTask<E extends MobEntity & IWeaponRangedAttackMob> extends Task<E> {
+public class ExtendedShootTargetTask<E extends Mob & IWeaponRangedAttackMob> extends Behavior<E> {
 
 	private ShootingStatus status = ShootingStatus.UNLOADED;
 	
 	public ExtendedShootTargetTask() {
 		super(ImmutableMap.of(
-				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT),
+				MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT),
 				1200);
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld world, E shooter) {
+	protected boolean checkExtraStartConditions(ServerLevel world, E shooter) {
 		LivingEntity target = getAttackTarget(shooter);
-		return shooter.canDoRangedAttack() && BrainUtil.canSee(shooter, target) && BrainUtil.isWithinAttackRange(shooter, target, 0);
+		return shooter.canDoRangedAttack() && BehaviorUtils.canSee(shooter, target) && BehaviorUtils.isWithinAttackRange(shooter, target, 0);
 	}
 	
 	@Override
-	protected void start(ServerWorld world, E shooter, long gameTime) {
+	protected void start(ServerLevel world, E shooter, long gameTime) {
 		this.status = shooter.getNextStatus();
 	}
 	
 	@Override
-	protected boolean canStillUse(ServerWorld world, E shooter, long gameTime) {
+	protected boolean canStillUse(ServerLevel world, E shooter, long gameTime) {
 		return shooter.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && this.checkExtraStartConditions(world, shooter);
 	}
 	
 	@Override
-	protected void tick(ServerWorld world, E shooter, long gameTime) {
+	protected void tick(ServerLevel world, E shooter, long gameTime) {
 		LivingEntity target = getAttackTarget(shooter);
-		BrainUtil.lookAtEntity(shooter, target);
+		BehaviorUtils.lookAtEntity(shooter, target);
 		this.attackTarget(shooter, target);
 	}
 	
 	@Override
-	protected void stop(ServerWorld world, E shooter, long gameTime) {
+	protected void stop(ServerLevel world, E shooter, long gameTime) {
 		shooter.stopRangedAttack();
 	}
 	

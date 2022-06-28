@@ -1,14 +1,14 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 public class SingleShotDataHandler extends FirearmItemDataHandler {
 
 	private ItemStack shot = ItemStack.EMPTY;
 	
-	public SingleShotDataHandler(ItemStackHandler handler) {
+	public SingleShotDataHandler(IItemHandlerModifiable handler) {
 		super(handler);
 	}
 	
@@ -29,7 +29,17 @@ public class SingleShotDataHandler extends FirearmItemDataHandler {
 	@Override public boolean hasAmmo() { return !this.shot.isEmpty(); }
 	@Override public boolean isFull() { return !this.shot.isEmpty(); }
 
-	@Override public CompoundNBT serializeAmmo() { return this.shot.serializeNBT(); }
-	@Override public void deserializeAmmo(CompoundNBT nbt) { this.shot = ItemStack.of(nbt); }
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		super.writeTag(tag);
+		tag.put("loadedShot", this.shot.serializeNBT());
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		super.readTag(tag);
+		this.shot = ItemStack.of(tag.getCompound("loadedShot"));
+	}
 
 }

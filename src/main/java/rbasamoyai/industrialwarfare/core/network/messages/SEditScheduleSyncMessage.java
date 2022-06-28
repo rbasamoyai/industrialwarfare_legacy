@@ -6,28 +6,27 @@ import java.util.function.Supplier;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Hand;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
 
 public class SEditScheduleSyncMessage {
 
-	public Hand hand;
-	public List<Pair<Integer, Integer>> schedule;
+	private InteractionHand hand;
+	private List<Pair<Integer, Integer>> schedule;
 	
 	public SEditScheduleSyncMessage() {
 	}
 	
-	public SEditScheduleSyncMessage(Hand hand, List<Pair<Integer, Integer>> schedule) {
+	public SEditScheduleSyncMessage(InteractionHand hand, List<Pair<Integer, Integer>> schedule) {
 		this.hand = hand;
 		this.schedule = schedule;
 	}
 	
-	public static void encode(SEditScheduleSyncMessage msg, PacketBuffer buf) {
-		buf.writeBoolean(msg.hand == Hand.MAIN_HAND);
+	public static void encode(SEditScheduleSyncMessage msg, FriendlyByteBuf buf) {
+		buf.writeBoolean(msg.hand == InteractionHand.MAIN_HAND);
 		buf.writeVarInt(msg.schedule.size());
 		msg.schedule.forEach(shift -> {
 			buf.writeInt(shift.getFirst());
@@ -35,8 +34,8 @@ public class SEditScheduleSyncMessage {
 		});
 	}
 	
-	public static SEditScheduleSyncMessage decode(PacketBuffer buf) {
-		Hand hand = buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
+	public static SEditScheduleSyncMessage decode(FriendlyByteBuf buf) {
+		InteractionHand hand = buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 		List<Pair<Integer, Integer>> schedule = new ArrayList<>(7);
 		int size = buf.readVarInt();
 		
@@ -49,16 +48,15 @@ public class SEditScheduleSyncMessage {
 		return new SEditScheduleSyncMessage(hand, schedule);
 	}
 	
-	public static void handle(SEditScheduleSyncMessage msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			ServerPlayerEntity player = context.getSender();
-			ItemStack handItem = player.getItemInHand(msg.hand);
+	public static void handle(SEditScheduleSyncMessage msg, Supplier<NetworkEvent.Context> sup) {
+		NetworkEvent.Context ctx = sup.get();
+		ctx.enqueueWork(() -> {
+			ItemStack handItem = ctx.getSender().getItemInHand(msg.hand);
 			ScheduleItem.getDataHandler(handItem).ifPresent(h -> {
 				h.setSchedule(msg.schedule);
 			});
 		});
-		context.setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 	
 }

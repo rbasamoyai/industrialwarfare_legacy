@@ -1,10 +1,10 @@
 package rbasamoyai.industrialwarfare.client.screen.widgets.page;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.Component;
 
 public class TextDecorator extends ScreenPageDecorator {
 
@@ -14,9 +14,9 @@ public class TextDecorator extends ScreenPageDecorator {
 	private final boolean shadow;
 	private final int textColor;
 	
-	private ITextComponent text;
+	private Component text;
 	
-	public TextDecorator(IScreenPage page, ITextComponent text, float x, float y, boolean centered, boolean shadow, int textColor) {
+	public TextDecorator(IScreenPage page, Component text, float x, float y, boolean centered, boolean shadow, int textColor) {
 		super(page);
 		
 		this.text = text;
@@ -28,10 +28,10 @@ public class TextDecorator extends ScreenPageDecorator {
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
 		Minecraft mc = Minecraft.getInstance();
-		FontRenderer font = mc.font;
+		Font font = mc.font;
 		float x = this.centered ? this.x - (float) font.width(this.text) * 0.5f : this.x;
 		if (this.shadow) {
 			font.drawShadow(stack, this.text, x, this.y, this.textColor);
@@ -40,6 +40,6 @@ public class TextDecorator extends ScreenPageDecorator {
 		}
 	}
 	
-	public void setText(ITextComponent text) { this.text = text; }
+	public void setText(Component text) { this.text = text; }
 	
 }

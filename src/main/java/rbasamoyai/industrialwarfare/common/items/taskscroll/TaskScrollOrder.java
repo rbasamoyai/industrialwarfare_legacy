@@ -5,16 +5,17 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.stream.Collectors;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.util.INBTSerializable;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.EmptyArgHolder;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
+import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 
 /**
  * A class for the TaskScrollItem. It can be expanded for multiple task scroll types.
@@ -23,7 +24,7 @@ import rbasamoyai.industrialwarfare.core.IWModRegistries;
  *
  */
 
-public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
+public class TaskScrollOrder implements INBTSerializable<CompoundTag> {
 	
 	private static final String TAG_COMMAND = "command";
 	private static final String TAG_ARGS = "args";
@@ -42,6 +43,12 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 	
 	public static TaskScrollOrder empty(TaskScrollCommand command) {
 		return filledWith(command, ArgWrapper.EMPTY);
+	}
+	
+	public static TaskScrollOrder fromTag(CompoundTag tag) {
+		TaskScrollOrder order = empty(TaskScrollCommandInit.MOVE_TO.get());
+		order.deserializeNBT(tag);
+		return order;
 	}
 	
 	public static TaskScrollOrder withPos(TaskScrollCommand command, BlockPos pos) {
@@ -93,11 +100,11 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT tag = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
 		tag.putString(TAG_COMMAND, this.command.getRegistryName().toString());
 		
-		ListNBT argTag = new ListNBT();
+		ListTag argTag = new ListTag();
 		this.args.stream()
 				.map(IArgHolder::getWrapper)
 				.map(ArgWrapper::serializeNBT)
@@ -108,18 +115,18 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		this.setCommand(IWModRegistries.TASK_SCROLL_COMMANDS.getValue(new ResourceLocation(nbt.getString(TAG_COMMAND))), ArgWrapper.EMPTY);
+	public void deserializeNBT(CompoundTag nbt) {
+		this.setCommand(IWModRegistries.TASK_SCROLL_COMMANDS.get().getValue(new ResourceLocation(nbt.getString(TAG_COMMAND))), ArgWrapper.EMPTY);
 		
-		ListNBT argTags = nbt.getList(TAG_ARGS, Constants.NBT.TAG_COMPOUND);
+		ListTag argTags = nbt.getList(TAG_ARGS, Tag.TAG_COMPOUND);
 		List<ArgWrapper> wrappers = argTags.stream()
-				.map(tag -> (CompoundNBT) tag)
+				.map(tag -> (CompoundTag) tag)
 				.map(ArgWrapper::fromNBT)
 				.collect(Collectors.toList());
 		this.args = this.command.getCommandTree().getArguments(wrappers);
 	}
 	
-	public void toNetwork(PacketBuffer buf) {
+	public void toNetwork(FriendlyByteBuf buf) {
 		buf.writeResourceLocation(this.command.getRegistryName());
 		buf.writeVarInt(this.args.size());
 		this.args.stream()
@@ -127,8 +134,8 @@ public class TaskScrollOrder implements INBTSerializable<CompoundNBT> {
 				.forEach(wrapper -> wrapper.toNetwork(buf));
 	}
 	
-	public static TaskScrollOrder fromNetwork(PacketBuffer buf) {
-		TaskScrollCommand command = IWModRegistries.TASK_SCROLL_COMMANDS.getValue(buf.readResourceLocation());
+	public static TaskScrollOrder fromNetwork(FriendlyByteBuf buf) {
+		TaskScrollCommand command = IWModRegistries.TASK_SCROLL_COMMANDS.get().getValue(buf.readResourceLocation());
 		int sz = buf.readVarInt();
 		
 		List<ArgWrapper> wrappers = new ArrayList<>();

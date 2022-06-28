@@ -1,22 +1,19 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem;
 
 import java.util.Stack;
-import java.util.stream.IntStream;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 public class InternalMagazineDataHandler extends FirearmItemDataHandler {
-	
-	private static final String TAG_INTERNAL_MAGAZINE = "internalMagazine";
 	
 	private int magazineSize;
 	private Stack<ItemStack> magazine = new Stack<>();
 	
-	public InternalMagazineDataHandler(ItemStackHandler handler) {
+	public InternalMagazineDataHandler(IItemHandlerModifiable handler) {
 		super(handler);
 	}
 	
@@ -28,7 +25,6 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 		if (this.magazine.size() >= this.magazineSize) return ammo;
 		if (ammo.isEmpty()) return ItemStack.EMPTY;
 		
-		// TODO: bullet item and other ammo
 		ItemStack splitAmmo = ammo.split(1);
 		
 		this.magazine.push(splitAmmo);
@@ -61,25 +57,26 @@ public class InternalMagazineDataHandler extends FirearmItemDataHandler {
 	}
 	
 	@Override
-	public CompoundNBT serializeAmmo() {
-		CompoundNBT tag = new CompoundNBT();
-		ListNBT ammo = new ListNBT();
+	public CompoundTag writeTag(CompoundTag tag) {
+		super.writeTag(tag);
+		ListTag ammo = new ListTag();
 		for (int i = 0; i < this.magazine.size(); ++i) {
-			ammo.add(this.magazine.get(i).serializeNBT());
+			ItemStack stack = this.magazine.get(i);
+			if (stack == null || stack.isEmpty()) continue;
+			ammo.add(stack.serializeNBT());
 		}
-		tag.put(TAG_INTERNAL_MAGAZINE, ammo);
+		tag.put("internalMagazine", ammo);
 		return tag;
 	}
 	
 	@Override
-	public void deserializeAmmo(CompoundNBT nbt) {
+	public void readTag(CompoundTag tag) {
+		super.readTag(tag);
 		this.magazine.clear();
-		ListNBT ammo = nbt.getList(TAG_INTERNAL_MAGAZINE, Constants.NBT.TAG_COMPOUND);
-		IntStream.rangeClosed(0, ammo.size() - 1)
-				.boxed()
-				.map(ammo::getCompound)
-				.map(ItemStack::of)
-				.forEach(this::insertAmmo);
+		ListTag ammo = tag.getList("internalMagazine", Tag.TAG_COMPOUND);
+		for (int i = 0; i < ammo.size(); ++i) {
+			this.magazine.push(ItemStack.of(ammo.getCompound(i)));
+		}
 	}
 
 }

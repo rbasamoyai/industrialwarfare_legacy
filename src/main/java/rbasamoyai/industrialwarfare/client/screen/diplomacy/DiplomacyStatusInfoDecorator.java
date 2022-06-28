@@ -5,17 +5,17 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import rbasamoyai.industrialwarfare.client.PlayerInfo;
 import rbasamoyai.industrialwarfare.client.screen.ScreenUtils;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.IScreenPage;
@@ -62,7 +62,7 @@ public class DiplomacyStatusInfoDecorator extends ScreenPageDecorator implements
 	private final int leftPos;
 	private final int topPos;
 	private final Minecraft mc;
-	private final FontRenderer font;
+	private final Font font;
 	
 	private List<DiplomacyStatusButton> buttons = new ArrayList<>();
 	private Button closeButton;
@@ -72,9 +72,9 @@ public class DiplomacyStatusInfoDecorator extends ScreenPageDecorator implements
 	public DiplomacyStatusInfoDecorator(IScreenPage page,
 			int leftPos,
 			int topPos,
-			Button.IPressable callback,
-			Function<DiplomaticStatus, DiplomacyStatusButton.IDisplay> displayProvider,
-			Function<DiplomaticStatus, DiplomacyStatusButton.IPressable> pressableProvider) {
+			Button.OnPress callback,
+			Function<DiplomaticStatus, DiplomacyStatusButton.OnDisplay> displayProvider,
+			Function<DiplomaticStatus, DiplomacyStatusButton.OnPress> pressableProvider) {
 		super(page);
 		
 		this.leftPos = leftPos;
@@ -116,19 +116,19 @@ public class DiplomacyStatusInfoDecorator extends ScreenPageDecorator implements
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
 		
 		if (this.tag.equals(PlayerIDTag.NO_OWNER)) return;
 		
-		TextureManager texManager = this.mc.getTextureManager();
-		texManager.bind(DiplomacyScreen.DIPLOMACY_GUI);
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, DiplomacyScreen.DIPLOMACY_GUI);
 		
 		stack.pushPose();
 		stack.translate(this.leftPos, this.topPos, 0);
 		this.getScreen().blit(stack, 0, 0, ICON_WINDOW_TEX_X, ICON_WINDOW_TEX_Y, ICON_WINDOW_WIDTH, ICON_WINDOW_HEIGHT);
 		
-		ITextComponent tc;
+		Component tc;
 		if (this.tag.isPlayer()) {
 			GameProfile profile = PlayerInfo.get(this.tag.getUUID());
 			if (profile == null) {
@@ -137,7 +137,7 @@ public class DiplomacyStatusInfoDecorator extends ScreenPageDecorator implements
 				String name = profile.getName();
 				tc = name == null
 						? DiplomacyScreen.COULD_NOT_LOAD.copy()
-						: new StringTextComponent(name);
+						: new TextComponent(name);
 			}
 			ScreenUtils.drawFace(this.tag, stack, ICON_OFFSET_X, ICON_OFFSET_Y, ICON_SCALED);
 		} else {
@@ -150,7 +150,7 @@ public class DiplomacyStatusInfoDecorator extends ScreenPageDecorator implements
 		
 		boolean noDiplo = false;
 		if (statuses.getFirst() != DiplomaticStatus.UNKNOWN && statuses.getSecond() != DiplomaticStatus.UNKNOWN) {
-			ITextComponent theirStatus = DiplomacyScreen.THEIR_STATUSES.get(statuses.getFirst());
+			Component theirStatus = DiplomacyScreen.THEIR_STATUSES.get(statuses.getFirst());
 			this.font.draw(stack, theirStatus, (float) THEIR_STATUS_TEXT_X, (float) THEIR_STATUS_TEXT_Y, TEXT_COLOR);
 			
 			this.font.draw(stack, DiplomacyScreen.OUR_STATUS, (float) OUR_STATUS_TEXT_X, (float) OUR_STATUS_TEXT_Y, TEXT_COLOR);

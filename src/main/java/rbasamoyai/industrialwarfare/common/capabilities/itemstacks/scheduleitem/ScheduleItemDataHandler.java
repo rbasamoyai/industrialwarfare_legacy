@@ -5,9 +5,11 @@ import java.util.List;
 
 import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
 
-public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
+public class ScheduleItemDataHandler implements IScheduleItemData {
 	
 	private List<Pair<Integer, Integer>> schedule = new ArrayList<>(7);
 	private int maxShifts = 6;
@@ -47,6 +49,21 @@ public class ScheduleItemDataHandler implements IScheduleItemDataHandler {
 	@Override
 	public boolean shouldWork(int minuteOfTheWeek) {
 		return ScheduleUtils.inShift(this.schedule, minuteOfTheWeek);
+	}
+	
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		tag.putInt("maxMinutes", this.maxMinutes);
+		tag.putInt("maxShifts", this.maxShifts);
+		tag.put("schedule", ScheduleUtils.toTag(this.schedule));
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		this.maxMinutes = tag.getInt("maxMinutes");
+		this.maxShifts = tag.getInt("maxShifts");
+		this.schedule = ScheduleUtils.fromTag(tag.getList("schedule", Tag.TAG_INT_ARRAY));
 	}
 
 }

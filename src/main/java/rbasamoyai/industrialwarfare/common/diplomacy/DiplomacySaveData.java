@@ -10,16 +10,16 @@ import java.util.stream.Stream;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.DimensionSavedDataManager;
-import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 
-public class DiplomacySaveData extends WorldSavedData {
+public class DiplomacySaveData extends SavedData {
 
 	private static final String DATA_NAME = "diplomacySaveData";
 	
@@ -37,16 +37,16 @@ public class DiplomacySaveData extends WorldSavedData {
 	private Map<UUID, Map<PlayerIDTag, Byte>> npcFactionsRelationsTable = new HashMap<>(); // UUID only as relations only apply to NPCs, whose owner UUID is always OwnerTag#GAIA_UUID
 	
 	public DiplomacySaveData() {
-		super(DATA_NAME);
+		super();
 	}
 	
-	public static DiplomacySaveData get(World world) {
-		if (!(world instanceof ServerWorld)) {
+	public static DiplomacySaveData get(Level world) {
+		if (!(world instanceof ServerLevel)) {
 			throw new RuntimeException("Attempted to get data from client world");
 		}
-		ServerWorld overworld = world.getServer().getLevel(World.OVERWORLD);
-		DimensionSavedDataManager dataManager = overworld.getDataStorage();
-		return dataManager.computeIfAbsent(DiplomacySaveData::new, DATA_NAME);
+		ServerLevel overworld = world.getServer().getLevel(Level.OVERWORLD);
+		DimensionDataStorage dataManager = overworld.getDataStorage();
+		return dataManager.computeIfAbsent(new DiplomacySaveData()::load, DiplomacySaveData::new, DATA_NAME);
 	}
 	
 	/* diplomacyTable methods */
@@ -122,7 +122,7 @@ public class DiplomacySaveData extends WorldSavedData {
 		this.setDirty();
 	}
 	
-	public void initPlayerDiplomacyStatuses(PlayerEntity player) {
+	public void initPlayerDiplomacyStatuses(Player player) {
 		PlayerIDTag tag = PlayerIDTag.of(player);
 		
 		for (PlayerIDTag keyTag : this.diplomacyTable.keySet()) {
@@ -206,18 +206,19 @@ public class DiplomacySaveData extends WorldSavedData {
 		this.setDirty();
 	}
 	
-	@Override
-	public void load(CompoundNBT tag) {
-		ListNBT diplomacyList = tag.getList(TAG_DIPLOMACY, Constants.NBT.TAG_COMPOUND);
+	public DiplomacySaveData load(CompoundTag tag) {
+		
+		
+		ListTag diplomacyList = tag.getList(TAG_DIPLOMACY, Tag.TAG_COMPOUND);
 		this.diplomacyTable.clear();
 		for (int i = 0; i < diplomacyList.size(); i++) {
-			CompoundNBT e1 = diplomacyList.getCompound(i);
+			CompoundTag e1 = diplomacyList.getCompound(i);
 			PlayerIDTag owner = PlayerIDTag.fromNBT(e1.getCompound(TAG_PLAYER));
 			
 			Map<PlayerIDTag, DiplomaticStatus> statusMap = new HashMap<>();
-			ListNBT statusList = e1.getList(TAG_STATUSES, Constants.NBT.TAG_COMPOUND);
+			ListTag statusList = e1.getList(TAG_STATUSES, Tag.TAG_COMPOUND);
 			for (int j = 0; j < statusList.size(); j++) {
-				CompoundNBT e2 = statusList.getCompound(j);
+				CompoundTag e2 = statusList.getCompound(j);
 				PlayerIDTag player = PlayerIDTag.fromNBT(e2.getCompound(TAG_PLAYER));
 				DiplomaticStatus status = DiplomaticStatus.fromValue(e2.getByte(TAG_STATUS));
 				statusMap.put(player, status);
@@ -225,36 +226,38 @@ public class DiplomacySaveData extends WorldSavedData {
 			this.diplomacyTable.put(owner, statusMap);
 		}
 		
-		ListNBT npcFactionsRelationsList = tag.getList(TAG_NPC_FACTION_RELATIONS, Constants.NBT.TAG_COMPOUND);
+		ListTag npcFactionsRelationsList = tag.getList(TAG_NPC_FACTION_RELATIONS, Tag.TAG_COMPOUND);
 		this.npcFactionsRelationsTable.clear();
 		for (int i = 0; i < npcFactionsRelationsList.size(); i++) {
-			CompoundNBT e1 = npcFactionsRelationsList.getCompound(i);
+			CompoundTag e1 = npcFactionsRelationsList.getCompound(i);
 			UUID npcFaction = e1.getUUID(TAG_NPC_FACTION);
 			
 			Map<PlayerIDTag, Byte> relationsMap = new HashMap<>();
-			ListNBT relationsList = e1.getList(TAG_STATUSES, Constants.NBT.TAG_COMPOUND);
+			ListTag relationsList = e1.getList(TAG_STATUSES, Tag.TAG_COMPOUND);
 			for (int j = 0; j < relationsList.size(); j++) {
-				CompoundNBT e2 = relationsList.getCompound(j);
+				CompoundTag e2 = relationsList.getCompound(j);
 				PlayerIDTag player = PlayerIDTag.fromNBT(e2.getCompound(TAG_PLAYER));
 				byte relationship = e2.getByte(TAG_RELATIONSHIP);
 				relationsMap.put(player, relationship);
 			}
 			this.npcFactionsRelationsTable.put(npcFaction, relationsMap);
 		}
+		
+		return this;
 	}
 
 	@Override
-	public CompoundNBT save(CompoundNBT tag) {
-		ListNBT diplomacyList = new ListNBT();
+	public CompoundTag save(CompoundTag tag) {
+		ListTag diplomacyList = new ListTag();
 		for (Entry<PlayerIDTag, Map<PlayerIDTag, DiplomaticStatus>> e1 : this.diplomacyTable.entrySet()) {
-			CompoundNBT entry1 = new CompoundNBT();
+			CompoundTag entry1 = new CompoundTag();
 			entry1.put(TAG_PLAYER, e1.getKey().serializeNBT());
 			
-			ListNBT statusList = new ListNBT();
+			ListTag statusList = new ListTag();
 			Map<PlayerIDTag, DiplomaticStatus> statusMap = e1.getValue();
 			if (statusMap != null) {
 				for (Entry<PlayerIDTag, DiplomaticStatus> e2 : statusMap.entrySet()) {
-					CompoundNBT entry2 = new CompoundNBT();
+					CompoundTag entry2 = new CompoundTag();
 					entry2.put(TAG_PLAYER, e2.getKey().serializeNBT());
 					entry2.putByte(TAG_STATUS, e2.getValue().getValue());
 					statusList.add(entry2);
@@ -266,16 +269,16 @@ public class DiplomacySaveData extends WorldSavedData {
 		}
 		tag.put(TAG_DIPLOMACY, diplomacyList);
 		
-		ListNBT npcFactionsRelationsList = new ListNBT();
+		ListTag npcFactionsRelationsList = new ListTag();
 		for (Entry<UUID, Map<PlayerIDTag, Byte>> e1 : this.npcFactionsRelationsTable.entrySet()) {
-			CompoundNBT entry1 = new CompoundNBT();
+			CompoundTag entry1 = new CompoundTag();
 			entry1.putUUID(TAG_NPC_FACTION, e1.getKey());
 			
-			ListNBT relationsList = new ListNBT();
+			ListTag relationsList = new ListTag();
 			Map<PlayerIDTag, Byte> relationshipMap = e1.getValue();
 			if (relationshipMap != null) {
 				for (Entry<PlayerIDTag, Byte> e2 : relationshipMap.entrySet()) {
-					CompoundNBT entry2 = new CompoundNBT();
+					CompoundTag entry2 = new CompoundTag();
 					entry2.put(TAG_PLAYER, e2.getKey().serializeNBT());
 					entry2.putByte(TAG_RELATIONSHIP, e2.getValue());
 					relationsList.add(entry2);

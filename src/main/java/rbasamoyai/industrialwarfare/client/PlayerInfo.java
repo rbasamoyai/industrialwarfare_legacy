@@ -8,7 +8,7 @@ import java.util.concurrent.Executor;
 
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.tileentity.SkullTileEntity;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 
 public class PlayerInfo {
 
@@ -25,9 +25,9 @@ public class PlayerInfo {
 	public static void queueProfileFill(UUID uuid, Executor exec) {
 		CompletableFuture.supplyAsync(() -> {
 			GameProfile profile = new GameProfile(uuid, "");
-			if (SkullTileEntity.sessionService == null) return profile;
+			if (SkullBlockEntity.sessionService == null) return profile;
 			try {
-				return SkullTileEntity.sessionService.fillProfileProperties(profile, true);
+				return SkullBlockEntity.sessionService.fillProfileProperties(profile, true);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return profile;

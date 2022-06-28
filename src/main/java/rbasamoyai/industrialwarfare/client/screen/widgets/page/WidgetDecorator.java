@@ -1,20 +1,20 @@
 package rbasamoyai.industrialwarfare.client.screen.widgets.page;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.components.AbstractWidget;
 
 public class WidgetDecorator extends AbstractWidgetDecorator {
 
-	private final Widget widget;
+	private final AbstractWidget widget;
 	
-	public WidgetDecorator(IScreenPage page, Widget widget) {
+	public WidgetDecorator(IScreenPage page, AbstractWidget widget) {
 		super(page);
 		this.widget = widget;
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.widget.render(stack, mouseX, mouseY, partialTicks);
 	}

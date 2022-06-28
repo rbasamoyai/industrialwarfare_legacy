@@ -1,7 +1,7 @@
 package rbasamoyai.industrialwarfare.core.datagen;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.common.data.SoundDefinition;
 import net.minecraftforge.common.data.SoundDefinition.Sound;

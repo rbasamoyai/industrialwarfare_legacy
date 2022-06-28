@@ -2,9 +2,9 @@ package rbasamoyai.industrialwarfare.common.recipes;
 
 import java.util.Optional;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
 

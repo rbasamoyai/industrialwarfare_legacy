@@ -2,19 +2,20 @@ package rbasamoyai.industrialwarfare.client.screen.taskscroll;
 
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.audio.SoundHandler;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
-public class ItemArgWidget extends Widget {
+public class ItemArgWidget extends AbstractWidget {
 
 	private static final int SLOT_WIDTH = 16;
 	private static final int HOVER_COLOR = 0x80FFFFFF;
@@ -25,7 +26,7 @@ public class ItemArgWidget extends Widget {
 	private int argIndex;
 	
 	public ItemArgWidget(int x, int y, int orderIndex, int argIndex, List<TaskScrollOrder> orderList, ItemRenderer itemRenderer) {
-		super(x, y, SLOT_WIDTH, SLOT_WIDTH, StringTextComponent.EMPTY);
+		super(x, y, SLOT_WIDTH, SLOT_WIDTH, TextComponent.EMPTY);
 		
 		this.orderList = orderList;
 		
@@ -35,7 +36,7 @@ public class ItemArgWidget extends Widget {
 	}
 	
 	@Override
-	public void renderButton(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void renderButton(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		if (0 <= this.orderIndex && this.orderIndex < this.orderList.size()) {
 			IArgHolder holder = this.orderList.get(this.orderIndex).getArgHolder(this.argIndex);
 			if (holder.isItemStackArg()) {
@@ -72,8 +73,11 @@ public class ItemArgWidget extends Widget {
 		this.argIndex = index;
 	}
 	
+	@Override public void playDownSound(SoundManager manager) {}
+	
 	@Override
-	public void playDownSound(SoundHandler handler) {
+	public void updateNarration(NarrationElementOutput pNarrationElementOutput) {
 		
 	}
+	
 }

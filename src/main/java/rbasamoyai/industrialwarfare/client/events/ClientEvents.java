@@ -1,27 +1,26 @@
 package rbasamoyai.industrialwarfare.client.events;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
-import net.minecraft.client.renderer.color.ItemColors;
-import net.minecraft.client.renderer.entity.SpriteRenderer;
-import net.minecraft.item.IDyeableArmorItem;
-import net.minecraft.item.ItemModelsProperties;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeableArmorItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ColorHandlerEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.blockentities.renderers.TaskScrollShelfRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NPCRenderer;
 import rbasamoyai.industrialwarfare.client.entities.renderers.NothingRenderer;
 import rbasamoyai.industrialwarfare.client.screen.MatchCoilScreen;
@@ -35,13 +34,12 @@ import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
 import rbasamoyai.industrialwarfare.client.screen.resourcestation.ResourceStationScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
-import rbasamoyai.industrialwarfare.client.tileentities.renderers.TaskScrollShelfTileEntityRenderer;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
+import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
-import rbasamoyai.industrialwarfare.core.init.ContainerInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
-import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.MenuInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
 @Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD, value = Dist.CLIENT)
@@ -51,25 +49,17 @@ public class ClientEvents {
 	
 	@SubscribeEvent
 	public static void onClientSetup(FMLClientSetupEvent event) {
-		ScreenManager.register(ContainerInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
-		ScreenManager.register(ContainerInit.DIPLOMACY.get(), DiplomacyScreen::new);
-		ScreenManager.register(ContainerInit.EDIT_LABEL.get(), EditLabelScreen::new);
-		ScreenManager.register(ContainerInit.MATCH_COIL.get(), MatchCoilScreen::new);
-		ScreenManager.register(ContainerInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
-		ScreenManager.register(ContainerInit.NPC_BASE.get(), NPCBaseScreen::new);
-		ScreenManager.register(ContainerInit.RESOURCE_STATION.get(), ResourceStationScreen::new);
-		ScreenManager.register(ContainerInit.SCHEDULE.get(), EditScheduleScreen::new);
-		ScreenManager.register(ContainerInit.TASK_SCROLL.get(), TaskScrollScreen::new);
-		ScreenManager.register(ContainerInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
-		ScreenManager.register(ContainerInit.WHISTLE.get(), WhistleScreen::new);
-		
-		Minecraft mc = Minecraft.getInstance();
-		
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.BULLET.get(), erm -> new SpriteRenderer<>(erm, mc.getItemRenderer()));
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.NPC.get(), NPCRenderer::new);
-		RenderingRegistry.registerEntityRenderingHandler(EntityTypeInit.FORMATION_LEADER.get(), NothingRenderer::new);
-		
-		ClientRegistry.bindTileEntityRenderer(TileEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfTileEntityRenderer::new);
+		MenuScreens.register(MenuInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
+		MenuScreens.register(MenuInit.DIPLOMACY.get(), DiplomacyScreen::new);
+		MenuScreens.register(MenuInit.EDIT_LABEL.get(), EditLabelScreen::new);
+		MenuScreens.register(MenuInit.MATCH_COIL.get(), MatchCoilScreen::new);
+		MenuScreens.register(MenuInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
+		MenuScreens.register(MenuInit.NPC_BASE.get(), NPCBaseScreen::new);
+		MenuScreens.register(MenuInit.RESOURCE_STATION.get(), ResourceStationScreen::new);
+		MenuScreens.register(MenuInit.SCHEDULE.get(), EditScheduleScreen::new);
+		MenuScreens.register(MenuInit.TASK_SCROLL.get(), TaskScrollScreen::new);
+		MenuScreens.register(MenuInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
+		MenuScreens.register(MenuInit.WHISTLE.get(), WhistleScreen::new);
 		
 		ForgeRegistries.ITEMS.forEach(i -> {
 			if (i instanceof FirearmItem) {
@@ -77,24 +67,31 @@ public class ClientEvents {
 			}
 		});
 		
-		event.enqueueWork(() -> {
-			ItemModelsProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
-					(stack, level, living) -> {
-						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
-					});
-			
-			ItemModelsProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
-					(stack, level, living) -> {
-						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
-					});
-			
-			ItemModelsProperties.register(ItemInit.MATCH_COIL.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"),
-					(stack, level, living) -> {
-						return (float) stack.getItem().getDurabilityForDisplay(stack) * 4.0f;
-					});
-			
-			RenderTypeLookup.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
-		});
+		ItemProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+				(stack, level, living, seed) -> {
+					return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+				});
+		
+		ItemProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+				(stack, level, living, seed) -> {
+					return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+				});
+		
+		ItemProperties.register(ItemInit.MATCH_COIL.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"),
+				(stack, level, living, seed) -> {
+					return (float) stack.getDamageValue() * 4.0f / (float) stack.getMaxDamage();
+				});
+		
+		ItemBlockRenderTypes.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
+	}
+	
+	@SubscribeEvent
+	public static void onEntityRenderersRegister(EntityRenderersEvent.RegisterRenderers event) {
+		event.registerEntityRenderer(EntityTypeInit.BULLET.get(), ThrownItemRenderer::new);
+		event.registerEntityRenderer(EntityTypeInit.NPC.get(), NPCRenderer::new);
+		event.registerEntityRenderer(EntityTypeInit.FORMATION_LEADER.get(), NothingRenderer::new);
+		
+		event.registerBlockEntityRenderer(BlockEntityTypeInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfRenderer::new);
 	}
 	
 	@SubscribeEvent
@@ -112,11 +109,11 @@ public class ClientEvents {
 		ItemColors itemColors = event.getItemColors();
 		
 		itemColors.register((stack, layer) -> {
-			return layer > 0 ? -1 : ((IDyeableArmorItem) stack.getItem()).getColor(stack);
+			return layer > 0 ? -1 : ((DyeableArmorItem) stack.getItem()).getColor(stack);
 		}, ItemInit.AMERICAN_KEPI.get());
 		
 		itemColors.register((stack, layer) -> {
-			return layer > 0 ? -1 : ((IDyeableArmorItem) stack.getItem()).getColor(stack);
+			return layer > 0 ? -1 : ((DyeableArmorItem) stack.getItem()).getColor(stack);
 		}, ItemInit.PICKELHAUBE_HIGH.get());
 	}
 	

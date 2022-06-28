@@ -1,11 +1,11 @@
 package rbasamoyai.industrialwarfare.common.items.debugitems;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -17,13 +17,13 @@ public class DebugOwnerItem extends Item {
 	}
 	
 	@Override
-	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
-		if (player.level.isClientSide) return ActionResultType.SUCCESS;
-		if (!entity.isAlive()) return ActionResultType.PASS;
-		if (!(entity instanceof NPCEntity)) return ActionResultType.PASS;
+	public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
+		if (player.level.isClientSide) return InteractionResult.SUCCESS;
+		if (!entity.isAlive()) return InteractionResult.PASS;
+		if (!(entity instanceof NPCEntity)) return InteractionResult.PASS;
 		
 		((NPCEntity) entity).getDataHandler().ifPresent(h -> h.setOwner(PlayerIDTag.of(player)));
-		return ActionResultType.CONSUME;
+		return InteractionResult.CONSUME;
 	}
 	
 	@Override

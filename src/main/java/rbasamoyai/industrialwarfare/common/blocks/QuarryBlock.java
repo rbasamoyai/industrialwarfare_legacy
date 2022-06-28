@@ -1,35 +1,37 @@
 package rbasamoyai.industrialwarfare.common.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.DirectionProperty;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import rbasamoyai.industrialwarfare.common.tileentities.QuarryTileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import rbasamoyai.industrialwarfare.common.blockentities.QuarryBlockEntity;
+import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 
 public class QuarryBlock extends ResourceStationBlock {
 
 	public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 	
 	public QuarryBlock() {
-		super(WorkstationBlock.WORKSTATION_WOOD);
+		super(ManufacturingBlock.WORKSTATION_WOOD);
 		
 		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
 	}
-	
+
 	@Override
-	protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING);
 	}
 	
@@ -39,26 +41,27 @@ public class QuarryBlock extends ResourceStationBlock {
 	}
 
 	@Override
-	public BlockState rotate(BlockState state, IWorld world, BlockPos pos, Rotation direction) {
+	public BlockState rotate(BlockState state, LevelAccessor level, BlockPos pos, Rotation direction) {
 		return state.setValue(FACING, direction.rotate(state.getValue(FACING)));
 	}
 	
 	@Override
-	public BlockState getStateForPlacement(BlockItemUseContext context) {
+	public BlockState getStateForPlacement(BlockPlaceContext context) {
 		return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
 	}
 	
+	@Override public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) { return new QuarryBlockEntity(pPos, pState); }
 	
 	@Override
-	public TileEntity createTileEntity(BlockState state, IBlockReader reader) {
-		return new QuarryTileEntity();
+	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack item) {
+		BlockEntity be = level.getBlockEntity(pos);
+		if (!(be instanceof QuarryBlockEntity)) return;
+		((QuarryBlockEntity) be).setYLevel(pos.getY() + 1);
 	}
 	
 	@Override
-	public void setPlacedBy(World level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack item) {
-		TileEntity te = level.getBlockEntity(pos);
-		if (!(te instanceof QuarryTileEntity)) return;
-		((QuarryTileEntity) te).setYLevel(pos.getY() + 1);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
+		return pLevel.isClientSide ? null : createTickerHelper(pBlockEntityType, BlockEntityTypeInit.QUARRY.get(), QuarryBlockEntity::serverTicker);
 	}
 	
 }

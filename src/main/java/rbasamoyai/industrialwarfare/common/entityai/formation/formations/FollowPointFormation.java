@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
+import com.mojang.math.Constants;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
@@ -26,9 +28,9 @@ public class FollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public Vector3d getFollowPosition(FormationLeaderEntity leader) {
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
-		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
+	public Vec3 getFollowPosition(FormationLeaderEntity leader) {
+		Vec3 leaderForward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
+		Vec3 leaderRight = new Vec3(-leaderForward.z, 0.0d, leaderForward.x);
 		
 		return leader.position()
 				.add(leaderForward.scale(this.followPoint.z))
@@ -47,9 +49,9 @@ public class FollowPointFormation extends PointFormation {
 	private static final String TAG_Z = "z";
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = super.serializeNBT();
-		CompoundNBT followPointTag = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag nbt = super.serializeNBT();
+		CompoundTag followPointTag = new CompoundTag();
 		followPointTag.putInt(TAG_X, this.followPoint.x);
 		followPointTag.putInt(TAG_Z, this.followPoint.z);
 		nbt.put(TAG_FOLLOW_POINT, followPointTag);
@@ -57,9 +59,9 @@ public class FollowPointFormation extends PointFormation {
 	}
 	
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
+	public void deserializeNBT(CompoundTag nbt) {
 		super.deserializeNBT(nbt);
-		CompoundNBT followPointTag = nbt.getCompound(TAG_FOLLOW_POINT);
+		CompoundTag followPointTag = nbt.getCompound(TAG_FOLLOW_POINT);
 		this.followPoint = new Point(followPointTag.getInt(TAG_X), followPointTag.getInt(TAG_Z));
 	}
 	

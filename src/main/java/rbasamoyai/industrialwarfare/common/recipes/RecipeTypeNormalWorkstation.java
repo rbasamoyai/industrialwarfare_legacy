@@ -1,9 +1,9 @@
 package rbasamoyai.industrialwarfare.common.recipes;
 
-import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.world.item.crafting.RecipeType;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
-public class RecipeTypeNormalWorkstation implements IRecipeType<NormalWorkstationRecipe> {
+public class RecipeTypeNormalWorkstation implements RecipeType<ManufactureRecipe> {
 
 	@Override
 	public String toString() {

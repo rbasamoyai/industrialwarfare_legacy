@@ -1,36 +1,31 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class LabelItemDataProvider implements ICapabilitySerializable<CompoundNBT> {
+public class LabelItemDataProvider implements ICapabilitySerializable<CompoundTag> {
 
-	private final LabelItemDataHandler dataHandler = new LabelItemDataHandler();
-	private final LazyOptional<ILabelItemDataHandler> dataOptional = LazyOptional.of(() -> this.dataHandler);
-	
-	public void invalidate() {
-		this.dataOptional.invalidate();
-	}
+	private final ILabelItemData dataHandler = new LabelItemDataHandler();
+	private final LazyOptional<ILabelItemData> dataOptional = LazyOptional.of(() -> this.dataHandler);
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return cap == LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
+		return cap == LabelItemCapability.INSTANCE ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		return LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY == null
-				? new CompoundNBT()
-				: (CompoundNBT) LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY.writeNBT(this.dataHandler, null);
+	public CompoundTag serializeNBT() {
+		return LabelItemCapability.INSTANCE.isRegistered() ? this.dataHandler.writeTag(new CompoundTag()) : new CompoundTag();
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		if (LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY != null)
-			LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY.readNBT(this.dataHandler, null, nbt);
+	public void deserializeNBT(CompoundTag nbt) {
+		if (LabelItemCapability.INSTANCE.isRegistered()) {
+			this.dataHandler.readTag(nbt);
+		}
 	}
 
 }

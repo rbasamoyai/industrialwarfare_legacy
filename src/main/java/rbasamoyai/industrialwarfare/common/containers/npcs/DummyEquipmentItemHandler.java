@@ -1,14 +1,14 @@
 package rbasamoyai.industrialwarfare.common.containers.npcs;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIntArray;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class DummyEquipmentItemHandler extends ItemStackHandler {
 	
-	private final IIntArray data;
+	private final ContainerData data;
 	
-	public DummyEquipmentItemHandler(IIntArray data) {
+	public DummyEquipmentItemHandler(ContainerData data) {
 		super(8);
 		this.data = data;
 	}

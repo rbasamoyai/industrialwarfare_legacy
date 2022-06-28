@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
@@ -18,11 +17,11 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 public class LabelNumArgSelector extends ArgSelector<Byte> {
 
 	private static final String TRANSLATION_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".edit_label";
-	private static final IFormattableTextComponent TOOLTIP_HEADER1 = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".tooltip.label_num1").withStyle(ArgSelector.HEADER_STYLE);
-	private static final IFormattableTextComponent TOOLTIP_HEADER2 = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".tooltip.label_num2").withStyle(TextFormatting.DARK_GRAY, TextFormatting.ITALIC);
-	private static final IFormattableTextComponent NO_NUMBER = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".no_num");
+	private static final Component TOOLTIP_HEADER1 = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".tooltip.label_num1").withStyle(ArgSelector.HEADER_STYLE);
+	private static final Component TOOLTIP_HEADER2 = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".tooltip.label_num2").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
+	private static final Component NO_NUMBER = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".no_num");
 	
-	private static final List<ITextComponent> TOOLTIP = Arrays.asList(
+	private static final List<Component> TOOLTIP = Arrays.asList(
 			TOOLTIP_HEADER1,
 			TOOLTIP_HEADER2
 			);
@@ -45,17 +44,17 @@ public class LabelNumArgSelector extends ArgSelector<Byte> {
 	
 	@Override
 	public void scrollSelectedArg(double scrollDist) {
-		this.selectedArg = MathHelper.floor(MathHelper.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? 10.0d : 1.0d), 0.0d, MAX_NUMBER));
+		this.selectedArg = Mth.floor(Mth.clamp((double) this.selectedArg + scrollDist * (Screen.hasShiftDown() ? 10.0d : 1.0d), 0.0d, MAX_NUMBER));
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
+	public List<Component> getComponentTooltip() {
 		return TOOLTIP;
 	}
 
 	@Override
-	public ITextComponent getTitle() {
-		return this.selectedArg == 0 ? NO_NUMBER : new StringTextComponent(Integer.toString(this.selectedArg));
+	public Component getTitle() {
+		return this.selectedArg == 0 ? NO_NUMBER : new TextComponent(Integer.toString(this.selectedArg));
 	}
 
 }

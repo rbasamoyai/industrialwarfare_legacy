@@ -2,12 +2,12 @@ package rbasamoyai.industrialwarfare.common.items.firearms;
 
 import java.util.function.Predicate;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.InternalMagazineDataHandler;
 import rbasamoyai.industrialwarfare.common.items.ISpeedloadable;
 import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
@@ -33,7 +33,7 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(stack, level, entity, slot, selected);
 		
 		if (!selected && entity instanceof LivingEntity && !level.isClientSide) {
@@ -51,7 +51,7 @@ public abstract class InternalMagazineFirearmItem extends FirearmItem implements
 				return;
 			}
 			
-			if (IWItemTags.CHEAT_AMMO.contains(ammo.getItem()) || shooter instanceof PlayerEntity && ((PlayerEntity) shooter).abilities.instabuild) {
+			if (ammo.is(IWItemTags.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
 				ammo = ammo.copy();
 			}
 			

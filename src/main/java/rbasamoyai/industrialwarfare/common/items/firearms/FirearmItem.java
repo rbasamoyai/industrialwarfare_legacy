@@ -12,74 +12,87 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Constants;
+import com.mojang.math.Vector3f;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingRenderer;
-import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.layers.ElytraLayer;
-import net.minecraft.client.renderer.entity.layers.HeldItemLayer;
-import net.minecraft.client.renderer.entity.model.BipedModel;
-import net.minecraft.client.renderer.entity.model.EntityModel;
-import net.minecraft.client.renderer.entity.model.PlayerModel;
-import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.IDyeableArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ShootableItem;
-import net.minecraft.item.UseAction;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.DyeableArmorItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ProjectileWeaponItem;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.IItemRenderProperties;
+import net.minecraftforge.client.RenderProperties;
 import net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
-import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemDataCapability;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemDataProvider;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
+import rbasamoyai.industrialwarfare.client.items.renderers.SpecialThirdPersonRender;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.FirearmItemCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemData;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.IPartItemData;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.PartItemCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem.PartItemDataHandler;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.IQualityItemData;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.IQualityModifier;
 import rbasamoyai.industrialwarfare.common.entities.ThirdPersonItemAnimEntity;
-import rbasamoyai.industrialwarfare.common.items.IFirstPersonTransform;
-import rbasamoyai.industrialwarfare.common.items.IFovModifier;
-import rbasamoyai.industrialwarfare.common.items.IHideCrosshair;
-import rbasamoyai.industrialwarfare.common.items.IItemWithScreen;
+import rbasamoyai.industrialwarfare.common.items.FirstPersonTransform;
+import rbasamoyai.industrialwarfare.common.items.FovModifierItem;
+import rbasamoyai.industrialwarfare.common.items.HideCrosshair;
 import rbasamoyai.industrialwarfare.common.items.ISimultaneousUseAndAttack;
+import rbasamoyai.industrialwarfare.common.items.ItemWithScreen;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
@@ -100,15 +113,15 @@ import software.bernie.geckolib3.network.ISyncable;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 import software.bernie.geckolib3.util.RenderUtils;
 
-public abstract class FirearmItem extends ShootableItem implements
+public abstract class FirearmItem extends ProjectileWeaponItem implements
 		ISimultaneousUseAndAttack,
-		IFovModifier,
-		IHideCrosshair,
-		IItemWithScreen,
-		IFirstPersonTransform,
+		FovModifierItem,
+		HideCrosshair,
+		ItemWithScreen,
+		FirstPersonTransform,
 		IAnimatable,
 		ISyncable,
-		ISpecialThirdPersonRender {
+		SpecialThirdPersonRender {
 	
 	protected final boolean needsCycle;
 	protected final int cooldownTime;
@@ -128,13 +141,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	protected final Function<LivingEntity, Float> horizontalRecoilSupplier;
 	protected final Function<LivingEntity, Float> verticalRecoilSupplier;
 	protected final Predicate<ItemStack> ammoPredicate;
-	protected final Function<ItemStackHandler, IFirearmItemDataHandler> dataHandlerSupplier;
-	protected final Supplier<ItemStackHandler> attachmentsHandler;
+	protected final Function<IItemHandlerModifiable, IFirearmItemData> dataHandlerSupplier;
+	protected final Supplier<IItemHandlerModifiable> attachmentsHandler;
 	
 	public AnimationFactory factory = new AnimationFactory(this);
 	
 	public FirearmItem(Item.Properties itemProperties, FirearmItem.AbstractProperties<?> firearmProperties,
-			Function<ItemStackHandler, IFirearmItemDataHandler> dataHandlerSupplier) {
+			Function<IItemHandlerModifiable, IFirearmItemData> dataHandlerSupplier) {
 		super(itemProperties);
 		
 		this.needsCycle = firearmProperties.needsCycle;
@@ -162,11 +175,18 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
-		FirearmItemDataProvider provider = new FirearmItemDataProvider(this.dataHandlerSupplier.apply(this.attachmentsHandler.get()));
-		provider.getCapability(FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY).ifPresent(h -> {
-			h.setAction(ActionType.NOTHING, 0);
+	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
+		BundledProvider provider = this.new BundledProvider();
+		provider.getCapability(FirearmItemCapability.INSTANCE).ifPresent(h -> {
+			h.setAction(ActionType.NOTHING, this.drawTime);
 			h.setAiming(false);
+		});
+		provider.getCapability(QualityItemCapability.INSTANCE).ifPresent(h -> {
+			h.setQuality(1.0f);
+		});
+		provider.getCapability(PartItemCapability.INSTANCE).ifPresent(h -> {
+			h.setPartCount(1);
+			h.setWeight(1.0f);
 		});
 		if (nbt != null) {
 			provider.deserializeNBT(nbt.contains("Parent") ? nbt.getCompound("Parent") : nbt);
@@ -174,37 +194,86 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		return provider;
 	}
+	
+	private class BundledProvider implements ICapabilitySerializable<CompoundTag> {
+		private final IFirearmItemData firearmDataInterface = FirearmItem.this.dataHandlerSupplier.apply(FirearmItem.this.attachmentsHandler.get());
+		private final IPartItemData partDataInterface = new PartItemDataHandler();
+		private final IQualityItemData qualityDataInterface = new QualityItemDataHandler();
+		private final LazyOptional<IFirearmItemData> firearmDataOptional = LazyOptional.of(() -> this.firearmDataInterface);
+		private final LazyOptional<IPartItemData> partDataOptional = LazyOptional.of(() -> this.partDataInterface);
+		private final LazyOptional<IQualityItemData> qualityDataOptional = LazyOptional.of(() -> this.qualityDataInterface);
 		
-	public static LazyOptional<IFirearmItemDataHandler> getDataHandler(ItemStack stack) {
-		return stack.getCapability(FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY);
+		@Override
+		public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+			if (cap == FirearmItemCapability.INSTANCE) {
+				return this.firearmDataOptional.cast();
+			}
+			if (cap == QualityItemCapability.INSTANCE) {
+				return this.qualityDataOptional.cast();
+			}
+			return cap == PartItemCapability.INSTANCE ? this.partDataOptional.cast() : LazyOptional.empty();
+		}
+		
+		@Override
+		public CompoundTag serializeNBT() {
+			CompoundTag tag = new CompoundTag();
+			if (FirearmItemCapability.INSTANCE.isRegistered()) {
+				this.firearmDataInterface.writeTag(tag);
+			}
+			if (QualityItemCapability.INSTANCE.isRegistered()) {
+				this.qualityDataInterface.writeTag(tag);
+			}
+			if (PartItemCapability.INSTANCE.isRegistered()) {
+				this.partDataInterface.writeTag(tag);
+			}
+			return tag;
+		}
+		
+		@Override
+		public void deserializeNBT(CompoundTag nbt) {
+			if (FirearmItemCapability.INSTANCE.isRegistered()) {
+				this.firearmDataInterface.readTag(nbt);
+			}
+			if (QualityItemCapability.INSTANCE.isRegistered()) {
+				this.qualityDataInterface.readTag(nbt);
+			}
+			if (PartItemCapability.INSTANCE.isRegistered()) {
+				this.partDataInterface.readTag(nbt);
+			}
+		}
+	}
+		
+	public static LazyOptional<IFirearmItemData> getDataHandler(ItemStack stack) {
+		return stack.getCapability(FirearmItemCapability.INSTANCE);
 	}
 	
 	@Override
-	public CompoundNBT getShareTag(ItemStack stack) {
-		CompoundNBT tag = stack.getOrCreateTag();
-		getDataHandler(stack).ifPresent(h -> {
-			if (FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY != null)
-				tag.put("item_cap", FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY.writeNBT(h, null));
-		});
+	public CompoundTag getShareTag(ItemStack stack) {
+		CompoundTag itemCap = new CompoundTag();
+		getDataHandler(stack).ifPresent(h -> h.writeTag(itemCap));
+		PartItem.getDataHandler(stack).ifPresent(h -> h.writeTag(itemCap));
+		QualityItem.getDataHandler(stack).ifPresent(h -> h.writeTag(itemCap));
+		CompoundTag tag = stack.getOrCreateTag();
+		tag.put("item_cap", itemCap);
 		return tag;
 	}
 	
 	@Override
-	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+	public void readShareTag(ItemStack stack, CompoundTag nbt) {
 		stack.setTag(nbt);
 		
 		if (nbt == null) return;
 		
-		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+		if (nbt.contains("creativeData", Tag.TAG_COMPOUND)) {
 			readCreativeData(stack, nbt.getCompound("creativeData"));
 			nbt.remove("creativeData");
 			return;
 		}
 		
-		getDataHandler(stack).ifPresent(h -> {
-			if (FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY != null)
-				FirearmItemDataCapability.FIREARM_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-		});
+		CompoundTag itemCap = nbt.getCompound("item_cap");
+		getDataHandler(stack).ifPresent(h -> h.readTag(itemCap));
+		PartItem.getDataHandler(stack).ifPresent(h -> h.readTag(itemCap));
+		QualityItem.getDataHandler(stack).ifPresent(h -> h.readTag(itemCap));
 	}
 	
 	@Override
@@ -220,9 +289,9 @@ public abstract class FirearmItem extends ShootableItem implements
 	@Override
 	public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
 		if (entity.level.isClientSide) return true;
-		if (entity instanceof PlayerEntity) {
-			Container ct = ((PlayerEntity) entity).containerMenu;
-			if (ct != null && !(ct instanceof PlayerContainer)) return true;
+		if (entity instanceof Player) {
+			AbstractContainerMenu ct = ((Player) entity).containerMenu;
+			if (ct != null && !(ct instanceof InventoryMenu)) return true;
 		}
 		
 		getDataHandler(stack).ifPresent(h -> {
@@ -250,17 +319,17 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
-		if (hand != Hand.MAIN_HAND) return ActionResult.pass(stack);
+		if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(stack);
 		if (getDataHandler(stack).map(h -> {
 			return !h.isFinishedAction() || h.isMeleeing();
 		}).orElse(false)) {
-			return ActionResult.fail(stack);
+			return InteractionResultHolder.fail(stack);
 		}
 		player.startUsingItem(hand);
 		this.startAiming(stack, player);
-		return world.isClientSide ? ActionResult.pass(stack) : ActionResult.consume(stack);
+		return level.isClientSide ? InteractionResultHolder.pass(stack) : InteractionResultHolder.consume(stack);
 	}
 	
 	@Override
@@ -269,12 +338,12 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public UseAction getUseAnimation(ItemStack stack) {
-		return UseAction.NONE;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.NONE;
 	}
 	
 	@Override
-	public void releaseUsing(ItemStack stack, World world, LivingEntity entity, int time) {
+	public void releaseUsing(ItemStack stack, Level world, LivingEntity entity, int time) {
 		this.stopAiming(stack, entity);
 	}
 	
@@ -318,12 +387,12 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
 		
 		if (level.isClientSide) return;
-		GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) level);
+		GeckoLibUtil.guaranteeIDForStack(stack, (ServerLevel) level);
 		
 		getDataHandler(stack).ifPresent(h -> {
 			if (!h.isSelected() && selected) {
@@ -402,6 +471,13 @@ public abstract class FirearmItem extends ShootableItem implements
 		});
 	}
 	
+	public static void resetSelected(ItemStack firearm, LivingEntity shooter) {
+		if (shooter.level.isClientSide) return;
+		getDataHandler(firearm).ifPresent(h -> {
+			h.setSelected(false);
+		});
+	}
+	
 	public static void tryPreviousStance(ItemStack firearm, LivingEntity shooter) {
 		if (shooter.level.isClientSide) return;
 		Item item = firearm.getItem(); 
@@ -410,7 +486,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag flag) {
 		QualityItem.appendHoverTextStatic(stack, world, tooltip, flag);
 		PartItem.appendHoverTextStatic(stack, world, tooltip, flag);
 	}
@@ -421,7 +497,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public boolean canAttackBlock(BlockState state, World level, BlockPos pos, PlayerEntity player) {
+	public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
 		return false; // TODO: maybe trowel melee?
 	}
 	
@@ -447,13 +523,13 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	@Override
-	public boolean shouldTransform(ItemStack stack, PlayerEntity player) {
+	public boolean shouldTransform(ItemStack stack, Player player) {
 		return true;
 	}
 	
 	@Override
-	public void transformMatrixStack(ItemStack itemStack, PlayerEntity player, MatrixStack matrixStack) {
-		matrixStack.scale(1.0f, 1.0f, isAiming(itemStack) ? 0.5f : 1.0f);
+	public void transformPoseStack(ItemStack itemStack, Player player, PoseStack poseStack) {
+		poseStack.scale(1.0f, 1.0f, isAiming(itemStack) ? 0.5f : 1.0f);
 	}
 	
 	/*
@@ -478,7 +554,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		if (instructionTokens.isEmpty()) return;
 		
-		ItemStackTileEntityRenderer ister = this.getItemStackTileEntityRenderer();
+		BlockEntityWithoutLevelRenderer ister = RenderProperties.get(this).getItemStackRenderer();
 		if (!(ister instanceof FirearmRenderer)) return;
 		FirearmRenderer renderer = (FirearmRenderer) ister;
 		
@@ -524,9 +600,9 @@ public abstract class FirearmItem extends ShootableItem implements
 		LivingEntity entity = RenderEvents.ENTITY_CACHE.get(animEntity.getUUID());
 		if (entity == null) return;
 		SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(event.sound));
-		Vector3d entityPos = entity.position();
+		Vec3 entityPos = entity.position();
 		float volume = mc.player == entity ? 16.0f : 1.0f;
-		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundCategory.MASTER, volume, 1.0f, true);
+		mc.player.level.playLocalSound(entityPos.x, entityPos.y, entityPos.z, sound, SoundSource.MASTER, volume, 1.0f, true);
 	}
 
 	@Override
@@ -534,7 +610,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		return this.factory;
 	}
 	
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {}
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, PoseStack matrixStack, float aimProgress) {}
 	
 	/*
 	 * THIRD-PERSON RENDERING METHODS
@@ -543,30 +619,41 @@ public abstract class FirearmItem extends ShootableItem implements
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+			PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
+				(LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = baseRenderer.getModel();
 		ResourceLocation loc = baseRenderer.getTextureLocation(entity);
-		int packedOverlay = LivingRenderer.getOverlayCoords(entity, 0.0f);
+		int packedOverlay = LivingEntityRenderer.getOverlayCoords(entity, 0.0f);
 		
 		float bob = (float) entity.tickCount + partialTicks;
 		
 		boolean falling = entity.getFallFlyingTicks() > 4;
-		float animSpeed = MathHelper.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
+		float animSpeed = Mth.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
 		if (animSpeed > 1.0f) animSpeed = 1.0f;
 		float animPos = entity.animationPosition - entity.animationSpeed * (1.0f - partialTicks);
 		if (entity.isBaby()) animPos *= 3.0f;
 		
 		boolean isStill = entity.getDeltaMovement().lengthSqr() < 0.00625d;
-		float headYaw = MathHelper.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);		
+		boolean shouldSit = entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
+		float headYaw;
+		float undoYaw;
+		if (shouldSit && entity.getVehicle() instanceof LivingEntity) {
+			LivingEntity livingVehicle = (LivingEntity) entity.getVehicle();
+			headYaw = Mth.rotLerp(partialTicks, livingVehicle.yBodyRotO, livingVehicle.yBodyRot);
+			undoYaw = headYaw;
+		} else {
+			headYaw = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
+			undoYaw = headYaw + entityYaw;
+		}
 		
 		stack.mulPose(Vector3f.YN.rotationDegrees(headYaw));
 		
-		if (model instanceof BipedModel) {
-			BipedModel<?> bmodel = (BipedModel<?>) model;
+		if (model instanceof HumanoidModel) {
+			HumanoidModel<?> bmodel = (HumanoidModel<?>) model;
+			bmodel.riding = shouldSit;
 			
 			float fallRestriction = 1.0f;
 			if (falling) {
@@ -576,14 +663,23 @@ public abstract class FirearmItem extends ShootableItem implements
 			if (fallRestriction < 1.0f) fallRestriction = 1.0f;
 			
 			bmodel.leftLeg.y = 12.0f;
-			bmodel.leftLeg.xRot = MathHelper.cos(animPos * 0.6662f + (float) Math.PI) * 1.4f * animSpeed / fallRestriction;
+			bmodel.leftLeg.xRot = Mth.cos(animPos * 0.6662f + (float) Math.PI) * 1.4f * animSpeed / fallRestriction;
 			bmodel.leftLeg.yRot = 0.0f;
 			bmodel.leftLeg.zRot = 0.0f;
 			
 			bmodel.rightLeg.y = 12.0f;
-			bmodel.rightLeg.xRot = MathHelper.cos(animPos * 0.6662f) * 1.4f * animSpeed / fallRestriction;
+			bmodel.rightLeg.xRot = Mth.cos(animPos * 0.6662f) * 1.4f * animSpeed / fallRestriction;
 			bmodel.rightLeg.yRot = 0.0f;
 			bmodel.rightLeg.zRot = 0.0f;
+			
+			if (shouldSit) {
+				bmodel.rightLeg.xRot = -1.4137167f;
+				bmodel.rightLeg.yRot = Constants.PI * 0.1f;
+				bmodel.rightLeg.zRot = 0.07853982f;
+				bmodel.leftLeg.xRot = -1.4137167f;
+				bmodel.leftLeg.yRot = -Constants.PI * 0.1f;
+				bmodel.leftLeg.zRot = -0.07853982f;
+			}
 			
 			if (entity.isCrouching() && isStill) {
 				bmodel.leftLeg.z = -4.0f;
@@ -595,16 +691,16 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			if (entity.isFallFlying()) {
 				float ffTicks = (float) entity.getFallFlyingTicks() + partialTicks;
-				float progress = MathHelper.clamp(ffTicks * ffTicks * 0.01f, 0.0f, 1.0f);
+				float progress = Mth.clamp(ffTicks * ffTicks * 0.01f, 0.0f, 1.0f);
 				
 				if (!entity.isAutoSpinAttack()) {
-					stack.mulPose(Vector3f.XN.rotationDegrees(progress * (-90.0f - entity.xRot)));
+					stack.mulPose(Vector3f.XN.rotationDegrees(progress * (-90.0f - entity.getXRot())));
 				}
 				
-				Vector3d view = entity.getViewVector(partialTicks);
-				Vector3d vel = entity.getDeltaMovement();
-				double viewHDSq = Entity.getHorizontalDistanceSqr(view);
-				double velHDSq = Entity.getHorizontalDistanceSqr(vel);
+				Vec3 view = entity.getViewVector(partialTicks);
+				Vec3 vel = entity.getDeltaMovement();
+				double viewHDSq = view.horizontalDistanceSqr();
+				double velHDSq = vel.horizontalDistanceSqr();
 				if (viewHDSq > 0.0f && velHDSq > 0.0f) {
 					double dist = (vel.x * view.x + vel.z * view.z) / Math.sqrt(viewHDSq * velHDSq);
 					double cross = vel.x * view.z - vel.z * view.x;
@@ -612,10 +708,10 @@ public abstract class FirearmItem extends ShootableItem implements
 				}
 				
 			} else if (entity.getSwimAmount(partialTicks) > 0.0f) {
-				bmodel.leftLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.leftLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F + (float)Math.PI));
-				bmodel.rightLeg.xRot = MathHelper.lerp(bmodel.swimAmount, bmodel.rightLeg.xRot, 0.3F * MathHelper.cos(animPos * 0.33333334F));
-				float swimRot = entity.isInWater() ? -90.0f - entity.xRot : -90.0f;
-				float swimRotL = MathHelper.lerp(bmodel.swimAmount, 0.0f, swimRot);
+				bmodel.leftLeg.xRot = Mth.lerp(bmodel.swimAmount, bmodel.leftLeg.xRot, 0.3F * Mth.cos(animPos * 0.33333334F + (float)Math.PI));
+				bmodel.rightLeg.xRot = Mth.lerp(bmodel.swimAmount, bmodel.rightLeg.xRot, 0.3F * Mth.cos(animPos * 0.33333334F));
+				float swimRot = entity.isInWater() ? -90.0f - entity.getXRot() : -90.0f;
+				float swimRotL = Mth.lerp(bmodel.swimAmount, 0.0f, swimRot);
 				
 				if (entity.isVisuallySwimming()) stack.translate(0.0f, entity.isInWater() ? 0.3125f : 0.125f, 0.0f);
 				
@@ -628,12 +724,12 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			stack.pushPose();
 			
-			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, baseRenderer);
-			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
+			List<HumanoidArmorLayer> armorLayers = AnimUtils.getLayers(HumanoidArmorLayer.class, baseRenderer);
+			HumanoidArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
 			if (entity.deathTime > 0) {
 				float deathRot = ((float) entity.deathTime + partialTicks - 1.0f) * 0.08f; // / 20.0f * 1.6f
-				deathRot = MathHelper.sqrt(deathRot);
+				deathRot = Mth.sqrt(deathRot);
 				if (deathRot > 1.0f) deathRot = 1.0f;
 				stack.mulPose(Vector3f.ZN.rotationDegrees(deathRot * 90.0f));				
 			}
@@ -643,8 +739,8 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			this.renderLegs(entity, stack, bufferIn, bmodel, armor, partialTicks, packedLightIn, packedOverlay, loc);
 			
-			if (entity instanceof AbstractClientPlayerEntity) {
-				AbstractClientPlayerEntity client = (AbstractClientPlayerEntity) entity;
+			if (entity instanceof AbstractClientPlayer) {
+				AbstractClientPlayer client = (AbstractClientPlayer) entity;
 				List<CapeLayer> capes = AnimUtils.getLayers(CapeLayer.class, baseRenderer);
 				for (CapeLayer layer : capes) {
 					layer.render(stack, bufferIn, packedLightIn, client, -1.0f, -1.0f, partialTicks, bob, -1.0f, -1.0f);
@@ -668,15 +764,15 @@ public abstract class FirearmItem extends ShootableItem implements
 			bmodel.setAllVisible(false);
 		}
 		
-		stack.mulPose(Vector3f.YP.rotationDegrees(headYaw + entityYaw));
+		stack.mulPose(Vector3f.YP.rotationDegrees(undoYaw));
 	}
 	
 	@SuppressWarnings("rawtypes")
-	protected void renderLegs(LivingEntity entity, MatrixStack stack, IRenderTypeBuffer bufferIn, BipedModel<?> bmodel,
-			BipedArmorLayer armor, float partialTicks, int packedLightIn, int packedOverlayIn, ResourceLocation loc) {
+	protected void renderLegs(LivingEntity entity, PoseStack stack, MultiBufferSource bufferIn, HumanoidModel<?> bmodel,
+			HumanoidArmorLayer armor, float partialTicks, int packedLightIn, int packedOverlayIn, ResourceLocation loc) {
 		Minecraft mc = Minecraft.getInstance();
 		
-		List<ModelRenderer> legs = new ArrayList<>();
+		List<ModelPart> legs = new ArrayList<>();
 		legs.add(bmodel.leftLeg);
 		legs.add(bmodel.rightLeg);
 		
@@ -690,7 +786,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		
 		float skinAlpha = entity.isInvisible() ? entity == mc.player ? 0.15f : 0.0f : 1.0f;
 		
-		IVertexBuilder builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+		VertexConsumer builder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
 		
 		legs.forEach(p -> p.render(stack, builder, packedLightIn, packedOverlayIn, 1.0f, 1.0f, 1.0f, skinAlpha));
 		
@@ -698,29 +794,29 @@ public abstract class FirearmItem extends ShootableItem implements
 			armor.innerModel.setAllVisible(true);
 			armor.outerModel.setAllVisible(true);
 			
-			ItemStack leggings = entity.getItemBySlot(EquipmentSlotType.LEGS);
+			ItemStack leggings = entity.getItemBySlot(EquipmentSlot.LEGS);
 			Item leggingsItem = leggings.getItem();
 			if (leggingsItem instanceof ArmorItem) {
-				ResourceLocation armorLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, null);
-				IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, leggings.hasFoil());
+				ResourceLocation armorLoc = armor.getArmorResource(entity, leggings, EquipmentSlot.LEGS, null);
+				VertexConsumer armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, leggings.hasFoil());
 				
 				armor.innerModel.leftLeg.copyFrom(bmodel.leftLeg);
 				armor.innerModel.rightLeg.copyFrom(bmodel.rightLeg);
 				
-				List<ModelRenderer> parts = new ArrayList<>();
+				List<ModelPart> parts = new ArrayList<>();
 				parts.add(armor.innerModel.leftLeg);
 				parts.add(armor.innerModel.rightLeg);
 				
-				if (leggingsItem instanceof IDyeableArmorItem) {
-					int color = ((IDyeableArmorItem) leggingsItem).getColor(leggings);
+				if (leggingsItem instanceof DyeableArmorItem) {
+					int color = ((DyeableArmorItem) leggingsItem).getColor(leggings);
 					float r = (float)(color >> 16 & 255) / 255.0F;
 					float g = (float)(color >> 8 & 255) / 255.0F;
 					float b = (float)(color & 255) / 255.0F;
 					
 					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
 					
-					ResourceLocation overlayLoc = armor.getArmorResource(entity, leggings, EquipmentSlotType.LEGS, "overlay");
-					IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, leggings.hasFoil());
+					ResourceLocation overlayLoc = armor.getArmorResource(entity, leggings, EquipmentSlot.LEGS, "overlay");
+					VertexConsumer overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, leggings.hasFoil());
 					
 					parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
 				} else {
@@ -728,29 +824,29 @@ public abstract class FirearmItem extends ShootableItem implements
 				}
 			}
 			
-			ItemStack boots = entity.getItemBySlot(EquipmentSlotType.FEET);
+			ItemStack boots = entity.getItemBySlot(EquipmentSlot.FEET);
 			Item bootsItem = boots.getItem();
 			if (bootsItem instanceof ArmorItem) {
-				ResourceLocation armorLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, null);
-				IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, boots.hasFoil());
+				ResourceLocation armorLoc = armor.getArmorResource(entity, boots, EquipmentSlot.FEET, null);
+				VertexConsumer armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, boots.hasFoil());
 				
 				armor.outerModel.leftLeg.copyFrom(bmodel.leftLeg);
 				armor.outerModel.rightLeg.copyFrom(bmodel.rightLeg);
 				
-				List<ModelRenderer> parts = new ArrayList<>();
+				List<ModelPart> parts = new ArrayList<>();
 				parts.add(armor.outerModel.leftLeg);
 				parts.add(armor.outerModel.rightLeg);
 				
-				if (bootsItem instanceof IDyeableArmorItem) {
-					int color = ((IDyeableArmorItem) bootsItem).getColor(boots);
+				if (bootsItem instanceof DyeableArmorItem) {
+					int color = ((DyeableArmorItem) bootsItem).getColor(boots);
 					float r = (float)(color >> 16 & 255) / 255.0F;
 					float g = (float)(color >> 8 & 255) / 255.0F;
 					float b = (float)(color & 255) / 255.0F;
 					
 					parts.forEach(p -> p.render(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f));
 					
-					ResourceLocation overlayLoc = armor.getArmorResource(entity, boots, EquipmentSlotType.FEET, "overlay");
-					IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, boots.hasFoil());
+					ResourceLocation overlayLoc = armor.getArmorResource(entity, boots, EquipmentSlot.FEET, "overlay");
+					VertexConsumer overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, boots.hasFoil());
 					
 					parts.forEach(p -> p.render(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY));
 				} else {
@@ -762,26 +858,26 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	@Override
 	public void onJustAfterRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+			PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
+				(LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		
 		AnimUtils.hideLayers(CapeLayer.class, baseRenderer);
 		AnimUtils.hideLayers(ElytraLayer.class, baseRenderer);
-		AnimUtils.hideLayers(HeldItemLayer.class, baseRenderer);
-		AnimUtils.hideLayers(BipedArmorLayer.class, baseRenderer);
+		AnimUtils.hideLayers(PlayerItemInHandLayer.class, baseRenderer);
+		AnimUtils.hideLayers(HumanoidArmorLayer.class, baseRenderer);
 	}
 
 	@Override
 	public void onPostRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+			PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		@SuppressWarnings("unchecked")
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
+				(LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = baseRenderer.getModel();
 		
 		if (model instanceof PlayerModel) {
@@ -796,11 +892,12 @@ public abstract class FirearmItem extends ShootableItem implements
 	public List<AnimationController<ThirdPersonItemAnimEntity>> getAnimationControlllers(ItemStack stack,
 			LivingEntity entity) {
 		AnimationController<ThirdPersonItemAnimEntity> upperBody = new AnimationController<>(
-				new ThirdPersonItemAnimEntity(entity.getUUID(), Hand.MAIN_HAND), "upper_body", 1,
+				new ThirdPersonItemAnimEntity(entity.getUUID(), InteractionHand.MAIN_HAND), "upper_body", 1,
 				this::upperBodyPredicate);
 		upperBody.registerSoundListener(this::thirdPersonSoundListener);
 		upperBody.registerCustomInstructionListener(this::thirdPersonCustomInstructionListener);
 		upperBody.registerParticleListener(this::particleListener);
+		upperBody.setAnimation(this.getDefaultAnimation(stack, entity, upperBody));
 		
 		List<AnimationController<ThirdPersonItemAnimEntity>> controllers = new ArrayList<>();
 		controllers.add(upperBody);
@@ -835,13 +932,13 @@ public abstract class FirearmItem extends ShootableItem implements
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, MatrixStack stack,
-			IRenderTypeBuffer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue,
+	public void onRenderRecursively(ItemStack item, LivingEntity entity, float partialTicks, GeoBone bone, PoseStack stack,
+			MultiBufferSource bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue,
 			float alpha, ThirdPersonItemAnimRenderer renderer) {
 		Minecraft mc = Minecraft.getInstance();
 		
-		LivingRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
-				(LivingRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
+		LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> baseRenderer =
+				(LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>>) mc.getEntityRenderDispatcher().getRenderer(entity);
 		EntityModel<?> model = baseRenderer.getModel();
 		ResourceLocation loc = baseRenderer.getTextureLocation(entity);
 		
@@ -850,17 +947,17 @@ public abstract class FirearmItem extends ShootableItem implements
 		String name = bone.getName();
 		boolean lockedLimbs = animRenderer == null ? false : animRenderer.areLimbsLocked();
 		
-		if (model instanceof BipedModel) {
-			BipedModel<?> bmodel = (BipedModel<?>) model;
+		if (model instanceof HumanoidModel) {
+			HumanoidModel<?> bmodel = (HumanoidModel<?>) model;
 			PlayerModel<?> pmodel = bmodel instanceof PlayerModel ? (PlayerModel<?>) bmodel : null;
 			
-			List<BipedArmorLayer> armorLayers = AnimUtils.getLayers(BipedArmorLayer.class, baseRenderer);
-			BipedArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
+			List<HumanoidArmorLayer> armorLayers = AnimUtils.getLayers(HumanoidArmorLayer.class, baseRenderer);
+			HumanoidArmorLayer armor = armorLayers.isEmpty() ? null : armorLayers.get(0);
 			
 			boolean isSneaking = bmodel.crouching && entity.getDeltaMovement().lengthSqr() > 0.00625d;
 			boolean isBody = name.equals("body");
 			boolean isBodyChild = bone.parent != null && bone.parent.name.equals("body");
-			boolean isFreeBone = name.equals("firearm") || name.length() >= 9 && name.substring(0, 9).equals("cartridge");
+			boolean isFreeBone = !isBody && bone.parent == null;
 			
 			if (isSneaking) {
 				if (isBody) {
@@ -893,7 +990,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			
 			if (!lockedLimbs && !isBody) {
 				RenderUtils.moveToPivot(bone, stack);
-				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
+				stack.mulPose(Vector3f.XN.rotationDegrees(Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot())));
 				RenderUtils.moveBackFromPivot(bone, stack);
 			}
 			
@@ -905,8 +1002,8 @@ public abstract class FirearmItem extends ShootableItem implements
 				RenderUtils.scale(bone, stack);
 				RenderUtils.moveBackFromPivot(bone, stack);
 				
-				ModelRenderer bodyPart = null;
-				ModelRenderer garment = null;
+				ModelPart bodyPart = null;
+				ModelPart garment = null;
 				
 				switch (name) {
 				case "body":
@@ -929,7 +1026,7 @@ public abstract class FirearmItem extends ShootableItem implements
 					garment = bmodel.hat;
 				}
 				
-				IVertexBuilder entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
+				VertexConsumer entityBuilder = bufferIn.getBuffer(RenderType.entityTranslucent(loc));
 				
 				float skinAlpha = 1.0f;
 				if (entity.isInvisible()) skinAlpha = entity == mc.player ? 0.15f : 0.0f;
@@ -946,24 +1043,26 @@ public abstract class FirearmItem extends ShootableItem implements
 					garment.visible = false;
 				}
 				
-				Map<EquipmentSlotType, BipedModel<?>> armorModels = new HashMap<>();
+				Map<EquipmentSlot, HumanoidModel<?>> armorModels = new HashMap<>();
 				
-				EquipmentSlotType[] slots;
+				EquipmentSlot[] slots;
 				switch (name) {
 				case "body":
-					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST, EquipmentSlotType.LEGS };
+					slots = new EquipmentSlot[] { EquipmentSlot.CHEST, EquipmentSlot.LEGS };
 					break;
 				case "head":
-					slots = new EquipmentSlotType[] { EquipmentSlotType.HEAD };
+					slots = new EquipmentSlot[] { EquipmentSlot.HEAD };
 					break;
 				default:
-					slots = new EquipmentSlotType[] { EquipmentSlotType.CHEST };
+					slots = new EquipmentSlot[] { EquipmentSlot.CHEST };
 				}
 				
-				for (EquipmentSlotType slot : slots) {
+				for (EquipmentSlot slot : slots) {
 					ItemStack slotItem = entity.getItemBySlot(slot);
-					BipedModel<?> defaultModel = slot == EquipmentSlotType.LEGS ? armor.innerModel : armor.outerModel;
-					BipedModel<?> moddedModel = ForgeHooksClient.getArmorModel(entity, slotItem, slot, defaultModel);
+					HumanoidModel<?> defaultModel = slot == EquipmentSlot.LEGS ? armor.innerModel : armor.outerModel;
+					Model hookModel = ForgeHooksClient.getArmorModel(entity, slotItem, slot, defaultModel);
+					if (!(hookModel instanceof HumanoidModel)) continue;
+					HumanoidModel<?> moddedModel = (HumanoidModel<?>) hookModel;
 					moddedModel.young = entity.isBaby();
 					moddedModel.setAllVisible(false);
 					switch (slot) {
@@ -997,15 +1096,15 @@ public abstract class FirearmItem extends ShootableItem implements
 					armorModels.put(slot, moddedModel);
 				}
 				
-				for (Map.Entry<EquipmentSlotType, BipedModel<?>> entry : armorModels.entrySet()) {
+				for (Map.Entry<EquipmentSlot, HumanoidModel<?>> entry : armorModels.entrySet()) {
 					ItemStack armorStack = entity.getItemBySlot(entry.getKey());
 					Item stackItem = armorStack.getItem();
 					if (stackItem instanceof ArmorItem) {
 						ResourceLocation armorLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), null);
-						IVertexBuilder armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
+						VertexConsumer armorBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(armorLoc), false, armorStack.hasFoil());
 						
-						if (stackItem instanceof IDyeableArmorItem) {
-							int color = ((IDyeableArmorItem) armorStack.getItem()).getColor(armorStack);
+						if (stackItem instanceof DyeableArmorItem) {
+							int color = ((DyeableArmorItem) armorStack.getItem()).getColor(armorStack);
 							float r = (float)(color >> 16 & 255) / 255.0F;
 							float g = (float)(color >> 8 & 255) / 255.0F;
 							float b = (float)(color & 255) / 255.0F;
@@ -1013,7 +1112,7 @@ public abstract class FirearmItem extends ShootableItem implements
 							entry.getValue().renderToBuffer(stack, armorBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1.0f);
 							
 							ResourceLocation overlayLoc = armor.getArmorResource(entity, armorStack, entry.getKey(), "overlay");
-							IVertexBuilder overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
+							VertexConsumer overlayBuilder = ItemRenderer.getArmorFoilBuffer(bufferIn, RenderType.armorCutoutNoCull(overlayLoc), false, armorStack.hasFoil());
 							
 							entry.getValue().renderToBuffer(stack, overlayBuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
 						} else {
@@ -1027,16 +1126,16 @@ public abstract class FirearmItem extends ShootableItem implements
 				
 			if (!lockedLimbs && isFreeBone) {
 				stack.translate(0.0f, 1.375f, 0.0f);
-				stack.mulPose(Vector3f.XN.rotationDegrees(MathHelper.rotLerp(partialTicks, entity.xRotO, entity.xRot)));
+				stack.mulPose(Vector3f.XN.rotationDegrees(Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot())));
 				stack.translate(0.0f, -1.375f, 0.0f);
 			}
 		}
 	}
 	
 	@Override
-	public float getBoneAlpha(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha) {
+	public boolean shouldHideCubes(ItemStack item, LivingEntity entity, GeoBone bone, float argAlpha) {
 		String name = bone.getName();
-		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head") ? 0.0f : 1.0f;
+		return name.equals("body") || name.equals("arm_left") || name.equals("arm_right") || name.equals("head");
 	}
 	
 	@Override public boolean shouldHideCrosshair(ItemStack stack) { return true; }
@@ -1046,28 +1145,43 @@ public abstract class FirearmItem extends ShootableItem implements
 		return TextureUtils.getWeaponSkinTexture(stack);
 	}
 	
+	@Override
+	public void initializeClient(Consumer<IItemRenderProperties> consumer) {
+		consumer.accept(new IItemRenderProperties() {
+			private BlockEntityWithoutLevelRenderer renderer = null;
+			
+			@Override
+			public BlockEntityWithoutLevelRenderer getItemStackRenderer() {
+				if (this.renderer == null) {
+					this.renderer = new FirearmRenderer();
+				}
+				return this.renderer;
+			}
+		});
+	}
+	
 	/*
 	 * STATIC QUERY METHODS
 	 */
 	
 	public static boolean isMeleeing(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isMeleeing).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemData::isMeleeing).orElse(false);
 	}
 	
 	public static boolean isFinishedAction(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isFinishedAction).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemData::isFinishedAction).orElse(false);
 	}
 	
 	public static boolean isCycled(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isCycled).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemData::isCycled).orElse(false);
 	}
 	
 	public static boolean isFired(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isFired).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemData::isFired).orElse(false);
 	}
 	
 	public static boolean isAiming(ItemStack stack) {
-		return getDataHandler(stack).map(IFirearmItemDataHandler::isAiming).orElse(false);
+		return getDataHandler(stack).map(IFirearmItemData::isAiming).orElse(false);
 	}
 	
 	public static ItemStack stackOf(Item item, float quality, int partCount, float weight) {
@@ -1076,7 +1190,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	
 	public static boolean isSubmergedInWater(LivingEntity shooter) {
 		return shooter.level.getBlockState(new BlockPos(shooter.getEyePosition(1.0f))).getBlock() == Blocks.WATER
-				&& (!(shooter instanceof PlayerEntity) || !((PlayerEntity) shooter).isCreative());
+				&& (!(shooter instanceof Player) || !((Player) shooter).isCreative());
 	}
 	
 	protected static float getEffectivenessFromEntity(LivingEntity entity) {
@@ -1084,7 +1198,7 @@ public abstract class FirearmItem extends ShootableItem implements
 	}
 	
 	protected static int getTimeModifiedByEntity(LivingEntity entity, int baseTime) {
-		return MathHelper.ceil(getTimeModifier(entity) * (float) baseTime);
+		return Mth.ceil(getTimeModifier(entity) * (float) baseTime);
 	}
 	
 	protected static float getTimeModifier(LivingEntity entity) {
@@ -1099,15 +1213,15 @@ public abstract class FirearmItem extends ShootableItem implements
 		return stack;
 	}
 	
-	public static CompoundNBT getCreativeData(ItemStack stack) {
-		CompoundNBT tag = PartItem.getCreativeData(stack);
+	public static CompoundTag getCreativeData(ItemStack stack) {
+		CompoundTag tag = PartItem.getCreativeData(stack);
 		getDataHandler(stack).ifPresent(h -> {
 			
 		});
 		return tag;
 	}
 	
-	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundTag nbt) {
 		PartItem.readCreativeData(stack, nbt);
 		getDataHandler(stack).ifPresent(h -> {
 			
@@ -1130,10 +1244,10 @@ public abstract class FirearmItem extends ShootableItem implements
 		private float muzzleVelocity;
 		private float spread;
 		private float fovModifier = 1.0f;
-		private Function<LivingEntity, Float> horizontalRecoilSupplier;
-		private Function<LivingEntity, Float> verticalRecoilSupplier;
+		private Function<LivingEntity, Float> horizontalRecoilSupplier = le -> 0.0f;
+		private Function<LivingEntity, Float> verticalRecoilSupplier = le -> 0.0f;
 		private Predicate<ItemStack> ammoPredicate;
-		private Supplier<ItemStackHandler> attachmentsHandler = ItemStackHandler::new;
+		private Supplier<IItemHandlerModifiable> attachmentsHandler = ItemStackHandler::new;
 		
 		protected final T thisObj;
 		
@@ -1228,7 +1342,7 @@ public abstract class FirearmItem extends ShootableItem implements
 			return this.thisObj;
 		}
 		
-		public T attachmentsHandler(Supplier<ItemStackHandler> supplier) {
+		public T attachmentsHandler(Supplier<IItemHandlerModifiable> supplier) {
 			this.attachmentsHandler = supplier;
 			return this.thisObj;
 		}
@@ -1268,7 +1382,7 @@ public abstract class FirearmItem extends ShootableItem implements
 		if (mc.player == null) return;
 		ItemStack stack = mc.player.getMainHandItem();
 		getDataHandler(stack).ifPresent(h -> {
-			float ticks = (float) h.getRecoilTicks() + (float) event.getRenderPartialTicks();
+			float ticks = (float) h.getRecoilTicks() + (float) event.getPartialTicks();
 			float oldTicks = Math.max(ticks - mc.getDeltaFrameTime(), 0.0f);
 			ticks *= 0.1f;
 			oldTicks *= 0.1f;

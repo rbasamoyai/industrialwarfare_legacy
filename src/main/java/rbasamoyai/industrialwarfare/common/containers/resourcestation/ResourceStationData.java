@@ -1,13 +1,13 @@
 package rbasamoyai.industrialwarfare.common.containers.resourcestation;
 
-import net.minecraft.util.IIntArray;
-import rbasamoyai.industrialwarfare.common.tileentities.ResourceStationTileEntity;
+import net.minecraft.world.inventory.ContainerData;
+import rbasamoyai.industrialwarfare.common.blockentities.ResourceStationBlockEntity;
 
-public class ResourceStationData implements IIntArray {
+public class ResourceStationData implements ContainerData {
 
-	private final ResourceStationTileEntity te;
+	private final ResourceStationBlockEntity te;
 	
-	public ResourceStationData(ResourceStationTileEntity te) {
+	public ResourceStationData(ResourceStationBlockEntity te) {
 		this.te = te;
 	}
 	

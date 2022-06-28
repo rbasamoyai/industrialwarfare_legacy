@@ -10,24 +10,23 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
-import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.TaskCommandArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
@@ -45,15 +44,15 @@ import rbasamoyai.industrialwarfare.utils.TooltipUtils;
  * 
  * @author rbasmaoyai
  */
-public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
+public class TaskScrollScreen extends AbstractContainerScreen<TaskScrollMenu> {
 
 	private static final ResourceLocation TASK_SCROLL_SCREEN_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/task_scroll.png");
 	
 	private static final String TASK_SCROLL_SCREEN_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".task_scroll";
-	private static final IFormattableTextComponent ADD_ORDER_BUTTON_TEXT = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".add_order");
-	private static final IFormattableTextComponent TOOLTIP_REMOVE_ORDER = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".remove_order");
-	private static final IFormattableTextComponent TOOLTIP_INSERT_ORDER = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".insert_order");
-	private static final IFormattableTextComponent ATTACH_LABEL_TEXT = new TranslationTextComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".attach_label");
+	private static final MutableComponent ADD_ORDER_BUTTON_TEXT = new TranslatableComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".add_order");
+	private static final MutableComponent TOOLTIP_REMOVE_ORDER = new TranslatableComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".remove_order");
+	private static final MutableComponent TOOLTIP_INSERT_ORDER = new TranslatableComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".insert_order");
+	private static final MutableComponent ATTACH_LABEL_TEXT = new TranslatableComponent(TASK_SCROLL_SCREEN_KEY_ROOT + ".attach_label");
 	
 	private static final int ARG_COLUMNS = 2;
 	private static final int TEXTURE_SIZE = 256;
@@ -150,13 +149,13 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	private Button removeOrderButton;
 	private Button insertOrderButton;
 	
-	private final TaskScrollArgSelectorWidget[][] asWidgetArray = new TaskScrollArgSelectorWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
-	private final RowIndexWidget[] riWidgetArray = new RowIndexWidget[TaskScrollContainer.ROW_COUNT];
-	private final ItemArgWidget[][] iaWidgetArray = new ItemArgWidget[TaskScrollContainer.ROW_COUNT][ARG_COLUMNS];
+	private final TaskScrollArgSelectorWidget[][] asWidgetArray = new TaskScrollArgSelectorWidget[TaskScrollMenu.ROW_COUNT][ARG_COLUMNS];
+	private final RowIndexWidget[] riWidgetArray = new RowIndexWidget[TaskScrollMenu.ROW_COUNT];
+	private final ItemArgWidget[][] iaWidgetArray = new ItemArgWidget[TaskScrollMenu.ROW_COUNT][ARG_COLUMNS];
 	
 	private final Map<Integer, Map<Integer, Optional<ArgSelector<?>>>> cachedSelectors = new HashMap<>();
 	
-	public TaskScrollScreen(TaskScrollContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
+	public TaskScrollScreen(TaskScrollMenu container, Inventory playerInv, Component localTitle) {
 		super(container, playerInv, localTitle);
 		
 		this.imageWidth = 176;
@@ -177,7 +176,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		super.init();
 		this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
 		
-		this.prevPageButton = this.addButton(new ImageButton(
+		this.prevPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + PAGE_PREV_BUTTON_GUI_X,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -189,7 +188,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				this::prevPage
 				));
 		
-		this.nextPageButton = this.addButton(new ImageButton(
+		this.nextPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + PAGE_NEXT_BUTTON_GUI_X,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -201,7 +200,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				this::nextPage
 				));
 		
-		this.addOrderButton = this.addButton(new Button(
+		this.addOrderButton = this.addRenderableWidget(new Button(
 				this.leftPos + ADD_ORDER_BUTTON_X,
 				this.topPos + ADD_ORDER_BUTTON_START_Y,
 				this.font.width(ADD_ORDER_BUTTON_TEXT) + 8,
@@ -210,9 +209,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				this::addOrder
 				));
 		
-		Button.ITooltip removeOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_REMOVE_ORDER, mouseX, mouseY);
+		Button.OnTooltip removeOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_REMOVE_ORDER, mouseX, mouseY);
 		
-		this.removeOrderButton = this.addButton(new DeactivatableImageButton(
+		this.removeOrderButton = this.addRenderableWidget(new DeactivatableImageButton(
 				this.leftPos + ORDER_OPERATION_BUTTONS_GUI_X,
 				this.topPos + ORDER_OPERATION_BUTTONS_GUI_START_Y,
 				ORDER_OPERATION_BUTTONS_WIDTH,
@@ -228,9 +227,9 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				));
 		WidgetUtils.setActiveAndVisible(this.removeOrderButton, false);
 		
-		Button.ITooltip insertOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_INSERT_ORDER, mouseX, mouseY);
+		Button.OnTooltip insertOrderButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_INSERT_ORDER, mouseX, mouseY);
 		
-		this.insertOrderButton = this.addButton(new DeactivatableImageButton(
+		this.insertOrderButton = this.addRenderableWidget(new DeactivatableImageButton(
 				this.leftPos + ORDER_OPERATION_BUTTONS_GUI_X,
 				this.topPos + ORDER_OPERATION_BUTTONS_GUI_START_Y + ORDER_OPERATION_BUTTONS_WIDTH,
 				ORDER_OPERATION_BUTTONS_WIDTH,
@@ -296,23 +295,21 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		TextureManager texManager = this.minecraft.getTextureManager();
-		texManager.bind(TASK_SCROLL_SCREEN_GUI);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, TASK_SCROLL_SCREEN_GUI);
 		
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
 		int scrollBarTexYDiff = this.canScroll() ? 0 : SCROLL_BAR_BUTTON_HEIGHT ;
-		int scrollBarY = this.topPos + SCROLL_BAR_BG_GUI_Y + MathHelper.floor((float) SCROLL_BAR_BG_EFFECTIVE_HEIGHT * this.scrollOffs);
+		int scrollBarY = this.topPos + SCROLL_BAR_BG_GUI_Y + Mth.floor((float) SCROLL_BAR_BG_EFFECTIVE_HEIGHT * this.scrollOffs);
 		this.blit(stack, this.leftPos + SCROLL_BAR_BG_GUI_X, scrollBarY, SCROLL_BAR_BUTTON_TEX_X, SCROLL_BAR_BUTTON_TEX_Y + scrollBarTexYDiff, SCROLL_BAR_WIDTH, SCROLL_BAR_BUTTON_HEIGHT);
 		
 		// Rendering attach label
@@ -329,7 +326,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		}
 		
 		// ArgSelectorWidget binds to the widgets texture, so need to bind back
-		texManager.bind(TASK_SCROLL_SCREEN_GUI);
+		RenderSystem.setShaderTexture(0, TASK_SCROLL_SCREEN_GUI);
 		
 		int topIndex = this.menu.getTopIndex();
 		int baseArgIndex = this.page * 2 -1;
@@ -354,14 +351,14 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			}
 		}
 		
-		texManager.bind(TASK_SCROLL_SCREEN_GUI);
+		RenderSystem.setShaderTexture(0, TASK_SCROLL_SCREEN_GUI);
 		
 		// The RowIndexWidgets are invisible but Widget#render has to be called for hovering to work
 		for (int i = 0; i < this.riWidgetArray.length; i++) this.riWidgetArray[i].render(stack, mouseX, mouseY, partialTicks);
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		super.renderLabels(stack, mouseX, mouseY);
 		
 		this.font.draw(stack, ATTACH_LABEL_TEXT, ATTACH_LABEL_TEXT_X, ATTACH_LABEL_TEXT_Y, ATTACH_LABEL_TEXT_COLOR);
@@ -371,7 +368,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		
 		int topIndex = this.menu.getTopIndex();
 		for (int i = 0; i < this.menu.getVisibleRowCount(); i++) {
-			StringTextComponent listIndexLabel = new StringTextComponent(String.valueOf(topIndex + i + 1));
+			TextComponent listIndexLabel = new TextComponent(String.valueOf(topIndex + i + 1));
 			int y1 = LIST_INDEX_START_Y + ROW_SPACING * i;
 			if (this.hoveringOverRowIndex != i) this.font.draw(stack, listIndexLabel, LIST_INDEX_RIGHT_X - this.font.width(listIndexLabel), y1, TEXT_COLOR);
 		}
@@ -385,13 +382,13 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 				if (optional.isPresent()) {
 					IArgHolder holder = optional.get().getArgHolder(argIndex);
 					if (holder.isItemStackArg()) {
-						ITextComponent title = holder.getSelector(this.menu)
+						Component title = holder.getSelector(this.menu)
 								.map(ArgSelector::getTitle)
-								.orElse(StringTextComponent.EMPTY);
+								.orElse(TextComponent.EMPTY);
 						
 						int x = ITEM_ARG_WIDGET_TITLE_START_X + COLUMN_SPACING * j;
 						int y = ITEM_ARG_WIDGET_TITLE_START_Y + ROW_SPACING * i;
-						IFormattableTextComponent shortened = TooltipUtils.getShortenedTitle((IFormattableTextComponent) title, this.font, ITEM_ARG_WIDGET_TITLE_WIDTH);
+						MutableComponent shortened = TooltipUtils.getShortenedTitle((MutableComponent) title, this.font, ITEM_ARG_WIDGET_TITLE_WIDTH);
 						this.font.draw(stack, shortened, x, y, TEXT_COLOR);
 					}
 				}
@@ -400,15 +397,15 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	}
 	
 	@Override
-	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderTooltip(PoseStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
 
 		for (int i = 0; i < this.asWidgetArray.length; i++) {
 			for (int j = 0; j < this.asWidgetArray[0].length; j++) {
 				TaskScrollArgSelectorWidget asWidget = this.asWidgetArray[i][j];
-				if (asWidget.isHovered()) {
+				if (asWidget.isHoveredOrFocused()) {
 					Optional<ArgSelector<?>> optional = asWidget.getSelector();
-					List<ITextComponent> tooltip = optional
+					List<Component> tooltip = optional
 							.map(ArgSelector::getComponentTooltip)
 							.orElseGet(() -> Arrays.asList(TooltipUtils.NOT_AVAILABLE));
 					this.renderComponentTooltip(stack, tooltip, mouseX, mouseY);
@@ -419,14 +416,14 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		for (int i = 0; i < this.iaWidgetArray.length; i++) {
 			for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
 				ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
-				if (iaWidget.isHovered() && !iaWidget.getItem().isEmpty()) {
+				if (iaWidget.isHoveredOrFocused() && !iaWidget.getItem().isEmpty()) {
 					this.renderTooltip(stack, iaWidget.getItem(), mouseX, mouseY);
 				}
 			}
 		}
 		
-		if (this.removeOrderButton.isHovered() && this.removeOrderButton.active) this.removeOrderButton.renderToolTip(stack, mouseX, mouseY);
-		if (this.insertOrderButton.isHovered() && this.insertOrderButton.active) this.insertOrderButton.renderToolTip(stack, mouseX, mouseY);
+		if (this.removeOrderButton.isHoveredOrFocused() && this.removeOrderButton.active) this.removeOrderButton.renderToolTip(stack, mouseX, mouseY);
+		if (this.insertOrderButton.isHoveredOrFocused() && this.insertOrderButton.active) this.insertOrderButton.renderToolTip(stack, mouseX, mouseY);
 	}
 	
 	@Override
@@ -443,8 +440,8 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			for (int i = 0; i < this.iaWidgetArray.length; i++) {
 				for (int j = 0; j < this.iaWidgetArray[i].length; j++) {
 					ItemArgWidget iaWidget = this.iaWidgetArray[i][j];
-					if (iaWidget.isHovered()) {
-						iaWidget.setItem(this.menu.getCarriedItem());
+					if (iaWidget.isHoveredOrFocused()) {
+						iaWidget.setItem(this.menu.getCarried());
 					}
 				}
 			}
@@ -466,7 +463,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	public boolean mouseDragged(double mouseX1, double mouseY1, int button, double mouseX2, double mouseY2) {
 		if (this.isScrolling && this.insideScrollBar(mouseX1 - (double) this.leftPos, mouseY1 - (double) this.topPos)) {
 			this.scrollOffs = ((float) mouseY1 - (float) this.topPos - (float) SCROLL_BAR_BG_GUI_Y - (float)(SCROLL_BAR_BUTTON_HEIGHT) * 0.5f) / (float) SCROLL_BAR_BG_EFFECTIVE_HEIGHT;
-			this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0f, 1.0f);
+			this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0f, 1.0f);
 			this.scrollTo(this.scrollOffs);
 
 		}
@@ -479,7 +476,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		if (this.canScroll()) {
 			if (this.insideScrollBar(mouseX - (double) this.leftPos, mouseY - (double) this.topPos)){
 				this.scrollOffs = this.scrollOffs - (float) scrollDist / (float) SCROLL_BAR_BG_EFFECTIVE_HEIGHT * 5.0f;
-				this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0f, 1.0f);
+				this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0f, 1.0f);
 				this.scrollTo(this.scrollOffs);
 			}
 		}
@@ -488,11 +485,11 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	}
 	
 	@Override
-	public void tick() {
+	public void containerTick() {
 		this.hoveringOverRowIndex = -1;
 		for (int i = 0; i < this.riWidgetArray.length; i++) {
 			RowIndexWidget riWidget = this.riWidgetArray[i];
-			if (riWidget.isHovered() && this.menu.isValidSlotOffs(this.menu.getTopIndex() + riWidget.getRowIndex()))
+			if (riWidget.isHoveredOrFocused() && this.menu.isValidSlotOffs(this.menu.getTopIndex() + riWidget.getRowIndex()))
 				this.hoveringOverRowIndex = riWidget.getRowIndex();
 		}
 		
@@ -505,7 +502,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.removeOrderButton.y = this.topPos + ORDER_OPERATION_BUTTONS_GUI_START_Y + ROW_SPACING * this.hoveringOverRowIndex;
 		this.insertOrderButton.y = this.removeOrderButton.y + ORDER_OPERATION_BUTTONS_WIDTH;
 		
-		super.tick();
+		super.containerTick();
 	}
 	
 	@Override
@@ -553,7 +550,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		this.lastPage = 0;
 		List<TaskScrollOrder> orderList = this.menu.getOrderList();
 		for (TaskScrollOrder order : orderList) {
-			int possibleLength = MathHelper.ceil((float)(order.currentArgLength() + 1) * 0.5f) - 1;
+			int possibleLength = Mth.ceil((float)(order.currentArgLength() + 1) * 0.5f) - 1;
 			if (possibleLength > this.lastPage) this.lastPage = possibleLength;
 		}
 		if (this.page > this.lastPage) this.page = this.lastPage;
@@ -616,7 +613,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 			}
 		}
 		
-		boolean isVisible = this.menu.getVisibleRowCount() < TaskScrollContainer.ROW_COUNT;
+		boolean isVisible = this.menu.getVisibleRowCount() < TaskScrollMenu.ROW_COUNT;
 		WidgetUtils.setActiveAndVisible(this.addOrderButton, isVisible && !this.menu.isOrderListFull());
 		this.addOrderButton.y = this.topPos + ADD_ORDER_BUTTON_START_Y + this.menu.getVisibleRowCount() % 5 * ROW_SPACING;
 		
@@ -652,7 +649,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 						if (selector.isPresent()) {
 							TaskScrollCommand oldCommand = order.getCommand();
 							TaskScrollCommand newCommand = selector.get().getSelectedArg().getLoc()
-									.map(IWModRegistries.TASK_SCROLL_COMMANDS::getValue)
+									.map(IWModRegistries.TASK_SCROLL_COMMANDS.get()::getValue)
 									.orElse(this.validCmds.get(0));
 							order.setCommand(newCommand, this.fillWrapper);
 							if (newCommand != oldCommand) {
@@ -680,7 +677,7 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 		int o = this.menu.isOrderListFull() ? 0 : 1;
 		this.saveWidgetsToOrders();
 		
-		this.menu.setTopIndex(MathHelper.floor(f * (float)(this.menu.getOrderListSize() - TaskScrollContainer.ROW_COUNT + o)));
+		this.menu.setTopIndex(Mth.floor(f * (float)(this.menu.getOrderListSize() - TaskScrollMenu.ROW_COUNT + o)));
 		int newTopIndex = this.menu.getTopIndex();
 		
 		for (int i = 0; i < this.iaWidgetArray.length; i++) {
@@ -694,11 +691,11 @@ public class TaskScrollScreen extends ContainerScreen<TaskScrollContainer> {
 	}
 	
 	private void updateScrollOffs(float oldSize) {
-		this.scrollOffs = MathHelper.clamp(this.scrollOffs * oldSize / (float) this.getScrollLength(), 0.0f, 1.0f);
+		this.scrollOffs = Mth.clamp(this.scrollOffs * oldSize / (float) this.getScrollLength(), 0.0f, 1.0f);
 	}
 	
 	private boolean canScroll() {
-		return this.menu.getOrderListSize() >= TaskScrollContainer.ROW_COUNT;
+		return this.menu.getOrderListSize() >= TaskScrollMenu.ROW_COUNT;
 	}
 	
 	private boolean insideScrollBar(double mouseX, double mouseY) {

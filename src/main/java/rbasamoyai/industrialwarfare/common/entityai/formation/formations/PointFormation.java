@@ -7,22 +7,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.Constants;
+import com.mojang.math.Constants;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entities.IWeaponRangedAttackMob;
@@ -30,7 +32,7 @@ import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationAttackType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.FormationEntityWrapper;
-import rbasamoyai.industrialwarfare.common.entityai.formation.IMovesInFormation;
+import rbasamoyai.industrialwarfare.common.entityai.formation.MovesInFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem.Interval;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
@@ -50,7 +52,7 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public FormationLeaderEntity spawnInnerFormationLeaders(World level, Vector3d pos, UUID commandGroup, PlayerIDTag owner) {
+	public FormationLeaderEntity spawnInnerFormationLeaders(Level level, Vec3 pos, UUID commandGroup, PlayerIDTag owner) {
 		FormationLeaderEntity leader = super.spawnInnerFormationLeaders(level, pos, commandGroup, owner);
 		
 		this.innerFormations
@@ -79,12 +81,12 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public <E extends CreatureEntity & IMovesInFormation> boolean addEntity(E entity) {
+	public <E extends PathfinderMob & MovesInFormation> boolean addEntity(E entity) {
 		int rank = entity.getFormationRank();
 		
 		for (Point p : this.positions.keySet()) {
 			if (this.units.containsKey(p)) {
-				CreatureEntity occupier = this.units.get(p).getEntity();
+				PathfinderMob occupier = this.units.get(p).getEntity();
 				if (occupier instanceof FormationLeaderEntity && ((FormationLeaderEntity) occupier).addEntity(entity)) {
 					return true;
 				}
@@ -97,7 +99,7 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public void removeEntity(CreatureEntity entity) {
+	public void removeEntity(PathfinderMob entity) {
 		this.units.keySet()
 		.stream()
 		.filter(p -> this.units.get(p).getEntity() == entity)
@@ -129,8 +131,8 @@ public abstract class PointFormation extends UnitFormation {
 		boolean finishedForming = this.formationState == State.FORMING;
 		boolean stopped = UnitFormation.isStopped(leader);
 		
-		Vector3d leaderForward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
-		Vector3d leaderRight = new Vector3d(-leaderForward.z, 0.0d, leaderForward.x);
+		Vec3 leaderForward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
+		Vec3 leaderRight = new Vec3(-leaderForward.z, 0.0d, leaderForward.x);
 		
 		Brain<?> leaderBrain = leader.getBrain();
 		
@@ -157,7 +159,7 @@ public abstract class PointFormation extends UnitFormation {
 				this.units.remove(p);
 				continue;
 			}
-			CreatureEntity unit = wrapper.getEntity();
+			PathfinderMob unit = wrapper.getEntity();
 			if (!UnitFormation.checkMemoriesForMovement(unit)) {
 				this.units.remove(p);
 				continue;
@@ -184,7 +186,7 @@ public abstract class PointFormation extends UnitFormation {
 				}
 				
 				if (unit instanceof IWeaponRangedAttackMob
-					&& UnitFormation.canDoRangedAttack((CreatureEntity & IWeaponRangedAttackMob) unit, target.getEyePosition(1.0f), MemoryModuleTypeInit.SHOOTING_POS.get())) {
+					&& UnitFormation.canDoRangedAttack((PathfinderMob & IWeaponRangedAttackMob) unit, target.getEyePosition(1.0f), MemoryModuleTypeInit.SHOOTING_POS.get())) {
 					unitBrain.setMemoryWithExpiry(MemoryModuleTypeInit.SHOOTING_POS.get(), target.getEyePosition(1.0f), 40L);
 				} else {
 					unitBrain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
@@ -194,21 +196,21 @@ public abstract class PointFormation extends UnitFormation {
 				unitBrain.setMemory(MemoryModuleTypeInit.SHOULD_PREPARE_ATTACK.get(), true);
 			}
 			
-			Vector3d precisePos =
+			Vec3 precisePos =
 					leader.position()
 					.add(leaderForward.scale(p.z))
 					.add(leaderRight.scale(p.x));
 			
 			boolean closeEnough = unit.position().closerThan(precisePos, CLOSE_ENOUGH);
 			
-			if (unitBrain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryModuleStatus.REGISTERED) && closeEnough) {
+			if (unitBrain.checkMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), MemoryStatus.REGISTERED) && closeEnough) {
 				unitBrain.setMemory(MemoryModuleTypeInit.ENGAGING_COMPLETED.get(), engagementFlag);
 			}
 			
 			if (this.formationState == State.FORMED && stopped && closeEnough && !engagementFlag) {
 				// Stop and stay oriented
-				unit.yRot = leader.yRot;
-				unit.yHeadRot = leader.yRot;
+				unit.setYRot(leader.getYRot());
+				unit.yHeadRot = leader.getYRot();
 				continue;
 			}
 			
@@ -216,7 +218,7 @@ public abstract class PointFormation extends UnitFormation {
 			if (unitBrain.hasMemoryValue(MemoryModuleType.MEETING_POINT) && !unitBrain.hasMemoryValue(MemoryModuleType.WALK_TARGET)) {
 				unitBrain.eraseMemory(MemoryModuleType.MEETING_POINT);
 			} else {
-				Vector3d possiblePos = this.tryFindingNewPosition(unit, precisePos);
+				Vec3 possiblePos = this.tryFindingNewPosition(unit, precisePos);
 				if (possiblePos == null) {
 					possiblePos = this.tryFindingNewPosition(unit, precisePos.add(0.0d, unit.getY() - leader.getY(), 0.0d));
 				}
@@ -243,20 +245,20 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	public float scoreOrientationAngle(float angle, World level, CreatureEntity leader, Vector3d pos) {
-		Vector3d forward = new Vector3d(-MathHelper.sin(leader.yRot * DEG_TO_RAD), 0.0d, MathHelper.cos(leader.yRot * DEG_TO_RAD));
-		Vector3d right = new Vector3d(-forward.z, 0.0d, forward.x);
+	public float scoreOrientationAngle(float angle, Level level, PathfinderMob leader, Vec3 pos) {
+		Vec3 forward = new Vec3(-Mth.sin(leader.getYRot() * Constants.DEG_TO_RAD), 0.0d, Mth.cos(leader.getYRot() * Constants.DEG_TO_RAD));
+		Vec3 right = new Vec3(-forward.z, 0.0d, forward.x);
 		
 		return this.units.entrySet()
 				.stream()
 				.filter(e -> !UnitFormation.isSlotEmpty(e.getValue()))
 				.map(e -> {
-					CreatureEntity unit = e.getValue().getEntity();
+					PathfinderMob unit = e.getValue().getEntity();
 					if (unit instanceof FormationLeaderEntity) {
 						return ((FormationLeaderEntity) unit).scoreOrientationAngle(angle, pos);
 					}
 					Point p = e.getKey();
-					Vector3d unitPos = pos.add(forward.scale(p.z)).add(right.scale(p.x));
+					Vec3 unitPos = pos.add(forward.scale(p.z)).add(right.scale(p.x));
 					BlockPos blockPos = (new BlockPos(unitPos)).below();
 					return level.loadedAndEntityCanStandOn(blockPos, unit) && level.noCollision(unit, unit.getBoundingBox().move(unitPos)) ? 1.0f : 0.0f;
 				})
@@ -271,14 +273,14 @@ public abstract class PointFormation extends UnitFormation {
 	private static final String TAG_UUID = "uuid";
 	
 	@Override
-	public CompoundNBT serializeNBT() {
-		CompoundNBT nbt = super.serializeNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag nbt = super.serializeNBT();
 		
-		ListNBT points = new ListNBT();
+		ListTag points = new ListTag();
 		for (Map.Entry<Point, Integer> entry : this.positions.entrySet()) {
 			Point point = entry.getKey();
 			
-			CompoundNBT pointTag = new CompoundNBT();
+			CompoundTag pointTag = new CompoundTag();
 			pointTag.putInt(TAG_X, point.x);
 			pointTag.putInt(TAG_Z, point.z);
 			pointTag.putInt(TAG_RANK, entry.getValue());
@@ -295,15 +297,15 @@ public abstract class PointFormation extends UnitFormation {
 	}
 	
 	@Override
-	protected void loadEntityData(CompoundNBT nbt, World level) {
+	protected void loadEntityData(CompoundTag nbt, Level level) {
 		if (level.isClientSide) return;
-		ServerWorld slevel = (ServerWorld) level;
+		ServerLevel slevel = (ServerLevel) level;
 		
-		ListNBT points = nbt.getList(TAG_POINTS, Constants.NBT.TAG_COMPOUND);
+		ListTag points = nbt.getList(TAG_POINTS, Tag.TAG_COMPOUND);
 		this.positions.clear();
 		this.units.clear();
 		for (int i = 0; i < points.size(); ++i) {
-			CompoundNBT pointTag = points.getCompound(i);
+			CompoundTag pointTag = points.getCompound(i);
 			
 			int x = pointTag.getInt(TAG_X);
 			int z = pointTag.getInt(TAG_Z);
@@ -314,8 +316,8 @@ public abstract class PointFormation extends UnitFormation {
 			
 			if (!pointTag.contains(TAG_UUID)) continue;
 			Entity unit = slevel.getEntity(pointTag.getUUID(TAG_UUID));
-			if (!(unit instanceof CreatureEntity && unit instanceof IMovesInFormation)) continue;
-			this.units.put(point, new FormationEntityWrapper<>((CreatureEntity & IMovesInFormation) unit));
+			if (!(unit instanceof PathfinderMob && unit instanceof MovesInFormation)) continue;
+			this.units.put(point, new FormationEntityWrapper<>((PathfinderMob & MovesInFormation) unit));
 		}
 	}
 	

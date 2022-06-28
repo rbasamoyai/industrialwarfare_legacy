@@ -10,31 +10,29 @@ import java.util.function.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPosWrapper;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.LazyOptional;
-import rbasamoyai.industrialwarfare.common.capabilities.tileentities.workstation.IWorkstationDataHandler;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.BlockPosTracker;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import rbasamoyai.industrialwarfare.common.blockentities.ManufacturingBlockEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
 public class WorkstationProfession extends NPCProfession {
 
-	private final Supplier<ImmutableMap<MemoryModuleType<?>, MemoryModuleStatus>> memoryChecks;
+	private final Supplier<ImmutableMap<MemoryModuleType<?>, MemoryStatus>> memoryChecks;
 	private final Set<Block> workstations;
 	
 	public WorkstationProfession(Block workstation) {
@@ -43,8 +41,8 @@ public class WorkstationProfession extends NPCProfession {
 	
 	public WorkstationProfession(Set<Block> workstations) {
 		this.memoryChecks = () -> ImmutableMap.of(
-				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.COMPLAINT.get(), MemoryModuleStatus.REGISTERED
+				MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleTypeInit.COMPLAINT.get(), MemoryStatus.REGISTERED
 				);
 		this.workstations = workstations;
 	}
@@ -52,14 +50,14 @@ public class WorkstationProfession extends NPCProfession {
 	@Override
 	public boolean checkMemories(NPCEntity npc) {
 		Brain<?> brain = npc.getBrain();
-		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.memoryChecks.get().entrySet()) {
+		for (Entry<MemoryModuleType<?>, MemoryStatus> e : this.memoryChecks.get().entrySet()) {
 			if (!brain.checkMemory(e.getKey(), e.getValue())) return false;
 		}
 		return true;
 	}
 
 	@Override
-	public Optional<BlockPos> getWorkingArea(World level, BlockPos pos, NPCEntity npc) {
+	public Optional<BlockPos> getWorkingArea(Level level, BlockPos pos, NPCEntity npc) {
 		if (!this.workstations.contains(level.getBlockState(pos).getBlock())) return Optional.empty();
 		
 		List<BlockPos> positions = Arrays.asList(pos.north(), pos.east(), pos.south(), pos.west());
@@ -70,20 +68,19 @@ public class WorkstationProfession extends NPCProfession {
 					.findFirst();
 	}
 	
-	private static boolean noCollision(World level, BlockPos pos, NPCEntity npc) {
+	private static boolean noCollision(Level level, BlockPos pos, NPCEntity npc) {
 		return level.noCollision(
 				npc.getBoundingBox()
-				.move(Vector3d.ZERO.subtract(npc.position()))
-				.move(pos)
-				.move(0.5d, 0.0d, 0.5d));
+				.move(Vec3.ZERO.subtract(npc.position()))
+				.move(Vec3.atCenterOf(pos)));
 	}
 	
 	@Override
-	public void work(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void work(Level level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		// Stay at workstation to do work
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().get();
-		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2));
+		AABB box = new AABB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2));
 		
 		if (!box.contains(npc.position())) {
 			if (npc.getNavigation().isDone()) {
@@ -93,44 +90,32 @@ public class WorkstationProfession extends NPCProfession {
 			return;
 		}
 		
-		TileEntity te = level.getBlockEntity(pos);
+		BlockEntity te = level.getBlockEntity(pos);
 		if (te == null) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
-		if (!(te instanceof WorkstationTileEntity)) {
+		if (!(te instanceof ManufacturingBlockEntity)) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
-		WorkstationTileEntity workstation = (WorkstationTileEntity) te;
+		ManufacturingBlockEntity workstation = (ManufacturingBlockEntity) te;
 		
-		LazyOptional<IWorkstationDataHandler> lzop = workstation.getDataHandler();
-		if (!lzop.isPresent()) {
+		if (workstation.hasWorker() && !workstation.isSameWorker(npc)) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
-		lzop.ifPresent(h -> {
-			if (h.hasWorker()) {
-				if (!h.getWorkerUUID().equals(npc.getUUID())) {
-					brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
-					return;
-				}
-			} else {
-				h.setWorkerUUID(npc.getUUID());
-			}
-			
-			if (!brain.hasMemoryValue(MemoryModuleType.LOOK_TARGET)) {
-				brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosWrapper(pos));
-			}
-		});
-		
+		workstation.setWorker(npc);
+		if (!brain.hasMemoryValue(MemoryModuleType.LOOK_TARGET)) {
+			brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(pos));
+		}
 	}
 	
 	@Override
-	public void stopWorking(World level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		TileEntity te = level.getBlockEntity(order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
-		if (!(te instanceof WorkstationTileEntity)) return;
-		((WorkstationTileEntity) te).setRecipe(ItemStack.EMPTY, false);
+	public void stopWorking(Level level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+		BlockEntity te = level.getBlockEntity(order.getWrappedArg(WorkAtCommand.POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO));
+		if (!(te instanceof ManufacturingBlockEntity)) return;
+		((ManufacturingBlockEntity) te).setRecipe(ItemStack.EMPTY, false);
 	}
 
 }

@@ -1,6 +1,6 @@
 package rbasamoyai.industrialwarfare.client.screen.widgets.page;
 
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 
 public class BaseScreenPage implements IScreenPage {
 	

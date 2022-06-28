@@ -3,22 +3,22 @@ package rbasamoyai.industrialwarfare.common.items.firearms.complete;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
@@ -43,8 +43,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 		super(new Item.Properties()
 							.stacksTo(1)
 							.durability(1200)
-							.tab(IWItemGroups.TAB_WEAPONS)
-							.setISTER(() -> FirearmRenderer::new),
+							.tab(IWItemGroups.TAB_WEAPONS),
 					new MatchlockFirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.PAPER_CARTRIDGE.get() || s.getItem() == ItemInit.INFINITE_PAPER_CARTRIDGE.get())
 							.baseDamage(35.0f)
@@ -72,7 +71,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	}
 
 	@Override
-	public INamedContainerProvider getItemContainerProvider(ItemStack stack) {
+	public MenuProvider getItemContainerProvider(ItemStack stack) {
 		return null;
 	}
 	
@@ -165,14 +164,14 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
   		}
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			ServerWorld slevel = (ServerWorld) shooter.level;
-			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundCategory.MASTER, 5.0f, 1.0f);
+			ServerLevel slevel = (ServerLevel) shooter.level;
+			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundSource.MASTER, 5.0f, 1.0f);
 			
-			Vector3d viewVector = shooter.getViewVector(1.0f);
-			Vector3d smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
-			Vector3d smokeDelta = viewVector.scale(0.3d);
-			int count = 50 + random.nextInt(51);
-			for (ServerPlayerEntity splayer : slevel.getPlayers(p -> true)) {
+			Vec3 viewVector = shooter.getViewVector(1.0f);
+			Vec3 smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
+			Vec3 smokeDelta = viewVector.scale(0.3d);
+			int count = 50 + shooter.getRandom().nextInt(51);
+			for (ServerPlayer  splayer : slevel.getPlayers(p -> true)) {
 				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.03d);
 			}
 			
@@ -258,7 +257,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 	}
 	
 	@Override
-	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, MatrixStack matrixStack, float aimProgress) {
+	public void setupAnimationState(FirearmRenderer renderer, ItemStack stack, PoseStack matrixStack, float aimProgress) {
 		if (renderer.getUniqueID(this).intValue() == -1) return;
 		
 		getDataHandler(stack).ifPresent(h -> {
@@ -267,7 +266,7 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 				renderer.hideBone("slow_match", !h.isFired());
 			}
 		});
-		float f = 1.0f / MathHelper.lerp(aimProgress, 1.0f, this.fovModifier);
+		float f = 1.0f / Mth.lerp(aimProgress, 1.0f, this.fovModifier);
 		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
@@ -354,12 +353,12 @@ public class FishtailMatchlockFirearmItem extends MatchlockFirearmItem {
 
 	@Override
 	public boolean shouldSpecialRender(ItemStack stack, LivingEntity entity) {
-		return entity instanceof AbstractClientPlayerEntity || entity instanceof NPCEntity;
+		return entity instanceof AbstractClientPlayer || entity instanceof NPCEntity;
 	}
 	
 	@Override
 	public void onPreRender(LivingEntity entity, IAnimatable animatable, float entityYaw, float partialTicks,
-			MatrixStack stack, IRenderTypeBuffer bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
+			PoseStack stack, MultiBufferSource bufferIn, int packedLightIn, ThirdPersonItemAnimRenderer renderer) {
 		super.onPreRender(entity, animatable, entityYaw, partialTicks, stack, bufferIn, packedLightIn, renderer);
 		
 		ItemStack item = entity.getMainHandItem();

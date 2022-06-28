@@ -2,8 +2,8 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree;
 
 import java.util.function.Supplier;
 
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.CountArgHolder;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.ItemArgHolder;
@@ -11,8 +11,8 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
 
 public class ArgHolders {
 
-	private static final ITextComponent EQUIP_ITEM_TITLE = new TranslationTextComponent("command." + IndustrialWarfare.MOD_ID + ".args.equip_item");
-	private static final ITextComponent FILTER_TITLE = new TranslationTextComponent("command." + IndustrialWarfare.MOD_ID + ".args.filter");
+	private static final Component EQUIP_ITEM_TITLE = new TranslatableComponent("command." + IndustrialWarfare.MOD_ID + ".args.equip_item");
+	private static final Component FILTER_TITLE = new TranslatableComponent("command." + IndustrialWarfare.MOD_ID + ".args.filter");
 	
 	public static final Supplier<IArgHolder> BASE_JUMP_CONDITION_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.BASE_JUMP_CONDITION_SELECTOR);
 	public static final Supplier<IArgHolder> DAY_TIME_ARG_HOLDER = () -> new CountArgHolder(ArgSelectors.DAY_TIME_SELECTOR);

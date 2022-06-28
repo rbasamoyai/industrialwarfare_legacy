@@ -4,22 +4,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.util.math.vector.Vector3i;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.RegistryObject;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraftforge.registries.ForgeRegistryEntry;
-import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTree;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
-import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
 
 /**
  * Task scroll command.
@@ -27,37 +20,39 @@ import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
  * @author rbasamoyai
  */
 
-@Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCommand> {
 	
 	protected static final double MAX_DISTANCE_FROM_POI = 100.0d;
 	protected static final float SPEED_MODIFIER = 3.0f;
 	protected static final int CLOSE_ENOUGH_DIST = 0;
-	protected static final Vector3i TOO_FAR = new Vector3i(MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d);
+	protected static final Vec3i TOO_FAR = new Vec3i(MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d, MAX_DISTANCE_FROM_POI + 1.0d);
 	
 	private final CommandTree tree;
-	private final Supplier<Map<MemoryModuleType<?>, MemoryModuleStatus>> requiredMemoriesSupplier;
-	private Map<MemoryModuleType<?>, MemoryModuleStatus> requiredMemories;
+	private final Supplier<Map<MemoryModuleType<?>, MemoryStatus>> requiredMemoriesSupplier;
+	private Map<MemoryModuleType<?>, MemoryStatus> requiredMemories = null;
 	
-	public TaskScrollCommand(CommandTree tree, Supplier<Map<MemoryModuleType<?>, MemoryModuleStatus>> requiredMemories) {
+	public TaskScrollCommand(CommandTree tree, Supplier<Map<MemoryModuleType<?>, MemoryStatus>> requiredMemories) {
 		this.tree = tree;
 		this.requiredMemoriesSupplier = requiredMemories;
 	}
 	
-	public abstract boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order);
+	public abstract boolean checkExtraStartConditions(ServerLevel world, NPCEntity npc, TaskScrollOrder order);
 	
-	public abstract void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order);
+	public abstract void start(ServerLevel world, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
-	public abstract void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order);
+	public abstract void tick(ServerLevel world, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
-	public abstract void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order);
+	public abstract void stop(ServerLevel world, NPCEntity npc, long gameTime, TaskScrollOrder order);
 	
 	public final CommandTree getCommandTree() {
 		return this.tree;
 	}
 	
 	public final boolean hasRequiredMemories(Brain<NPCEntity> brain) {
-		for (Entry<MemoryModuleType<?>, MemoryModuleStatus> e : this.requiredMemories.entrySet()) {
+		if (this.requiredMemories == null) {
+			this.requiredMemories = this.requiredMemoriesSupplier.get();
+		}
+		for (Entry<MemoryModuleType<?>, MemoryStatus> e : this.requiredMemories.entrySet()) {
 			if (!brain.checkMemory(e.getKey(), e.getValue())) return false;
 		}
 		return true;
@@ -66,18 +61,6 @@ public abstract class TaskScrollCommand extends ForgeRegistryEntry<TaskScrollCom
 	@Override
 	public String toString() {
 		return this.getRegistryName().toString();
-	}
-	
-	private void initPostSetup() {
-		this.requiredMemories = this.requiredMemoriesSupplier.get();
-	}
-	
-	@SubscribeEvent
-	public static void initValidCommands(FMLCommonSetupEvent event) {
-		TaskScrollCommandInit.TASK_SCROLL_COMMANDS.getEntries()
-				.stream()
-				.map(RegistryObject::get)
-				.forEach(TaskScrollCommand::initPostSetup);
 	}
 	
 }

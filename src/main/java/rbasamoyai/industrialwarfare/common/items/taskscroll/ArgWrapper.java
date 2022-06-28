@@ -4,11 +4,11 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
 public class ArgWrapper {
@@ -53,8 +53,8 @@ public class ArgWrapper {
 	public Optional<ItemStack> getItem() { return this.itemOptional; }
 	public Optional<ResourceLocation> getLoc() { return this.locOptional; }
 	
-	public CompoundNBT serializeNBT() {
-		CompoundNBT tag = new CompoundNBT();
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
 		if (this.argNum != 0) tag.putInt(TAG_VALUE, this.argNum);
 		this.posOptional.ifPresent(pos -> tag.putIntArray(TAG_POS, new int[] {pos.getX(), pos.getY(), pos.getZ()}));
 		this.itemOptional.ifPresent(stack -> tag.put(TAG_ITEM, stack.serializeNBT()));
@@ -62,7 +62,7 @@ public class ArgWrapper {
 		return tag;
 	}
 	
-	public static ArgWrapper fromNBT(CompoundNBT nbt) {
+	public static ArgWrapper fromNBT(CompoundTag nbt) {
 		int value = nbt.getInt(TAG_VALUE);
 		Optional<BlockPos> posOptional;
 		if (nbt.contains(TAG_POS)) {
@@ -77,7 +77,7 @@ public class ArgWrapper {
 		return new ArgWrapper(value, posOptional, itemOptional, locOptional);
 	}
 	
-	public void toNetwork(PacketBuffer buf) {
+	public void toNetwork(FriendlyByteBuf buf) {
 		byte flag = 0;
 		if (this.argNum != 0) flag |= Flags.NUM;
 		if (this.posOptional.isPresent()) flag |= Flags.POS;
@@ -91,7 +91,7 @@ public class ArgWrapper {
 		if ((flag & Flags.LOC) != 0) buf.writeResourceLocation(this.locOptional.orElseGet(() -> new ResourceLocation(IndustrialWarfare.MOD_ID, "empty")));
 	}
 	
-	public static ArgWrapper fromNetwork(PacketBuffer buf) {
+	public static ArgWrapper fromNetwork(FriendlyByteBuf buf) {
 		byte flag = buf.readByte();
 		
 		int value = 0;

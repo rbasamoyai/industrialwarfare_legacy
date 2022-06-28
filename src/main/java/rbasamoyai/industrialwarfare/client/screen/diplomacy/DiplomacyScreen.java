@@ -9,20 +9,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.BaseScreenPage;
@@ -31,46 +31,46 @@ import rbasamoyai.industrialwarfare.client.screen.widgets.page.DraggableDecorato
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.IScreenPage;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.TextDecorator;
 import rbasamoyai.industrialwarfare.client.screen.widgets.page.WidgetCollectionDecorator;
-import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
+import rbasamoyai.industrialwarfare.common.containers.DiplomacyMenu;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.DiplomacyScreenMessages;
 
-public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
+public class DiplomacyScreen extends AbstractContainerScreen<DiplomacyMenu> {
 
 	public static final ResourceLocation DIPLOMACY_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/diplomacy.png");
 	
 	public static final String TRANSLATION_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".diplomacy";
 	
-	/* DEBUG */ public static final ITextComponent DEBUG_NPC = (new StringTextComponent("*DEBUG*").withStyle(TextFormatting.DARK_RED)).append(new StringTextComponent(" An NPC Faction").withStyle(TextFormatting.RESET));
+	/* DEBUG */ public static final Component DEBUG_NPC = (new TextComponent("*DEBUG*").withStyle(ChatFormatting.DARK_RED)).append(new TextComponent(" An NPC Faction").withStyle(ChatFormatting.RESET));
 	
-	private static final ITextComponent DIPLOMATIC_RELATIONS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".diplomatic_relations");
-	private static final ITextComponent NPC_FACTION_RELATIONSHIPS_PAGE_TITLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".npc_faction_relationships");
+	private static final Component DIPLOMATIC_RELATIONS_PAGE_TITLE = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".diplomatic_relations");
+	private static final Component NPC_FACTION_RELATIONSHIPS_PAGE_TITLE = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".npc_faction_relationships");
 	
-	public static final ITextComponent THEIR_STATUS = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".their_status");
-	public static final ITextComponent THEIR_STATUS_SHORT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".their_status.short");
-	public static final ITextComponent OUR_STATUS = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".our_status");
-	public static final ITextComponent OUR_STATUS_SHORT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".our_status.short");
-	public static final ITextComponent LOADING_PLAYER_INFO = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".loading_player_info");
-	public static final ITextComponent COULD_NOT_LOAD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".could_not_load").withStyle(TextFormatting.DARK_RED);
-	public static final ITextComponent NO_DIPLOMACY_AVAILABLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".no_diplomacy_available").withStyle(TextFormatting.DARK_RED);
+	public static final Component THEIR_STATUS = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".their_status");
+	public static final Component THEIR_STATUS_SHORT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".their_status.short");
+	public static final Component OUR_STATUS = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".our_status");
+	public static final Component OUR_STATUS_SHORT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".our_status.short");
+	public static final Component LOADING_PLAYER_INFO = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".loading_player_info");
+	public static final Component COULD_NOT_LOAD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".could_not_load").withStyle(ChatFormatting.DARK_RED);
+	public static final Component NO_DIPLOMACY_AVAILABLE = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".no_diplomacy_available").withStyle(ChatFormatting.DARK_RED);
 	
-	private static final List<ITextComponent> LOADING_FRAMES =
+	private static final List<Component> LOADING_FRAMES =
 			Arrays.asList(
-					new StringTextComponent(""),
-					new StringTextComponent("."),
-					new StringTextComponent(".."),
-					new StringTextComponent("...")
+					new TextComponent(""),
+					new TextComponent("."),
+					new TextComponent(".."),
+					new TextComponent("...")
 					);
 	
-	public static final Map<DiplomaticStatus, ITextComponent> STATUSES =
+	public static final Map<DiplomaticStatus, Component> STATUSES =
 			Arrays.stream(DiplomaticStatus.values())
 					.collect(Collectors.toMap(ds -> ds, ds -> {
-						return new TranslationTextComponent(TRANSLATION_KEY_ROOT + "." + ds.getName());
+						return new TranslatableComponent(TRANSLATION_KEY_ROOT + "." + ds.getName());
 					}));
 	
-	public static final Map<DiplomaticStatus, ITextComponent> STATUSES_COLORED =
+	public static final Map<DiplomaticStatus, Component> STATUSES_COLORED =
 			STATUSES
 					.entrySet()
 					.stream()
@@ -78,7 +78,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 						return e.getValue().copy().withStyle(e.getKey().getStyle());
 					}));
 	
-	public static final Map<DiplomaticStatus, ITextComponent> OUR_STATUSES =
+	public static final Map<DiplomaticStatus, Component> OUR_STATUSES =
 			STATUSES_COLORED
 					.entrySet()
 					.stream()
@@ -86,7 +86,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 						return OUR_STATUS.copy().append(": ").append(e.getValue());
 					}));
 	
-	public static final Map<DiplomaticStatus, ITextComponent> THEIR_STATUSES =
+	public static final Map<DiplomaticStatus, Component> THEIR_STATUSES =
 			STATUSES
 					.entrySet()
 					.stream()
@@ -94,7 +94,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 						return THEIR_STATUS.copy().append(": ").append(e.getValue());
 					}));
 	
-	public static final Map<DiplomaticStatus, ITextComponent> THEIR_STATUSES_COLORED =
+	public static final Map<DiplomaticStatus, Component> THEIR_STATUSES_COLORED =
 			STATUSES_COLORED
 					.entrySet()
 					.stream()
@@ -153,7 +153,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	
 	private int ticks = REFRESH_AFTER;
 	
-	public DiplomacyScreen(DiplomacyContainer container, PlayerInventory playerInv, ITextComponent title) {
+	public DiplomacyScreen(DiplomacyMenu container, Inventory playerInv, Component title) {
 		super(container, playerInv, title);
 		
 		this.imageWidth = 238;
@@ -166,7 +166,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	protected void init() {
 		super.init();
 		
-		this.prevPageButton = this.addButton(new ImageButton(
+		this.prevPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + PAGE_BUTTON_PREV_GUI_X,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -177,7 +177,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 				DIPLOMACY_GUI,
 				this::prevPage));
 		
-		this.nextPageButton = this.addButton(new ImageButton(
+		this.nextPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + PAGE_BUTTON_NEXT_GUI_X,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -231,16 +231,15 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);		
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		TextureManager texManager = this.minecraft.textureManager;
-		texManager.bind(DIPLOMACY_GUI);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderTexture(0, DIPLOMACY_GUI);
 		
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
@@ -251,7 +250,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		this.font.draw(stack, this.title, this.titleLabelX - (float) this.font.width(this.title) * 0.5f, this.titleLabelY, TEXT_COLOR);
 	}
 	
@@ -288,7 +287,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 	}
 	
 	@Override
-	public void tick() {
+	public void containerTick() {
 		if (++this.ticks >= REFRESH_AFTER) {
 			IWNetwork.CHANNEL.sendToServer(new DiplomacyScreenMessages.SRequestUpdate());
 			if (this.menu.isDirty() && this.drpList != null) {
@@ -299,7 +298,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 		}
 		this.getCurrentPage().tick();
 		this.drpScrollbar.setActive(this.drpList == null ? false : this.drpList.getSize() > LIST_ROWS);
-		super.tick();
+		super.containerTick();
 	}
 	
 	@Override
@@ -350,14 +349,14 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 		this.drpInfo.setTag(tag);
 	}
 	
-	public static ITextComponent getLoadingText(int frame) {
+	public static Component getLoadingText(int frame) {
 		return LOADING_PLAYER_INFO.copy().append(LOADING_FRAMES.get(frame));
 	}
 	
 	private void setDrpListTopIndex(float ox, float oy) {
 		if (this.drpList == null) return;
 		float size = Math.max((float) this.drpList.getSize() - 8.0f, 0.0f);
-		int index = MathHelper.floor(oy * size);
+		int index = Mth.floor(oy * size);
 		this.drpList.setTopIndex(index);
 	}
 	
@@ -385,7 +384,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 		this.drpList.setButtonsActive(true);
 	}
 	
-	private DiplomacyStatusButton.IDisplay dsbDisplay(DiplomaticStatus status) {
+	private DiplomacyStatusButton.OnDisplay dsbDisplay(DiplomaticStatus status) {
 		return tag -> {
 			Pair<DiplomaticStatus, DiplomaticStatus> statuses = this.menu.getDiplomaticStatuses().get(tag);
 			if (statuses == null) {
@@ -400,7 +399,7 @@ public class DiplomacyScreen extends ContainerScreen<DiplomacyContainer> {
 		};
 	}
 	
-	private DiplomacyStatusButton.IPressable dsbPressable(DiplomaticStatus status) {
+	private DiplomacyStatusButton.OnPress dsbPressable(DiplomaticStatus status) {
 		return tag -> {
 			Pair<DiplomaticStatus, DiplomaticStatus> statuses = this.menu.getDiplomaticStatuses().get(tag);
 			if (statuses == null) return;

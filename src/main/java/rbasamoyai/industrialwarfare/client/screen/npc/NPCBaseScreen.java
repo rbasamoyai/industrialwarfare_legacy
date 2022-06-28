@@ -1,29 +1,28 @@
 package rbasamoyai.industrialwarfare.client.screen.npc;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
-import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import rbasamoyai.industrialwarfare.common.containers.npcs.NPCMenu;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.SNPCContainerActivateMessage;
 
-public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
+public class NPCBaseScreen extends AbstractContainerScreen<NPCMenu> {
 
 	private static final ResourceLocation NPC_SCREEN_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/npcs/npc_base.png");
 	
 	private static final String TRANSLATION_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".npc";
-	private static final ITextComponent NPC_MAIN_PAGE_TEXT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".main_page");
-	private static final ITextComponent NPC_INVENTORY_TEXT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".inventory");
+	private static final Component NPC_MAIN_PAGE_TEXT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".main_page");
+	private static final Component NPC_INVENTORY_TEXT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".inventory");
 	
 	private static final int SLOT_SPACING = 18;
 	private static final int SLOT_TEX_X = 176;
@@ -62,13 +61,13 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	public static final int INVENTORY_PAGE = 1;
 	private static final int LAST_PAGE = INVENTORY_PAGE;
 	
-	private ITextComponent pageTitle = NPC_MAIN_PAGE_TEXT;
+	private Component pageTitle = NPC_MAIN_PAGE_TEXT;
 	private int page = 0;
 	
 	private Button prevPageButton;
 	private Button nextPageButton;
 	
-	public NPCBaseScreen(NPCContainer container, PlayerInventory playerInv, ITextComponent localTitle) {
+	public NPCBaseScreen(NPCMenu container, Inventory playerInv, Component localTitle) {
 		super(container, playerInv, localTitle);
 		
 		this.imageWidth = 176;
@@ -80,7 +79,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	protected void init() {
 		super.init();
 		
-		this.prevPageButton = this.addButton(new ImageButton(
+		this.prevPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -92,7 +91,7 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 				this::prevPage
 				));
 		
-		this.nextPageButton = this.addButton(new ImageButton(
+		this.nextPageButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos,
 				this.topPos + PAGE_BUTTON_GUI_Y,
 				PAGE_BUTTON_WIDTH,
@@ -108,26 +107,24 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		TextureManager texManager = this.getMinecraft().getTextureManager();
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, NPC_SCREEN_GUI);
 		
-		texManager.bind(NPC_SCREEN_GUI);
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
 		if (this.page == 0) {
 			for (int i = 0; i < 12; i++) {
 				if (i != 0 && i != 2 && i != 9 && i != 11) { // Ugly, I know but at least I only have to write AbstractGui#blit only once
-					int x = this.leftPos + NPCContainer.NPC_EQUIPMENT_SLOTS_LEFT_X + i % NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
-					int y = this.topPos + NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i / NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
+					int x = this.leftPos + NPCMenu.NPC_EQUIPMENT_SLOTS_LEFT_X + i % NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
+					int y = this.topPos + NPCMenu.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i / NPC_EQUIPMENT_SLOTS_GUI_COLUMNS * SLOT_SPACING - 1;
 					this.blit(stack, x, y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_SPACING, SLOT_SPACING);
 				}
 			}
@@ -135,22 +132,22 @@ public class NPCBaseScreen extends ContainerScreen<NPCContainer> {
 			this.blit(stack, this.leftPos + NPC_ENTITY_WINDOW_GUI_X, this.topPos + NPC_ENTITY_WINDOW_GUI_Y, NPC_ENTITY_WINDOW_TEX_X, NPC_ENTITY_WINDOW_TEX_Y, NPC_ENTITY_WINDOW_WIDTH, NPC_ENTITY_WINDOW_HEIGHT);	
 		} else if (this.page == 1) {
 			for (int i = 0; i < this.menu.getInvSlotCount(); i++) {
-				int x = this.leftPos + NPCContainer.NPC_INVENTORY_START_X + i % NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
-				int y = this.topPos + NPCContainer.NPC_INVENTORY_START_Y + i / NPCContainer.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
+				int x = this.leftPos + NPCMenu.NPC_INVENTORY_START_X + i % NPCMenu.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
+				int y = this.topPos + NPCMenu.NPC_INVENTORY_START_Y + i / NPCMenu.NPC_INVENTORY_COLUMNS * SLOT_SPACING - 1;
 				this.blit(stack, x, y, SLOT_TEX_X, SLOT_TEX_Y, SLOT_SPACING, SLOT_SPACING);
 			}
 		}
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		super.renderLabels(stack, mouseX, mouseY);
 		this.font.drawShadow(stack, this.pageTitle, (this.imageWidth - this.font.width(this.pageTitle)) / 2, PAGE_TITLE_Y, TEXT_COLOR);
 		
 		if (this.page == MAIN_PAGE && !this.menu.areArmorSlotsEnabled()) {
-			for (int i = 0; i < NPCContainer.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT - 1; i++) {
-				int y = NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
-				this.fillGradient(stack, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X, y, NPCContainer.NPC_EQUIPMENT_SLOTS_CENTER_X + 16, y + 16, SHADE_COLOR, SHADE_COLOR);
+			for (int i = 0; i < NPCMenu.NPC_EQUIPMENT_ARMOR_SLOTS_COUNT - 1; i++) {
+				int y = NPCMenu.NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
+				this.fillGradient(stack, NPCMenu.NPC_EQUIPMENT_SLOTS_CENTER_X, y, NPCMenu.NPC_EQUIPMENT_SLOTS_CENTER_X + 16, y + 16, SHADE_COLOR, SHADE_COLOR);
 			}
 		}
 	}

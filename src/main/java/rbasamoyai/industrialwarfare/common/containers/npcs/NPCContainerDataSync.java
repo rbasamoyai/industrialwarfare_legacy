@@ -1,19 +1,18 @@
 package rbasamoyai.industrialwarfare.common.containers.npcs;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.IIntArray;
-import net.minecraft.util.math.MathHelper;
-import rbasamoyai.industrialwarfare.common.capabilities.entities.npc.NPCDataCapability;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerData;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 
-public class NPCContainerDataSync implements IIntArray {
+public class NPCContainerDataSync implements ContainerData {
 
 	public static final float VALID_RANGE = 4.0f;
 	
 	protected final NPCEntity npc;
-	protected PlayerEntity player;
+	protected Player player;
 	
-	public NPCContainerDataSync(NPCEntity npc, PlayerEntity player) {
+	public NPCContainerDataSync(NPCEntity npc, Player player) {
 		this.npc = npc;
 		this.player = player;
 	}
@@ -24,12 +23,12 @@ public class NPCContainerDataSync implements IIntArray {
 			case 0:
 				return this.npc.getInventoryItemHandler().getSlots();
 			case 1:
-				return	MathHelper.abs((float)(player.getX() - npc.getX())) <= VALID_RANGE
-						&& MathHelper.abs((float)(player.getY() - npc.getY())) <= VALID_RANGE
-						&& MathHelper.abs((float)(player.getZ() - npc.getZ())) <= VALID_RANGE
+				return	Mth.abs((float)(player.getX() - npc.getX())) <= VALID_RANGE
+						&& Mth.abs((float)(player.getY() - npc.getY())) <= VALID_RANGE
+						&& Mth.abs((float)(player.getZ() - npc.getZ())) <= VALID_RANGE
 						&& !npc.isDeadOrDying() ? 1 : 0;
 			case 2:
-				return this.npc.getCapability(NPCDataCapability.NPC_DATA_CAPABILITY)
+				return this.npc.getDataHandler()
 						.map(h -> h.canWearEquipment() ? 1 : 0)
 						.orElse(0);
 			default:

@@ -2,12 +2,12 @@ package rbasamoyai.industrialwarfare.core.itemgroup;
 
 import java.util.Arrays;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.NonNullList;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.common.items.PartItem;
 import rbasamoyai.industrialwarfare.common.items.RecipeItem;
 import rbasamoyai.industrialwarfare.common.items.ScheduleItem;
@@ -61,9 +61,9 @@ import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
 public class IWItemGroups {
 	
-	private static int groupId = ItemGroup.getGroupCountSafe();
+	private static int groupId = CreativeModeTab.getGroupCountSafe();
 	
-	public static final ItemGroup TAB_GENERAL = new ItemGroup(groupId++, "industrialwarfare.general") {
+	public static final CreativeModeTab TAB_GENERAL = new CreativeModeTab(groupId++, "industrialwarfare.general") {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
@@ -95,7 +95,7 @@ public class IWItemGroups {
 		}	
 	};
 	
-	public static final ItemGroup TAB_DEBUG = new ItemGroup(groupId++, "industrialwarfare.debug") {
+	public static final CreativeModeTab TAB_DEBUG = new CreativeModeTab(groupId++, "industrialwarfare.debug") {
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.JOB_SITE_POINTER),
@@ -115,7 +115,7 @@ public class IWItemGroups {
 		}
 	};
 
-	public static final ItemGroup TAB_BLOCKS = new ItemGroup(groupId++, "industrialwarfare.blocks") {
+	public static final CreativeModeTab TAB_BLOCKS = new CreativeModeTab(groupId++, "industrialwarfare.blocks") {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
@@ -134,7 +134,7 @@ public class IWItemGroups {
 		}
 	};
 	
-	public static final ItemGroup TAB_PARTS = new ItemGroup(groupId++, "industrialwarfare.parts") {		
+	public static final CreativeModeTab TAB_PARTS = new CreativeModeTab(groupId++, "industrialwarfare.parts") {		
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
@@ -150,7 +150,7 @@ public class IWItemGroups {
 		}		
 	};
 	
-	public static final ItemGroup TAB_RECIPES = new ItemGroup(groupId++, "industrialwarfare.recipes") {	
+	public static final CreativeModeTab TAB_RECIPES = new CreativeModeTab(groupId++, "industrialwarfare.recipes") {	
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
@@ -165,7 +165,7 @@ public class IWItemGroups {
 		}	
 	};
 	
-	public static final ItemGroup TAB_WEAPONS = new ItemGroup(groupId++, "industrialwarfare.weapons") {	
+	public static final CreativeModeTab TAB_WEAPONS = new CreativeModeTab(groupId++, "industrialwarfare.weapons") {	
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(
@@ -184,7 +184,7 @@ public class IWItemGroups {
 		}	
 	};
 	
-	public static final ItemGroup TAB_ARMOR = new ItemGroup(groupId++, "industrialwarfare.armor") {
+	public static final CreativeModeTab TAB_ARMOR = new CreativeModeTab(groupId++, "industrialwarfare.armor") {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
 			items.addAll(Arrays.asList(

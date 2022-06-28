@@ -5,17 +5,17 @@ import java.util.UUID;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.AttributeModifier.Operation;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemData;
 
 public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 
@@ -31,7 +31,7 @@ public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(stack, level, entity, slot, selected);
 		if (!(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
@@ -97,8 +97,8 @@ public abstract class PrimingFirearmItem extends SingleShotFirearmItem {
 	}
 	
 	@Override
-	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack) {
-		if (getDataHandler(stack).map(IFirearmItemDataHandler::isCycled).orElse(false)) {
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
+		if (getDataHandler(stack).map(IFirearmItemData::isCycled).orElse(false)) {
 			return ImmutableMultimap.of(Attributes.MOVEMENT_SPEED, new AttributeModifier(PRIMED_MOVEMENT_SPEED_UUID, "industrialwarfare.item.firearm.primed_movement_speed", (double) this.slowdownFactor, Operation.MULTIPLY_TOTAL));
 		}
 		return super.getAttributeModifiers(slot, stack);

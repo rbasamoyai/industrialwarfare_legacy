@@ -1,11 +1,11 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemDataHandler;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemData;
 import rbasamoyai.industrialwarfare.common.items.MatchCordItem;
 
 public abstract class MatchlockFirearmItem extends PrimingFirearmItem {
@@ -24,7 +24,7 @@ public abstract class MatchlockFirearmItem extends PrimingFirearmItem {
 	}
 	
 	@Override
-	public void inventoryTick(ItemStack stack, World level, Entity entity, int slot, boolean selected) {
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(stack, level, entity, slot, selected);
 		if (level.isClientSide || !(entity instanceof LivingEntity)) return;
 		LivingEntity shooter = (LivingEntity) entity;
@@ -67,7 +67,7 @@ public abstract class MatchlockFirearmItem extends PrimingFirearmItem {
 	
 	@Override
 	protected int getCyclingTime(ItemStack firearm, LivingEntity shooter) {
-		return getDataHandler(firearm).map(IFirearmItemDataHandler::isFired).orElse(false) ? this.primingNoCordTime : this.cycleTime;
+		return getDataHandler(firearm).map(IFirearmItemData::isFired).orElse(false) ? this.primingNoCordTime : this.cycleTime;
 	}
 	
 	@Override
@@ -81,7 +81,7 @@ public abstract class MatchlockFirearmItem extends PrimingFirearmItem {
 	
 	@Override
 	public int getUnprimingTime(ItemStack firearm, LivingEntity shooter) {
-		return getDataHandler(firearm).map(IFirearmItemDataHandler::isFired).orElse(false) ? super.getUnprimingTime(firearm, shooter) : this.unprimingNoCordTime;
+		return getDataHandler(firearm).map(IFirearmItemData::isFired).orElse(false) ? super.getUnprimingTime(firearm, shooter) : this.unprimingNoCordTime;
 	}
 	
 	@Override

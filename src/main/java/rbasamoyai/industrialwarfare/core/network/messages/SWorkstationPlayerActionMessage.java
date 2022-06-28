@@ -4,14 +4,14 @@ import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
+import rbasamoyai.industrialwarfare.common.blockentities.ManufacturingBlockEntity;
 
 /*
  * A class for sending packets relating to actions done by players in workstations.
@@ -20,51 +20,49 @@ import rbasamoyai.industrialwarfare.common.tileentities.WorkstationTileEntity;
 
 public class SWorkstationPlayerActionMessage {
 
-	public BlockPos tileEntityPos;
-	public int action;
+	private BlockPos blockEntityPos;
+	private int action;
 
 	public SWorkstationPlayerActionMessage() {
 	}
 
 	public SWorkstationPlayerActionMessage(BlockPos pos, int action) {
-		this.tileEntityPos = pos;
+		this.blockEntityPos = pos;
 		this.action = action;
 	}
 
-	public static void encode(SWorkstationPlayerActionMessage msg, PacketBuffer buf) {
+	public static void encode(SWorkstationPlayerActionMessage msg, FriendlyByteBuf buf) {
 		buf
-				.writeBlockPos(msg.tileEntityPos)
+				.writeBlockPos(msg.blockEntityPos)
 				.writeInt(msg.action);
 	}
 
-	public static SWorkstationPlayerActionMessage decode(PacketBuffer buf) {
+	public static SWorkstationPlayerActionMessage decode(FriendlyByteBuf buf) {
 		return new SWorkstationPlayerActionMessage(buf.readBlockPos(), buf.readInt());
 	}
 
-	public static void handle(SWorkstationPlayerActionMessage msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			ServerPlayerEntity player = context.getSender();
-			ServerWorld world = player.getLevel();
-			if (world.hasChunk(msg.tileEntityPos.getX() / 16, msg.tileEntityPos.getZ() / 16) && !world.isClientSide) {
-				TileEntity te = world.getBlockEntity(msg.tileEntityPos);
-				if (te instanceof WorkstationTileEntity) {
-					WorkstationTileEntity workstationTE = (WorkstationTileEntity) te;
-					switch (msg.action) {
-					case 1:
-						workstationTE.attemptCraft(player);
-						break;
-					case 2:
-						workstationTE.onPlayerCloseScreen(player);
-						break;
-					default:
-						IndustrialWarfare.LOGGER.printf(Level.WARN, "Wrong action int specifier passed to WorkstationPlayerActionMessage, refer to WorkstationPlayerActionMessage#handle for valid action numbers");
-					}
-				}
-			} else {
-				IndustrialWarfare.LOGGER.printf(Level.WARN, "WorkstationPlayerActionMessage received with tileEntityPos field pointing to a non-existent chunk");
+	public static void handle(SWorkstationPlayerActionMessage msg, Supplier<NetworkEvent.Context> sup) {
+		NetworkEvent.Context ctx = sup.get();
+		ctx.enqueueWork(() -> {
+			ServerPlayer player = ctx.getSender();
+			ServerLevel level = player.getLevel();
+			if (!level.hasChunk(msg.blockEntityPos.getX() >> 4, msg.blockEntityPos.getZ() >> 4)) {
+				IndustrialWarfare.LOGGER.printf(Level.WARN, "SWorkstationPlayerActionMessage received that points to a non-existent chunk");
+			}
+			BlockEntity te = level.getBlockEntity(msg.blockEntityPos);
+			if (!(te instanceof ManufacturingBlockEntity)) return;
+			ManufacturingBlockEntity manuBlock = (ManufacturingBlockEntity) te;
+			switch (msg.action) {
+			case 1:
+				manuBlock.attemptCraft(player);
+				break;
+			case 2:
+				manuBlock.onPlayerCloseScreen(player);
+				break;
+			default:
+				IndustrialWarfare.LOGGER.printf(Level.WARN, "Invalid action int specifier passed to SWorkstationPlayerActionMessage, refer to SWorkstationPlayerActionMessage#handle for valid action numbers");
 			}
 		});
-		context.setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 }

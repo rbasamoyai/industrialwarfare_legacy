@@ -6,13 +6,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
-import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationContainer;
+import net.minecraftforge.network.NetworkEvent;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationMenu;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.network.handlers.ResourceStationCHandlers;
 
@@ -27,21 +26,20 @@ public class ResourceStationMessages {
 			this.selectedTab = selectedTab;
 		}
 		
-		public static void encode(SSelectTab msg, PacketBuffer buf) {
+		public static void encode(SSelectTab msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.selectedTab);
 		}
 		
-		public static SSelectTab decode(PacketBuffer buf) {
+		public static SSelectTab decode(FriendlyByteBuf buf) {
 			return new SSelectTab(buf.readVarInt());
 		}
 		
 		public static void handle(SSelectTab msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity sender = ctx.getSender();
-				Container ct = sender.containerMenu;
-				if (!(ct instanceof ResourceStationContainer)) return;
-				((ResourceStationContainer) ct).setSelected(msg.selectedTab);
+				AbstractContainerMenu ct = ctx.getSender().containerMenu;
+				if (!(ct instanceof ResourceStationMenu)) return;
+				((ResourceStationMenu) ct).setSelected(msg.selectedTab);
 			});
 			ctx.setPacketHandled(true);
 		}
@@ -60,12 +58,12 @@ public class ResourceStationMessages {
 		
 		public List<SupplyRequestPredicate> getPredicates() { return this.predicates; }
 		
-		public static void encode(CSyncRequests msg, PacketBuffer buf) {
+		public static void encode(CSyncRequests msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.predicates.size());
 			msg.predicates.forEach(p -> p.toNetwork(buf));
 		}
 		
-		public static CSyncRequests decode(PacketBuffer buf) {
+		public static CSyncRequests decode(FriendlyByteBuf buf) {
 			List<SupplyRequestPredicate> predicates =
 					IntStream.range(0, buf.readVarInt()).boxed()
 					.map(i -> SupplyRequestPredicate.fromNetwork(buf))
@@ -91,21 +89,20 @@ public class ResourceStationMessages {
 			this.running = running;
 		}
 		
-		public static void encode(SSetRunning msg, PacketBuffer buf) {
+		public static void encode(SSetRunning msg, FriendlyByteBuf buf) {
 			buf.writeBoolean(msg.running);
 		}
 		
-		public static SSetRunning decode(PacketBuffer buf) {
+		public static SSetRunning decode(FriendlyByteBuf buf) {
 			return new SSetRunning(buf.readBoolean());
 		}
 		
 		public static void handle(SSetRunning msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity sender = ctx.getSender();
-				Container ct = sender.containerMenu;
-				if (!(ct instanceof ResourceStationContainer)) return;
-				((ResourceStationContainer) ct).setRunning(msg.running);
+				AbstractContainerMenu ct = ctx.getSender().containerMenu;
+				if (!(ct instanceof ResourceStationMenu)) return;
+				((ResourceStationMenu) ct).setRunning(msg.running);
 			});
 			ctx.setPacketHandled(true);
 		}
@@ -122,22 +119,21 @@ public class ResourceStationMessages {
 			this.index = index;
 		}
 		
-		public static void encode(SSetExtraStock msg, PacketBuffer buf) {
+		public static void encode(SSetExtraStock msg, FriendlyByteBuf buf) {
 			msg.extraStock.toNetwork(buf);
 			buf.writeVarInt(msg.index);
 		}
 		
-		public static SSetExtraStock decode(PacketBuffer buf) {
+		public static SSetExtraStock decode(FriendlyByteBuf buf) {
 			return new SSetExtraStock(SupplyRequestPredicate.fromNetwork(buf), buf.readVarInt());
 		}
 		
 		public static void handle(SSetExtraStock msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity sender = ctx.getSender();
-				Container ct = sender.containerMenu;
-				if (!(ct instanceof ResourceStationContainer)) return;
-				((ResourceStationContainer) ct).setOrAddExtraStock(msg.extraStock, msg.index);
+				AbstractContainerMenu ct = ctx.getSender().containerMenu;
+				if (!(ct instanceof ResourceStationMenu)) return;
+				((ResourceStationMenu) ct).setOrAddExtraStock(msg.extraStock, msg.index);
 			});
 			ctx.setPacketHandled(true);
 		}
@@ -152,21 +148,20 @@ public class ResourceStationMessages {
 			this.index = index;
 		}
 		
-		public static void encode(SRemoveExtraStock msg, PacketBuffer buf) {
+		public static void encode(SRemoveExtraStock msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.index);
 		}
 		
-		public static SRemoveExtraStock decode(PacketBuffer buf) {
+		public static SRemoveExtraStock decode(FriendlyByteBuf buf) {
 			return new SRemoveExtraStock(buf.readVarInt());
 		}
 		
 		public static void handle(SRemoveExtraStock msg, Supplier<NetworkEvent.Context> sup) {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
-				ServerPlayerEntity sender = ctx.getSender();
-				Container ct = sender.containerMenu;
-				if (!(ct instanceof ResourceStationContainer)) return;
-				((ResourceStationContainer) ct).removeExtraStock(msg.index);
+				AbstractContainerMenu ct = ctx.getSender().containerMenu;
+				if (!(ct instanceof ResourceStationMenu)) return;
+				((ResourceStationMenu) ct).removeExtraStock(msg.index);
 			});
 			ctx.setPacketHandled(true);
 		}
@@ -183,12 +178,12 @@ public class ResourceStationMessages {
 		
 		public List<SupplyRequestPredicate> getExtraStock() { return this.extraStock; }
 		
-		public static void encode(CSyncExtraStock msg, PacketBuffer buf) {
+		public static void encode(CSyncExtraStock msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.extraStock.size());
 			msg.extraStock.forEach(p -> p.toNetwork(buf));
 		}
 		
-		public static CSyncExtraStock decode(PacketBuffer buf) {
+		public static CSyncExtraStock decode(FriendlyByteBuf buf) {
 			int sz = buf.readVarInt();
 			List<SupplyRequestPredicate> extraStock = new ArrayList<>(sz);
 			for (int i = 0; i < sz; ++i) {

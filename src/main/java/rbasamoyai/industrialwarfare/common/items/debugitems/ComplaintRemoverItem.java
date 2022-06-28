@@ -1,13 +1,13 @@
 package rbasamoyai.industrialwarfare.common.items.debugitems;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
@@ -24,18 +24,18 @@ public class ComplaintRemoverItem extends Item {
 	}
 	
 	@Override
-	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
-		if (player.level.isClientSide) return ActionResultType.SUCCESS;
-		if (!entity.isAlive()) return ActionResultType.PASS;
-		if (!(entity instanceof NPCEntity)) return ActionResultType.PASS;
+	public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
+		if (player.level.isClientSide) return InteractionResult.SUCCESS;
+		if (!entity.isAlive()) return InteractionResult.PASS;
+		if (!(entity instanceof NPCEntity)) return InteractionResult.PASS;
 		
 		NPCEntity npc = (NPCEntity) entity;
 		Brain<?> brain = npc.getBrain();
-		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) return ActionResultType.CONSUME;
+		if (!brain.hasMemoryValue(MemoryModuleTypeInit.COMPLAINT.get())) return InteractionResult.CONSUME;
 		NPCComplaint oldComplaint = brain.getMemory(MemoryModuleTypeInit.COMPLAINT.get()).orElse(NPCComplaintInit.CLEAR.get());
 		brain.eraseMemory(MemoryModuleTypeInit.COMPLAINT.get());
-		player.displayClientMessage(new TranslationTextComponent(REMOVED_COMPLAINTS_KEY, npc.getDisplayName(), oldComplaint.getRegistryName()), true);
-		return ActionResultType.CONSUME;
+		player.displayClientMessage(new TranslatableComponent(REMOVED_COMPLAINTS_KEY, npc.getDisplayName(), oldComplaint.getRegistryName()), true);
+		return InteractionResult.CONSUME;
 	}
 	
 	@Override

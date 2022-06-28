@@ -1,18 +1,18 @@
 package rbasamoyai.industrialwarfare.common.containers;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class ImmovableGuiItemSlot extends Slot {
 
-	public ImmovableGuiItemSlot(IInventory inventory, int index, int x, int y) {
+	public ImmovableGuiItemSlot(Container inventory, int index, int x, int y) {
 		super(inventory, index, x, y);
 	}
 	
 	@Override
-	public boolean mayPickup(PlayerEntity player) {
+	public boolean mayPickup(Player player) {
 		return false;
 	}
 	

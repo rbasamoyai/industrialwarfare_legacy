@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.phys.AABB;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
@@ -34,8 +34,8 @@ public class CommandUtils {
 	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#COMPLAINT}</li>
 	 * </ul>
 	 */
-	public static void trySetInterfaceWalkTarget(ServerWorld world, NPCEntity npc, BlockPos target, float speedModifier, int closeEnoughDist) {
-		AxisAlignedBB box = new AxisAlignedBB(target.offset(-1, -2, -1), target.offset(2, 1, 2));
+	public static void trySetInterfaceWalkTarget(ServerLevel world, NPCEntity npc, BlockPos target, float speedModifier, int closeEnoughDist) {
+		AABB box = new AABB(target.offset(-1, -2, -1), target.offset(2, 1, 2));
 		if (box.contains(npc.position())) return;
 		
 		List<BlockPos> list = BlockPos.betweenClosedStream(target.offset(-1, -2, -1), target.offset(1, 0, 1)).map(BlockPos::immutable).collect(Collectors.toList());
@@ -57,13 +57,13 @@ public class CommandUtils {
 	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#COMPLAINT}</li>
 	 * </ul>
 	 */
-	public static boolean validatePos(ServerWorld world, NPCEntity npc, Optional<BlockPos> optional, double maxDistanceFromPoi, NPCComplaint emptyComplaint) {
+	public static boolean validatePos(ServerLevel world, NPCEntity npc, Optional<BlockPos> optional, double maxDistanceFromPoi, NPCComplaint emptyComplaint) {
 		if (!optional.isPresent()) {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), emptyComplaint);
 			return false;
 		}
 		BlockPos pos = optional.get();
-		if (!pos.closerThan(npc.position(), maxDistanceFromPoi)) {
+		if (!pos.closerToCenterThan(npc.position(), maxDistanceFromPoi)) {
 			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.TOO_FAR.get(), 200L);
 			return false;
 		}
@@ -77,7 +77,7 @@ public class CommandUtils {
 	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#COMPLAINT}</li>
 	 * </ul>
 	 */
-	public static boolean validateStandingPos(ServerWorld world, NPCEntity npc, Optional<BlockPos> optional, double maxDistanceFromPoi, NPCComplaint emptyComplaint) {
+	public static boolean validateStandingPos(ServerLevel world, NPCEntity npc, Optional<BlockPos> optional, double maxDistanceFromPoi, NPCComplaint emptyComplaint) {
 		if (!validatePos(world, npc, optional, maxDistanceFromPoi, emptyComplaint)) return false;
 		if (!world.loadedAndEntityCanStandOn(optional.get(), npc) || !world.noCollision(npc)) {
 			npc.getBrain().setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_ACCESS.get(), 200L);
@@ -93,7 +93,7 @@ public class CommandUtils {
 	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#COMPLAINT}</li>
 	 * </ul>
 	 */
-	public static boolean validateWait(ServerWorld world, NPCEntity npc, WaitMode mode, NPCComplaint invalidModeComplaint) {
+	public static boolean validateWait(ServerLevel world, NPCEntity npc, WaitMode mode, NPCComplaint invalidModeComplaint) {
 		if (mode == WaitMode.RELATIVE_TIME || mode == WaitMode.HEARD_BELL) return true;
 		if (mode != WaitMode.DAY_TIME) {
 			npc.getBrain().setMemory(MemoryModuleTypeInit.COMPLAINT.get(), invalidModeComplaint);
@@ -134,7 +134,7 @@ public class CommandUtils {
 	 * <li>{@link rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit#COMPLAINT MemoryModuleTypeInit#WAIT_FOR}</li>
 	 * </ul>
 	 */
-	public static void tickWait(ServerWorld world, NPCEntity npc, WaitMode mode, long gameTime) {
+	public static void tickWait(ServerLevel world, NPCEntity npc, WaitMode mode, long gameTime) {
 		Brain<?> brain = npc.getBrain();
 		long waitUntil = brain.getMemory(MemoryModuleTypeInit.WAIT_FOR.get()).orElse(0L);
 		
@@ -189,12 +189,12 @@ public class CommandUtils {
 		}
 	}
 	
-	private static final Map<Integer, EquipmentSlotType> BY_FILTER_FLAG =
-			Arrays.stream(EquipmentSlotType.values())
-			.collect(Collectors.toMap(EquipmentSlotType::getFilterFlag, e -> e));
+	private static final Map<Integer, EquipmentSlot> BY_FILTER_FLAG =
+			Arrays.stream(EquipmentSlot.values())
+			.collect(Collectors.toMap(EquipmentSlot::getFilterFlag, e -> e));
 
 	
-	public static EquipmentSlotType equipmentSlotTypeFromFilterFlag(int flag) {
+	public static EquipmentSlot equipmentSlotTypeFromFilterFlag(int flag) {
 		return BY_FILTER_FLAG.get(flag);
 	}
 }

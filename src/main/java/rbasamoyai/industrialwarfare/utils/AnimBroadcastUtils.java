@@ -3,13 +3,13 @@ package rbasamoyai.industrialwarfare.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Tuple;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.CQueueEntityAnimMessage;
 import software.bernie.geckolib3.network.GeckoLibNetwork;
@@ -22,7 +22,7 @@ public class AnimBroadcastUtils {
 	 * Call on server thread
 	 */
 	public static <S extends Item & ISyncable> void syncItemStackAnim(ItemStack stack, LivingEntity entity, S syncableItem, int animId) {
-		final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) entity.level);
+		final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerLevel) entity.level);
 		final PacketDistributor.PacketTarget target = PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity);
 		GeckoLibNetwork.syncAnimation(target, syncableItem, id, animId);
 	}
@@ -31,9 +31,9 @@ public class AnimBroadcastUtils {
 	 * Call on server thread
 	 */
 	public static <S extends Item & ISyncable> void syncItemStackAnimToSelf(ItemStack stack, LivingEntity entity, S syncableItem, int animId) {
-		if (!(entity instanceof ServerPlayerEntity)) return;
-		final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) entity.level);
-		final PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) entity);
+		if (!(entity instanceof ServerPlayer)) return;
+		final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerLevel) entity.level);
+		final PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayer) entity);
 		GeckoLibNetwork.syncAnimation(target, syncableItem, id, animId);
 	}
 

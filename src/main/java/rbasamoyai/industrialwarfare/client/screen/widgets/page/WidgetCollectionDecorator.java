@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.components.AbstractWidget;
 
 /**
  * Useful for applying IWidgetDecorator operations on multiple widgets. For a
@@ -17,15 +17,15 @@ import net.minecraft.client.gui.widget.Widget;
 
 public class WidgetCollectionDecorator extends AbstractWidgetDecorator {
 
-	private final Collection<Widget> widgets;
+	private final Collection<AbstractWidget> widgets;
 	
-	public WidgetCollectionDecorator(IScreenPage page, Collection<Widget> widgets) {
+	public WidgetCollectionDecorator(IScreenPage page, Collection<AbstractWidget> widgets) {
 		super(page);
 		this.widgets = widgets;
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.apply(w -> w.render(stack, mouseX, mouseY, partialTicks));
 	}
@@ -40,8 +40,8 @@ public class WidgetCollectionDecorator extends AbstractWidgetDecorator {
 		this.apply(w -> w.visible = visible);
 	}
 	
-	private void apply(Consumer<Widget> func) {
-		this.widgets.forEach(func);
+	private void apply(Consumer<AbstractWidget> consumer) {
+		this.widgets.forEach(consumer);
 	}
 	
 	@Override
@@ -59,8 +59,8 @@ public class WidgetCollectionDecorator extends AbstractWidgetDecorator {
 		return this.test(w -> w.mouseDragged(mouseX1, mouseY1, action, mouseX2, mouseY2)) || super.mouseDragged(mouseX1, mouseY1, action, mouseX2, mouseY2);
 	}
 	
-	private boolean test(Predicate<Widget> predicate) {
-		for (Widget w : this.widgets) {
+	private boolean test(Predicate<AbstractWidget> predicate) {
+		for (AbstractWidget w : this.widgets) {
 			if (predicate.test(w)) return true;
 		}
 		return false;

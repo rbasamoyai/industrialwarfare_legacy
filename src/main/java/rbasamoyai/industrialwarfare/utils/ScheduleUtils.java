@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.nbt.IntArrayNBT;
-import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.ListTag;
 
 public class ScheduleUtils {
 
@@ -32,13 +32,13 @@ public class ScheduleUtils {
 				.isPresent();
 	}
 	
-	public static ListNBT toNBT(List<Pair<Integer, Integer>> schedule) {
-		ListNBT tag = new ListNBT();
-		schedule.forEach(shift -> tag.add(new IntArrayNBT(new int[] {shift.getFirst(), shift.getSecond()})));
+	public static ListTag toTag(List<Pair<Integer, Integer>> schedule) {
+		ListTag tag = new ListTag();
+		schedule.forEach(shift -> tag.add(new IntArrayTag(new int[] {shift.getFirst(), shift.getSecond()})));
 		return tag;
 	}
 	
-	public static List<Pair<Integer, Integer>> fromNBT(ListNBT tag) {
+	public static List<Pair<Integer, Integer>> fromTag(ListTag tag) {
 		List<Pair<Integer, Integer>> schedule = new ArrayList<>(tag.size());
 		for (int i = 0; i < tag.size(); i++) {
 			int[] shift = tag.getIntArray(i);

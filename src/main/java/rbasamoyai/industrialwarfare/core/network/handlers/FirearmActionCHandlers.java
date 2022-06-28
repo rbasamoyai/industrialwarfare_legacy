@@ -3,8 +3,8 @@ package rbasamoyai.industrialwarfare.core.network.handlers;
 import java.util.function.Supplier;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.SoundEvents;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 
 public class FirearmActionCHandlers {

@@ -4,30 +4,30 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import net.minecraft.client.renderer.entity.LivingRenderer;
-import net.minecraft.client.renderer.entity.layers.LayerRenderer;
-import net.minecraft.client.renderer.model.ModelRenderer;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import rbasamoyai.industrialwarfare.client.rendering.NothingLayer;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 
 public class AnimUtils {
 
-	public static void renderPartOverBone(ModelRenderer model, GeoBone bone, MatrixStack stack, IVertexBuilder buffer,
+	public static void renderPartOverBone(ModelPart model, GeoBone bone, PoseStack stack, VertexConsumer buffer,
 			int packedLightIn, int packedOverlayIn, float alpha) {
 		renderPartOverBone(model, bone, stack, buffer, packedLightIn, packedOverlayIn, 1.0f, 1.0f, 1.0f, alpha);
 	}
 	
-	public static void renderPartOverBone(ModelRenderer model, GeoBone bone, MatrixStack stack, IVertexBuilder buffer,
+	public static void renderPartOverBone(ModelPart model, GeoBone bone, PoseStack stack, VertexConsumer buffer,
 			int packedLightIn, int packedOverlayIn, float r, float g, float b, float a) {
 		setupModelFromBone(model, bone);
 		model.render(stack, buffer, packedLightIn, packedOverlayIn, r, g, b, a);
 	}
 	
-	public static void setupModelFromBone(ModelRenderer model, GeoBone bone) {
+	public static void setupModelFromBone(ModelPart model, GeoBone bone) {
 		model.setPos(bone.rotationPointX, bone.rotationPointY, bone.rotationPointZ);
 		model.xRot = 0.0f;
 		model.yRot = 0.0f;
@@ -35,13 +35,13 @@ public class AnimUtils {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <L extends LayerRenderer<?, ?>> List<L> getLayers(Class<L> clazz, LivingRenderer<?, ?> renderer) {
-		Field layerField = ObfuscationReflectionHelper.findField(LivingRenderer.class, "field_177097_h");
+	public static <L extends RenderLayer<?, ?>> List<L> getLayers(Class<L> clazz, LivingEntityRenderer<?, ?> renderer) {
+		Field layerField = ObfuscationReflectionHelper.findField(LivingEntityRenderer.class, "f_115291_");
 		List<L> result = new ArrayList<>();
 		try {
-			List<LayerRenderer<?, ?>> layers = (List<LayerRenderer<?, ?>>) layerField.get(renderer);
+			List<RenderLayer<?, ?>> layers = (List<RenderLayer<?, ?>>) layerField.get(renderer);
 			for (int i = 0; i < layers.size(); ++i) {
-				LayerRenderer<?, ?> layer = layers.get(i);
+				RenderLayer<?, ?> layer = layers.get(i);
 				Class<?> layerClass = layer.getClass();
 				if (layerClass.equals(clazz)) {
 					result.add((L) layer);
@@ -53,14 +53,14 @@ public class AnimUtils {
 		return result;
 	}
 
-	public static void hideLayers(Class<?> clazz, LivingRenderer<?, ?> renderer) {
+	public static void hideLayers(Class<?> clazz, LivingEntityRenderer<?, ?> renderer) {
 		// I want to throw up after this
-		Field layerField = ObfuscationReflectionHelper.findField(LivingRenderer.class, "field_177097_h");
+		Field layerField = ObfuscationReflectionHelper.findField(LivingEntityRenderer.class, "f_115291_");
 		try {
 			@SuppressWarnings("unchecked")
-			List<LayerRenderer<?, ?>> layers = (List<LayerRenderer<?, ?>>) layerField.get(renderer);
+			List<RenderLayer<?, ?>> layers = (List<RenderLayer<?, ?>>) layerField.get(renderer);
 			for (int i = 0; i < layers.size(); ++i) {
-				LayerRenderer<?, ?> layer = layers.get(i);
+				RenderLayer<?, ?> layer = layers.get(i);
 				Class<?> layerClass = layer.getClass();
 				if (layerClass.equals(clazz)) layers.set(i, new NothingLayer<>(renderer, layer));
 			}
@@ -69,14 +69,14 @@ public class AnimUtils {
 		}		
 	}
 	
-	public static void restoreLayers(LivingRenderer<?, ?> renderer) {
+	public static void restoreLayers(LivingEntityRenderer<?, ?> renderer) {
 		// I also want to throw up after this
-		Field layerField = ObfuscationReflectionHelper.findField(LivingRenderer.class, "field_177097_h");
+		Field layerField = ObfuscationReflectionHelper.findField(LivingEntityRenderer.class, "f_115291_");
 		try {
 			@SuppressWarnings("unchecked")
-			List<LayerRenderer<?, ?>> layers = (List<LayerRenderer<?, ?>>) layerField.get(renderer);
+			List<RenderLayer<?, ?>> layers = (List<RenderLayer<?, ?>>) layerField.get(renderer);
 			for (int i = 0; i < layers.size(); ++i) {
-				LayerRenderer<?, ?> layer = layers.get(i);
+				RenderLayer<?, ?> layer = layers.get(i);
 				if (layer instanceof NothingLayer) {
 					layers.set(i, ((NothingLayer<?, ?>) layer).getReplacedLayer());  
 				}

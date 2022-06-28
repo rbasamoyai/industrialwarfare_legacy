@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 

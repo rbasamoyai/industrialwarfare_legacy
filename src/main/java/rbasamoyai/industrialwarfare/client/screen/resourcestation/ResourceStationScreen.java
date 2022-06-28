@@ -5,24 +5,23 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
-import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationContainer;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationMenu;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
@@ -30,7 +29,7 @@ import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSelectTab;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSetRunning;
 
-public class ResourceStationScreen extends ContainerScreen<ResourceStationContainer> {
+public class ResourceStationScreen extends AbstractContainerScreen<ResourceStationMenu> {
 	
 	private static final ResourceLocation RESOURCE_GATHERING_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/workstations/resource_station.png");
 	private static final ResourceLocation TABS_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
@@ -66,12 +65,12 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	private static final int SHADE_COLOR = 1090453504;
 	
 	private static final String MAIN_TRANSLATION_KEY = "gui." + IndustrialWarfare.MOD_ID + ".resource_station";
-	private static final ITextComponent SUPPLIES_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".supplies");
-	private static final ITextComponent BUFFER_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".buffer");
-	private static final ITextComponent STOP_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".stop");
-	private static final ITextComponent START_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".start");
-	private static final ITextComponent EXTRA_STOCK_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".extra_stock");
-	private static final ITextComponent REMOVE_EXTRA_STOCK_TEXT = new TranslationTextComponent(MAIN_TRANSLATION_KEY + ".remove_extra_stock").withStyle(TextFormatting.RED);
+	private static final Component SUPPLIES_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".supplies");
+	private static final Component BUFFER_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".buffer");
+	private static final Component STOP_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".stop");
+	private static final Component START_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".start");
+	private static final Component EXTRA_STOCK_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".extra_stock");
+	private static final Component REMOVE_EXTRA_STOCK_TEXT = new TranslatableComponent(MAIN_TRANSLATION_KEY + ".remove_extra_stock").withStyle(ChatFormatting.RED);
 	
 	private boolean isScrolling = false;
 	private float scrollOffs = 0.0f;
@@ -80,13 +79,13 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	private final List<List<ItemStack>> matchingItemsCache = new ArrayList<>();
 	private final List<ItemStack> extraStockCache = new ArrayList<>();
 	
-	private final List<ITextComponent> titles;
+	private final List<Component> titles;
 	
 	private Button stopButton;
 	private Button startButton;
 	private ItemInputWidget addExtraStockWidget;
 	
-	public ResourceStationScreen(ResourceStationContainer menu, PlayerInventory playerInv, ITextComponent title) {
+	public ResourceStationScreen(ResourceStationMenu menu, Inventory playerInv, Component title) {
 		super(menu, playerInv, title);
 		this.imageHeight = 168;
 		this.inventoryLabelY = this.imageHeight - 94;
@@ -97,59 +96,57 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	protected void init() {
 		super.init();
 		
-		this.stopButton = this.addButton(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, STOP_TEXT, b -> this.setRunning(b, false)));
-		this.startButton = this.addButton(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, START_TEXT, b -> this.setRunning(b, true)));
+		this.stopButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, STOP_TEXT, b -> this.setRunning(b, false)));
+		this.startButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, START_TEXT, b -> this.setRunning(b, true)));
 		boolean running = this.menu.isRunning();
 		WidgetUtils.setActiveAndVisible(this.startButton, !running);
 		WidgetUtils.setActiveAndVisible(this.stopButton, running);
 		
-		this.addExtraStockWidget = this.addButton(new ItemInputWidget(this.leftPos + TOP_MENU_START_X + 62, this.topPos + TOP_MENU_START_Y + 1, this::addItemToExtraStock));
+		this.addExtraStockWidget = this.addRenderableWidget(new ItemInputWidget(this.leftPos + TOP_MENU_START_X + 62, this.topPos + TOP_MENU_START_Y + 1, this::addItemToExtraStock));
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		
-		TextureManager texManager = this.minecraft.getTextureManager();
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		
 		int selected = this.menu.getSelected();
 		if (selected != 0) {
-			texManager.bind(TABS_LOCATION);
+			RenderSystem.setShaderTexture(0, TABS_LOCATION);
 			this.renderTabButton(stack, this.leftPos, this.topPos - 28, this.menu.getIcon(), 0, false);
 		}
 		if (selected != 1) {
-			texManager.bind(TABS_LOCATION);
+			RenderSystem.setShaderTexture(0, TABS_LOCATION);
 			this.renderTabButton(stack, this.leftPos + 29, this.topPos - 28, new ItemStack(Items.CHEST), 1, false);
 		}
 		if (selected != 2) {
-			texManager.bind(TABS_LOCATION);
+			RenderSystem.setShaderTexture(0, TABS_LOCATION);
 			this.renderTabButton(stack, this.leftPos + 58, this.topPos - 28, new ItemStack(Items.HOPPER), 2, false);
 		}
 		if (selected != 3) {
-			texManager.bind(TABS_LOCATION);
+			RenderSystem.setShaderTexture(0, TABS_LOCATION);
 			this.renderTabButton(stack, this.leftPos + 87, this.topPos - 28, new ItemStack(ItemInit.WORKER_SUPPORT.get()), 3, false);
 		}
 		
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		texManager.bind(RESOURCE_GATHERING_GUI);
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, RESOURCE_GATHERING_GUI);
 		blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, TEX_WIDTH, TEX_HEIGHT);
 		
 		if (selected == 0) {
 			this.renderScrollList(stack, this.matchingItemsCache, fulfillingItems -> {
+				if (fulfillingItems.isEmpty()) return ItemStack.EMPTY;
 				int index = (int)((this.renderTicks / (long) TIME_BETWEEN_ITEMS) % fulfillingItems.size());
 				return fulfillingItems.get(index);
 			});
 		} else if (selected == 3) {
 			this.renderScrollList(stack, this.extraStockCache, Function.identity());
-			texManager.bind(RESOURCE_GATHERING_GUI);
+			RenderSystem.setShaderTexture(0, RESOURCE_GATHERING_GUI);
 			blit(stack, this.leftPos + TOP_MENU_START_X + 61, this.topPos + TOP_MENU_START_Y, 237, 63, 18, 18, TEX_WIDTH, TEX_HEIGHT);
 			if (this.menu.getExtraStock().size() >= 27) {
 				int x = this.addExtraStockWidget.x;
@@ -160,17 +157,18 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 			blit(stack, this.leftPos + TOP_MENU_START_X, this.topPos + TOP_MENU_START_Y, TOP_MENU_INVENTORY_TEX_X, TOP_MENU_INVENTORY_TEX_Y, TOP_MENU_INVENTORY_WIDTH, TOP_MENU_INVENTORY_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
 		}
 		
-		texManager.bind(TABS_LOCATION);
+		RenderSystem.setShaderTexture(0, TABS_LOCATION);
 		if (selected == 0) this.renderTabButton(stack, this.leftPos, this.topPos - 28, this.menu.getIcon(), 0, true);
 		else if (selected == 1) this.renderTabButton(stack, this.leftPos + 29, this.topPos - 28, new ItemStack(Items.CHEST), 1, true);
 		else if (selected == 2) this.renderTabButton(stack, this.leftPos + 58, this.topPos - 28, new ItemStack(Items.HOPPER), 2, true);
 		else if (selected == 3) this.renderTabButton(stack, this.leftPos + 87, this.topPos - 28, new ItemStack(ItemInit.WORKER_SUPPORT.get()), 3, true);
 	}
 	
-	private void renderTabButton(MatrixStack stack, int x, int y, ItemStack icon, int index, boolean selected) {
+	private void renderTabButton(PoseStack stack, int x, int y, ItemStack icon, int index, boolean selected) {
 		int texX = 28 * index;
 		int texY = selected ? 32 : 0;
 		
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		RenderSystem.enableBlend();
 		this.itemRenderer.blitOffset = 100.0f;
 		this.blit(stack, x, y, texX, texY, 28, 32);
@@ -178,7 +176,7 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 		this.itemRenderer.blitOffset = 0.0f;
 	}
 	
-	private <T> void renderScrollList(MatrixStack stack, List<T> list, Function<T, ItemStack> func) {
+	private <T> void renderScrollList(PoseStack stack, List<T> list, Function<T, ItemStack> func) {
 		blit(stack, this.leftPos + TOP_MENU_START_X, this.topPos + TOP_MENU_START_Y, TOP_MENU_REQUESTS_TEX_X, TOP_MENU_REQUESTS_TEX_Y, TOP_MENU_REQUESTS_WIDTH, TOP_MENU_REQUESTS_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
 		
 		int base = this.getBaseIndex(list);
@@ -192,7 +190,7 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 			this.itemRenderer.renderAndDecorateItem(func.apply(list.get(i)), this.leftPos + rx, this.topPos + ry);
 		}
 		
-		this.minecraft.getTextureManager().bind(RESOURCE_GATHERING_GUI);
+		RenderSystem.setShaderTexture(0, RESOURCE_GATHERING_GUI);
 		
 		this.itemRenderer.blitOffset = 0.0f;
 		this.setBlitOffset(0);
@@ -204,16 +202,16 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		int selected = this.menu.getSelected();
-		ITextComponent title = 0 <= selected && selected < this.titles.size() ? this.titles.get(selected) : this.title;
+		Component title = 0 <= selected && selected < this.titles.size() ? this.titles.get(selected) : this.title;
 		this.font.draw(stack, title, (float) this.titleLabelX, (float) this.titleLabelY, 4210752);
 		
-		this.font.draw(stack, this.inventory.getDisplayName(), (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
+		this.font.draw(stack, this.playerInventoryTitle, (float)this.inventoryLabelX, (float)this.inventoryLabelY, 4210752);
 	}
 	
 	@Override
-	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderTooltip(PoseStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
 		
 		int d0 = mouseX - this.leftPos;
@@ -221,12 +219,13 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 		
 		int hovered = this.insideTab(d0, d1);
 		if (hovered != -1) {
-			ITextComponent title = 0 <= hovered && hovered < this.titles.size() ? this.titles.get(hovered) : this.title;
+			Component title = 0 <= hovered && hovered < this.titles.size() ? this.titles.get(hovered) : this.title;
 			this.renderTooltip(stack, title, mouseX, mouseY);
 		}
 		
 		if (this.menu.getSelected() == 0) {
 			this.renderListTooltip(stack, mouseX, mouseY, this.matchingItemsCache, fulfillingItems -> {
+				if (fulfillingItems.size() == 0) return ItemStack.EMPTY;
 				int index = (int)((this.renderTicks / (long) TIME_BETWEEN_ITEMS) % fulfillingItems.size());
 				return fulfillingItems.get(index);
 			});
@@ -235,7 +234,7 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 		}
 	}
 	
-	private <T> void renderListTooltip(MatrixStack stack, int mouseX, int mouseY, List<T> list, Function<T, ItemStack> func) {
+	private <T> void renderListTooltip(PoseStack stack, int mouseX, int mouseY, List<T> list, Function<T, ItemStack> func) {
 		int d0 = mouseX - this.leftPos;
 		int d1 = mouseY - this.topPos;
 		
@@ -251,17 +250,17 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	}
 	
 	@Override
-	public List<ITextComponent> getTooltipFromItem(ItemStack stack) {
-		List<ITextComponent> tooltip = super.getTooltipFromItem(stack);
+	public List<Component> getTooltipFromItem(ItemStack stack) {
+		List<Component> tooltip = super.getTooltipFromItem(stack);
 		if (stack.getOrCreateTag().contains("screen.removeTooltip")) {
-			tooltip.add(StringTextComponent.EMPTY);
+			tooltip.add(TextComponent.EMPTY);
 			tooltip.add(REMOVE_EXTRA_STOCK_TEXT);
 		}
 		return tooltip;
 	}
 	
 	private int getBaseIndex(List<?> list) {
-		return MathHelper.ceil((float) Math.max(0, list.size() - 9) * this.scrollOffs / 3.0f) * 3;
+		return Mth.ceil((float) Math.max(0, list.size() - 9) * this.scrollOffs / 3.0f) * 3;
 	}
 	
 	@Override
@@ -274,8 +273,8 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 			return true;
 		}
 		
-		if (this.addExtraStockWidget.isHovered()) {
-			this.addExtraStockWidget.setItem(this.menu.getCarriedItem());
+		if (this.addExtraStockWidget.isHoveredOrFocused()) {
+			this.addExtraStockWidget.setItem(this.menu.getCarried());
 			return true;
 		}
 		
@@ -299,7 +298,7 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	public boolean mouseDragged(double mouseX1, double mouseY1, int button, double mouseX2, double mouseY2) {
 		if (this.isScrolling && this.canScroll()) {
 			this.scrollOffs = ((float) mouseY1 - (float) this.topPos - (float) SCROLL_BAR_X - (float)(SCROLL_BAR_BUTTON_HEIGHT) * 0.5f) / (float) SCROLL_BAR_BG_HEIGHT_PRACTICAL;
-			this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0f, 1.0f);
+			this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0f, 1.0f);
 		}
 		
 		return super.mouseDragged(mouseX1, mouseY1, button, mouseX2, mouseY2);
@@ -330,7 +329,7 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 		
 		if (this.canScroll() && this.isHoveringScrollBar(d0, d1)) {
 			this.scrollOffs = this.scrollOffs - (float) scrollDist / (float) SCROLL_BAR_BG_HEIGHT_PRACTICAL * 2.0f;
-			this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0f, 1.0f);
+			this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0f, 1.0f);
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollDist);
 	}
@@ -351,8 +350,8 @@ public class ResourceStationScreen extends ContainerScreen<ResourceStationContai
 	}
 	
 	@Override
-	public void tick() {
-		super.tick();
+	public void containerTick() {
+		super.containerTick();
 		
 		++this.renderTicks;
 		

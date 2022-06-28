@@ -2,15 +2,15 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -31,42 +31,42 @@ public class TakeFromCommand extends TaskScrollCommand {
 	
 	public TakeFromCommand() {
 		super(CommandTrees.ITEM_HANDLING, () -> ImmutableMap.of(
-				MemoryModuleType.LOOK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED
+				MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleType.WALK_TARGET, MemoryStatus.REGISTERED
 				));
 	}
 	
 	@Override
-	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
-		return CommandUtils.validatePos(world, npc, order.getWrappedArg(POS_ARG_INDEX).getPos(), TaskScrollCommand.MAX_DISTANCE_FROM_POI, NPCComplaintInit.INVALID_ORDER.get());
+	public boolean checkExtraStartConditions(ServerLevel level, NPCEntity npc, TaskScrollOrder order) {
+		return CommandUtils.validatePos(level, npc, order.getWrappedArg(POS_ARG_INDEX).getPos(), TaskScrollCommand.MAX_DISTANCE_FROM_POI, NPCComplaintInit.INVALID_ORDER.get());
 	}
 
 	@Override
-	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		CommandUtils.trySetInterfaceWalkTarget(world, npc, order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+	public void start(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+		CommandUtils.trySetInterfaceWalkTarget(level, npc, order.getWrappedArg(POS_ARG_INDEX).getPos().get(), TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 	}
 
 	@Override
-	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void tick(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		BlockPos pos = order.getWrappedArg(POS_ARG_INDEX).getPos().orElse(BlockPos.ZERO);
-		AxisAlignedBB box = new AxisAlignedBB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
+		AABB box = new AABB(pos.offset(-1, -2, -1), pos.offset(2, 1, 2));
 		
 		if (!box.contains(npc.position())) {
 			if (npc.getNavigation().isDone()) {
-				CommandUtils.trySetInterfaceWalkTarget(world, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
+				CommandUtils.trySetInterfaceWalkTarget(level, npc, pos, TaskScrollCommand.SPEED_MODIFIER, TaskScrollCommand.CLOSE_ENOUGH_DIST);
 			}
 			return;
 		}
 		
-		TileEntity te = world.getBlockEntity(pos);
-		if (te == null) {
+		BlockEntity be = level.getBlockEntity(pos);
+		if (be == null) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.NOTHING_HERE.get(), 200L);
 			return;
 		}
 		
 		Direction side = Direction.from3DDataValue(order.getWrappedArg(ACCESS_SIDE_ARG_INDEX).getArgNum());
-		LazyOptional<IItemHandler> lzop = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
+		LazyOptional<IItemHandler> lzop = be.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, side);
 		if (!lzop.isPresent()) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.CANT_OPEN.get(), 200L);
 			return;
@@ -95,7 +95,7 @@ public class TakeFromCommand extends TaskScrollCommand {
 	}
 
 	@Override
-	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void stop(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		if (!CommandUtils.hasComplaint(npc)) {
 			CommandUtils.incrementCurrentInstructionIndexMemory(npc);
 		}

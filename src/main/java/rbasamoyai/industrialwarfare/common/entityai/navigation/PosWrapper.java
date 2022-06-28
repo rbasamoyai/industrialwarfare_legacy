@@ -1,22 +1,22 @@
 package rbasamoyai.industrialwarfare.common.entityai.navigation;
 
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.IPosWrapper;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Position;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.PositionTracker;
+import net.minecraft.world.phys.Vec3;
 
-public class PosWrapper implements IPosWrapper {
+public class PosWrapper implements PositionTracker {
 
-	private final Vector3d vec;
+	private final Vec3 vec;
 	private final BlockPos blockPos;
 	
-	public PosWrapper(IPosition pos) {
-		this.vec = new Vector3d(pos.x(), pos.y(), pos.z());
+	public PosWrapper(Position pos) {
+		this.vec = new Vec3(pos.x(), pos.y(), pos.z());
 		this.blockPos = new BlockPos(pos);
 	}
 	
-	@Override public Vector3d currentPosition() { return this.vec; }
+	@Override public Vec3 currentPosition() { return this.vec; }
 	@Override public BlockPos currentBlockPosition() { return this.blockPos; }
 	@Override public boolean isVisibleBy(LivingEntity entity) { return true; }
 

@@ -3,24 +3,23 @@ package rbasamoyai.industrialwarfare.client.screen;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.containers.MatchCoilContainer;
+import rbasamoyai.industrialwarfare.common.containers.matchcoil.MatchCoilMenu;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.SMatchCoilSyncMessage;
 
-public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
+public class MatchCoilScreen extends AbstractContainerScreen<MatchCoilMenu> {
 
 	private static final int SHEARS_TEX_X = 176;
 	private static final int SHEARS_TEX_Y = 0;
@@ -37,8 +36,8 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	private static final int CORD_GUI_X = 17;
 	private static final int CORD_GUI_Y = 38;
 	
-	private static final int BASE_CORD_LENGTH = MatchCoilContainer.MINIMUM_CORD_LEFT;
-	private static final int TOTAL_CORD_LENGTH = MatchCoilContainer.TOTAL_CORD_LENGTH;
+	private static final int BASE_CORD_LENGTH = MatchCoilMenu.MINIMUM_CORD_LEFT;
+	private static final int TOTAL_CORD_LENGTH = MatchCoilMenu.TOTAL_CORD_LENGTH;
 	
 	private static final String KEY_DURABILITY = "item.durability";
 	private static final String BASE_KEY = "gui." + IndustrialWarfare.MOD_ID + ".match_coil";
@@ -55,7 +54,7 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	private boolean isScrolling = false;
 	private float scrollOffs = 0.0f;
 	
-	public MatchCoilScreen(MatchCoilContainer container, PlayerInventory playerInv, ITextComponent title) {
+	public MatchCoilScreen(MatchCoilMenu container, Inventory playerInv, Component title) {
 		super(container, playerInv, title);
 		this.scrollOffs = (float) this.menu.getCutLength() / (float) TOTAL_CORD_LENGTH;
 	}
@@ -66,23 +65,20 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		
-		TextureManager texManager = this.minecraft.textureManager;
-		texManager.bind(MATCH_COIL_SCREEN);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, MATCH_COIL_SCREEN);
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
 		float cordFullness = (float)(this.menu.getCurrentCoilLength() - BASE_CORD_LENGTH) / (float) TOTAL_CORD_LENGTH;
-		cordFullness = MathHelper.clamp(cordFullness, 0.0f, 1.0f);
+		cordFullness = Mth.clamp(cordFullness, 0.0f, 1.0f);
 		
 		int cordX = this.leftPos + CORD_GUI_X;
 		int cordY = this.topPos + CORD_GUI_Y;
@@ -95,38 +91,38 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 	}
 	
 	@Override
-	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderTooltip(PoseStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
 		double d0 = mouseX - (double) this.leftPos;
 		double d1 = mouseY - (double) this.topPos;
 		if (this.hoveringShears(d0, d1)) {
 			ItemStack shears = this.menu.getShears();
-			List<ITextComponent> shearsTooltip = new ArrayList<>();
-			shearsTooltip.add(new TranslationTextComponent(KEY_DURABILITY, shears.getMaxDamage() - shears.getDamageValue(), shears.getMaxDamage()));
+			List<Component> shearsTooltip = new ArrayList<>();
+			shearsTooltip.add(new TranslatableComponent(KEY_DURABILITY, shears.getMaxDamage() - shears.getDamageValue(), shears.getMaxDamage()));
 			int cutLength = this.menu.getCutLength();
 			if (Screen.hasShiftDown()) {
-				shearsTooltip.add(new TranslationTextComponent(KEY_CUT_LENGTH_TICKS, cutLength));
+				shearsTooltip.add(new TranslatableComponent(KEY_CUT_LENGTH_TICKS, cutLength));
 			} else {
-				int minutes = MathHelper.floor((float) cutLength / 1200.0f);
+				int minutes = Mth.floor((float) cutLength / 1200.0f);
 				float seconds = (float)(cutLength % 1200) / 20.0f;
-				shearsTooltip.add(new TranslationTextComponent(KEY_CUT_LENGTH, minutes, seconds));
+				shearsTooltip.add(new TranslatableComponent(KEY_CUT_LENGTH, minutes, seconds));
 			}
 			this.renderComponentTooltip(stack, shearsTooltip, mouseX, mouseY);
 		}
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		super.renderLabels(stack, mouseX, mouseY);
-		ITextComponent remainingCoil;
+		Component remainingCoil;
 		int coilLength = this.menu.getCurrentCoilLength();
 		if (Screen.hasShiftDown()) {
-			remainingCoil = new TranslationTextComponent(KEY_REMAINING_COIL_TICKS, coilLength);
+			remainingCoil = new TranslatableComponent(KEY_REMAINING_COIL_TICKS, coilLength);
 		} else {
-			int hours = MathHelper.floor((float) coilLength / 72000.0f);
-			int minutes = MathHelper.floor((float)(coilLength % 72000) / 1200.0f);
+			int hours = Mth.floor((float) coilLength / 72000.0f);
+			int minutes = Mth.floor((float)(coilLength % 72000) / 1200.0f);
 			float seconds = (float)(coilLength % 1200) / 20.0f;
-			remainingCoil = new TranslationTextComponent(KEY_REMAINING_COIL, hours, minutes, seconds);
+			remainingCoil = new TranslatableComponent(KEY_REMAINING_COIL, hours, minutes, seconds);
 		}
 		this.font.draw(stack, remainingCoil, REMAINING_COIL_TEXT_X, REMAINING_COIL_TEXT_Y, 4210752);
 	}
@@ -161,8 +157,8 @@ public class MatchCoilScreen extends ContainerScreen<MatchCoilContainer> {
 		if (this.isScrolling) {
 			this.scrollOffs = ((float) d0 - (float) CORD_GUI_X) / (float) CORD_WIDTH;
 			float cordFullness = (float)(this.menu.getCurrentCoilLength() - BASE_CORD_LENGTH) / (float) TOTAL_CORD_LENGTH;
-			cordFullness = MathHelper.clamp(cordFullness, 0.0f, 1.0f);
-			this.scrollOffs = MathHelper.clamp(this.scrollOffs, 0.0f, cordFullness);
+			cordFullness = Mth.clamp(cordFullness, 0.0f, 1.0f);
+			this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0f, cordFullness);
 			this.scrollTo(this.scrollOffs);
 		}
 		

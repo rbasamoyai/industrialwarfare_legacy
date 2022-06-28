@@ -2,88 +2,86 @@ package rbasamoyai.industrialwarfare.common.items;
 
 import java.util.List;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.IQualityItemDataHandler;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.IQualityItemData;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataProvider;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class QualityItem extends Item {
 	
-	private static final IFormattableTextComponent TOOLTIP_QUALITY = new TranslationTextComponent("tooltip." + IndustrialWarfare.MOD_ID + ".quality");
+	private static final MutableComponent TOOLTIP_QUALITY = new TranslatableComponent("tooltip." + IndustrialWarfare.MOD_ID + ".quality");
 	
 	public QualityItem(Item.Properties properties) {
 		super(properties);
 	}
 	
 	@Override
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
+	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
 		QualityItemDataProvider provider = new QualityItemDataProvider();
-		CompoundNBT tag = nbt;
-		if (nbt == null) tag = defaultNBT(nbt);
-		else if (nbt.contains("Parent")) tag = nbt.getCompound("Parent");
-		provider.deserializeNBT(tag);
+		if (nbt == null) {
+			provider.getCapability(QualityItemCapability.INSTANCE).ifPresent(h -> {
+				h.setQuality(1.0f);
+			});
+		} else {
+			provider.deserializeNBT(nbt.contains("Parent") ? nbt.getCompound("Parent") : nbt);
+		}
 		return provider;
 	}
 	
-	public static CompoundNBT defaultNBT(CompoundNBT nbt) {
-		nbt.putFloat(QualityItemDataCapability.TAG_QUALITY, 1.0f);
-		return nbt;
+	public static LazyOptional<IQualityItemData> getDataHandler(ItemStack stack) {
+		return stack.getCapability(QualityItemCapability.INSTANCE);
 	}
 	
-	public static LazyOptional<? extends IQualityItemDataHandler> getDataHandler(ItemStack stack) {
-		return stack.getCapability(QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY);
+	public static float getQuality(ItemStack stack) {
+		return QualityItem.getDataHandler(stack).map(IQualityItemData::getQuality).orElse(1.0f);
 	}
 	
 	@Override
-	public CompoundNBT getShareTag(ItemStack stack) {
-		CompoundNBT tag = stack.getOrCreateTag();
-		getDataHandler(stack).ifPresent(h -> {
-			tag.put("item_cap", QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.writeNBT(h, null));
-		});
+	public CompoundTag getShareTag(ItemStack stack) {
+		CompoundTag tag = stack.getOrCreateTag();
+		getDataHandler(stack).ifPresent(h -> tag.put("item_cap", h.writeTag(new CompoundTag())));
 		return tag;
 	}
 	
 	@Override
-	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+	public void readShareTag(ItemStack stack, CompoundTag nbt) {
 		stack.setTag(nbt);
 		
 		if (nbt == null) return;
 		
-		if (nbt.contains("creativeData", Constants.NBT.TAG_COMPOUND)) {
+		if (nbt.contains("creativeData", Tag.TAG_COMPOUND)) {
 			readCreativeData(stack, nbt.getCompound("creativeData"));
 			nbt.remove("creativeData");
 			return;
 		}
 		
-		getDataHandler(stack).ifPresent(h -> {
-			QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-		});
+		getDataHandler(stack).ifPresent(h -> h.readTag(nbt.getCompound("item_cap")));
 	}
 	
 	@Override
-	public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-		appendHoverTextStatic(stack, world, tooltip, flag);
+	public void appendHoverText(ItemStack stack, Level Level, List<Component> tooltip, TooltipFlag flag) {
+		appendHoverTextStatic(stack, Level, tooltip, flag);
 	}
 	
-	public static void appendHoverTextStatic(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+	public static void appendHoverTextStatic(ItemStack stack, Level Level, List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(TooltipUtils.makeItemFieldTooltip(TOOLTIP_QUALITY,
 				getDataHandler(stack)
 						.map(h -> Screen.hasShiftDown()
-								? new StringTextComponent(TooltipUtils.formatFloat(h.getQuality() * 100.0f).concat("%"))
+								? new TextComponent(TooltipUtils.formatFloat(h.getQuality() * 100.0f).concat("%"))
 								: TooltipUtils.getWordedQuality(h.getQuality()))
 						.orElseGet(() -> TooltipUtils.NOT_AVAILABLE))
 		);
@@ -106,17 +104,17 @@ public class QualityItem extends Item {
 		return stack;
 	}
 	
-	public static CompoundNBT getCreativeData(ItemStack stack) {
-		CompoundNBT tag = new CompoundNBT();
+	public static CompoundTag getCreativeData(ItemStack stack) {
+		CompoundTag tag = new CompoundTag();
 		getDataHandler(stack).ifPresent(h -> {
-			tag.putFloat(QualityItemDataCapability.TAG_QUALITY, h.getQuality());
+			tag.putFloat("quality", h.getQuality());
 		});
 		return tag;
 	}
 	
-	public static void readCreativeData(ItemStack stack, CompoundNBT nbt) {
+	public static void readCreativeData(ItemStack stack, CompoundTag nbt) {
 		getDataHandler(stack).ifPresent(h -> {
-			h.setQuality(nbt.getFloat(QualityItemDataCapability.TAG_QUALITY));
+			h.setQuality(nbt.getFloat("quality"));
 		});
 	}
 	

@@ -1,0 +1,252 @@
+package rbasamoyai.industrialwarfare.common.containers.npcs;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import com.mojang.datafixers.util.Pair;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.MenuConstructor;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
+import rbasamoyai.industrialwarfare.common.containers.ToggleableSlotItemHandler;
+import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
+import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
+import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
+import rbasamoyai.industrialwarfare.core.init.MenuInit;
+import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
+
+/*
+ * Base NPC container class. Interfaces with the task slot and the inventory.
+ */
+
+public class NPCMenu extends AbstractContainerMenu {
+	
+	private static final Pair<ResourceLocation, ResourceLocation> TASK_ICON = Pair.of(InventoryMenu.BLOCK_ATLAS, new ResourceLocation(IndustrialWarfare.MOD_ID, "item/task_icon"));
+	private static final Pair<ResourceLocation, ResourceLocation> SCHEDULE_ICON = Pair.of(InventoryMenu.BLOCK_ATLAS, new ResourceLocation(IndustrialWarfare.MOD_ID, "item/schedule_icon"));
+	
+	private static final int SLOT_SPACING = 18;
+	
+	private static final int PLAYER_INVENTORY_START_X = 8;
+	private static final int PLAYER_INVENTORY_START_Y = 154;
+	private static final int PLAYER_INVENTORY_ROWS = 3;
+	private static final int PLAYER_INVENTORY_COLUMNS = 9;
+	private static final int PLAYER_HOTBAR_SLOT_Y = 212;
+	private static final int PLAYER_INVENTORY_SLOT_COUNT = PLAYER_INVENTORY_ROWS * PLAYER_INVENTORY_COLUMNS;
+	private static final int PLAYER_HOTBAR_COUNT = PLAYER_INVENTORY_COLUMNS;
+	
+	// public so NPCBaseScreen can access
+	public static final int NPC_EQUIPMENT_SLOTS_CENTER_X = 134;
+	public static final int NPC_EQUIPMENT_SLOTS_CENTER_START_Y = 32;
+	public static final int NPC_EQUIPMENT_SLOTS_LEFT_X = NPC_EQUIPMENT_SLOTS_CENTER_X - SLOT_SPACING;
+	public static final int NPC_EQUIPMENT_SLOTS_RIGHT_X = NPC_EQUIPMENT_SLOTS_CENTER_X + SLOT_SPACING;
+	public static final int NPC_EQUIPMENT_SLOTS_SIDE_Y = NPC_EQUIPMENT_SLOTS_CENTER_START_Y + SLOT_SPACING;
+	public static final int NPC_EQUIPMENT_ARMOR_SLOTS_COUNT = 5; // Counting offhand as equipment
+	public static final int NPC_EQUIPMENT_HAND_SLOTS_COUNT = 1; 
+	public static final int NPC_EQUIPMENT_WORKSTUFFS_SLOTS_COUNT = 2;
+	public static final int NPC_EQUIPMENT_SLOT_COUNT = NPC_EQUIPMENT_ARMOR_SLOTS_COUNT + NPC_EQUIPMENT_HAND_SLOTS_COUNT + NPC_EQUIPMENT_WORKSTUFFS_SLOTS_COUNT;
+	
+	public static final int NPC_INVENTORY_START_X = 8;
+	public static final int NPC_INVENTORY_START_Y = 32;
+	public static final int NPC_INVENTORY_COLUMNS = 9;
+	
+	private static final int PLAYER_INVENTORY_SLOTS_START_INDEX = 0;
+	private static final int NPC_EQUIPMENT_SLOTS_START_INDEX = PLAYER_INVENTORY_SLOTS_START_INDEX + PLAYER_HOTBAR_COUNT + PLAYER_INVENTORY_SLOT_COUNT;
+	private static final int NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX = NPC_EQUIPMENT_SLOTS_START_INDEX;
+	private static final int NPC_EQUIPMENT_HAND_SLOTS_START_INDEX = NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX + NPC_EQUIPMENT_ARMOR_SLOTS_COUNT;
+	private static final int NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX = NPC_EQUIPMENT_HAND_SLOTS_START_INDEX + NPC_EQUIPMENT_HAND_SLOTS_COUNT;
+	private static final int NPC_INVENTORY_START_INDEX = NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + NPC_EQUIPMENT_WORKSTUFFS_SLOTS_COUNT;
+	
+	private static final ResourceLocation[] EQUIPMENT_SLOT_ICONS = new ResourceLocation[] {
+			InventoryMenu.EMPTY_ARMOR_SLOT_HELMET,
+			InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE,
+			InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS,
+			InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS,
+			InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD
+			};
+	
+	protected final List<ToggleableSlotItemHandler> npcEquipmentSlots = new ArrayList<>(NPC_EQUIPMENT_SLOT_COUNT); 
+	protected final List<ToggleableSlotItemHandler> npcInventorySlots = new ArrayList<>();
+	
+	protected final int npcInventoryEndIndex;
+	
+	protected final Optional<? extends NPCEntity> entityOptional;
+	protected final ContainerData data;
+	
+	public static NPCMenu getClientContainer(int windowId, Inventory playerInv, FriendlyByteBuf buf) {
+		int npcSlots = buf.readVarInt();
+		boolean armorSlotsEnabled = buf.readBoolean();
+		
+		ContainerData data = new SimpleContainerData(3);
+		data.set(0, npcSlots);
+		data.set(2, armorSlotsEnabled ? 1 : 0);
+		
+		return new NPCMenu(MenuInit.NPC_BASE.get(), windowId, playerInv, new DummyEquipmentItemHandler(data), new ItemStackHandler(npcSlots), data, Optional.empty());
+	}
+	
+	public static MenuConstructor getServerContainerProvider(NPCEntity entity) {
+		return (windowId, playerInv, data) -> new NPCMenu(MenuInit.NPC_BASE.get(), windowId, playerInv, entity.getEquipmentItemHandler(), entity.getInventoryItemHandler(), new NPCContainerDataSync(entity, playerInv.player), Optional.of(entity));
+	}
+	
+	protected NPCMenu(MenuType<?> type, int windowId, Inventory playerInv, IItemHandler equipmentItemHandler, IItemHandler inventoryItemHandler, ContainerData data, Optional<? extends NPCEntity> entity) {
+		super(type, windowId);
+		
+		this.data = data;
+		this.entityOptional = entity;
+		
+		// Player slots
+		for (int i = 0; i < PLAYER_INVENTORY_ROWS; i++) {
+			for (int j = 0; j < PLAYER_INVENTORY_COLUMNS; j++) {
+				int x = PLAYER_INVENTORY_START_X + j * SLOT_SPACING;
+				int y = PLAYER_INVENTORY_START_Y + i * SLOT_SPACING;
+				int index = i * PLAYER_INVENTORY_COLUMNS + j + PLAYER_HOTBAR_COUNT;
+				this.addSlot(new Slot(playerInv, index, x, y));
+			}
+		}
+		
+		for (int i = 0; i < PLAYER_HOTBAR_COUNT; i++) {
+			int x = PLAYER_INVENTORY_START_X + SLOT_SPACING * i;
+			this.addSlot(new Slot(playerInv, i, x, PLAYER_HOTBAR_SLOT_Y));
+		}
+		
+		// NPC slots
+		for (int i = 0; i < NPC_EQUIPMENT_ARMOR_SLOTS_COUNT; i++) {
+			boolean isOffhandSlot = i == EquipmentItemHandler.OFFHAND_INDEX;
+			int x = isOffhandSlot ? NPC_EQUIPMENT_SLOTS_LEFT_X : NPC_EQUIPMENT_SLOTS_CENTER_X;
+			int y = isOffhandSlot ? NPC_EQUIPMENT_SLOTS_SIDE_Y : NPC_EQUIPMENT_SLOTS_CENTER_START_Y + i * SLOT_SPACING;
+			
+			this.npcEquipmentSlots.add(
+					(ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, i, x, y, true) {
+						@Override
+						public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+							return Pair.of(InventoryMenu.BLOCK_ATLAS, EQUIPMENT_SLOT_ICONS[this.getSlotIndex()]);
+						}
+					}));
+		}
+		
+		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.MAINHAND_INDEX, NPC_EQUIPMENT_SLOTS_RIGHT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y, true)));
+		
+		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.TASK_ITEM_INDEX, NPC_EQUIPMENT_SLOTS_LEFT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y + SLOT_SPACING, true) {
+			@Override
+			public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+				return TASK_ICON;
+			}
+		}));
+		
+		this.npcEquipmentSlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(equipmentItemHandler, EquipmentItemHandler.SCHEDULE_ITEM_INDEX, NPC_EQUIPMENT_SLOTS_RIGHT_X, NPC_EQUIPMENT_SLOTS_SIDE_Y + SLOT_SPACING, true) {
+			@Override
+			public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+				return SCHEDULE_ICON;
+			}
+		}));
+		
+		for (int i = 0; i < inventoryItemHandler.getSlots(); i++) {
+			int x = NPC_INVENTORY_START_X + i % NPC_INVENTORY_COLUMNS * SLOT_SPACING;
+			int y = NPC_INVENTORY_START_Y + i / NPC_INVENTORY_COLUMNS * SLOT_SPACING;
+			this.npcInventorySlots.add((ToggleableSlotItemHandler) this.addSlot(new ToggleableSlotItemHandler(inventoryItemHandler, i, x, y, false)));
+		}
+		
+		this.npcInventoryEndIndex = this.slots.size();
+		
+		this.addDataSlots(data);
+	}
+	
+	@Override
+	public boolean stillValid(Player player) {
+		return this.data.get(1) > 0;
+	}
+	
+	@Override
+	public ItemStack quickMoveStack(Player player, int index) {
+		ItemStack slotCopy = ItemStack.EMPTY;
+		Slot slot = this.getSlot(index);
+		
+		if (slot != null && slot.hasItem()) {
+			ItemStack slotStack = slot.getItem();
+			slotCopy = slotStack.copy();
+			
+			if (index < NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX) { // Move stack from player to NPC
+				EquipmentSlot type = NPCEntity.getEquipmentSlotForItem(slotStack);
+				int equipmentSlot = NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX + EquipmentItemHandler.getTypeSlot(type);
+				
+				if (type != EquipmentSlot.MAINHAND && this.getSlot(equipmentSlot).getItem().isEmpty()) {
+					if (!this.moveItemStackTo(slotStack, equipmentSlot, equipmentSlot + 1, false)) {
+						return ItemStack.EMPTY;
+					}
+				}
+				
+				if (slotCopy.getItem() instanceof TaskScrollItem) {
+					if (!this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, false)) {
+						return ItemStack.EMPTY;
+					}
+				}
+				
+				if (slotCopy.getItem() == ItemInit.SCHEDULE.get()) {
+					if (!this.moveItemStackTo(slotStack, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 1, NPC_EQUIPMENT_WORKSTUFFS_SLOTS_START_INDEX + 2, false)) {
+						return ItemStack.EMPTY;
+					}
+				}
+				
+				if (!this.moveItemStackTo(slotStack, NPC_INVENTORY_START_INDEX, this.npcInventoryEndIndex, false)) {
+					return ItemStack.EMPTY;
+				}
+			} else { // Move stack from NPC to player
+				if (slotCopy.getItem() instanceof TaskScrollItem) {
+					this.entityOptional.ifPresent(npc -> {
+						Brain<?> brain = npc.getBrain();
+						brain.setMemory(MemoryModuleTypeInit.STOP_EXECUTION.get(), true);
+					});
+				} else if (slotCopy.getItem() == ItemInit.SCHEDULE.get()) {
+					
+				}
+				
+				if (!this.moveItemStackTo(slotStack, PLAYER_INVENTORY_SLOTS_START_INDEX, NPC_EQUIPMENT_ARMOR_SLOTS_START_INDEX, true)) {
+					return ItemStack.EMPTY;
+				}
+			}
+			
+			if (slotStack.isEmpty()) {
+				slot.set(ItemStack.EMPTY);
+			} else {
+				slot.setChanged();
+			}
+			
+			if (slotStack.getCount() == slotCopy.getCount()) {
+				return ItemStack.EMPTY;
+			}
+			
+			slot.onTake(player, slotStack);
+		}
+		
+		return slotCopy;
+	}
+	
+	public int getInvSlotCount() {
+		return this.data.get(0);
+	}
+	
+	public boolean areArmorSlotsEnabled() {
+		return this.data.get(2) > 0;
+	}
+	
+	public void updateActiveSlots(int page) {
+		this.npcEquipmentSlots.forEach(s -> s.setActive(page == NPCBaseScreen.MAIN_PAGE));
+		this.npcInventorySlots.forEach(s -> s.setActive(page == NPCBaseScreen.INVENTORY_PAGE));
+	}
+
+}

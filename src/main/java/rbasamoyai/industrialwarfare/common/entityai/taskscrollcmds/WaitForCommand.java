@@ -2,10 +2,10 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.commandtree.CommandTrees;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common.WaitMode;
@@ -21,30 +21,30 @@ public class WaitForCommand extends TaskScrollCommand {
 	
 	public WaitForCommand() {
 		super(CommandTrees.WAIT_FOR, () -> ImmutableMap.of(
-				MemoryModuleType.HEARD_BELL_TIME, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.WAIT_FOR.get(), MemoryModuleStatus.REGISTERED
+				MemoryModuleType.HEARD_BELL_TIME, MemoryStatus.REGISTERED,
+				MemoryModuleTypeInit.WAIT_FOR.get(), MemoryStatus.REGISTERED
 				));
 	}
 	
 	@Override
-	public boolean checkExtraStartConditions(ServerWorld world, NPCEntity npc, TaskScrollOrder order) {
-		return CommandUtils.validateWait(world, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), NPCComplaintInit.INVALID_ORDER.get());
+	public boolean checkExtraStartConditions(ServerLevel level, NPCEntity npc, TaskScrollOrder order) {
+		return CommandUtils.validateWait(level, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), NPCComplaintInit.INVALID_ORDER.get());
 	}
 
 	@Override
-	public void start(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void start(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		WaitMode mode = WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum());
 		long waitTime = (long) order.getWrappedArg(WAIT_TIME_ARG_INDEX).getArgNum() * 20L;
 		CommandUtils.startWait(npc, mode, gameTime, waitTime);
 	}
 
 	@Override
-	public void tick(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
-		CommandUtils.tickWait(world, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), gameTime);
+	public void tick(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+		CommandUtils.tickWait(level, npc, WaitMode.fromId(order.getWrappedArg(WAIT_MODE_ARG_INDEX).getArgNum()), gameTime);
 	}
 
 	@Override
-	public void stop(ServerWorld world, NPCEntity npc, long gameTime, TaskScrollOrder order) {
+	public void stop(ServerLevel level, NPCEntity npc, long gameTime, TaskScrollOrder order) {
 		Brain<?> brain = npc.getBrain();
 		if (!CommandUtils.hasComplaint(npc)) {
 			CommandUtils.incrementCurrentInstructionIndexMemory(npc);

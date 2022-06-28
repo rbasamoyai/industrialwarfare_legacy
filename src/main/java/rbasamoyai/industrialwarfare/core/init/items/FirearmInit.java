@@ -1,9 +1,9 @@
 package rbasamoyai.industrialwarfare.core.init.items;
 
-import net.minecraft.item.Item;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.ColtSAAFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.FishtailMatchlockFirearmItem;

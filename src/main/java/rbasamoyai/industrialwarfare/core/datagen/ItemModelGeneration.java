@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
+import net.minecraft.data.HashCache;
 import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
@@ -116,7 +116,7 @@ public class ItemModelGeneration extends ItemModelProvider {
 	}
 	
 	@Override
-	public void run(DirectoryCache cache) throws IOException {
+	public void run(HashCache cache) throws IOException {
 		super.run(cache);	
 	}
 	

@@ -2,7 +2,7 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.function.BiFunction;
 
-import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 
 /**
@@ -12,5 +12,5 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
  */
 
 @FunctionalInterface
-public interface IArgSelectorProvider extends BiFunction<Integer, TaskScrollContainer, ArgSelector<?>> {
+public interface IArgSelectorProvider extends BiFunction<Integer, TaskScrollMenu, ArgSelector<?>> {
 }

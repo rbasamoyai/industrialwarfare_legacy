@@ -2,7 +2,7 @@ package rbasamoyai.industrialwarfare.common.items.taskscroll;
 
 import java.util.Optional;
 
-import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 
 public interface IArgHolder {
 	
@@ -11,6 +11,6 @@ public interface IArgHolder {
 	
 	public boolean isItemStackArg();
 	
-	public Optional<ArgSelector<?>> getSelector(TaskScrollContainer container);
+	public Optional<ArgSelector<?>> getSelector(TaskScrollMenu container);
 	
 }

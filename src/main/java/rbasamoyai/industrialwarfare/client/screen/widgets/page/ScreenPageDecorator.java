@@ -1,8 +1,8 @@
 package rbasamoyai.industrialwarfare.client.screen.widgets.page;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 
 public class ScreenPageDecorator implements IScreenPage {
 
@@ -13,7 +13,7 @@ public class ScreenPageDecorator implements IScreenPage {
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.page.render(stack, mouseX, mouseY, partialTicks);
 	}
 	

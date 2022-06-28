@@ -1,10 +1,10 @@
 package rbasamoyai.industrialwarfare.common.entities;
 
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.entity.IRangedAttackMob;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.core.Position;
+import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.entity.LivingEntity;
 
-public interface IWeaponRangedAttackMob extends IRangedAttackMob {
+public interface IWeaponRangedAttackMob extends RangedAttackMob {
 
 	enum ShootingStatus {
 		UNLOADED,
@@ -28,7 +28,7 @@ public interface IWeaponRangedAttackMob extends IRangedAttackMob {
 	 */
 	ShootingStatus getNextStatus();
 	
-	void performRangedAttack(IPosition target, float damage);
+	void performRangedAttack(Position target, float damage);
 	
 	/**
 	 * @return false when done cooling down, true otherwise

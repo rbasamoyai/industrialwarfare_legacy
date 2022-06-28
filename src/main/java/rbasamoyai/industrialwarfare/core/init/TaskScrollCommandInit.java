@@ -1,11 +1,7 @@
 package rbasamoyai.industrialwarfare.core.init;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.RegistryObject;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.DepositAtCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.EquipCommand;
@@ -18,12 +14,11 @@ import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.TaskScrollCom
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.UnequipCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WaitForCommand;
 import rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.WorkAtCommand;
-import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 
-@Mod.EventBusSubscriber(modid = IndustrialWarfare.MOD_ID, bus = Bus.MOD)
 public class TaskScrollCommandInit {
 
-	public static final DeferredRegister<TaskScrollCommand> TASK_SCROLL_COMMANDS = DeferredRegister.create(TaskScrollCommand.class, IndustrialWarfare.MOD_ID);
+	public static final DeferredRegister<TaskScrollCommand> TASK_SCROLL_COMMANDS = DeferredRegister.create(IWModRegistries.KEY_TASK_COMMANDS, IndustrialWarfare.MOD_ID);
 	
 	public static final RegistryObject<TaskScrollCommand> MOVE_TO = TASK_SCROLL_COMMANDS.register("move_to", MoveToCommand::new);
 	public static final RegistryObject<TaskScrollCommand> TAKE_FROM = TASK_SCROLL_COMMANDS.register("take_from", TakeFromCommand::new);
@@ -35,10 +30,5 @@ public class TaskScrollCommandInit {
 	public static final RegistryObject<TaskScrollCommand> EQUIP = TASK_SCROLL_COMMANDS.register("equip", EquipCommand::new);
 	public static final RegistryObject<TaskScrollCommand> UNEQUIP = TASK_SCROLL_COMMANDS.register("unequip", UnequipCommand::new);
 	public static final RegistryObject<TaskScrollCommand> PATROL = TASK_SCROLL_COMMANDS.register("patrol", PatrolCommand::new);
-	
-	@SubscribeEvent
-	public static void onCommonSetup(FMLCommonSetupEvent event) {
-		TaskScrollItem.initValidCommands();
-	}
 	
 }

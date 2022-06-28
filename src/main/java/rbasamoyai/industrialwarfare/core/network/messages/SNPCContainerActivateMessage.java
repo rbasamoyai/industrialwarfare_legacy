@@ -2,15 +2,14 @@ package rbasamoyai.industrialwarfare.core.network.messages;
 
 import java.util.function.Supplier;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
-import rbasamoyai.industrialwarfare.common.containers.npcs.NPCContainer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraftforge.network.NetworkEvent;
+import rbasamoyai.industrialwarfare.common.containers.npcs.NPCMenu;
 
 public class SNPCContainerActivateMessage {
 
-	public int page;
+	private int page;
 	
 	public SNPCContainerActivateMessage() {
 	}
@@ -19,24 +18,22 @@ public class SNPCContainerActivateMessage {
 		this.page = page;
 	}
 	
-	public static void encode(SNPCContainerActivateMessage msg, PacketBuffer buf) {
+	public static void encode(SNPCContainerActivateMessage msg, FriendlyByteBuf buf) {
 		buf.writeVarInt(msg.page);
 	}
 	
-	public static SNPCContainerActivateMessage decode(PacketBuffer buf) {
+	public static SNPCContainerActivateMessage decode(FriendlyByteBuf buf) {
 		return new SNPCContainerActivateMessage(buf.readVarInt());
 	}
 	
-	public static void handle(SNPCContainerActivateMessage msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			ServerPlayerEntity player = context.getSender();
-			Container ct = player.containerMenu;
-			if (ct instanceof NPCContainer) {
-				((NPCContainer) ct).updateActiveSlots(msg.page);
-			}
+	public static void handle(SNPCContainerActivateMessage msg, Supplier<NetworkEvent.Context> sup) {
+		NetworkEvent.Context ctx = sup.get();
+		ctx.enqueueWork(() -> {
+			AbstractContainerMenu ct = ctx.getSender().containerMenu;
+			if (!(ct instanceof NPCMenu)) return;
+			((NPCMenu) ct).updateActiveSlots(msg.page);
 		});
-		context.setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 	
 }

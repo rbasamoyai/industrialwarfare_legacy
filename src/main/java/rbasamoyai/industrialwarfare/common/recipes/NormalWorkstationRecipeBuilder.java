@@ -11,15 +11,16 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import net.minecraft.block.Block;
-import net.minecraft.data.IFinishedRecipe;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.IItemProvider;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.tags.ITag;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 
 public class NormalWorkstationRecipeBuilder {
@@ -49,14 +50,14 @@ public class NormalWorkstationRecipeBuilder {
 		return this;
 	}
 	
-	public NormalWorkstationRecipeBuilder addIngredient(IItemProvider item, int count) {
+	public NormalWorkstationRecipeBuilder addIngredient(ItemLike item, int count) {
 		this.checkAddIngredientArgs(item, count);
 		Ingredient ingredient = Ingredient.of(item);
 		this.ingredients.put(ingredient, new BuilderValueData(count, false));
 		return this;
 	}
 	
-	public NormalWorkstationRecipeBuilder addIngredient(ITag<Item> tag, int count) {
+	public NormalWorkstationRecipeBuilder addIngredient(TagKey<Item> tag, int count) {
 		this.checkAddIngredientArgs(tag, count);
 		Ingredient ingredient = Ingredient.of(tag);
 		this.ingredients.put(ingredient, new BuilderValueData(count, true));
@@ -66,7 +67,7 @@ public class NormalWorkstationRecipeBuilder {
 	// TODO: Add ingredient checks (e.g. count, if this makes an invalid recipe (not enough stacks in workstation), etc.)
 	private void checkAddIngredientArgs(Object o, int count) {
 		if (count < 1) throw new IllegalArgumentException("Ingredient count must be at least 1");
-		if (o instanceof IItemProvider) {
+		if (o instanceof ItemLike) {
 			
 		} else if (o instanceof Ingredient) {
 			
@@ -79,12 +80,12 @@ public class NormalWorkstationRecipeBuilder {
 		}
 	}
 	
-	public void save(Consumer<IFinishedRecipe> consumer, ResourceLocation id) {
+	public void save(Consumer<FinishedRecipe> consumer, ResourceLocation id) {
 		LOGGER.debug("Generating recipe with id " + id.toString());
 		consumer.accept(new NormalWorkstationRecipeBuilder.Result(id, this.output, this.addedWeight, this.ingredients, this.workstation));
 	}
 	
-	public class Result implements IFinishedRecipe {
+	public class Result implements FinishedRecipe {
 		
 		public static final String RECIPE_TYPE = IndustrialWarfare.MOD_ID + ":normal_workstation_recipe";
 		
@@ -104,7 +105,7 @@ public class NormalWorkstationRecipeBuilder {
 
 		@Override
 		public void serializeRecipeData(JsonObject jsonObj) {
-			jsonObj.addProperty(NormalWorkstationRecipe.TAG_TYPE, RECIPE_TYPE);
+			jsonObj.addProperty(ManufactureRecipe.TAG_TYPE, RECIPE_TYPE);
 			
 			JsonArray inputJsonArray = new JsonArray();
 			
@@ -118,21 +119,21 @@ public class NormalWorkstationRecipeBuilder {
 				else if (input.getItems().length == 1)
 					obj = input.toJson().getAsJsonObject();
 				else
-					obj.add(NormalWorkstationRecipe.TAG_INPUTS, input.toJson());
-				if (data.ingredientCount > 1) obj.addProperty(NormalWorkstationRecipe.TAG_COUNT, data.ingredientCount);
+					obj.add(ManufactureRecipe.TAG_INPUTS, input.toJson());
+				if (data.ingredientCount > 1) obj.addProperty(ManufactureRecipe.TAG_COUNT, data.ingredientCount);
 				inputJsonArray.add(obj);
 			}
 			
-			jsonObj.add(NormalWorkstationRecipe.TAG_INPUT, inputJsonArray);
+			jsonObj.add(ManufactureRecipe.TAG_INPUT, inputJsonArray);
 			
 			JsonObject outputObj = new JsonObject();
-			outputObj.addProperty(NormalWorkstationRecipe.TAG_ITEM, this.output.getItem().getRegistryName().toString());
-			if (this.output.getCount() > 1) outputObj.addProperty(NormalWorkstationRecipe.TAG_COUNT, this.output.getCount());
-			if (this.addedWeight > 0) outputObj.addProperty(NormalWorkstationRecipe.TAG_ADDED_WEIGHT, this.addedWeight);
+			outputObj.addProperty(ManufactureRecipe.TAG_ITEM, this.output.getItem().getRegistryName().toString());
+			if (this.output.getCount() > 1) outputObj.addProperty(ManufactureRecipe.TAG_COUNT, this.output.getCount());
+			if (this.addedWeight > 0) outputObj.addProperty(ManufactureRecipe.TAG_ADDED_WEIGHT, this.addedWeight);
 			
-			jsonObj.add(NormalWorkstationRecipe.TAG_OUTPUT, outputObj);
+			jsonObj.add(ManufactureRecipe.TAG_OUTPUT, outputObj);
 			
-			jsonObj.addProperty(NormalWorkstationRecipe.TAG_BLOCK, this.workstation.getRegistryName().toString());
+			jsonObj.addProperty(ManufactureRecipe.TAG_BLOCK, this.workstation.getRegistryName().toString());
 		}
 
 		@Override
@@ -141,8 +142,8 @@ public class NormalWorkstationRecipeBuilder {
 		}
 
 		@Override
-		public IRecipeSerializer<?> getType() {
-			return NormalWorkstationRecipe.SERIALIZER;
+		public RecipeSerializer<?> getType() {
+			return ManufactureRecipe.SERIALIZER;
 		}
 
 		@Deprecated

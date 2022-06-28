@@ -6,27 +6,26 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.stream.IntStream;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.ITextProperties;
-import net.minecraft.util.text.LanguageMap;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.screen.widgets.WidgetUtils;
-import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleContainer;
+import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleMenu;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.SEditScheduleSyncMessage;
 import rbasamoyai.industrialwarfare.utils.ScheduleUtils;
@@ -34,28 +33,28 @@ import rbasamoyai.industrialwarfare.utils.TextureUtils;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
-public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
+public class EditScheduleScreen extends AbstractContainerScreen<EditScheduleMenu> {
 
 	private static final ResourceLocation SCHEDULE_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/edit_schedule.png");
 	
 	private static final String TRANSLATION_KEY_ROOT = "gui." + IndustrialWarfare.MOD_ID + ".edit_schedule";
 	private static final String TIME_FORMAT_1_KEY = TRANSLATION_KEY_ROOT + ".time_format1";
 	private static final String TIME_FORMAT_2_KEY = TRANSLATION_KEY_ROOT + ".time_format2";
-	private static final IFormattableTextComponent INFO_TITLE = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".info");
-	private static final IFormattableTextComponent TIME_FIELD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".time");
-	private static final IFormattableTextComponent START_TIME_field = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".start_time");
-	private static final IFormattableTextComponent END_TIME_FIELD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".end_time");
-	private static final IFormattableTextComponent SHIFT_LENGTH_FIELD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".shift_length");
-	private static final IFormattableTextComponent ALLOTTED_MINUTES_FIELD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".minutes_allotted");
-	private static final IFormattableTextComponent ALLOTTED_SHIFTS_FIELD = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".shifts_allotted");
-	private static final IFormattableTextComponent PROMPT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".prompt");
-	private static final IFormattableTextComponent TOOLTIP_ADD_SHIFT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".tooltip.add_shift");
-	private static final IFormattableTextComponent TOOLTIP_REMOVE_SHIFT = new TranslationTextComponent(TRANSLATION_KEY_ROOT + ".tooltip.remove_shift");
+	private static final MutableComponent INFO_TITLE = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".info");
+	private static final MutableComponent TIME_FIELD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".time");
+	private static final MutableComponent START_TIME_field = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".start_time");
+	private static final MutableComponent END_TIME_FIELD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".end_time");
+	private static final MutableComponent SHIFT_LENGTH_FIELD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".shift_length");
+	private static final MutableComponent ALLOTTED_MINUTES_FIELD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".minutes_allotted");
+	private static final MutableComponent ALLOTTED_SHIFTS_FIELD = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".shifts_allotted");
+	private static final MutableComponent PROMPT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".prompt");
+	private static final MutableComponent TOOLTIP_ADD_SHIFT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".tooltip.add_shift");
+	private static final MutableComponent TOOLTIP_REMOVE_SHIFT = new TranslatableComponent(TRANSLATION_KEY_ROOT + ".tooltip.remove_shift");
 	
-	private static final IFormattableTextComponent[] DAY_NUMBERS = IntStream.rangeClosed(1, 7)
+	private static final MutableComponent[] DAY_NUMBERS = IntStream.rangeClosed(1, 7)
 			.boxed()
-			.map(i -> new StringTextComponent(Integer.toString(i)))
-			.toArray(sz -> new IFormattableTextComponent[sz]);
+			.map(i -> new TextComponent(Integer.toString(i)))
+			.toArray(sz -> new MutableComponent[sz]);
 	
 	private static final int TEXTURE_SIZE = 256;
 	
@@ -126,9 +125,9 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 	private int hoveredShift = -1;
 	private boolean scheduleHovered = false;
 	private ScheduleDragging dragging = ScheduleDragging.NONE;
-	private List<ITextProperties> info = new ArrayList<>();
+	private List<FormattedText> info = new ArrayList<>();
 	
-	public EditScheduleScreen(EditScheduleContainer container, PlayerInventory playerInv, ITextComponent title) {
+	public EditScheduleScreen(EditScheduleMenu container, Inventory playerInv, Component title) {
 		super(container, playerInv, title);
 		
 		this.imageWidth = 153;
@@ -146,9 +145,9 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 	protected void init() {
 		super.init();
 		
-		Button.ITooltip addShiftButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_ADD_SHIFT, mouseX, mouseY);
+		Button.OnTooltip addShiftButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_ADD_SHIFT, mouseX, mouseY);
 		
-		this.addShiftButton = this.addButton(new ImageButton(
+		this.addShiftButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + SCHEDULE_START_X - 2,
 				this.topPos + SCHEDULE_Y + ADD_MARKER_TIP_HEIGHT,
 				ADD_MARKER_WIDTH,
@@ -165,9 +164,9 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 				));
 		WidgetUtils.setActiveAndVisible(this.addShiftButton, false);
 		
-		Button.ITooltip removeShiftButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_REMOVE_SHIFT, mouseX, mouseY);;
+		Button.OnTooltip removeShiftButton$tooltip = (button, stack, mouseX, mouseY) -> this.renderTooltip(stack, TOOLTIP_REMOVE_SHIFT, mouseX, mouseY);;
 		
-		this.removeShiftButton = this.addButton(new ImageButton(
+		this.removeShiftButton = this.addRenderableWidget(new ImageButton(
 				this.leftPos + SCHEDULE_START_X,
 				this.topPos + SCHEDULE_Y + SHIFT_START_MARKER_HEIGHT,
 				REMOVE_SHIFT_BUTTON_WIDTH,
@@ -193,32 +192,30 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 		this.info.clear();
 		this.info.add(ALLOTTED_MINUTES_FIELD.copy().append(": " + minutes + " / " + this.menu.getMaxMinutes()));
 		this.info.add(ALLOTTED_SHIFTS_FIELD.copy().append(": " + schedule.size() + " / " + this.menu.getMaxShifts()));
-		this.info.add(new StringTextComponent(""));
-		List<ITextProperties> splitPrompt = this.font.getSplitter().splitLines(PROMPT.copy(), INFO_WIDTH, Style.EMPTY);
+		this.info.add(new TextComponent(""));
+		List<FormattedText> splitPrompt = this.font.getSplitter().splitLines(PROMPT.copy(), INFO_WIDTH, Style.EMPTY);
 		this.info.addAll(splitPrompt);
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		TextureManager texManager = this.minecraft.getTextureManager();
-		texManager.bind(SCHEDULE_GUI);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, SCHEDULE_GUI);
 		
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 		
-		int timeMarkerX = this.leftPos + SCHEDULE_START_X - 2 + MathHelper.floor(this.menu.getMinuteOfTheWeekScaled() * (float) SCHEDULE_LENGTH) % SCHEDULE_LENGTH;
+		int timeMarkerX = this.leftPos + SCHEDULE_START_X - 2 + Mth.floor(this.menu.getMinuteOfTheWeekScaled() * (float) SCHEDULE_LENGTH) % SCHEDULE_LENGTH;
 		this.blit(stack, timeMarkerX, this.topPos + TOP_MARKERS_GUI_Y, TIME_MARKER_TEX_X, TIME_MARKER_TEX_Y, TIME_MARKER_WIDTH, TIME_MARKER_HEIGHT);
 		
 		if (this.canDisplayAdd()) {
-			int addMarkerX = this.leftPos + SCHEDULE_START_X - 2 + MathHelper.floor((float) this.hoveredMinute / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
+			int addMarkerX = this.leftPos + SCHEDULE_START_X - 2 + Mth.floor((float) this.hoveredMinute / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
 			this.blit(stack, addMarkerX, this.topPos + BOTTOM_MARKERS_GUI_Y, ADD_MARKER_TEX_X, ADD_MARKER_TEX_Y, ADD_MARKER_WIDTH, ADD_MARKER_TIP_HEIGHT);
 		}
 		
@@ -226,8 +223,8 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 			int start = shift.getFirst();
 			int end = shift.getSecond();
 			
-			int startScaled = this.leftPos + SCHEDULE_START_X + MathHelper.floor((float) start / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
-			int endScaled = this.leftPos + SCHEDULE_START_X + MathHelper.floor((float) end / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
+			int startScaled = this.leftPos + SCHEDULE_START_X + Mth.floor((float) start / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
+			int endScaled = this.leftPos + SCHEDULE_START_X + Mth.floor((float) end / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
 			
 			this.fillGradient(stack, startScaled, this.topPos + SCHEDULE_Y, endScaled, this.topPos + SCHEDULE_Y + SCHEDULE_HEIGHT, this.shiftColor, this.shiftColor);
 			
@@ -237,7 +234,7 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 	}
 	
 	@Override
-	protected void renderLabels(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderLabels(PoseStack stack, int mouseX, int mouseY) {
 		this.font.draw(stack, this.title, (this.imageWidth - this.font.width(this.title)) / 2, this.titleLabelY, this.darkTextColor);
 		for (int i = 0; i < DAY_NUMBERS.length; i++) {
 			int x = DAY_NUM_START_X + i * DAY_NUM_SPACING;
@@ -247,24 +244,24 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 		
 		for (int i = 0; i < this.info.size(); i++) {
 			int y = INFO_START_Y + i * TEXT_SPACING;
-			this.font.draw(stack, LanguageMap.getInstance().getVisualOrder(this.info.get(i)), INFO_X, y, this.darkTextColor);
+			this.font.draw(stack, Language.getInstance().getVisualOrder(this.info.get(i)), INFO_X, y, this.darkTextColor);
 		}
-		//this.font.draw(stack, new StringTextComponent(Integer.toString(this.hoveredShift) + " " + this.dragging.toString()), 6, this.imageHeight - 10, this.darkTextColor);
+		//this.font.draw(stack, new TextComponent(Integer.toString(this.hoveredShift) + " " + this.dragging.toString()), 6, this.imageHeight - 10, this.darkTextColor);
 	}
 	
 	@Override
-	protected void renderTooltip(MatrixStack stack, int mouseX, int mouseY) {
+	protected void renderTooltip(PoseStack stack, int mouseX, int mouseY) {
 		super.renderTooltip(stack, mouseX, mouseY);
 		
 		double d0 = mouseX - (double) this.leftPos;
 		double d1 = mouseY - (double) this.topPos;
 		if (this.hoveringTimeMarker(d0, d1)) {
-			ITextComponent timeTooltip = formatTime(TIME_FIELD.copy().withStyle(TooltipUtils.FIELD_STYLE).append(": "), this.menu.getMinuteOfTheWeek(), TooltipUtils.VALUE_STYLE);
+			Component timeTooltip = formatTime(TIME_FIELD.copy().withStyle(TooltipUtils.FIELD_STYLE).append(": "), this.menu.getMinuteOfTheWeek(), TooltipUtils.VALUE_STYLE);
 			this.renderTooltip(stack, timeTooltip, mouseX, mouseY);
 		}
 		
-		if (this.addShiftButton.isHovered() && this.addShiftButton.active) this.addShiftButton.renderToolTip(stack, mouseX, mouseY);
-		if (this.removeShiftButton.isHovered() && this.removeShiftButton.active) this.removeShiftButton.renderToolTip(stack, mouseX, mouseY);
+		if (this.addShiftButton.isHoveredOrFocused() && this.addShiftButton.active) this.addShiftButton.renderToolTip(stack, mouseX, mouseY);
+		if (this.removeShiftButton.isHoveredOrFocused() && this.removeShiftButton.active) this.removeShiftButton.renderToolTip(stack, mouseX, mouseY);
 	}
 	
 	@Override
@@ -366,7 +363,7 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 		this.scheduleHovered = this.insideSchedule(d0, d1);
 		if (this.scheduleHovered) {
 			float posUnclamped = (float)(d0 - (double) SCHEDULE_START_X) / TimeUtils.WEEK_MINUTES;
-			this.hoveredMinute = MathHelper.floor(MathHelper.clamp(posUnclamped, 0.0f, 1.0f) * TimeUtils.WEEK_MINUTES);
+			this.hoveredMinute = Mth.floor(Mth.clamp(posUnclamped, 0.0f, 1.0f) * TimeUtils.WEEK_MINUTES);
 		}
 		
 		if (this.dragging == ScheduleDragging.NONE) this.hoveredShift = -1;
@@ -380,11 +377,11 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 				int end = shift.getSecond();
 				if (start <= this.hoveredMinute && this.hoveredMinute < end) {
 					this.hoveredShift = i;
-					xOffs += MathHelper.floor((float) start / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
+					xOffs += Mth.floor((float) start / TimeUtils.WEEK_MINUTES * (float) SCHEDULE_LENGTH);
 				}
 			}
 			
-			this.addShiftButton.x = this.hoveredShift == -1 ? MathHelper.floor(mouseX) : this.leftPos + SCHEDULE_START_X;
+			this.addShiftButton.x = this.hoveredShift == -1 ? Mth.floor(mouseX) : this.leftPos + SCHEDULE_START_X;
 			this.addShiftButton.x -= 2;
 			this.removeShiftButton.x = xOffs;
 		}
@@ -397,7 +394,7 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 			Pair<Integer, Integer> shift = schedule.get(this.hoveredShift);
 			this.info.add(formatTime(START_TIME_field.copy().append(": "), shift.getFirst()));
 			this.info.add(formatTime(END_TIME_FIELD.copy().append(": "), shift.getSecond()));
-			this.info.add(SHIFT_LENGTH_FIELD.copy().append(": ").append(new TranslationTextComponent(TIME_FORMAT_2_KEY, shift.getSecond() - shift.getFirst())));
+			this.info.add(SHIFT_LENGTH_FIELD.copy().append(": ").append(new TranslatableComponent(TIME_FORMAT_2_KEY, shift.getSecond() - shift.getFirst())));
 		}
 		if (oldHovered && !this.scheduleHovered) {
 			int minutes = schedule.stream()
@@ -408,8 +405,8 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 			this.info.clear();
 			this.info.add(ALLOTTED_MINUTES_FIELD.copy().append(": " + minutes + " / " + this.menu.getMaxMinutes()));
 			this.info.add(ALLOTTED_SHIFTS_FIELD.copy().append(": " + schedule.size() + " / " + this.menu.getMaxShifts()));
-			this.info.add(new StringTextComponent(""));
-			List<ITextProperties> splitPrompt = this.font.getSplitter().splitLines(PROMPT.copy(), INFO_WIDTH, Style.EMPTY);
+			this.info.add(new TextComponent(""));
+			List<FormattedText> splitPrompt = this.font.getSplitter().splitLines(PROMPT.copy(), INFO_WIDTH, Style.EMPTY);
 			this.info.addAll(splitPrompt);
 		}
 		
@@ -510,18 +507,18 @@ public class EditScheduleScreen extends ContainerScreen<EditScheduleContainer> {
 	}
 	
 	private boolean hoveringTimeMarker(double mouseX, double mouseY) {
-		int markerX = SCHEDULE_START_X - 2 + MathHelper.floor(this.menu.getMinuteOfTheWeekScaled() * (float) SCHEDULE_LENGTH) % SCHEDULE_LENGTH;
+		int markerX = SCHEDULE_START_X - 2 + Mth.floor(this.menu.getMinuteOfTheWeekScaled() * (float) SCHEDULE_LENGTH) % SCHEDULE_LENGTH;
 		return markerX <= mouseX && mouseX < markerX + TIME_MARKER_WIDTH && TOP_MARKERS_GUI_Y <= mouseY && mouseY <= TOP_MARKERS_GUI_Y + TIME_MARKER_HEAD_HEIGHT;
 	}
 	
-	private static IFormattableTextComponent formatTime(IFormattableTextComponent tc, long minuteOfTheWeek) {
+	private static MutableComponent formatTime(MutableComponent tc, long minuteOfTheWeek) {
 		return formatTime(tc, minuteOfTheWeek, Style.EMPTY);
 	}
 	
-	private static IFormattableTextComponent formatTime(IFormattableTextComponent tc, long minuteOfTheWeek, Style style) {
+	private static MutableComponent formatTime(MutableComponent tc, long minuteOfTheWeek, Style style) {
 		long day = minuteOfTheWeek / TimeUtils.DAY_MINUTES + 1L;
 		long minute = minuteOfTheWeek % TimeUtils.DAY_MINUTES;
-		return tc.copy().append(new TranslationTextComponent(TIME_FORMAT_1_KEY, day, minute).withStyle(style));
+		return tc.copy().append(new TranslatableComponent(TIME_FORMAT_1_KEY, day, minute).withStyle(style));
 	}
 	
 }

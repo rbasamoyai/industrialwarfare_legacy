@@ -6,14 +6,14 @@ import java.util.UUID;
 
 import com.mojang.serialization.Codec;
 
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.util.UUIDCodec;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Position;
+import net.minecraft.core.SerializableUUID;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
@@ -42,16 +42,16 @@ public class MemoryModuleTypeInit {
 	public static final RegistryObject<MemoryModuleType<Boolean>> ENGAGING_COMPLETED = MEMORY_MODULE_TYPES.register("engaging_target", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> EXECUTING_INSTRUCTION = MEMORY_MODULE_TYPES.register("executing_instruction", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> FINISHED_ATTACKING = MEMORY_MODULE_TYPES.register("finished_attacking", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
-	public static final RegistryObject<MemoryModuleType<UUID>> IN_COMMAND_GROUP = MEMORY_MODULE_TYPES.register("in_command_group", () -> new MemoryModuleType<>(Optional.of(UUIDCodec.CODEC)));
+	public static final RegistryObject<MemoryModuleType<UUID>> IN_COMMAND_GROUP = MEMORY_MODULE_TYPES.register("in_command_group", () -> new MemoryModuleType<>(Optional.of(SerializableUUID.CODEC)));
 	public static final RegistryObject<MemoryModuleType<FormationLeaderEntity>> IN_FORMATION = MEMORY_MODULE_TYPES.register("in_formation", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> JUMP_TO = MEMORY_MODULE_TYPES.register("jump_to", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> ON_PATROL = MEMORY_MODULE_TYPES.register("on_patrol", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
-	public static final RegistryObject<MemoryModuleType<Vector3d>> PRECISE_POS = MEMORY_MODULE_TYPES.register("precise_pos", () -> new MemoryModuleType<>(Optional.of(PrecisePosCodec.CODEC)));
+	public static final RegistryObject<MemoryModuleType<Vec3>> PRECISE_POS = MEMORY_MODULE_TYPES.register("precise_pos", () -> new MemoryModuleType<>(Optional.of(PrecisePosCodec.CODEC)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> REACHED_MOVEMENT_TARGET = MEMORY_MODULE_TYPES.register("reached_movement_target", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> SHOULD_PREPARE_ATTACK = MEMORY_MODULE_TYPES.register("should_prepare_attack", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> STOP_EXECUTION = MEMORY_MODULE_TYPES.register("stop_execution", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<List<SupplyRequestPredicate>>> SUPPLY_REQUESTS = MEMORY_MODULE_TYPES.register("supply_request", () -> new MemoryModuleType<>(Optional.empty()));
-	public static final RegistryObject<MemoryModuleType<IPosition>> SHOOTING_POS = MEMORY_MODULE_TYPES.register("shooting_pos", () -> new MemoryModuleType<>(Optional.empty()));
+	public static final RegistryObject<MemoryModuleType<Position>> SHOOTING_POS = MEMORY_MODULE_TYPES.register("shooting_pos", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Long>> WAIT_FOR = MEMORY_MODULE_TYPES.register("wait_for", () -> new MemoryModuleType<>(Optional.of(Codec.LONG)));
 	
 }

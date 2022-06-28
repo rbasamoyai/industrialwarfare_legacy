@@ -2,8 +2,8 @@ package rbasamoyai.industrialwarfare.core.init;
 
 import com.google.common.collect.ImmutableSet;
 
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.formation.UnitFormationType;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.ColumnFormation;
@@ -15,10 +15,11 @@ import rbasamoyai.industrialwarfare.common.entityai.formation.formations.Segment
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation;
 import rbasamoyai.industrialwarfare.common.entityai.formation.formations.UnitFormation.Point;
 import rbasamoyai.industrialwarfare.common.items.WhistleItem.FormationCategory;
+import rbasamoyai.industrialwarfare.core.IWModRegistries;
 
 public class UnitFormationTypeInit {
 
-	public static final DeferredRegister<UnitFormationType<?>> UNIT_FORMATION_TYPES = DeferredRegister.create(UnitFormationType.CLASS_GENERIC, IndustrialWarfare.MOD_ID);
+	public static final DeferredRegister<UnitFormationType<?>> UNIT_FORMATION_TYPES = DeferredRegister.create(IWModRegistries.KEY_UNIT_FORMATION_TYPES, IndustrialWarfare.MOD_ID);
 	
 	public static final RegistryObject<UnitFormationType<NoFormation>> NO_FORMATION = UNIT_FORMATION_TYPES.register("no_formation",
 			() -> new UnitFormationType<>(NoFormation::new, 0xF00BAFFF, FormationCategory.NO_FORMATION, ImmutableSet.of(

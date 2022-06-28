@@ -1,10 +1,10 @@
 package rbasamoyai.industrialwarfare.client.screen.diplomacy;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
 
 public class DiplomacyStatusButton extends Button {
@@ -14,22 +14,21 @@ public class DiplomacyStatusButton extends Button {
 	private static final int BUTTON_TEX_X = 238;
 	private static final int BUTTON_TEX_Y_START = 48;
 	
-	private final IDisplay display;
-	private final IPressable pressable;
+	private final OnDisplay display;
+	private final OnPress pressable;
 	
 	private PlayerIDTag tag = PlayerIDTag.NO_OWNER;
 	
-	public DiplomacyStatusButton(int x, int y, IDisplay display, IPressable pressable) {
-		super(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, StringTextComponent.EMPTY, null);
+	public DiplomacyStatusButton(int x, int y, OnDisplay display, OnPress pressable) {
+		super(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, TextComponent.EMPTY, null);
 		
 		this.display = display;
 		this.pressable = pressable;
 	}
 	
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
-		Minecraft mc = Minecraft.getInstance();
-		mc.textureManager.bind(DiplomacyScreen.DIPLOMACY_GUI);
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
+		RenderSystem.setShaderTexture(0, DiplomacyScreen.DIPLOMACY_GUI);
 		
 		int y = BUTTON_TEX_Y_START;
 		switch (this.display.display(this.tag)) {
@@ -54,12 +53,12 @@ public class DiplomacyStatusButton extends Button {
 	public void setTag(PlayerIDTag tag) { this.tag = tag; }
 	
 	@FunctionalInterface
-	public static interface IDisplay {
+	public static interface OnDisplay {
 		public DisplayType display(PlayerIDTag tag);
 	}
 	
 	@FunctionalInterface
-	public static interface IPressable {
+	public static interface OnPress {
 		public void onPress(PlayerIDTag tag);
 	}
 	

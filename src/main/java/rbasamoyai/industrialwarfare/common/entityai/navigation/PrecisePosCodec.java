@@ -3,16 +3,16 @@ package rbasamoyai.industrialwarfare.common.entityai.navigation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.phys.Vec3;
 
 public class PrecisePosCodec {
 
-	public static final Codec<Vector3d> CODEC = RecordCodecBuilder.create(instance -> {
+	public static final Codec<Vec3> CODEC = RecordCodecBuilder.create(instance -> {
 		return instance.group(
-				Codec.DOUBLE.fieldOf("x").forGetter(Vector3d::x),
-				Codec.DOUBLE.fieldOf("y").forGetter(Vector3d::y),
-				Codec.DOUBLE.fieldOf("z").forGetter(Vector3d::z))
-				.apply(instance, Vector3d::new);
+				Codec.DOUBLE.fieldOf("x").forGetter(Vec3::x),
+				Codec.DOUBLE.fieldOf("y").forGetter(Vec3::y),
+				Codec.DOUBLE.fieldOf("z").forGetter(Vec3::z))
+				.apply(instance, Vec3::new);
 	});
 	
 }

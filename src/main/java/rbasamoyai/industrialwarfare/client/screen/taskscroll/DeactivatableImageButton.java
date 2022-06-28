@@ -1,12 +1,12 @@
 package rbasamoyai.industrialwarfare.client.screen.taskscroll;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import rbasamoyai.industrialwarfare.client.screen.widgets.MultiStateImageButton;
 
 public class DeactivatableImageButton extends MultiStateImageButton {
 
-	public DeactivatableImageButton(int x, int y, int width, int height, int texX, int texY, ResourceLocation resourceLocation, int texWidth, int texHeight, IPressable pressable, ITooltip tooltip, ITextComponent message) {
+	public DeactivatableImageButton(int x, int y, int width, int height, int texX, int texY, ResourceLocation resourceLocation, int texWidth, int texHeight, OnPress pressable, OnTooltip tooltip, Component message) {
 		super(x, y, width, height, texX, texY, resourceLocation, texWidth, texHeight, pressable, tooltip, message);
 	}
 	

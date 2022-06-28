@@ -1,38 +1,37 @@
 package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.schedule.Activity;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
-import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
+import rbasamoyai.industrialwarfare.common.entities.HasDiplomaticOwner;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> extends Task<E> {
+public class StartSelfDefenseTask<E extends Mob & HasDiplomaticOwner> extends Behavior<E> {
 	
 	public StartSelfDefenseTask() {
 		super(ImmutableMap.of(
-				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleType.VISIBLE_LIVING_ENTITIES, MemoryModuleStatus.VALUE_PRESENT,
-				MemoryModuleTypeInit.DEFENDING_SELF.get(), MemoryModuleStatus.VALUE_ABSENT));
+				MemoryModuleType.ATTACK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES, MemoryStatus.VALUE_PRESENT,
+				MemoryModuleTypeInit.DEFENDING_SELF.get(), MemoryStatus.VALUE_ABSENT));
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, E entity) {
 		Brain<?> brain = entity.getBrain();
 		PlayerIDTag npcOwner = entity.getDiplomaticOwner();
 		DiplomacySaveData saveData = DiplomacySaveData.get(level);
@@ -41,8 +40,8 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 			LivingEntity target = brain.getMemory(MemoryModuleType.ATTACK_TARGET).get();
 			if (target.isAlive()) return true;
 			
-			if (target instanceof IHasDiplomaticOwner) {
-				PlayerIDTag targetOwner = ((IHasDiplomaticOwner) target).getDiplomaticOwner();
+			if (target instanceof HasDiplomaticOwner) {
+				PlayerIDTag targetOwner = ((HasDiplomaticOwner) target).getDiplomaticOwner();
 				if (npcOwner.equals(targetOwner)) {
 					return entity.hasOwner();
 				}
@@ -52,8 +51,8 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 				}
 			}
 			
-			if (target instanceof PlayerEntity) {
-				PlayerEntity player = (PlayerEntity) target;
+			if (target instanceof Player) {
+				Player player = (Player) target;
 				if (player.isCreative() || player.isSpectator()) return false;
 				PlayerIDTag playerTag = PlayerIDTag.of(player);
 				if (npcOwner.equals(playerTag)) return false;
@@ -69,7 +68,7 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 	}
 	
 	@Override
-	protected void start(ServerWorld level, E entity, long gameTime) {
+	protected void start(ServerLevel level, E entity, long gameTime) {
 		Optional<LivingEntity> optional = this.findNearestAttacker(entity);
 		if (!optional.isPresent()) return;
 		Brain<?> brain = entity.getBrain();
@@ -85,8 +84,8 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 		
 		LivingEntity directAttacker = entity.getLastHurtByMob();
 		if (directAttacker != null && directAttacker.isAlive()) {
-			if (directAttacker instanceof IHasDiplomaticOwner) {
-				PlayerIDTag attackerOwner = ((IHasDiplomaticOwner) directAttacker).getDiplomaticOwner();
+			if (directAttacker instanceof HasDiplomaticOwner) {
+				PlayerIDTag attackerOwner = ((HasDiplomaticOwner) directAttacker).getDiplomaticOwner();
 				if (npcOwner.equals(attackerOwner) && !entity.hasOwner()) {
 					return Optional.of(directAttacker);
 				} else {
@@ -96,8 +95,8 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 					}
 				}
 			}
-			if (directAttacker instanceof PlayerEntity) {
-				PlayerEntity player = (PlayerEntity) directAttacker;
+			if (directAttacker instanceof Player) {
+				Player player = (Player) directAttacker;
 				if (!player.isCreative() && !player.isSpectator()) {
 					PlayerIDTag playerTag = PlayerIDTag.of(player);
 					if (!npcOwner.equals(playerTag)) {
@@ -110,13 +109,12 @@ public class StartSelfDefenseTask<E extends MobEntity & IHasDiplomaticOwner> ext
 			}
 		}
 		
-		List<LivingEntity> visibleEntities = brain.getMemory(MemoryModuleType.VISIBLE_LIVING_ENTITIES).orElse(new ArrayList<>());
-		for (LivingEntity e : visibleEntities) {
+		for (LivingEntity e : brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).map(nvle -> nvle.findAll(e -> true)).orElse(new ArrayList<>())) {
 			Brain<?> targetBrain = e.getBrain();
 			if (targetBrain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && targetBrain.getMemory(MemoryModuleType.ATTACK_TARGET).get() == entity) {
 				return Optional.of(e);
 			}
-			if (e instanceof MobEntity && ((MobEntity) e).getTarget() == entity) {
+			if (e instanceof Mob && ((Mob) e).getTarget() == entity) {
 				return Optional.of(e);
 			}
 		}

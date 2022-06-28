@@ -2,7 +2,7 @@ package rbasamoyai.industrialwarfare.common.items;
 
 import java.util.function.Predicate;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 public interface ISpeedloadable {
 

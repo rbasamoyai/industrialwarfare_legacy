@@ -2,31 +2,31 @@ package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.schedule.Activity;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.schedule.Activity;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class StopSelfDefenseTask extends Task<MobEntity> {
+public class StopSelfDefenseTask extends Behavior<Mob> {
 
 	private final Activity nextActivity;
 	
 	public StopSelfDefenseTask(Activity nextActivity) {
 		super(ImmutableMap.of(
-				MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.REGISTERED,
-				MemoryModuleTypeInit.DEFENDING_SELF.get(), MemoryModuleStatus.VALUE_PRESENT));
+				MemoryModuleType.ATTACK_TARGET, MemoryStatus.REGISTERED,
+				MemoryModuleTypeInit.DEFENDING_SELF.get(), MemoryStatus.VALUE_PRESENT));
 		this.nextActivity = nextActivity;
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, MobEntity entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, Mob entity) {
 		return entity.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).map(target -> {
-			if (target instanceof PlayerEntity && (((PlayerEntity) target).isCreative() || ((PlayerEntity) target).isSpectator())) {
+			if (target instanceof Player && (((Player) target).isCreative() || ((Player) target).isSpectator())) {
 				return true;
 			}
 			return target.isDeadOrDying();
@@ -34,7 +34,7 @@ public class StopSelfDefenseTask extends Task<MobEntity> {
 	}
 	
 	@Override
-	protected void start(ServerWorld level, MobEntity entity, long gameTime) {
+	protected void start(ServerLevel level, Mob entity, long gameTime) {
 		Brain<?> brain = entity.getBrain();
 		brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
 		brain.eraseMemory(MemoryModuleTypeInit.DEFENDING_SELF.get());

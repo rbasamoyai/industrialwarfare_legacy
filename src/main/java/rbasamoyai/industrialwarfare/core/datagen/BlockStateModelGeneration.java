@@ -1,12 +1,9 @@
 package rbasamoyai.industrialwarfare.core.datagen;
 
-import java.io.IOException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
@@ -57,11 +54,6 @@ public class BlockStateModelGeneration extends BlockStateProvider {
 		
 		simpleBlock(BlockInit.WORKER_SUPPORT.get(), new UncheckedModelFile(modLoc("block/worker_support")));
 		simpleBlockItem(BlockInit.WORKER_SUPPORT.get(), new UncheckedModelFile(modLoc("block/worker_support")));
-	}
-	
-	@Override
-	public void run(DirectoryCache cache) throws IOException {
-		super.run(cache);
 	}
 	
 	@Override

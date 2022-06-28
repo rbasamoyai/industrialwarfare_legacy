@@ -3,52 +3,52 @@ package rbasamoyai.industrialwarfare.core.network.messages;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.NetworkEvent;
 import rbasamoyai.industrialwarfare.common.items.LabelItem;
 
 public class SEditLabelSyncMessage {
 
-	public Hand hand;
-	public byte num;
-	public UUID uuid;
-	public ITextComponent name;
+	private InteractionHand hand;
+	private byte num;
+	private UUID uuid;
+	private Component name;
 	
 	public SEditLabelSyncMessage() {
 	}
 	
-	public SEditLabelSyncMessage(Hand hand, byte num, UUID uuid, ITextComponent name) {
+	public SEditLabelSyncMessage(InteractionHand hand, byte num, UUID uuid, Component name) {
 		this.hand = hand;
 		this.num = num;
 		this.uuid = uuid;
 		this.name = name;
 	}
 	
-	public static void encode(SEditLabelSyncMessage msg, PacketBuffer buf) {
-		buf.writeBoolean(msg.hand == Hand.MAIN_HAND);
+	public static void encode(SEditLabelSyncMessage msg, FriendlyByteBuf buf) {
+		buf.writeBoolean(msg.hand == InteractionHand.MAIN_HAND);
 		buf.writeByte(msg.num);
 		buf
 				.writeUUID(msg.uuid)
-				.writeUtf(ITextComponent.Serializer.toJson(msg.name));
+				.writeUtf(Component.Serializer.toJson(msg.name));
 	}
 	
-	public static SEditLabelSyncMessage decode(PacketBuffer buf) {
-		Hand hand = buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
+	public static SEditLabelSyncMessage decode(FriendlyByteBuf buf) {
+		InteractionHand hand = buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 		byte num = buf.readByte();
 		UUID uuid = buf.readUUID();
-		ITextComponent name = ITextComponent.Serializer.fromJson(buf.readUtf());
+		Component name = Component.Serializer.fromJson(buf.readUtf());
 		return new SEditLabelSyncMessage(hand, num, uuid, name);
 	}
 	
-	public static void handle(SEditLabelSyncMessage msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			ServerPlayerEntity player = context.getSender();
+	public static void handle(SEditLabelSyncMessage msg, Supplier<NetworkEvent.Context> sup) {
+		NetworkEvent.Context ctx = sup.get();
+		ctx.enqueueWork(() -> {
+			ServerPlayer player = ctx.getSender();
 			ItemStack handItem = player.getItemInHand(msg.hand);
 			
 			boolean split = handItem.getCount() > 1;
@@ -61,10 +61,10 @@ public class SEditLabelSyncMessage {
 			});
 			
 			if (split) {
-				if (!player.inventory.add(label)) InventoryHelper.dropItemStack(player.level, player.getX(), player.getY(), player.getZ(), label);
+				if (!player.getInventory().add(label)) Containers.dropItemStack(player.level, player.getX(), player.getY(), player.getZ(), label);
 			}
 		});
-		context.setPacketHandled(true);
+		ctx.setPacketHandled(true);
 	}
 	
 }

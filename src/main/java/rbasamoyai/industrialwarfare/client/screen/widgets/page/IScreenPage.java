@@ -4,14 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
 
-public interface IScreenPage extends IGuiEventListener {
+public interface IScreenPage extends GuiEventListener {
 
-	default void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {}
+	default void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {}
 	
 	public void tick();
 	

@@ -3,18 +3,16 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceContext.BlockMode;
-import net.minecraft.util.math.RayTraceContext.FluidMode;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
@@ -24,35 +22,35 @@ public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 	
 	private static final String TOOLTIP_TRANSLATION_KEY = "selector.tooltip." + IndustrialWarfare.MOD_ID + ".block_pos";
 	
-	private static final IFormattableTextComponent TOOLTIP_HEADER = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
-	private static final IFormattableTextComponent TOOLTIP_OLD_POS = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + ".old_position");
-	private static final IFormattableTextComponent TOOLTIP_CURRENT_POS = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + ".standing_at");
-	private static final IFormattableTextComponent TOOLTIP_LOOKING_AT = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + ".looking_at");
-	private static final IFormattableTextComponent TOOLTIP_NOT_LOOKING_AT = new TranslationTextComponent(TOOLTIP_TRANSLATION_KEY + ".not_looking_at").withStyle(ArgSelector.CANNOT_SELECT_STYLE);
+	private static final MutableComponent TOOLTIP_HEADER = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY).withStyle(ArgSelector.HEADER_STYLE);
+	private static final MutableComponent TOOLTIP_OLD_POS = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY + ".old_position");
+	private static final MutableComponent TOOLTIP_CURRENT_POS = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY + ".standing_at");
+	private static final MutableComponent TOOLTIP_LOOKING_AT = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY + ".looking_at");
+	private static final MutableComponent TOOLTIP_NOT_LOOKING_AT = new TranslatableComponent(TOOLTIP_TRANSLATION_KEY + ".not_looking_at").withStyle(ArgSelector.CANNOT_SELECT_STYLE);
 	
-	public BlockPosArgSelector(PlayerEntity player, BlockPos oldOrderPos) {
+	public BlockPosArgSelector(Player player, BlockPos oldOrderPos) {
 		super(getArgs(player, oldOrderPos));
 	}
 	
 	/**
 	 * Raytracing code taken from <a href="https://stackoverflow.com/a/66891421">this Stack Overflow answer.</a>
 	 */
-	private static List<BlockPos> getArgs(PlayerEntity player, BlockPos oldOrderPos) {
+	private static List<BlockPos> getArgs(Player player, BlockPos oldOrderPos) {
 		double rayLength = 10.0d;
 		
-		Vector3d playerRot = player.getLookAngle();
-		Vector3d rayPath = playerRot.scale(rayLength);
+		Vec3 playerRot = player.getLookAngle();
+		Vec3 rayPath = playerRot.scale(rayLength);
 		
-		Vector3d from = player.getEyePosition(0);
-		Vector3d to = from.add(rayPath);
+		Vec3 from = player.getEyePosition(0);
+		Vec3 to = from.add(rayPath);
 		
-		RayTraceContext context = new RayTraceContext(from, to, BlockMode.OUTLINE, FluidMode.ANY, null);
-		BlockRayTraceResult result = player.level.clip(context);
+		ClipContext context = new ClipContext(from, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, null);
+		BlockHitResult result = player.level.clip(context);
 		
 		ArrayList<BlockPos> args = new ArrayList<>();
 		args.add(oldOrderPos);
 		args.add(player.blockPosition());
-		if (result.getType() == RayTraceResult.Type.BLOCK) args.add(result.getBlockPos());
+		if (result.getType() == HitResult.Type.BLOCK) args.add(result.getBlockPos());
 		
 		return args;
 	}
@@ -68,28 +66,28 @@ public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 	}
 
 	@Override
-	public List<ITextComponent> getComponentTooltip() {
-		List<ITextComponent> tooltip = new ArrayList<>();
+	public List<Component> getComponentTooltip() {
+		List<Component> tooltip = new ArrayList<>();
 		tooltip.add(TOOLTIP_HEADER);
 		
 		BlockPos lookingAt = this.possibleArgs.size() >= 3 ? this.possibleArgs.get(2) : null;
 		
-		IFormattableTextComponent choice0 = TooltipUtils.formatAsStyle(
-				formatBlockPos(this.possibleArgs.get(0))
+		MutableComponent choice0 = TooltipUtils.formatAsStyle(
+				new TextComponent(this.possibleArgs.get(0).toShortString())
 						.append(ArgSelector.SPACER.copy())
 						.append(TOOLTIP_OLD_POS.copy()),
 				ArgSelector.NOT_SELECTED_STYLE
 				);
-		IFormattableTextComponent choice1 = TooltipUtils.formatAsStyle( 
-				formatBlockPos(this.possibleArgs.get(1))
+		MutableComponent choice1 = TooltipUtils.formatAsStyle( 
+				new TextComponent(this.possibleArgs.get(1).toShortString())
 						.append(ArgSelector.SPACER.copy())
 						.append(TOOLTIP_CURRENT_POS.copy()),
 				ArgSelector.NOT_SELECTED_STYLE
 				);
-		IFormattableTextComponent choice2 = lookingAt == null
+		MutableComponent choice2 = lookingAt == null
 				? TOOLTIP_NOT_LOOKING_AT.copy()
 				: TooltipUtils.formatAsStyle(
-						formatBlockPos(lookingAt)
+						new TextComponent(this.possibleArgs.get(2).toShortString())
 								.append(ArgSelector.SPACER.copy())
 								.append(TOOLTIP_LOOKING_AT.copy()),
 						ArgSelector.NOT_SELECTED_STYLE
@@ -115,12 +113,8 @@ public class BlockPosArgSelector extends ArgSelector<BlockPos> {
 	}
 	
 	@Override
-	public ITextComponent getTitle() {
-		return this.selectedArg != 2 || this.possibleArgs.size() >= 3 ? formatBlockPos(this.possibleArgs.get(this.selectedArg)) : TooltipUtils.NOT_AVAILABLE.copy();
-	}
-	
-	private static StringTextComponent formatBlockPos(BlockPos pos) {
-		return new StringTextComponent(pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
+	public Component getTitle() {
+		return this.selectedArg != 2 || this.possibleArgs.size() >= 3 ? new TextComponent(this.possibleArgs.get(this.selectedArg).toShortString()) : TooltipUtils.NOT_AVAILABLE.copy();
 	}
 
 }

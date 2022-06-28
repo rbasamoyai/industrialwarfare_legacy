@@ -1,8 +1,8 @@
 package rbasamoyai.industrialwarfare.common.entityai.formation;
 
-import net.minecraft.entity.CreatureEntity;
+import net.minecraft.world.entity.PathfinderMob;
 
-public class FormationEntityWrapper<E extends CreatureEntity & IMovesInFormation> {
+public class FormationEntityWrapper<E extends PathfinderMob & MovesInFormation> {
 
 	private final E entity;
 	

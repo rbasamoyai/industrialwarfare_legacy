@@ -2,52 +2,51 @@ package rbasamoyai.industrialwarfare.common.items;
 
 import java.util.UUID;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuConstructor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.ILabelItemDataHandler;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.LabelItemDataCapability;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.ILabelItemData;
+import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.LabelItemCapability;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.label.LabelItemDataProvider;
-import rbasamoyai.industrialwarfare.common.containers.EditLabelContainer;
+import rbasamoyai.industrialwarfare.common.containers.EditLabelMenu;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
 import rbasamoyai.industrialwarfare.utils.TooltipUtils;
 
 public class LabelItem extends Item {
 
-	private static final IFormattableTextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".edit_label.title");
+	private static final MutableComponent TITLE = new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".edit_label.title");
 	
 	public LabelItem() {
 		super(new Item.Properties().tab(IWItemGroups.TAB_GENERAL));
 	}
 	
 	@Override
-	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundNBT nbt) {
+	public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
 		LabelItemDataProvider provider = new LabelItemDataProvider();
 		if (nbt == null) {
-			provider.getCapability(LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY).ifPresent(h -> {
+			provider.getCapability(LabelItemCapability.INSTANCE).ifPresent(h -> {
 				h.setUUID(new UUID(0L, 0L));
 				h.setNumber((byte) 0);
-				h.cacheName(StringTextComponent.EMPTY);
+				h.cacheName(TextComponent.EMPTY);
 			});
 		} else {
 			provider.deserializeNBT(nbt.contains("Parent") ? nbt.getCompound("Parent") : nbt);
@@ -55,32 +54,28 @@ public class LabelItem extends Item {
 		return provider;
 	}
 	
-	public static LazyOptional<ILabelItemDataHandler> getDataHandler(ItemStack stack) {
-		return stack.getCapability(LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY);
+	public static LazyOptional<ILabelItemData> getDataHandler(ItemStack stack) {
+		return stack.getCapability(LabelItemCapability.INSTANCE);
 	}
 	
 	@Override
-	public CompoundNBT getShareTag(ItemStack stack) {
-		CompoundNBT nbt = stack.getOrCreateTag();
-		getDataHandler(stack).ifPresent(h -> {
-			nbt.put("item_cap", LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY.writeNBT(h, null));
-		});
+	public CompoundTag getShareTag(ItemStack stack) {
+		CompoundTag nbt = stack.getOrCreateTag();
+		getDataHandler(stack).ifPresent(h -> nbt.put("item_cap", h.writeTag(new CompoundTag())));
 		return nbt;
 	}
 	
 	@Override
-	public void readShareTag(ItemStack stack, CompoundNBT nbt) {
+	public void readShareTag(ItemStack stack, CompoundTag nbt) {
 		super.readShareTag(stack, nbt);
 		
 		if (nbt != null) {
-			getDataHandler(stack).ifPresent(h -> {
-				LabelItemDataCapability.LABEL_ITEM_DATA_CAPABILITY.readNBT(h, null, nbt.getCompound("item_cap"));
-			});
+			getDataHandler(stack).ifPresent(h -> h.readTag(nbt.getCompound("item_cap")));
 		}
 	}
 	
 	@Override
-	public ActionResultType interactLivingEntity(ItemStack stack, PlayerEntity player, LivingEntity entity, Hand hand) {
+	public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity entity, InteractionHand hand) {
 		if (entity instanceof NPCEntity) {
 			if (!player.level.isClientSide && entity.isAlive()) {
 				boolean split = stack.getCount() > 1;
@@ -92,40 +87,40 @@ public class LabelItem extends Item {
 				});
 				
 				if (split) {
-					if (!player.inventory.add(label)) InventoryHelper.dropItemStack(player.level, player.getX(), player.getY(), player.getZ(), label);
+					if (!player.getInventory().add(label)) player.drop(label, false, true);
 				}
 			}
-			return ActionResultType.sidedSuccess(player.level.isClientSide);
+			return InteractionResult.sidedSuccess(player.level.isClientSide);
 		}
 		return super.interactLivingEntity(stack, player, entity, hand);
 	}
 	
 	@Override
-	public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 		ItemStack handItem = player.getItemInHand(hand);
-		if (!world.isClientSide && player instanceof ServerPlayerEntity) {
-			LazyOptional<ILabelItemDataHandler> optional = getDataHandler(handItem);
+		if (!level.isClientSide && player instanceof ServerPlayer) {
+			LazyOptional<ILabelItemData> optional = getDataHandler(handItem);
 			
-			UUID labelUUID = optional.map(ILabelItemDataHandler::getUUID).orElseGet(() -> new UUID(0L, 0L));
-			byte labelNum = optional.map(ILabelItemDataHandler::getNumber).orElse((byte) 0);
-			ITextComponent labelCachedName = optional.map(ILabelItemDataHandler::getCachedName).orElse(StringTextComponent.EMPTY);
+			UUID labelUUID = optional.map(ILabelItemData::getUUID).orElseGet(() -> new UUID(0L, 0L));
+			byte labelNum = optional.map(ILabelItemData::getNumber).orElse((byte) 0);
+			Component labelCachedName = optional.map(ILabelItemData::getCachedName).orElse(TextComponent.EMPTY);
 			
-			IContainerProvider containerProvider = EditLabelContainer.getServerContainerProvider(hand, labelUUID, labelNum, labelCachedName);
-			INamedContainerProvider namedContainerProvider = new SimpleNamedContainerProvider(containerProvider, TITLE);
+			MenuConstructor containerProvider = EditLabelMenu.getServerContainerProvider(hand, labelUUID, labelNum, labelCachedName);
+			MenuProvider namedContainerProvider = new SimpleMenuProvider(containerProvider, TITLE);
 			
-			NetworkHooks.openGui((ServerPlayerEntity) player, namedContainerProvider, buf -> {
-				buf.writeBoolean(hand == Hand.MAIN_HAND);
+			NetworkHooks.openGui((ServerPlayer) player, namedContainerProvider, buf -> {
+				buf.writeBoolean(hand == InteractionHand.MAIN_HAND);
 				buf
 						.writeUUID(labelUUID)
-						.writeUtf(ITextComponent.Serializer.toJson(labelCachedName))
+						.writeUtf(Component.Serializer.toJson(labelCachedName))
 						.writeByte(labelNum);
 			});
 		}
-		return ActionResult.sidedSuccess(handItem, world.isClientSide);
+		return InteractionResultHolder.sidedSuccess(handItem, level.isClientSide);
 	}
 	
 	@Override
-	public ITextComponent getName(ItemStack stack) {
+	public Component getName(ItemStack stack) {
 		return getDataHandler(stack)
 				.map(h -> {
 					byte flag = h.getFlags();
@@ -134,14 +129,14 @@ public class LabelItem extends Item {
 					
 					if (flag == 0) return super.getName(stack);
 					
-					StringTextComponent tc = new StringTextComponent("");
+					TextComponent tc = new TextComponent("");
 					if (hasNum) tc.append(Byte.toString(h.getNumber()));
 					if (hasName) {
 						if (TooltipUtils.charLength(tc) > 0) tc.append(" ");
 						tc.append(h.getCachedName());
 					}
 					
-					return (ITextComponent) tc;
+					return (Component) tc;
 				})
 				.orElseGet(() -> super.getName(stack));
 	}

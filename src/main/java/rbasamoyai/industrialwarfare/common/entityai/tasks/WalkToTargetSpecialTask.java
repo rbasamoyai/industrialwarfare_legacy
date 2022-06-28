@@ -1,16 +1,16 @@
 package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.task.WalkToTargetTask;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.MoveToTargetSink;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
 
-public class WalkToTargetSpecialTask extends WalkToTargetTask {
+public class WalkToTargetSpecialTask extends MoveToTargetSink {
 
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, MobEntity entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, Mob entity) {
 		Brain<?> brain = entity.getBrain();
 		WalkTarget walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET).get();
 		boolean reachedTarget = this.reachedTarget(entity, walkTarget);

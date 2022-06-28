@@ -2,7 +2,7 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.Optional;
 
-import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
@@ -24,7 +24,7 @@ public class EmptyArgHolder implements IArgHolder {
 	}
 
 	@Override
-	public Optional<ArgSelector<?>> getSelector(TaskScrollContainer container) {
+	public Optional<ArgSelector<?>> getSelector(TaskScrollMenu container) {
 		return Optional.of(new EmptyArgSelector());
 	}
 

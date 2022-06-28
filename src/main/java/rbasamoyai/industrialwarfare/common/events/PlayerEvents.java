@@ -1,17 +1,17 @@
 package rbasamoyai.industrialwarfare.common.events;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemFrameEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
@@ -33,13 +33,13 @@ public class PlayerEvents {
 	public static void onPlayerJoinWorld(EntityJoinWorldEvent event) {
 		Entity e = event.getEntity();
 		if (e == null) return;
-		if (!(e instanceof PlayerEntity)) return;
+		if (!(e instanceof Player)) return;
 		
-		World world = event.getWorld();
+		Level world = event.getWorld();
 		if (world == null) return;
-		if (!(world instanceof ServerWorld)) return;
+		if (!(world instanceof ServerLevel)) return;
 		
-		PlayerEntity player = (PlayerEntity) e;
+		Player player = (Player) e;
 		
 		DiplomacySaveData diplomacyData = DiplomacySaveData.get(world);
 		if (!diplomacyData.hasPlayerIdTag(PlayerIDTag.of(player))) {
@@ -50,16 +50,16 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
-		PlayerEntity player = event.getPlayer();
+		Player player = event.getPlayer();
 		Entity target = event.getTarget();
-		Hand hand = event.getHand();
+		InteractionHand hand = event.getHand();
 		
 		ItemStack stack = player.getItemInHand(hand);
 		
 		if (event.isCancelable() && stack.getItem() instanceof FirearmItem) {
 			if (!player.level.isClientSide) {
-				if (target instanceof ItemFrameEntity) {
-					ItemFrameEntity frame = (ItemFrameEntity) target;
+				if (target instanceof ItemFrame) {
+					ItemFrame frame = (ItemFrame) target;
 					frame.interact(player, hand);
 				}
 				
@@ -68,13 +68,13 @@ public class PlayerEvents {
 			}
 			
 			event.setCanceled(true);
-			event.setCancellationResult(ActionResultType.CONSUME);
+			event.setCancellationResult(InteractionResult.CONSUME);
 		}
 	}
 	
 	@SubscribeEvent
 	public static void onAttackEntity(AttackEntityEvent event) {
-		PlayerEntity player = event.getPlayer();
+		Player player = event.getPlayer();
 		if (player.swingingArm == null) return;
 		
 		ItemStack stack = player.getItemInHand(player.swingingArm);
@@ -86,7 +86,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-		PlayerEntity player = event.getPlayer();
+		Player player = event.getPlayer();
 		if (player.swingingArm == null) return;
 		
 		ItemStack stack = player.getItemInHand(player.swingingArm);
@@ -100,8 +100,8 @@ public class PlayerEvents {
 	public static void onRightClick(PlayerInteractEvent.RightClickItem event) {
 		ItemStack stack = event.getItemStack();
 		Item item = stack.getItem();
-		PlayerEntity player = event.getPlayer();
-		Hand hand = player.getUsedItemHand();
+		Player player = event.getPlayer();
+		InteractionHand hand = player.getUsedItemHand();
 		if (hand == null) return;
 		
 		if (item instanceof FirearmItem) {
@@ -110,11 +110,11 @@ public class PlayerEvents {
 			}
 		}
 		
-		if (hand == Hand.MAIN_HAND && item == Items.FLINT_AND_STEEL) {
+		if (hand == InteractionHand.MAIN_HAND && item == Items.FLINT_AND_STEEL) {
 			ItemStack offhand = player.getOffhandItem();
 			if (offhand.getItem() instanceof MatchCordItem && !MatchCordItem.isLit(offhand)) {
 				MatchCordItem.lightMatch(offhand, true);
-				player.level.playSound(null, player.blockPosition(), SoundEvents.FLINTANDSTEEL_USE, SoundCategory.PLAYERS, 1.0F, player.getRandom().nextFloat() * 0.4F + 0.8F);
+				player.level.playSound(null, player.blockPosition(), SoundEvents.FLINTANDSTEEL_USE, SoundSource.PLAYERS, 1.0F, player.getRandom().nextFloat() * 0.4F + 0.8F);
 				stack.hurtAndBreak(1, player, e -> {
 					e.broadcastBreakEvent(hand);
 				});
@@ -124,7 +124,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void onOpenContainer(PlayerContainerEvent.Open event) {
-		PlayerEntity player = event.getPlayer();
+		Player player = event.getPlayer();
 		ItemStack mainhand = player.getMainHandItem();
 		
 		if (mainhand.getItem() instanceof PrimingFirearmItem) {

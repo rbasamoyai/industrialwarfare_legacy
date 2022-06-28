@@ -2,28 +2,28 @@ package rbasamoyai.industrialwarfare.common.entityai.tasks;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
-import rbasamoyai.industrialwarfare.common.entities.IHasDiplomaticOwner;
+import rbasamoyai.industrialwarfare.common.entities.HasDiplomaticOwner;
 
-public class EndDiplomacyAttackTask<E extends LivingEntity & IHasDiplomaticOwner> extends Task<E> {
+public class EndDiplomacyAttackTask<E extends LivingEntity & HasDiplomaticOwner> extends Behavior<E> {
 
 	public EndDiplomacyAttackTask() {
-		super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryModuleStatus.VALUE_PRESENT));
+		super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, E entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, E entity) {
 		LivingEntity target = this.getAttackTarget(entity);
-		if (!(target instanceof IHasDiplomaticOwner)) return false;
+		if (!(target instanceof HasDiplomaticOwner)) return false;
 		PlayerIDTag owner = entity.getDiplomaticOwner();
-		PlayerIDTag targetOwner = ((IHasDiplomaticOwner) target).getDiplomaticOwner();
+		PlayerIDTag targetOwner = ((HasDiplomaticOwner) target).getDiplomaticOwner();
 		if (owner.equals(targetOwner)) return true;
 		DiplomaticStatus status = DiplomacySaveData.get(level).getDiplomaticStatus(owner, targetOwner);
 		// TODO: neutral and unknown
@@ -31,7 +31,7 @@ public class EndDiplomacyAttackTask<E extends LivingEntity & IHasDiplomaticOwner
 	}
 	
 	@Override
-	protected void start(ServerWorld level, E entity, long gameTime) {
+	protected void start(ServerLevel level, E entity, long gameTime) {
 		entity.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
 	}
 	

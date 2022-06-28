@@ -1,13 +1,13 @@
 package rbasamoyai.industrialwarfare.client.screen.widgets;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class HoldSelectImageButton extends MultiStateImageButton {
 
 	private boolean selected = false;
 	
-	public HoldSelectImageButton(int x, int y, int width, int height, int texX, int texY, ResourceLocation resourceLocation, int texWidth, int texHeight, IPressable pressable, ITooltip tooltip, ITextComponent message) {
+	public HoldSelectImageButton(int x, int y, int width, int height, int texX, int texY, ResourceLocation resourceLocation, int texWidth, int texHeight, OnPress pressable, OnTooltip tooltip, Component message) {
 		super(x, y, width, height, texX, texY, resourceLocation, texWidth, texHeight, pressable, tooltip, message);
 	}
 	

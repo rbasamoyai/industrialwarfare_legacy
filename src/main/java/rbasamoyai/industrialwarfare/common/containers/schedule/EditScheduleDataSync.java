@@ -1,16 +1,16 @@
 package rbasamoyai.industrialwarfare.common.containers.schedule;
 
-import net.minecraft.util.IIntArray;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.level.Level;
 import rbasamoyai.industrialwarfare.utils.TimeUtils;
 
-public class EditScheduleDataSync implements IIntArray {
+public class EditScheduleDataSync implements ContainerData {
 	
-	private final World world;
+	private final Level world;
 	private final int maxMinutes;
 	private final int maxShifts;
 	
-	public EditScheduleDataSync(World world, int maxMinutes, int maxShifts) {
+	public EditScheduleDataSync(Level world, int maxMinutes, int maxShifts) {
 		this.world = world;
 		this.maxMinutes = maxMinutes;
 		this.maxShifts = maxShifts;

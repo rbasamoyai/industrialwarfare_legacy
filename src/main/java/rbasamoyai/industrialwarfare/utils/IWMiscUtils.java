@@ -1,27 +1,19 @@
 package rbasamoyai.industrialwarfare.utils;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.state.properties.SlabType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 
 public class IWMiscUtils {
 
-	public static boolean isTopSlabAt(World level, BlockPos pos) {
+	public static boolean isTopSlabAt(Level level, BlockPos pos) {
 		BlockState blockstate = level.getBlockState(pos);
-		Block block = blockstate.getBlock();
-		return block.getTags().contains(BlockTags.SLABS.getName())
+		return blockstate.is(BlockTags.SLABS)
 			&& blockstate.getValue(SlabBlock.TYPE) == SlabType.TOP
 			&& !blockstate.getValue(SlabBlock.WATERLOGGED);
-	}
-	
-	public static boolean isAirAt(World level, BlockPos pos) {
-		BlockState blockstate = level.getBlockState(pos);
-		Block block = blockstate.getBlock();
-		return block.isAir(blockstate, level, pos);
 	}
 	
 	public static float quadEasingIn(float time) {

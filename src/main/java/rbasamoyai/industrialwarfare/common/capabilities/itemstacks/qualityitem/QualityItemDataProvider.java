@@ -1,36 +1,31 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class QualityItemDataProvider implements ICapabilitySerializable<CompoundNBT> {
-
-	private final QualityItemDataHandler dataHandler = new QualityItemDataHandler();
-	private final LazyOptional<IQualityItemDataHandler> dataOptional = LazyOptional.of(() -> this.dataHandler);
+public class QualityItemDataProvider implements ICapabilitySerializable<CompoundTag> {
 	
-	public void invalidate() {
-		this.dataOptional.invalidate();
-	}
+	private final IQualityItemData dataHandler = new QualityItemDataHandler();
+	private final LazyOptional<IQualityItemData> dataOptional = LazyOptional.of(() -> this.dataHandler);
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return cap == QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
+		return cap == QualityItemCapability.INSTANCE ? this.dataOptional.cast() : LazyOptional.empty();
+	}
+	
+	@Override
+	public CompoundTag serializeNBT() {
+		return QualityItemCapability.INSTANCE.isRegistered() ? this.dataHandler.writeTag(new CompoundTag()) : new CompoundTag();
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		return QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY == null
-				? new CompoundNBT()
-				: (CompoundNBT) QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.writeNBT(this.dataHandler, null);
-	}
-
-	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		if (QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY != null)
-			QualityItemDataCapability.QUALITY_ITEM_DATA_CAPABILITY.readNBT(this.dataHandler, null, nbt);
+	public void deserializeNBT(CompoundTag tag) {
+		if (QualityItemCapability.INSTANCE.isRegistered()) {
+			this.dataHandler.readTag(tag);
+		}
 	}
 
 }

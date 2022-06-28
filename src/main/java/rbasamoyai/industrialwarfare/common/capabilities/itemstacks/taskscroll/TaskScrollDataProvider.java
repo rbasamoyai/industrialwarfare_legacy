@@ -1,36 +1,33 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class TaskScrollDataProvider implements ICapabilitySerializable<CompoundNBT> {
+public class TaskScrollDataProvider implements ICapabilitySerializable<CompoundTag> {
 
-	private final TaskScrollDataHandler dataHandler = new TaskScrollDataHandler();
-	private final LazyOptional<ITaskScrollDataHandler> dataOptional = LazyOptional.of(() -> this.dataHandler);
+	private final ITaskScrollData dataHandler = new TaskScrollDataHandler();
+	private final LazyOptional<ITaskScrollData> dataOptional = LazyOptional.of(() -> this.dataHandler);
 	
-	public void invalidate() {
-		this.dataOptional.invalidate();
-	}
+	
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return cap == TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY ? this.dataOptional.cast() : LazyOptional.empty();
+		return cap == TaskScrollCapability.INSTANCE ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		return TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY == null
-				? new CompoundNBT()
-				: (CompoundNBT) TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.writeNBT(this.dataHandler, null);
+	public CompoundTag serializeNBT() {
+		return TaskScrollCapability.INSTANCE.isRegistered() ? this.dataHandler.writeTag(new CompoundTag()) : new CompoundTag();
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		if (TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY != null)
-			TaskScrollDataCapability.TASK_SCROLL_DATA_CAPABILITY.readNBT(this.dataHandler, null, nbt);
+	public void deserializeNBT(CompoundTag nbt) {
+		if (TaskScrollCapability.INSTANCE.isRegistered()) {
+			this.dataHandler.readTag(nbt);
+		}
 	}
 
 }

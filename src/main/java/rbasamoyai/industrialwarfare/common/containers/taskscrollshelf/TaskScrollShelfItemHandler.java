@@ -1,15 +1,15 @@
 package rbasamoyai.industrialwarfare.common.containers.taskscrollshelf;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.blockentities.TaskScrollShelfBlockEntity;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollItem;
-import rbasamoyai.industrialwarfare.common.tileentities.TaskScrollShelfTileEntity;
 
 public class TaskScrollShelfItemHandler extends ItemStackHandler {
 
-	public final TaskScrollShelfTileEntity te;
+	public final TaskScrollShelfBlockEntity te;
 	
-	public TaskScrollShelfItemHandler(TaskScrollShelfTileEntity te, int count) {
+	public TaskScrollShelfItemHandler(TaskScrollShelfBlockEntity te, int count) {
 		super(count);
 		
 		this.te = te;

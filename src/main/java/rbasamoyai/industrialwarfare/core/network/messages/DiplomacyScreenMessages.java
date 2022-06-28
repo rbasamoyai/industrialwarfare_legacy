@@ -7,20 +7,20 @@ import java.util.function.Supplier;
 
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuConstructor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkHooks;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.containers.DiplomacyContainer;
+import rbasamoyai.industrialwarfare.common.containers.DiplomacyMenu;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomacySaveData;
 import rbasamoyai.industrialwarfare.common.diplomacy.DiplomaticStatus;
 import rbasamoyai.industrialwarfare.common.diplomacy.PlayerIDTag;
@@ -29,39 +29,39 @@ import rbasamoyai.industrialwarfare.core.network.handlers.DiplomacyScreenCHandle
 public class DiplomacyScreenMessages {
 	
 	public static class SOpenScreen {
-		private static final ITextComponent TITLE = new TranslationTextComponent("gui." + IndustrialWarfare.MOD_ID + ".diplomacy");
+		private static final Component TITLE = new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".diplomacy");
 		
 		public SOpenScreen() {}
-		public static void encode(SOpenScreen msg, PacketBuffer buf) {}
-		public static SOpenScreen decode(PacketBuffer buf) { return new SOpenScreen(); }
+		public static void encode(SOpenScreen msg, FriendlyByteBuf buf) {}
+		public static SOpenScreen decode(FriendlyByteBuf buf) { return new SOpenScreen(); }
 		
-		public static void handle(SOpenScreen msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
-				IContainerProvider containerProvider = DiplomacyContainer.getServerContainerProvider();
-				INamedContainerProvider namedContainerProvider = new SimpleNamedContainerProvider(containerProvider, TITLE);
-				NetworkHooks.openGui(context.getSender(), namedContainerProvider);
+		public static void handle(SOpenScreen msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				MenuConstructor containerProvider = DiplomacyMenu.getServerContainerProvider();
+				MenuProvider namedAbstractContainerMenuProvider = new SimpleMenuProvider(containerProvider, TITLE);
+				NetworkHooks.openGui(ctx.getSender(), namedAbstractContainerMenuProvider);
 			});
-			context.setPacketHandled(true);
+			ctx.setPacketHandled(true);
 		}
 	}
 	
 	public static class SRequestUpdate {
 		public SRequestUpdate() {}
-		public static void encode(SRequestUpdate msg, PacketBuffer buf) {}
-		public static SRequestUpdate decode(PacketBuffer buf) { return new SRequestUpdate(); }
+		public static void encode(SRequestUpdate msg, FriendlyByteBuf buf) {}
+		public static SRequestUpdate decode(FriendlyByteBuf buf) { return new SRequestUpdate(); }
 		
-		public static void handle(SRequestUpdate msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
-				ServerPlayerEntity player = context.getSender();
-				Container ct = player.containerMenu;
+		public static void handle(SRequestUpdate msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				ServerPlayer player = ctx.getSender();
+				AbstractContainerMenu ct = player.containerMenu;
 				if (ct == null) return;
-				if (!(ct instanceof DiplomacyContainer)) return;
-				((DiplomacyContainer) ct).updateData();
+				if (!(ct instanceof DiplomacyMenu)) return;
+				((DiplomacyMenu) ct).updateData();
 				ct.broadcastChanges();
 			});
-			context.setPacketHandled(true);
+			ctx.setPacketHandled(true);
 		}
 	}
 	
@@ -76,7 +76,7 @@ public class DiplomacyScreenMessages {
 			this.npcFactionRelationships = npcFactionRelationships;
 		}
 		
-		public static void encode(CBroadcastChanges msg, PacketBuffer buf) {
+		public static void encode(CBroadcastChanges msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.diplomaticStatuses.size());
 			
 			msg.diplomaticStatuses
@@ -98,7 +98,7 @@ public class DiplomacyScreenMessages {
 					});
 		}
 		
-		public static CBroadcastChanges decode(PacketBuffer buf) {
+		public static CBroadcastChanges decode(FriendlyByteBuf buf) {
 			int dsSz = buf.readVarInt();
 			Map<PlayerIDTag, Pair<DiplomaticStatus, DiplomaticStatus>> diplomaticStatuses = new HashMap<>(dsSz);
 			for (int i = 0; i < dsSz; i++) {
@@ -119,12 +119,12 @@ public class DiplomacyScreenMessages {
 			return new CBroadcastChanges(diplomaticStatuses, relationships);
 		}
 		
-		public static void handle(CBroadcastChanges msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> DiplomacyScreenCHandlers.handleCBroadcastChanges(msg, contextSupplier));
+		public static void handle(CBroadcastChanges msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> DiplomacyScreenCHandlers.handleCBroadcastChanges(msg, sup));
 			});
-			context.setPacketHandled(true);
+			ctx.setPacketHandled(true);
 		}
 	}
 	
@@ -137,7 +137,7 @@ public class DiplomacyScreenMessages {
 			this.statusChanges = statusChanges;
 		}
 		
-		public static void encode(SDiplomaticStatusChangeSync msg, PacketBuffer buf) {
+		public static void encode(SDiplomaticStatusChangeSync msg, FriendlyByteBuf buf) {
 			buf.writeVarInt(msg.statusChanges.size());
 			msg.statusChanges.forEach((tag, status) -> {
 				tag.toNetwork(buf);
@@ -145,7 +145,7 @@ public class DiplomacyScreenMessages {
 			});
 		}
 		
-		public static SDiplomaticStatusChangeSync decode(PacketBuffer buf) {
+		public static SDiplomaticStatusChangeSync decode(FriendlyByteBuf buf) {
 			int sz = buf.readVarInt();
 			Map<PlayerIDTag, DiplomaticStatus> statuses = new HashMap<>();
 			for (int i = 0; i < sz; i++) {
@@ -156,17 +156,17 @@ public class DiplomacyScreenMessages {
 			return new SDiplomaticStatusChangeSync(statuses);
 		}
 		
-		public static void handle(SDiplomaticStatusChangeSync msg, Supplier<NetworkEvent.Context> contextSupplier) {
-			NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
-				ServerPlayerEntity player = context.getSender();
+		public static void handle(SDiplomaticStatusChangeSync msg, Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				ServerPlayer player = ctx.getSender();
 				DiplomacySaveData saveData = DiplomacySaveData.get(player.level);
 				PlayerIDTag playerTag = PlayerIDTag.of(player);
 				msg.statusChanges.forEach((tag, status) -> {
 					saveData.setDiplomaticStatus(playerTag, tag, status);
 				});
 			});
-			context.setPacketHandled(true);
+			ctx.setPacketHandled(true);
 		}
 	}
 	

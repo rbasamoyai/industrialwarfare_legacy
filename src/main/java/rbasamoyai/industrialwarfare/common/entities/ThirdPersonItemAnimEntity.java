@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.events.RenderEvents;
-import rbasamoyai.industrialwarfare.client.items.renderers.ISpecialThirdPersonRender;
+import rbasamoyai.industrialwarfare.client.items.renderers.SpecialThirdPersonRender;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.controller.AnimationController;
@@ -21,15 +21,15 @@ import software.bernie.geckolib3.core.manager.AnimationFactory;
 public class ThirdPersonItemAnimEntity implements IAnimatable {
 
 	private UUID uuid;
-	private Hand hand;
+	private InteractionHand hand;
 	private Map<String, AnimationBuilder> queuedAnims = new HashMap<>();
 	private float animSpeed = 1.0f;
 	
 	public ThirdPersonItemAnimEntity() {
-		this(Util.NIL_UUID, Hand.MAIN_HAND);
+		this(Util.NIL_UUID, InteractionHand.MAIN_HAND);
 	}
 	
-	public ThirdPersonItemAnimEntity(UUID uuid, Hand hand) {
+	public ThirdPersonItemAnimEntity(UUID uuid, InteractionHand hand) {
 		this.uuid = uuid;
 		this.hand = hand;
 	}
@@ -43,8 +43,8 @@ public class ThirdPersonItemAnimEntity implements IAnimatable {
 		
 		ItemStack stack = entity.getItemInHand(this.hand);
 		Item item = stack.getItem();
-		if (!(item instanceof ISpecialThirdPersonRender)) return;
-		ISpecialThirdPersonRender stpr = (ISpecialThirdPersonRender) item;
+		if (!(item instanceof SpecialThirdPersonRender)) return;
+		SpecialThirdPersonRender stpr = (SpecialThirdPersonRender) item;
 
 		stpr.getAnimationControlllers(stack, entity).forEach(data::addAnimationController);
 	}
@@ -52,7 +52,7 @@ public class ThirdPersonItemAnimEntity implements IAnimatable {
 	@Override public AnimationFactory getFactory() { return this.factory; }
 	
 	public UUID getUUID() { return this.uuid; }
-	public Hand getHand() { return this.hand; }
+	public InteractionHand getHand() { return this.hand; }
 	
 	public void queueAnim(String controller, AnimationBuilder builder) { this.queuedAnims.put(controller, builder); }
 	public AnimationBuilder popAndGetAnim(String controller) { return this.queuedAnims.remove(controller); }

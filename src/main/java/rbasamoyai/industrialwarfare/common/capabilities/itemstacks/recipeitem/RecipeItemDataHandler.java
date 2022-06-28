@@ -1,11 +1,11 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.recipeitem;
 
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataHandler;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
-public class RecipeItemDataHandler extends QualityItemDataHandler implements IRecipeItemDataHandler {
+public class RecipeItemDataHandler implements IRecipeItemData {
 	
 	// Defaulting to the iron wire id to be safe
 	private ResourceLocation itemId = PartItemInit.PART_IRON_WIRE.getId();
@@ -28,6 +28,17 @@ public class RecipeItemDataHandler extends QualityItemDataHandler implements IRe
 	@Override
 	public ResourceLocation getItemId() {
 		return this.itemId;
+	}
+	
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		tag.putString("recipeItem", this.itemId.toString());
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		this.setItemId(tag.getString("recipeItem"));
 	}
 
 }

@@ -4,35 +4,35 @@ import java.util.UUID;
 
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleStatus;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.brain.memory.WalkTarget;
-import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.GlobalPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.phys.AABB;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
-public class FinishMovementCommandTask extends Task<LivingEntity> {
+public class FinishMovementCommandTask extends Behavior<LivingEntity> {
 
 	private final MemoryModuleType<GlobalPos> memoryType;
 	
 	public FinishMovementCommandTask(MemoryModuleType<GlobalPos> memoryType) {
-		super(ImmutableMap.<MemoryModuleType<?>, MemoryModuleStatus>builder()
-				.put(memoryType, MemoryModuleStatus.VALUE_PRESENT)
-				.put(MemoryModuleType.WALK_TARGET, MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryModuleStatus.VALUE_ABSENT)
-				.put(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryModuleStatus.VALUE_PRESENT)
-				.put(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryModuleStatus.REGISTERED)
-				.put(MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(), MemoryModuleStatus.VALUE_ABSENT)
+		super(ImmutableMap.<MemoryModuleType<?>, MemoryStatus>builder()
+				.put(memoryType, MemoryStatus.VALUE_PRESENT)
+				.put(MemoryModuleType.WALK_TARGET, MemoryStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.IN_FORMATION.get(), MemoryStatus.VALUE_ABSENT)
+				.put(MemoryModuleTypeInit.IN_COMMAND_GROUP.get(), MemoryStatus.VALUE_PRESENT)
+				.put(MemoryModuleTypeInit.PRECISE_POS.get(), MemoryStatus.REGISTERED)
+				.put(MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(), MemoryStatus.VALUE_ABSENT)
 				.build());
 		this.memoryType = memoryType;
 	}
 	
 	@Override
-	protected boolean checkExtraStartConditions(ServerWorld level, LivingEntity entity) {
+	protected boolean checkExtraStartConditions(ServerLevel level, LivingEntity entity) {
 		Brain<?> brain = entity.getBrain();
 		
 		GlobalPos gpos = brain.getMemory(this.memoryType).get();
@@ -42,7 +42,7 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 			return true;
 		}
 		
-		AxisAlignedBB checkAround = entity.getBoundingBox().inflate(1.0d, 1.0d, 1.0d);
+		AABB checkAround = entity.getBoundingBox().inflate(1.0d, 1.0d, 1.0d);
 		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, checkAround)) {
 			Brain<?> brain1 = e.getBrain();
 			if (this.checkMemories(brain1) && getCommandGroup(brain).equals(getCommandGroup(brain1))) {
@@ -53,7 +53,7 @@ public class FinishMovementCommandTask extends Task<LivingEntity> {
 	}
 	
 	@Override
-	protected void start(ServerWorld level, LivingEntity entity, long gameTime) {
+	protected void start(ServerLevel level, LivingEntity entity, long gameTime) {
 		Brain<?> brain = entity.getBrain();
 		brain.eraseMemory(this.memoryType);
 		brain.eraseMemory(MemoryModuleTypeInit.PRECISE_POS.get());

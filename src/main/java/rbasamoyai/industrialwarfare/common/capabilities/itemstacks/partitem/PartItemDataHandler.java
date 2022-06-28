@@ -1,8 +1,8 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.partitem;
 
-import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.qualityitem.QualityItemDataHandler;
+import net.minecraft.nbt.CompoundTag;
 
-public class PartItemDataHandler extends QualityItemDataHandler implements IPartItemDataHandler {
+public class PartItemDataHandler implements IPartItemData {
 
 	private int partCount = 1;
 	private float weight = 1.0f;
@@ -25,6 +25,19 @@ public class PartItemDataHandler extends QualityItemDataHandler implements IPart
 	@Override
 	public float getWeight() {
 		return this.weight;
+	}
+	
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		tag.putFloat("weight", this.weight);
+		tag.putInt("partCount", this.partCount);
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		this.weight = tag.getFloat("weight");
+		this.partCount = tag.getInt("partCount");
 	}
 
 }

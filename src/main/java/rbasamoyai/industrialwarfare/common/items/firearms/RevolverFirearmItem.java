@@ -1,11 +1,12 @@
 package rbasamoyai.industrialwarfare.common.items.firearms;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.RevolverDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
+import rbasamoyai.industrialwarfare.common.items.QualityItem;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
@@ -30,7 +31,7 @@ public abstract class RevolverFirearmItem extends FirearmItem {
 				return;
 			}
 			
-			float quality = h.getQuality();
+			float quality = QualityItem.getQuality(firearm);
 			float durability = 1.0f  - (float) firearm.getDamageValue() / (float) firearm.getMaxDamage();
 			float effectiveness = getEffectivenessFromEntity(shooter);
 			
@@ -38,7 +39,7 @@ public abstract class RevolverFirearmItem extends FirearmItem {
 			BulletEntity bullet = new BulletEntity(shooter.level, shooter, damage, this.headshotMultiplier);
 			bullet.setItem(new ItemStack(PartItemInit.PART_BULLET.get()));
 			
-			Vector3d lookVector = shooter.getViewVector(1.0f);
+			Vec3 lookVector = shooter.getViewVector(1.0f);
 			float spread = isAiming(firearm) ? this.spread : this.hipfireSpread;
 			spread *= 1.0f + (3.0f - (quality + durability + effectiveness) / 3.0f);
 			float velocity = this.muzzleVelocity * (quality + durability) / 2.0f;

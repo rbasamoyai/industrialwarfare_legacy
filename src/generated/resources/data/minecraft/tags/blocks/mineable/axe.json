@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "industrialwarfare:assembler_workstation",
+    "industrialwarfare:quarry",
+    "industrialwarfare:tree_farm",
+    "industrialwarfare:match_coil",
+    "industrialwarfare:spool",
+    "industrialwarfare:task_scroll_shelf",
+    "industrialwarfare:worker_support"
+  ]
+}

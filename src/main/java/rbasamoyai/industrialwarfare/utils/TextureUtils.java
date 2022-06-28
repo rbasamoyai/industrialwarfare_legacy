@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.SimpleTexture;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 public class TextureUtils {
 
@@ -48,7 +48,7 @@ public class TextureUtils {
 	}
 	
 	public static ResourceLocation getWeaponSkinTexture(ItemStack stack) {
-		CompoundNBT nbt = stack.getOrCreateTag();
+		CompoundTag nbt = stack.getOrCreateTag();
 		int skin = nbt.getInt("weaponSkin");
 		ResourceLocation regName = stack.getItem().getRegistryName();
 		String path = String.format("textures/item/%s%s.png", regName.getPath(), skin > 0 ? Integer.toString(skin) : "");

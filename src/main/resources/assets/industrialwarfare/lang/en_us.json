@@ -105,6 +105,9 @@
 	"tile.industrialwarfare.weaponsmith_workstation":	"Weaponsmithing Table",
 	"tile.industrialwarfare.woodworker_workstation":	"Woodworking Table",
 	
+	"tile.industrialwarfare.quarry": "Quarry",
+    "tile.industrialwarfare.tree_farm": "Tree Farm",
+	
 	"tile.industrialwarfare.task_scroll_shelf":		"Task Scroll Shelf",
 	"tile.industrialwarfare.research_library":		"Research Library",	
 	
@@ -408,8 +411,6 @@
 	"gui.industrialwarfare.different_dimensions": "Cannot set coordinates in different dimensions!",
 	"gui.industrialwarfare.set_bounds": "Set bounds of tile at %1$s to %2$s, %3$s",
 	
-	"gui.industrialwarfare.quarry": "Quarry",
-	"gui.industrialwarfare.tree_farm": "Tree Farm",
 	"gui.industrialwarfare.resource_station.supplies": "Supplies",
 	"gui.industrialwarfare.resource_station.buffer": "Drop-offs",
 	"gui.industrialwarfare.resource_station.start": "Start station",

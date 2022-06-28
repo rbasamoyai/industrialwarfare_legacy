@@ -1,15 +1,15 @@
 package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.scheduleitem;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class ScheduleItemDataProvider implements ICapabilitySerializable<CompoundNBT> {
+public class ScheduleItemDataProvider implements ICapabilitySerializable<CompoundTag> {
 
-	private final ScheduleItemDataHandler dataHandler = new ScheduleItemDataHandler();
-	private final LazyOptional<IScheduleItemDataHandler> dataOptional = LazyOptional.of(() -> this.dataHandler);
+	private final IScheduleItemData dataHandler = new ScheduleItemDataHandler();
+	private final LazyOptional<IScheduleItemData> dataOptional = LazyOptional.of(() -> this.dataHandler);
 	
 	public void invalidate() {
 		this.dataOptional.invalidate();
@@ -17,20 +17,19 @@ public class ScheduleItemDataProvider implements ICapabilitySerializable<Compoun
 	
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-		return cap == ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER ? this.dataOptional.cast() : LazyOptional.empty();
+		return cap == ScheduleItemCapability.INSTANCE ? this.dataOptional.cast() : LazyOptional.empty();
 	}
 
 	@Override
-	public CompoundNBT serializeNBT() {
-		return ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER == null
-				? new CompoundNBT()
-				: (CompoundNBT) ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER.writeNBT(this.dataHandler, null);
+	public CompoundTag serializeNBT() {
+		return ScheduleItemCapability.INSTANCE.isRegistered() ? this.dataHandler.writeTag(new CompoundTag()) : new CompoundTag();
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		if (ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER != null)
-			ScheduleItemDataCapability.SCHEDULE_ITEM_DATA_HANDLER.readNBT(this.dataHandler, null, nbt);
+	public void deserializeNBT(CompoundTag nbt) {
+		if (ScheduleItemCapability.INSTANCE.isRegistered()) {
+			this.dataHandler.readTag(nbt);
+		}
 	}
 
 }

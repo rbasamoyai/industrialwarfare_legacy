@@ -1,21 +1,20 @@
 package rbasamoyai.industrialwarfare.client.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfContainer;
+import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfMenu;
 
-public class TaskScrollShelfScreen extends ContainerScreen<TaskScrollShelfContainer> {
+public class TaskScrollShelfScreen extends AbstractContainerScreen<TaskScrollShelfMenu> {
 	
 	private static final ResourceLocation TASK_SCROLL_SHELF_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/task_scroll_shelf.png");
 
-	public TaskScrollShelfScreen(TaskScrollShelfContainer container, PlayerInventory playerInv, ITextComponent title) {
+	public TaskScrollShelfScreen(TaskScrollShelfMenu container, Inventory playerInv, Component title) {
 		super(container, playerInv, title);
 		this.imageHeight = 186;
 		this.inventoryLabelY = this.imageHeight - 94;
@@ -27,18 +26,16 @@ public class TaskScrollShelfScreen extends ContainerScreen<TaskScrollShelfContai
 	}
 
 	@Override
-	public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
+	public void render(PoseStack stack, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(stack);
 		super.render(stack, mouseX, mouseY, partialTicks);
 		this.renderTooltip(stack, mouseX, mouseY);
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
-	protected void renderBg(MatrixStack stack, float partialTicks, int mouseX, int mouseY) {
-		RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-		TextureManager texManager = this.minecraft.getTextureManager();
-		texManager.bind(TASK_SCROLL_SHELF_GUI);
+	protected void renderBg(PoseStack stack, float partialTicks, int mouseX, int mouseY) {
+		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		RenderSystem.setShaderTexture(0, TASK_SCROLL_SHELF_GUI);
 		this.blit(stack, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
 	}
 

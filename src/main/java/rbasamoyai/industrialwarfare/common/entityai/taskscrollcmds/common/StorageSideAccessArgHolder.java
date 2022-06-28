@@ -2,8 +2,8 @@ package rbasamoyai.industrialwarfare.common.entityai.taskscrollcmds.common;
 
 import java.util.Optional;
 
-import net.minecraft.util.Direction;
-import rbasamoyai.industrialwarfare.common.containers.TaskScrollContainer;
+import net.minecraft.core.Direction;
+import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgSelector;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.ArgWrapper;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.IArgHolder;
@@ -28,7 +28,7 @@ public class StorageSideAccessArgHolder implements IArgHolder {
 	}
 
 	@Override
-	public Optional<ArgSelector<?>> getSelector(TaskScrollContainer container) {
+	public Optional<ArgSelector<?>> getSelector(TaskScrollMenu container) {
 		return Optional.of(new StorageSideAccessArgSelector(this.arg.get3DDataValue()));
 	}
 	

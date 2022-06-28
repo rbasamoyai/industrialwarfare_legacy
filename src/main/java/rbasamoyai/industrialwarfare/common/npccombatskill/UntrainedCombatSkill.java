@@ -1,8 +1,8 @@
 package rbasamoyai.industrialwarfare.common.npccombatskill;
 
-import net.minecraft.item.CrossbowItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 

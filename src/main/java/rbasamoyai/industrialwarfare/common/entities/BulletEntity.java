@@ -2,31 +2,31 @@ package rbasamoyai.industrialwarfare.common.entities;
 
 import java.util.UUID;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.entity.projectile.ProjectileItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.particles.BlockParticleData;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.IndirectEntityDamageSource;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.NetworkHooks;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.IndirectEntityDamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
@@ -35,7 +35,7 @@ import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.FirearmActionMessages;
 
-public class BulletEntity extends ProjectileItemEntity {
+public class BulletEntity extends ThrowableItemProjectile {
 
 	private static final String DAMAGE_SOURCE_KEY = IndustrialWarfare.MOD_ID + ".bullet";
 	
@@ -45,20 +45,20 @@ public class BulletEntity extends ProjectileItemEntity {
 	
 	private float damage;
 	private float headshotMultiplier;
-	private Vector3d origin;
+	private Vec3 origin;
 	
-	public BulletEntity(EntityType<? extends BulletEntity> type, World world) {
-		this(type, world, 0.0f, 0.0f, Vector3d.ZERO);
+	public BulletEntity(EntityType<? extends BulletEntity> type, Level level) {
+		this(type, level, 0.0f, 0.0f, Vec3.ZERO);
 	}
 	
-	public BulletEntity(World world, LivingEntity owner, float damage, float headshotMultiplier) {
-		this(EntityTypeInit.BULLET.get(), world, damage, headshotMultiplier, new Vector3d(owner.getX(), owner.getEyeY(), owner.getZ()));
+	public BulletEntity(Level level, LivingEntity owner, float damage, float headshotMultiplier) {
+		this(EntityTypeInit.BULLET.get(), level, damage, headshotMultiplier, new Vec3(owner.getX(), owner.getEyeY(), owner.getZ()));
 		this.setOwner(owner);
 		this.setPos(owner.getX(), owner.getEyeY(), owner.getZ());
 	}
 	
-	public BulletEntity(EntityType<? extends BulletEntity> type, World world, float damage, float headshotMultiplier, Vector3d origin) {
-		super(type, world);
+	public BulletEntity(EntityType<? extends BulletEntity> type, Level level, float damage, float headshotMultiplier, Vec3 origin) {
+		super(type, level);
 		this.damage = damage;
 		this.headshotMultiplier = headshotMultiplier;
 		this.origin = origin; 
@@ -100,38 +100,38 @@ public class BulletEntity extends ProjectileItemEntity {
 	}
 	
 	@Override
-	protected void onHitEntity(EntityRayTraceResult result) {
+	protected void onHitEntity(EntityHitResult result) {
 		super.onHitEntity(result);
 		Entity hit = result.getEntity();
 		Entity owner = this.getOwner();
 		float damage = this.damage;
-		if (MathHelper.abs((float)(this.getEyeY() - hit.getEyeY())) < 0.2f) {
+		if (Mth.abs((float)(this.getEyeY() - hit.getEyeY())) < 0.2f) {
 			damage *= this.headshotMultiplier;
-			if (!this.level.isClientSide && owner instanceof ServerPlayerEntity) {
-				IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) owner), new FirearmActionMessages.CNotifyHeadshot());
+			if (!this.level.isClientSide && owner instanceof ServerPlayer) {
+				IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) owner), new FirearmActionMessages.CNotifyHeadshot());
 			}
 		}
 		hit.invulnerableTime = 0;
 		hit.hurt(new IndirectEntityDamageSource(DAMAGE_SOURCE_KEY, this, this.getOwner()), damage);
-		this.remove();
+		this.discard();
 	}
 	
 	@Override
-	protected void onHitBlock(BlockRayTraceResult result) {
+	protected void onHitBlock(BlockHitResult result) {
 		BlockPos pos = result.getBlockPos();
 		BlockState blockstate = this.level.getBlockState(pos);
 		Block block = blockstate.getBlock();
 		
 		boolean shouldRemove = true;
 		
-		if (block == Blocks.TNT) {
+		if (blockstate.is(Blocks.TNT)) {
 			Entity owner = this.getOwner();
-			blockstate.catchFire(this.level, pos, result.getDirection(), owner instanceof LivingEntity ? (LivingEntity) owner : null);
+			blockstate.onCaughtFire(this.level, pos, result.getDirection(), owner instanceof LivingEntity ? (LivingEntity) owner : null);
 			this.level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-		} else if (block.is(IWBlockTags.SHATTERABLE)) {
+		} else if (blockstate.is(IWBlockTags.SHATTERABLE)) {
 			this.level.destroyBlock(pos, false);
 			shouldRemove = false;
-		} else if (block == Blocks.MELON) {
+		} else if (blockstate.is(Blocks.MELON)) {
 			this.level.destroyBlock(pos, true);
 			shouldRemove = false;
 		} else {
@@ -144,20 +144,21 @@ public class BulletEntity extends ProjectileItemEntity {
 		}
 		
 		if (shouldRemove && !this.level.isClientSide) {
-			Vector3d hitPos = result.getLocation();
+			Vec3 hitPos = result.getLocation();
 			int count = 20 + random.nextInt(21);
-			((ServerWorld) this.level).sendParticles(new BlockParticleData(ParticleTypes.BLOCK, blockstate), hitPos.x, hitPos.y, hitPos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
-			this.remove();
+			
+			((ServerLevel) this.level).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, blockstate), hitPos.x, hitPos.y, hitPos.z, count, 0.0d, 0.0d, 0.0d, 0.02d);
+			this.discard();
 		}
 	}
 	
 	@Override
-	public void addAdditionalSaveData(CompoundNBT tag) {
+	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putFloat(TAG_DAMAGE, this.damage);
 		tag.putFloat(TAG_HEADSHOT_MULTIPLIER, this.headshotMultiplier);
 		
-		CompoundNBT originTag = new CompoundNBT();
+		CompoundTag originTag = new CompoundTag();
 		originTag.putDouble("x", this.origin.x);
 		originTag.putDouble("y", this.origin.y);
 		originTag.putDouble("z", this.origin.z);
@@ -165,18 +166,18 @@ public class BulletEntity extends ProjectileItemEntity {
 	}
 	
 	@Override
-	public void readAdditionalSaveData(CompoundNBT tag) {
+	public void readAdditionalSaveData(CompoundTag tag) {
 		this.damage = tag.getFloat(TAG_DAMAGE);
 		this.headshotMultiplier = tag.getFloat(TAG_HEADSHOT_MULTIPLIER);
 		
-		CompoundNBT originTag = tag.getCompound(TAG_ORIGIN);
-		this.origin = new Vector3d(originTag.getDouble("x"), originTag.getDouble("y"), originTag.getDouble("z"));
+		CompoundTag originTag = tag.getCompound(TAG_ORIGIN);
+		this.origin = new Vec3(originTag.getDouble("x"), originTag.getDouble("y"), originTag.getDouble("z"));
 		
 		super.readAdditionalSaveData(tag);
 	}
 
 	@Override
-	public IPacket<?> getAddEntityPacket() {
+	public Packet<?> getAddEntityPacket() {
 		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 	

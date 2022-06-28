@@ -1,11 +1,11 @@
 package rbasamoyai.industrialwarfare.core.datagen;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.data.BlockTagsProvider;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.ItemTagsProvider;
-import net.minecraft.item.Items;
+import net.minecraft.data.tags.BlockTagsProvider;
+import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
@@ -29,6 +29,15 @@ public class TagsGeneration {
 		
 		@Override
 		protected void addTags() {
+			tag(BlockTags.MINEABLE_WITH_AXE)
+					.add(BlockInit.ASSEMBLER_WORKSTATION.get())
+					.add(BlockInit.QUARRY.get())
+					.add(BlockInit.TREE_FARM.get())
+					.add(BlockInit.MATCH_COIL.get())
+					.add(BlockInit.SPOOL.get())
+					.add(BlockInit.TASK_SCROLL_SHELF.get())
+					.add(BlockInit.WORKER_SUPPORT.get());
+			
 			tag(IWBlockTags.SHATTERABLE)
 					.addTag(BlockTags.FLOWER_POTS)
 					.addTag(BlockTags.IMPERMEABLE)

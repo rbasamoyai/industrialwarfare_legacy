@@ -10,7 +10,7 @@ import net.minecraftforge.fml.config.ModConfig.Type;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import rbasamoyai.industrialwarfare.core.config.IWConfig;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
-import rbasamoyai.industrialwarfare.core.init.ContainerInit;
+import rbasamoyai.industrialwarfare.core.init.MenuInit;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.FormationAttackTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
@@ -19,7 +19,7 @@ import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 import rbasamoyai.industrialwarfare.core.init.NPCProfessionInit;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.TaskScrollCommandInit;
-import rbasamoyai.industrialwarfare.core.init.TileEntityTypeInit;
+import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.UnitFormationTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.FirearmInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
@@ -43,8 +43,8 @@ public class IndustrialWarfare {
 		FirearmInit.FIREARMS.register(modEventBus);
 		PartItemInit.PARTS.register(modEventBus);
 		
-		TileEntityTypeInit.TILE_ENTITY_TYPES.register(modEventBus);
-		ContainerInit.CONTAINER_TYPES.register(modEventBus);
+		BlockEntityTypeInit.TILE_ENTITY_TYPES.register(modEventBus);
+		MenuInit.CONTAINER_TYPES.register(modEventBus);
 		EntityTypeInit.ENTITY_TYPES.register(modEventBus);
 		MemoryModuleTypeInit.MEMORY_MODULE_TYPES.register(modEventBus);
 		SoundEventInit.SOUND_EVENTS.register(modEventBus);

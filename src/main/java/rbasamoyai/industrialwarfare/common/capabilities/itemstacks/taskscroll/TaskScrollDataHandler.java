@@ -2,11 +2,15 @@ package rbasamoyai.industrialwarfare.common.capabilities.itemstacks.taskscroll;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 
-public class TaskScrollDataHandler implements ITaskScrollDataHandler {
+public class TaskScrollDataHandler implements ITaskScrollData {
 
 	private static final int MAX_SIZE = 16;
 	
@@ -42,6 +46,25 @@ public class TaskScrollDataHandler implements ITaskScrollDataHandler {
 	@Override
 	public int getMaxListSize() {
 		return MAX_SIZE;
+	}
+
+	@Override
+	public CompoundTag writeTag(CompoundTag tag) {
+		tag.put("orderList", this.orderList.stream().map(TaskScrollOrder::serializeNBT).collect(Collectors.toCollection(ListTag::new)));
+		tag.put("labelItem", this.getLabel().serializeNBT());
+		return tag;
+	}
+	
+	@Override
+	public void readTag(CompoundTag tag) {
+		List<TaskScrollOrder> newList =
+				tag.getList("orderList", Tag.TAG_COMPOUND)
+				.stream()
+				.map(CompoundTag.class::cast)
+				.map(TaskScrollOrder::fromTag)
+				.collect(Collectors.toCollection(ArrayList::new));
+		this.setList(newList);
+		this.setLabel(ItemStack.of(tag.getCompound("labelItem")));
 	}
 	
 }
