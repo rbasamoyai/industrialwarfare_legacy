@@ -40,26 +40,27 @@ import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
+public class SharpsCartridgeFirearmItem extends SingleShotFirearmItem {
 
-	public MartiniHenryFirearmItem() {
+	public SharpsCartridgeFirearmItem() {
 		super(new Item.Properties()
 							.stacksTo(1)
 							.durability(1200)
 							.tab(IWItemGroups.TAB_WEAPONS),
 					new FirearmItem.Properties()
 							.ammoPredicate(s -> s.getItem() == ItemInit.AMMO_GENERIC.get() || s.getItem() == ItemInit.INFINITE_AMMO_GENERIC.get())
-							.baseDamage(19.0f)
-							.headshotMultiplier(3.0f)
-							.spread(0.1f)
+							.baseDamage(25.0f)
+							.headshotMultiplier(4.0f)
+							.spread(0.05f)
 							.hipfireSpread(5.0f)
-							.muzzleVelocity(6.0f)
-							.horizontalRecoil(e -> 1.5f * (float) e.getRandom().nextGaussian())
-							.verticalRecoil(e -> 6.0f + 2.0f * e.getRandom().nextFloat())
+							.muzzleVelocity(8.0f)
+							.horizontalRecoil(e -> 2.0f * (float) e.getRandom().nextGaussian())
+							.verticalRecoil(e -> 6.5f + 3.0f * e.getRandom().nextFloat())
 							.cooldownTime(20)
-							.drawTime(20)
-							.reloadTime(50)
-							.projectileRange(100)
+							.drawTime(10)
+							.reloadTime(70)
+							.projectileRange(150) // Crank up your server chunk rendering/processing distance
+							.fovModifier(0.5f)
 							.needsCycle(false));
 
 	}
@@ -77,7 +78,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 	 * ANIMATION CONTROL METHODS
 	 */
 	
-	private static final float PIN_ROT = (float) Math.toRadians(30.0d);
+	private static final float HAMMER_ROT = (float) Math.toRadians(-15.0d);
 	
 	@Override
 	protected void onSelect(ItemStack firearm, LivingEntity shooter) {
@@ -132,12 +133,12 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		super.shoot(firearm, shooter);
 		if (!shooter.level.isClientSide) {
 			ServerLevel slevel = (ServerLevel) shooter.level;
-			shooter.level.playSound(null, shooter, SoundEventInit.HEAVY_RIFLE_FIRED.get(), SoundSource.MASTER, 5.0f, 1.0f);
+			shooter.level.playSound(null, shooter, SoundEventInit.SNIPER_RIFLE_FIRED.get(), SoundSource.MASTER, 5.0f, 1.0f);
 			
 			Vec3 viewVector = shooter.getViewVector(1.0f);
 			Vec3 smokePos = shooter.getEyePosition(1.0f).add(viewVector.scale(2.0d));
 			Vec3 smokeDelta = viewVector.scale(0.5d);
-			int count = 30 + shooter.getRandom().nextInt(31);
+			int count = 35 + shooter.getRandom().nextInt(36);
 			for (ServerPlayer splayer : slevel.getPlayers(p -> true)) {
 				slevel.sendParticles(splayer, ParticleTypes.POOF, true, smokePos.x, smokePos.y, smokePos.z, count, smokeDelta.x, smokeDelta.y, smokeDelta.z, 0.02d);
 			}
@@ -217,29 +218,27 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		
 		getDataHandler(stack).ifPresent(h -> {
 			if (h.getAction() == ActionType.NOTHING) {
-				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+				renderer.setBoneRotation("hammer", h.hasAmmo() ? 0.0f : HAMMER_ROT, 0.0f, 0.0f);
 			}
 		});
 	}
 
-	public static final int ANIM_PORT_ARMS = 0;
-	public static final int ANIM_TRAIL_ARMS = 1;
-	public static final int ANIM_HIP_AIMING = 2;
-	public static final int ANIM_HIP_FIRING = 3;
-	public static final int ANIM_RELOAD = 4;
-	public static final int ANIM_RELOAD_EXTRACT = 5;
-	public static final int ANIM_ADS_AIMING = 6;
-	public static final int ANIM_ADS_AIMING_START = 7;
-	public static final int ANIM_ADS_AIMING_END = 8;
-	public static final int ANIM_ADS_FIRING = 9;
-	public static final int ANIM_SELECT_FIREARM = 13;
+	public static final int ANIM_PORT_ARMS = 00;
+	public static final int ANIM_SELECT_FIREARM = 01;
+	public static final int ANIM_HIP_AIMING = 10;
+	public static final int ANIM_HIP_FIRING = 11;
+	public static final int ANIM_ADS_AIMING = 20;
+	public static final int ANIM_ADS_FIRING = 21;
+	public static final int ANIM_ADS_AIMING_START = 22;
+	public static final int ANIM_ADS_AIMING_STOP = 23;
+	public static final int ANIM_RELOAD = 30;
+	public static final int ANIM_RELOAD_EXTRACT = 31;
 	
 	@Override
 	public void onAnimationSync(int id, int state) {
 		AnimationBuilder builder = new AnimationBuilder();
 		switch (state) {
 		case ANIM_PORT_ARMS: builder.addAnimation("port_arms", true); break;
-		case ANIM_TRAIL_ARMS: builder.addAnimation("trail_arms", true); break;
 		case ANIM_HIP_AIMING: builder.addAnimation("hip_aiming", true); break;
 		case ANIM_HIP_FIRING:
 			builder
@@ -249,7 +248,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		case ANIM_RELOAD:
 			builder
 			.addAnimation("reload", false)
-			.addAnimation("reload_hold", true);
+			.addAnimation("hip_aiming", true);
 			break;
 		case ANIM_RELOAD_EXTRACT:
 			builder
@@ -262,7 +261,7 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 			.addAnimation("ads_aiming_start", false)
 			.addAnimation("ads_aiming", true);
 			break;
-		case ANIM_ADS_AIMING_END:
+		case ANIM_ADS_AIMING_STOP:
 			builder
 			.addAnimation("ads_aiming_stop", false)
 			.addAnimation("hip_aiming", true);
@@ -298,18 +297,18 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 		
 		getDataHandler(item).ifPresent(h -> {
 			if (h.getAction() == ActionType.NOTHING) {
-				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
+				renderer.setBoneRotation("hammer", h.hasAmmo() ? 0.0f : HAMMER_ROT, 0.0f, 0.0f);
 			}
 		});
 	}
 
-	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/martini_henry_t.animation.json");
+	private static final ResourceLocation ANIM_FILE_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "animations/third_person/sharps_cartridge_t.animation.json");
 	@Override
 	public ResourceLocation getAnimationFileLocation(ItemStack stack, LivingEntity entity) {
 		return ANIM_FILE_LOC;
 	}
 
-	private static final ResourceLocation MODEL_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "geo/third_person/martini_henry_t.geo.json");
+	private static final ResourceLocation MODEL_LOC = new ResourceLocation(IndustrialWarfare.MOD_ID, "geo/third_person/sharps_cartridge_t.geo.json");
 	@Override
 	public ResourceLocation getModelLocation(ItemStack stack, LivingEntity entity) {
 		return MODEL_LOC;

@@ -9,6 +9,7 @@ import rbasamoyai.industrialwarfare.common.items.firearms.complete.ColtSAAFirear
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.FishtailMatchlockFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.LeeMetfordFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.MartiniHenryFirearmItem;
+import rbasamoyai.industrialwarfare.common.items.firearms.complete.SharpsCartridgeFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.TanegashimaMatchlockFirearmItem;
 import rbasamoyai.industrialwarfare.common.items.firearms.complete.VetterliFirearmItem;
 
@@ -22,5 +23,6 @@ public class FirearmInit {
 	public static final RegistryObject<Item> FISHTAIL_MATCHLOCK = FIREARMS.register("fishtail_matchlock", FishtailMatchlockFirearmItem::new);
 	public static final RegistryObject<Item> TANEGASHIMA_MATCHLOCK = FIREARMS.register("tanegashima_matchlock", TanegashimaMatchlockFirearmItem::new);
 	public static final RegistryObject<Item> LEE_METFORD = FIREARMS.register("lee_metford", LeeMetfordFirearmItem::new);
+	public static final RegistryObject<Item> SHARPS_CARTRIDGE = FIREARMS.register("sharps_cartridge", SharpsCartridgeFirearmItem::new);
 	
 }

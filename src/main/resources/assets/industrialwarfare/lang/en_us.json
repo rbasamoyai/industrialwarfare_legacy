@@ -135,6 +135,7 @@
 	"item.industrialwarfare.fishtail_matchlock": "Fishtail Matchlock Musket",
 	"item.industrialwarfare.tanegashima_matchlock": "Tanegashima Matchlock Musket",
 	"item.industrialwarfare.lee_metford": "Lee-Metford Rifle",
+	"item.industrialwarfare.sharps_cartridge": "Sharps Rifle (Metal Cartridge)",
 	
 	"item.industrialwarfare.pith_helmet": "Pith Helmet",
 	"item.industrialwarfare.american_kepi": "American Kepi",
@@ -455,7 +456,6 @@
 	"profession.industrialwarfare.quarrier": "Quarrier",
 	"profession.industrialwarfare.logger": "Logger",
 	
-	"subtitle.industrialwarfare.item.heavy_rifle.fired": "Heavy rifle fired",
 	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
 	"subtitle.industrialwarfare.item.revolver.fired": "Revolver fired"
 }

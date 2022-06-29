@@ -174,7 +174,8 @@ public class IWItemGroups {
 					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.SHARPS_CARTRIDGE.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		
