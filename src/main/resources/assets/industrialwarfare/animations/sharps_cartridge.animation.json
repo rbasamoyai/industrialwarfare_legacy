@@ -1644,7 +1644,7 @@
 				}
 			},
 			"timeline": {
-				"0.0": "set_hidden cartridge1 true; allow_mod hammer"
+				"0.0": "set_hidden cartridge true; allow_mod hammer"
 			}
 		},
 		"select_firearm": {
@@ -1721,6 +1721,9 @@
 						}
 					}
 				}
+			},
+			"timeline": {
+				"0.0": "set_hidden cartridge true; allow_mod hammer"
 			}
 		}
 	},

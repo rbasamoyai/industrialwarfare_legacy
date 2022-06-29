@@ -32,6 +32,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.layers.ElytraLayer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -867,6 +868,7 @@ public abstract class FirearmItem extends ProjectileWeaponItem implements
 		
 		AnimUtils.hideLayers(CapeLayer.class, baseRenderer);
 		AnimUtils.hideLayers(ElytraLayer.class, baseRenderer);
+		AnimUtils.hideLayers(ItemInHandLayer.class, baseRenderer);
 		AnimUtils.hideLayers(PlayerItemInHandLayer.class, baseRenderer);
 		AnimUtils.hideLayers(HumanoidArmorLayer.class, baseRenderer);
 	}

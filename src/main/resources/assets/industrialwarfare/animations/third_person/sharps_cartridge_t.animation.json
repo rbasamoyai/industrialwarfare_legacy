@@ -203,6 +203,22 @@
 					"rotation": {
 						"vector": [0, 0, -22.5]
 					}
+				},
+				"trigger": {
+					"rotation": {
+						"0.5": {
+							"vector": [7.5, 0, 0]
+						},
+						"1.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				},
+				"hammer": {
+					"rotation": {
+						"vector": [15, 0, 0]
+					}
 				}
 			},
 			"timeline": {

@@ -48,41 +48,43 @@ public class ClientEvents {
 	private static final String TAG_IS_LIT = MatchCordItem.TAG_IS_LIT;
 	
 	@SubscribeEvent
-	public static void onClientSetup(FMLClientSetupEvent event) {
-		MenuScreens.register(MenuInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
-		MenuScreens.register(MenuInit.DIPLOMACY.get(), DiplomacyScreen::new);
-		MenuScreens.register(MenuInit.EDIT_LABEL.get(), EditLabelScreen::new);
-		MenuScreens.register(MenuInit.MATCH_COIL.get(), MatchCoilScreen::new);
-		MenuScreens.register(MenuInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
-		MenuScreens.register(MenuInit.NPC_BASE.get(), NPCBaseScreen::new);
-		MenuScreens.register(MenuInit.RESOURCE_STATION.get(), ResourceStationScreen::new);
-		MenuScreens.register(MenuInit.SCHEDULE.get(), EditScheduleScreen::new);
-		MenuScreens.register(MenuInit.TASK_SCROLL.get(), TaskScrollScreen::new);
-		MenuScreens.register(MenuInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
-		MenuScreens.register(MenuInit.WHISTLE.get(), WhistleScreen::new);
-		
-		ForgeRegistries.ITEMS.forEach(i -> {
-			if (i instanceof FirearmItem) {
-				MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, ((FirearmItem) i)::onCameraSetup);
-			}
+	public static void onClientSetup(FMLClientSetupEvent event) {		
+		event.enqueueWork(() -> {
+			MenuScreens.register(MenuInit.ATTACHMENTS_RIFLE.get(), AttachmentsRifleScreen::new);
+			MenuScreens.register(MenuInit.DIPLOMACY.get(), DiplomacyScreen::new);
+			MenuScreens.register(MenuInit.EDIT_LABEL.get(), EditLabelScreen::new);
+			MenuScreens.register(MenuInit.MATCH_COIL.get(), MatchCoilScreen::new);
+			MenuScreens.register(MenuInit.NORMAL_WORKSTATION.get(), NormalWorkstationScreen::new);
+			MenuScreens.register(MenuInit.NPC_BASE.get(), NPCBaseScreen::new);
+			MenuScreens.register(MenuInit.RESOURCE_STATION.get(), ResourceStationScreen::new);
+			MenuScreens.register(MenuInit.SCHEDULE.get(), EditScheduleScreen::new);
+			MenuScreens.register(MenuInit.TASK_SCROLL.get(), TaskScrollScreen::new);
+			MenuScreens.register(MenuInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
+			MenuScreens.register(MenuInit.WHISTLE.get(), WhistleScreen::new);
+			
+			ForgeRegistries.ITEMS.forEach(i -> {
+				if (i instanceof FirearmItem) {
+					MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, ((FirearmItem) i)::onCameraSetup);
+				}
+			});
+			
+			ItemProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+					(stack, level, living, seed) -> {
+						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+					});
+			
+			ItemProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
+					(stack, level, living, seed) -> {
+						return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
+					});
+			
+			ItemProperties.register(ItemInit.MATCH_COIL.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"),
+					(stack, level, living, seed) -> {
+						return (float) stack.getDamageValue() * 4.0f / (float) stack.getMaxDamage();
+					});
+			
+			ItemBlockRenderTypes.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
 		});
-		
-		ItemProperties.register(ItemInit.MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
-				(stack, level, living, seed) -> {
-					return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
-				});
-		
-		ItemProperties.register(ItemInit.INFINITE_MATCH_CORD.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "is_lit"),
-				(stack, level, living, seed) -> {
-					return stack.getOrCreateTag().getBoolean(TAG_IS_LIT) ? 1.0f : 0.0f;
-				});
-		
-		ItemProperties.register(ItemInit.MATCH_COIL.get(), new ResourceLocation(IndustrialWarfare.MOD_ID, "coil_amount"),
-				(stack, level, living, seed) -> {
-					return (float) stack.getDamageValue() * 4.0f / (float) stack.getMaxDamage();
-				});
-		
-		ItemBlockRenderTypes.setRenderLayer(BlockInit.WORKER_SUPPORT.get(), RenderType.cutout());
 	}
 	
 	@SubscribeEvent

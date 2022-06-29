@@ -172,7 +172,7 @@ public class SharpsCartridgeFirearmItem extends SingleShotFirearmItem {
 	public void startAiming(ItemStack firearm, LivingEntity shooter) {
 		super.startAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_START);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_start", false));
@@ -185,7 +185,7 @@ public class SharpsCartridgeFirearmItem extends SingleShotFirearmItem {
 	public void stopAiming(ItemStack firearm, LivingEntity shooter) {
 		super.stopAiming(firearm, shooter);
 		if (!shooter.level.isClientSide) {
-			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_HIP_AIMING);
+			AnimBroadcastUtils.syncItemStackAnimToSelf(firearm, shooter, this, ANIM_ADS_AIMING_STOP);
 			
 			List<Tuple<String, Boolean>> upperBody = new ArrayList<>();
 			upperBody.add(new Tuple<>("ads_aiming_stop", false));
