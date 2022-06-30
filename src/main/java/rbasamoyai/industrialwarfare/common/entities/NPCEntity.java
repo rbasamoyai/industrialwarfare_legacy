@@ -27,6 +27,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -402,6 +403,11 @@ public class NPCEntity extends PathfinderMob implements
 	@Override
 	public PlayerIDTag getDiplomaticOwner() {
 		return this.getDataHandler().map(INPCData::getOwner).orElse(PlayerIDTag.NO_OWNER);
+	}
+	
+	@Override
+	public double getMyRidingOffset() {
+		return -0.35d;
 	}
 	
 	/*
