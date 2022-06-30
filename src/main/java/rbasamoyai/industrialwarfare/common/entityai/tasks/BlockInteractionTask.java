@@ -60,7 +60,7 @@ public class BlockInteractionTask extends Behavior<NPCEntity> {
 			entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 			return false;
 		}
-		if (interaction.action() == Type.PLACE_BLOCK) {
+		if (interaction.action() == Type.PLACE_BLOCK || interaction.action() == Type.MODIFY_BLOCK) {
 			if (interaction.checkState(level, entity)) {
 				entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 				return false;
@@ -163,7 +163,7 @@ public class BlockInteractionTask extends Behavior<NPCEntity> {
 			}
 			ItemStack useStack = entity.getItemInHand(opposite);
 			useStack.shrink(1);
-			interaction.executePlaceActionIfPossible(level, entity);
+			interaction.executeBlockActionIfPossible(level, entity);
 			entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 6);
 		}

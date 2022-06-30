@@ -106,11 +106,6 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 			this.generateCache();
 		}
 		if (this.posCache.isEmpty()) {
-			this.findItemsToPickUp();
-			if (!this.itemsToPickUp.isEmpty()) {
-				return null;
-			}
-			
 			this.setYLevel(this.currentYLevel - 1);
 			if (this.isFinished()) {
 				this.setRunning(false);
@@ -118,7 +113,6 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 			}
 			this.generateCache();
 		}
-		
 		if (this.posCache.isEmpty()) {
 			return null;
 		}

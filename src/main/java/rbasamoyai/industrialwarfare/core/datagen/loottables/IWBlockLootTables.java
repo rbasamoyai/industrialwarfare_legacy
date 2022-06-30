@@ -14,13 +14,14 @@ public class IWBlockLootTables extends BlockLoot {
 
 	@Override
 	protected void addTables() {
-		this.dropSelf(BlockInit.ASSEMBLER_WORKSTATION.get());
-		this.dropSelf(BlockInit.TASK_SCROLL_SHELF.get());
-		this.dropOther(BlockInit.MATCH_COIL.get(), Items.AIR);
-		this.dropSelf(BlockInit.SPOOL.get());
-		this.dropSelf(BlockInit.QUARRY.get());
-		this.dropSelf(BlockInit.TREE_FARM.get());
-		this.dropSelf(BlockInit.WORKER_SUPPORT.get());
+		dropSelf(BlockInit.ASSEMBLER_WORKSTATION.get());
+		dropSelf(BlockInit.TASK_SCROLL_SHELF.get());
+		dropOther(BlockInit.MATCH_COIL.get(), Items.AIR);
+		dropSelf(BlockInit.SPOOL.get());
+		dropSelf(BlockInit.QUARRY.get());
+		dropSelf(BlockInit.TREE_FARM.get());
+		dropSelf(BlockInit.WORKER_SUPPORT.get());
+		dropSelf(BlockInit.FARMING_PLOT.get());
 	}
 	
 	@Override

@@ -15,6 +15,7 @@ public class IWBlockTags {
 	public static final TagKey<Block> CAN_PLANT_FORESTRY = bind("can_plant_forestry");
 	public static final TagKey<Block> FORESTRY_HARVESTABLE = bind("forestry_harvestable");
 	public static final TagKey<Block> FUNGUS = bind("fungus");
+	public static final TagKey<Block> CLEARABLES = bind("clearables");
 	
 	protected static TagKey<Block> bind(String id) {
 		return BlockTags.create(new ResourceLocation(IndustrialWarfare.MOD_ID, id));

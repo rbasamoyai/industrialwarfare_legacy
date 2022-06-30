@@ -5,6 +5,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.blockentities.FarmingPlotBlockEntity;
 import rbasamoyai.industrialwarfare.common.blockentities.ManufacturingBlockEntity;
 import rbasamoyai.industrialwarfare.common.blockentities.MatchCoilBlockEntity;
 import rbasamoyai.industrialwarfare.common.blockentities.QuarryBlockEntity;
@@ -20,6 +21,9 @@ public class BlockEntityTypeInit {
 	
 	public static final RegistryObject<BlockEntityType<MatchCoilBlockEntity>> MATCH_COIL = TILE_ENTITY_TYPES.register("match_coil",
 			() -> BlockEntityType.Builder.of(MatchCoilBlockEntity::new, BlockInit.MATCH_COIL.get()).build(null));
+	
+	public static final RegistryObject<BlockEntityType<FarmingPlotBlockEntity>> FARMING_PLOT = TILE_ENTITY_TYPES.register("farming_plot",
+			() -> BlockEntityType.Builder.of(FarmingPlotBlockEntity::new, BlockInit.FARMING_PLOT.get()).build(null));
 	
 	public static final RegistryObject<BlockEntityType<QuarryBlockEntity>> QUARRY = TILE_ENTITY_TYPES.register("quarry",
 			() -> BlockEntityType.Builder.of(QuarryBlockEntity::new, BlockInit.QUARRY.get()).build(null));

@@ -29,19 +29,21 @@
 	"item.industrialwarfare.makeshift_brain":	"Makeshift Brain",
 	"item.industrialwarfare.makeshift_head":	"Makeshift Head",
 	
-	"item.industrialwarfare.set_profession_armorer": "Set Profession to Armorer",
 	"item.industrialwarfare.set_profession_assembler": "Set Profession to Assembler",
+	"item.industrialwarfare.set_profession_farmer": "Set Profession to Farmer",
+	"item.industrialwarfare.set_profession_jobless": "Set Profession to Jobless",
+	"item.industrialwarfare.set_profession_logger": "Set Profession to Logger",
+	"item.industrialwarfare.set_profession_quarrier": "Set Profession to Quarrier",
+	
+	"item.industrialwarfare.set_profession_armorer": "Set Profession to Armorer",
 	"item.industrialwarfare.set_profession_bladesmith": "Set Profession to Bladesmith",
 	"item.industrialwarfare.set_profession_chemist": "Set Profession to Chemist",
 	"item.industrialwarfare.set_profession_commander": "Set Profession to Commander",
 	"item.industrialwarfare.set_profession_founder": "Set Profession to Founder",
 	"item.industrialwarfare.set_profession_gunsmith": "Set Profession to Gunsmith",
-	"item.industrialwarfare.set_profession_jobless": "Set Profession to Jobless",
-	"item.industrialwarfare.set_profession_logger": "Set Profession to Logger",
 	"item.industrialwarfare.set_profession_machinist": "Set Profession to Machinist",
 	"item.industrialwarfare.set_profession_medic": "Set Profession to Medic",
 	"item.industrialwarfare.set_profession_metalsmith": "Set Profession to Metalsmith",
-	"item.industrialwarfare.set_profession_quarrier": "Set Profession to Quarrier",
 	"item.industrialwarfare.set_profession_reanimator": "Set Profession to Reanimator",
 	"item.industrialwarfare.set_profession_researcher": "Set Profession to Researcher",
 	"item.industrialwarfare.set_profession_transporter": "Set Profession to Transporter",
@@ -65,7 +67,6 @@
 	"item.industrialwarfare.npc_spawn_egg":	"NPC Spawn Egg",
 	
 	"block.industrialwarfare.armorer_workstation":		"Armory Table",
-	"block.industrialwarfare.assembler_workstation":	"Assembly Table",
 	"block.industrialwarfare.bladesmith_workstation":	"Bladesmithing Anvil",
 	"block.industrialwarfare.chemist_workstation_1":	"Chemical Laboratory",
 	"block.industrialwarfare.chemist_workstation_2":	"Chemical Furnace",
@@ -84,12 +85,13 @@
 	"block.industrialwarfare.task_scroll_shelf":	"Task Scroll Shelf",
 	"block.industrialwarfare.match_coil": "Match Coil",
 	"block.industrialwarfare.spool": "Spool",
+	"block.industrialwarfare.assembler_workstation": "Assembly Table",
 	"block.industrialwarfare.quarry": "Quarry",
 	"block.industrialwarfare.tree_farm": "Tree Farm",
+	"block.industrialwarfare.farming_plot": "Farming Plot",
 	"block.industrialwarfare.worker_support": "Worker Support",
 	
 	"tile.industrialwarfare.armorer_workstation":		"Armory Table",
-	"tile.industrialwarfare.assembler_workstation":		"Assembly Table",
 	"tile.industrialwarfare.bladesmith_workstation":	"Bladesmithing Anvil",
 	"tile.industrialwarfare.chemist_workstation_1":		"Chemical Laboratory",
 	"tile.industrialwarfare.chemist_workstation_2":		"Chemical Furnace",
@@ -105,8 +107,10 @@
 	"tile.industrialwarfare.weaponsmith_workstation":	"Weaponsmithing Table",
 	"tile.industrialwarfare.woodworker_workstation":	"Woodworking Table",
 	
+	"tile.industrialwarfare.assembler_workstation": "Assembly Table",
 	"tile.industrialwarfare.quarry": "Quarry",
     "tile.industrialwarfare.tree_farm": "Tree Farm",
+    "tile.industrialwarfare.farming_plot": "Farming Plot",
 	
 	"tile.industrialwarfare.task_scroll_shelf":		"Task Scroll Shelf",
 	"tile.industrialwarfare.research_library":		"Research Library",	
@@ -410,7 +414,9 @@
 	"gui.industrialwarfare.set_profession": "Set %1$s's profession to ",
 	
 	"gui.industrialwarfare.different_dimensions": "Cannot set coordinates in different dimensions!",
-	"gui.industrialwarfare.set_bounds": "Set bounds of tile at %1$s to %2$s, %3$s",
+	"gui.industrialwarfare.too_large": "The set bounds cannot be larger than %1$s x %2$s x %3$s (dimensions were %4$s x %5$s x %6$s)",
+	"gui.industrialwarfare.must_contain_block": "The set bounds must contain the target block position at %s",
+	"gui.industrialwarfare.set_bounds": "Set bounds of block at %1$s to %2$s, %3$s",
 	
 	"gui.industrialwarfare.resource_station.supplies": "Supplies",
 	"gui.industrialwarfare.resource_station.buffer": "Drop-offs",
@@ -455,6 +461,7 @@
 	"profession.industrialwarfare.jobless": "Jobless",
 	"profession.industrialwarfare.quarrier": "Quarrier",
 	"profession.industrialwarfare.logger": "Logger",
+	"profession.industrialwarfare.farmer": "Farmer",
 	
 	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
 	"subtitle.industrialwarfare.item.revolver.fired": "Revolver fired"

@@ -3,6 +3,8 @@ Current TODO:
 - IT'S PORTIN' TIME!
 	- Fix stuff
 
+- Bounds rendering for configurable blocks
+
 - Formulate an economy
 	- Resource gathering
 		- Farming
@@ -20,6 +22,8 @@ Current TODO:
 		- Commodities
 			- Clothes/uniforms
 			- Food
+
+- Documentation via Guidebook
 
 - Possible restructuring
 of folder hierarchy?

@@ -98,6 +98,7 @@ public class ItemModelGeneration extends ItemModelProvider {
 		simpleBuilder("set_profession_assembler");
 		simpleBuilder("set_profession_quarrier");
 		simpleBuilder("set_profession_logger");
+		simpleBuilder("set_profession_farmer");
 		
 		simpleBuilder("surveyors_kit");
 		

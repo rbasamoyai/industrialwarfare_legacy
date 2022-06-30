@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "industrialwarfare:block/farming_plot"
+    },
+    "facing=south": {
+      "model": "industrialwarfare:block/farming_plot",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "industrialwarfare:block/farming_plot",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "industrialwarfare:block/farming_plot",
+      "y": 90
+    }
+  }
+}

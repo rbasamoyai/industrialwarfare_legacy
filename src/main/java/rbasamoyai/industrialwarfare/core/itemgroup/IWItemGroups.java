@@ -105,7 +105,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.SET_PROFESSION_JOBLESS),
 					getItemStack(ItemInit.SET_PROFESSION_ASSEMBLER),
 					getItemStack(ItemInit.SET_PROFESSION_QUARRIER),
-					getItemStack(ItemInit.SET_PROFESSION_LOGGER)
+					getItemStack(ItemInit.SET_PROFESSION_LOGGER),
+					getItemStack(ItemInit.SET_PROFESSION_FARMER)
 					));
 		}
 		
@@ -124,6 +125,7 @@ public class IWItemGroups {
 					getItemStack(ItemInit.SPOOL),
 					getItemStack(ItemInit.QUARRY),
 					getItemStack(ItemInit.TREE_FARM),
+					getItemStack(ItemInit.FARMING_PLOT),
 					getItemStack(ItemInit.WORKER_SUPPORT)
 					));
 		}

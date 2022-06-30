@@ -65,11 +65,12 @@ public class ResourceGatheringProfession extends NPCProfession {
 		if (!this.workingAreas.contains(level.getBlockState(pos).getBlock())) {
 			return Optional.empty();
 		}
+		
 		List<BlockPos> positions = Arrays.asList(pos.north(), pos.east(), pos.south(), pos.west());
 		return positions.stream()
 					.filter(p -> level.loadedAndEntityCanStandOn(p.below(), npc))
 					.filter(p -> noCollision(level, p, npc))
-					.sorted((pa, pb) -> Double.compare(pa.distSqr(npc.blockPosition()), pb.distSqr(npc.blockPosition())))
+					.sorted((pa, pb) -> Double.compare(Vec3.atCenterOf(pa).distanceToSqr(npc.position()), Vec3.atCenterOf(pb).distanceToSqr(npc.position())))
 					.findFirst();
 	}
 	
@@ -201,11 +202,16 @@ public class ResourceGatheringProfession extends NPCProfession {
 						brain.setMemory(MemoryModuleTypeInit.SUPPLY_REQUESTS.get(), Util.make(new ArrayList<>(), list -> list.add(predicate)));
 					}
 				}
-			} else if (action == Type.PLACE_BLOCK) {
-				InteractionHand opposite = useHand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-				ItemStack useStack = npc.getItemInHand(opposite);
+			} else if (action == Type.PLACE_BLOCK || action == Type.MODIFY_BLOCK) {
+				InteractionHand itemHand;
+				if (action == Type.PLACE_BLOCK) {
+					itemHand = useHand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+				} else {
+					itemHand = useHand;
+				}
+				ItemStack useStack = npc.getItemInHand(itemHand);
 				SupplyRequestPredicate predicate = interaction.item();
-				if (!interaction.item().matches(useStack) && !this.switchItem(npc, predicate, opposite)) {
+				if (!interaction.item().matches(useStack) && !this.switchItem(npc, predicate, itemHand)) {
 					resourceStation.stopWorking(npc);
 					brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 10);
 					

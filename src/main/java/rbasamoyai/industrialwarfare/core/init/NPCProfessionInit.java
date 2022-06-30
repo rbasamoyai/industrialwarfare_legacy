@@ -3,6 +3,7 @@ package rbasamoyai.industrialwarfare.core.init;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.npcprofessions.FarmerProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.JoblessProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.LoggerProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
@@ -22,5 +23,7 @@ public class NPCProfessionInit {
 	public static final RegistryObject<NPCProfession> QUARRIER = PROFESSIONS.register("quarrier", QuarrierProfession::new);
 	
 	public static final RegistryObject<NPCProfession> LOGGER = PROFESSIONS.register("logger", LoggerProfession::new);
+	
+	public static final RegistryObject<NPCProfession> FARMER = PROFESSIONS.register("farmer", FarmerProfession::new);
 	
 }

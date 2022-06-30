@@ -79,6 +79,10 @@ public class TagsGeneration {
 			tag(IWBlockTags.FUNGUS)
 					.add(Blocks.CRIMSON_FUNGUS)
 					.add(Blocks.WARPED_FUNGUS);
+			
+			tag(IWBlockTags.CLEARABLES)
+					.addTag(BlockTags.FLOWERS)
+					.addTag(BlockTags.REPLACEABLE_PLANTS);
 		}
 		
 		@Override

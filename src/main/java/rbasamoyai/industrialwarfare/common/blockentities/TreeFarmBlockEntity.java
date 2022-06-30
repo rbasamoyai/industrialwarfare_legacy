@@ -7,6 +7,7 @@ import java.util.Queue;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
@@ -44,7 +45,7 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 	private BlockPos startingCorner;
 	private BlockPos endingCorner;
 	
-	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();;
+	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();
 	private int searchCooldown = 0;
 	
 	public TreeFarmBlockEntity(BlockPos pos, BlockState state) {
@@ -66,26 +67,31 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		AABB bounds = new AABB(pos1, pos2.offset(1, 1, 1));
 		if (bounds.getXsize() > 64 || bounds.getYsize() > 4 || bounds.getZsize() > 64) {
 			if (player != null) {
-				
+				player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".too_large", 64, 4, 64, bounds.getXsize(), bounds.getYsize(), bounds.getZsize()).withStyle(ChatFormatting.RED), true);
 			}
 			return;
 		}
-		if (!bounds.inflate(5.0d, 2.0d, 5.0d).contains(Vec3.atCenterOf(this.worldPosition))) {
+		if (!bounds.contains(Vec3.atCenterOf(this.worldPosition))) {
 			if (player != null) {
-				
+				player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".must_contain_block", this.worldPosition.toShortString()).withStyle(ChatFormatting.RED), true);
 			}
 			return;
 		}
 		this.startingCorner = new BlockPos(bounds.minX, bounds.minY, bounds.minZ);
 		this.endingCorner = new BlockPos(bounds.maxX - 1.0d, bounds.maxY - 1.0d, bounds.maxZ - 1.0d);
 		if (player != null) {
-			String posString = this.worldPosition.getX() + " " + this.worldPosition.getY() + " " + this.worldPosition.getZ();
-			String posString1 = this.startingCorner.getX() + " " + this.startingCorner.getY() + " " + this.startingCorner.getZ();
-			String posString2 = this.endingCorner.getX() + " " + this.endingCorner.getY() + " " + this.endingCorner.getZ();
-			player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".set_bounds", posString, posString1, posString2), true);
+			player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".set_bounds", this.worldPosition.toShortString(), this.startingCorner.toShortString(), this.endingCorner.toShortString()), true);
 		}
 		this.setChanged();
 	}
+	
+	@Override
+	public AABB getBoxForRenderingCurrentBounds(ItemStack stack) {
+		return this.startingCorner != null && this.endingCorner != null ? new AABB(this.startingCorner.immutable(), this.endingCorner.immutable().offset(1, 1, 1)) : null;
+	}
+	
+	@Override public BlockPos startingCorner() { return this.startingCorner; }
+	@Override public BlockPos endingCorner() { return this.endingCorner; }
 	
 	@Override
 	public boolean isFinished() {

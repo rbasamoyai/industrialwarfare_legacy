@@ -63,8 +63,11 @@ public class ItemInit {
 	public static final RegistryObject<Item> ASSEMBLER_WORKSTATION = registerBlockItem(BlockInit.ASSEMBLER_WORKSTATION);
 	public static final RegistryObject<Item> TASK_SCROLL_SHELF = registerBlockItem(BlockInit.TASK_SCROLL_SHELF);
 	public static final RegistryObject<Item> SPOOL = registerBlockItem(BlockInit.SPOOL);
+	
 	public static final RegistryObject<Item> QUARRY = registerBlockItem(BlockInit.QUARRY);
 	public static final RegistryObject<Item> TREE_FARM = registerBlockItem(BlockInit.TREE_FARM);
+	public static final RegistryObject<Item> FARMING_PLOT = registerBlockItem(BlockInit.FARMING_PLOT);
+	
 	public static final RegistryObject<Item> WORKER_SUPPORT = registerBlockItem(BlockInit.WORKER_SUPPORT);
 	
 	public static final RegistryObject<Item> RECIPE_MANUAL = ITEMS.register("recipe_manual", RecipeItem::new);
@@ -107,6 +110,7 @@ public class ItemInit {
 	public static final RegistryObject<Item> SET_PROFESSION_ASSEMBLER = ITEMS.register("set_profession_assembler", () -> setProfessionItem(NPCProfessionInit.ASSEMBLER));
 	public static final RegistryObject<Item> SET_PROFESSION_QUARRIER = ITEMS.register("set_profession_quarrier", () -> setProfessionItem(NPCProfessionInit.QUARRIER));
 	public static final RegistryObject<Item> SET_PROFESSION_LOGGER = ITEMS.register("set_profession_logger", () -> setProfessionItem(NPCProfessionInit.LOGGER));
+	public static final RegistryObject<Item> SET_PROFESSION_FARMER = ITEMS.register("set_profession_farmer", () -> setProfessionItem(NPCProfessionInit.FARMER));
 	
 	public static final RegistryObject<Item> SURVEYORS_KIT = ITEMS.register("surveyors_kit", SurveyorsKitItem::new);
 	

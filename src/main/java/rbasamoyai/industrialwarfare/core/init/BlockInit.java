@@ -8,6 +8,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.blocks.FarmingPlotBlock;
 import rbasamoyai.industrialwarfare.common.blocks.ManufacturingBlock;
 import rbasamoyai.industrialwarfare.common.blocks.MatchCoilBlock;
 import rbasamoyai.industrialwarfare.common.blocks.OpaqueCutoutBlock;
@@ -31,5 +32,6 @@ public class BlockInit {
 			() -> new OpaqueCutoutBlock(BlockBehaviour.Properties.of(Material.WOOD).sound(SoundType.WOOD).noOcclusion()));
 	
 	public static final RegistryObject<Block> TREE_FARM = BLOCKS.register("tree_farm", TreeFarmBlock::new);
+	public static final RegistryObject<Block> FARMING_PLOT = BLOCKS.register("farming_plot", FarmingPlotBlock::new);
 	
 }
