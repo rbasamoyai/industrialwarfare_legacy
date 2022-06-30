@@ -193,7 +193,8 @@ public class IWItemGroups {
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.PITH_HELMET),
 					getItemStack(ItemInit.AMERICAN_KEPI),
-					getItemStack(ItemInit.PICKELHAUBE_HIGH)
+					getItemStack(ItemInit.PICKELHAUBE_HIGH),
+					getItemStack(ItemInit.DRAGOON_HELMET)
 					));
 		}
 		

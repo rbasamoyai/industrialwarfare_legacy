@@ -1,0 +1,15 @@
+{
+  "parent": "industrialwarfare:item/dragoon_helmet_bronze",
+  "textures": {
+    "layer0": "industrialwarfare:item/dragoon_helmet",
+    "layer1": "industrialwarfare:item/dragoon_helmet_overlay"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "minecraft:custom_model_data": 1.0
+      },
+      "model": "industrialwarfare:item/dragoon_helmet_gold"
+    }
+  ]
+}

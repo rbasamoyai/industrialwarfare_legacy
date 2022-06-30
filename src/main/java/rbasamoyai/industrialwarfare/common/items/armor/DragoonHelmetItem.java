@@ -15,17 +15,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.IItemRenderProperties;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.ModModelLayers;
-import rbasamoyai.industrialwarfare.client.items.models.PickelhaubeHighModel;
+import rbasamoyai.industrialwarfare.client.items.models.DragoonHelmetModel;
 
-public class PickelhaubeHighItem extends DyeableArmorItem {
+public class DragoonHelmetItem extends DyeableArmorItem {
 
-	public PickelhaubeHighItem(ArmorMaterial material, EquipmentSlot type, Item.Properties properties) {
+	public DragoonHelmetItem(ArmorMaterial material, EquipmentSlot type, Item.Properties properties) {
 		super(material, type, properties);
 	}
 	
 	@Override
 	public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-		return String.format("%s:/textures/models/armor/pickelhaube_high%s.png", IndustrialWarfare.MOD_ID, type == null ? "" : String.format("_%s", type));
+		String suf = "";
+		if (type != null) {
+			int modelData = stack.getOrCreateTag().getInt("CustomModelData");
+			suf = String.format("_%s%s", type, modelData == 0 ? "" : Integer.toString(modelData));
+		}
+		return String.format("%s:/textures/models/armor/dragoon_helmet%s.png", IndustrialWarfare.MOD_ID, type == null ? "" : suf);
 	}
 	
 	@Override
@@ -40,7 +45,7 @@ public class PickelhaubeHighItem extends DyeableArmorItem {
 			@Override
 			public HumanoidModel<?> getArmorModel(LivingEntity entityLiving, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
 				Minecraft mc = Minecraft.getInstance();
-				return new PickelhaubeHighModel(mc.getEntityModels().bakeLayer(ModModelLayers.PICKELHAUBE_HIGH));
+				return new DragoonHelmetModel(mc.getEntityModels().bakeLayer(ModModelLayers.DRAGOON_HELMET));
 			}
 		});
 	}

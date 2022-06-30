@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.blockentities.renderers.TaskScrollShelfRenderer;
 import rbasamoyai.industrialwarfare.client.items.models.AmericanKepiModel;
+import rbasamoyai.industrialwarfare.client.items.models.DragoonHelmetModel;
 import rbasamoyai.industrialwarfare.client.items.models.PickelhaubeHighModel;
 import rbasamoyai.industrialwarfare.client.items.models.PithHelmetModel;
 
@@ -19,6 +20,7 @@ public class ModModelLayers {
 	public static final ModelLayerLocation SCROLL = create("scroll");
 	
 	public static final ModelLayerLocation AMERICAN_KEPI = create("american_kepi");
+	public static final ModelLayerLocation DRAGOON_HELMET = create("dragoon_helmet");
 	public static final ModelLayerLocation PICKELHAUBE_HIGH = create("pickelhaube_high");
 	public static final ModelLayerLocation PITH_HELMET = create("pith_helmet");
 	
@@ -34,6 +36,7 @@ public class ModModelLayers {
 	public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
 		event.registerLayerDefinition(SCROLL, TaskScrollShelfRenderer::createScrollLayer);
 		event.registerLayerDefinition(AMERICAN_KEPI, AmericanKepiModel::createLayer);
+		event.registerLayerDefinition(DRAGOON_HELMET, DragoonHelmetModel::createLayer);
 		event.registerLayerDefinition(PICKELHAUBE_HIGH, PickelhaubeHighModel::createLayer);
 		event.registerLayerDefinition(PITH_HELMET, PithHelmetModel::createLayer);
 	}

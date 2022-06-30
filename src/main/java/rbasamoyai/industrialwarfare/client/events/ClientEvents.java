@@ -117,6 +117,10 @@ public class ClientEvents {
 		itemColors.register((stack, layer) -> {
 			return layer > 0 ? -1 : ((DyeableArmorItem) stack.getItem()).getColor(stack);
 		}, ItemInit.PICKELHAUBE_HIGH.get());
+		
+		itemColors.register((stack, layer) -> {
+			return layer > 0 ? -1 : ((DyeableArmorItem) stack.getItem()).getColor(stack);
+		}, ItemInit.DRAGOON_HELMET.get());
 	}
 	
 }
