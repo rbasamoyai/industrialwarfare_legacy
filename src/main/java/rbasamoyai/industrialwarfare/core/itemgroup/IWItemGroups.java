@@ -190,11 +190,14 @@ public class IWItemGroups {
 	public static final CreativeModeTab TAB_ARMOR = new CreativeModeTab(groupId++, "industrialwarfare.armor") {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
+			ItemStack dragoonGold = getItemStack(ItemInit.DRAGOON_HELMET);
+			dragoonGold.getOrCreateTag().putInt("CustomModelData", 1);
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.PITH_HELMET),
 					getItemStack(ItemInit.AMERICAN_KEPI),
 					getItemStack(ItemInit.PICKELHAUBE_HIGH),
-					getItemStack(ItemInit.DRAGOON_HELMET)
+					getItemStack(ItemInit.DRAGOON_HELMET),
+					dragoonGold
 					));
 		}
 		
