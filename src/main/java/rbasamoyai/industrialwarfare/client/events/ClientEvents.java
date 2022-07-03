@@ -61,6 +61,7 @@ public class ClientEvents {
 			MenuScreens.register(MenuInit.TASK_SCROLL.get(), TaskScrollScreen::new);
 			MenuScreens.register(MenuInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
 			MenuScreens.register(MenuInit.WHISTLE.get(), WhistleScreen::new);
+			MenuScreens.register(MenuInit.LIVESTOCK_PEN.get(), null);
 			
 			ForgeRegistries.ITEMS.forEach(i -> {
 				if (i instanceof FirearmItem) {

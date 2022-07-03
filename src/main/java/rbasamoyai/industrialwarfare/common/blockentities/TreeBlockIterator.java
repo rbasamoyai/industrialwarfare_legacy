@@ -13,8 +13,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import rbasamoyai.industrialwarfare.common.ModTags.Blocks;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 
 public class TreeBlockIterator {
 
@@ -45,7 +45,7 @@ public class TreeBlockIterator {
 			for (BlockPos pos : BlockPos.betweenClosed(center.offset(-1, -1, -1), center.offset(2, 2, 2))) {
 				if (this.level.isOutsideBuildHeight(pos) || !this.limit.contains(Vec3.atCenterOf(pos)) || this.knownPositions.contains(pos)) continue;
 				BlockState state = this.level.getBlockState(pos);
-				if (!state.is(IWBlockTags.FORESTRY_HARVESTABLE)) continue;
+				if (!state.is(Blocks.FORESTRY_HARVESTABLE)) continue;
 				
 				BlockPos immutable = pos.immutable();
 				GlobalPos gp = GlobalPos.of(this.level.dimension(), immutable);

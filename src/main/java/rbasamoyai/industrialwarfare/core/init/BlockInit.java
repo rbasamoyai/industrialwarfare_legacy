@@ -9,6 +9,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.blocks.FarmingPlotBlock;
+import rbasamoyai.industrialwarfare.common.blocks.LivestockPenBlock;
 import rbasamoyai.industrialwarfare.common.blocks.ManufacturingBlock;
 import rbasamoyai.industrialwarfare.common.blocks.MatchCoilBlock;
 import rbasamoyai.industrialwarfare.common.blocks.OpaqueCutoutBlock;
@@ -33,5 +34,6 @@ public class BlockInit {
 	
 	public static final RegistryObject<Block> TREE_FARM = BLOCKS.register("tree_farm", TreeFarmBlock::new);
 	public static final RegistryObject<Block> FARMING_PLOT = BLOCKS.register("farming_plot", FarmingPlotBlock::new);
+	public static final RegistryObject<Block> LIVESTOCK_PEN = BLOCKS.register("livestock_pen", LivestockPenBlock::new);
 	
 }

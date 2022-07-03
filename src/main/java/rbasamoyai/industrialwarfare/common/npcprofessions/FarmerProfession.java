@@ -9,7 +9,7 @@ import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 
-public class FarmerProfession extends ResourceGatheringProfession {
+public class FarmerProfession extends BlockGatheringProfession {
 
 	public FarmerProfession() {
 		super(ImmutableList.of(

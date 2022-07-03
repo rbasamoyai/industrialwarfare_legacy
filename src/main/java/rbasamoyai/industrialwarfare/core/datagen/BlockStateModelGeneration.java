@@ -36,6 +36,9 @@ public class BlockStateModelGeneration extends BlockStateProvider {
 		horizontalBlock(BlockInit.FARMING_PLOT.get(), new UncheckedModelFile(modLoc("block/farming_plot")));
 		simpleBlockItem(BlockInit.FARMING_PLOT.get(), new UncheckedModelFile(modLoc("block/farming_plot")));
 		
+		horizontalBlock(BlockInit.LIVESTOCK_PEN.get(), new UncheckedModelFile(modLoc("block/livestock_pen")));
+		simpleBlockItem(BlockInit.LIVESTOCK_PEN.get(), new UncheckedModelFile(modLoc("block/livestock_pen")));
+		
 		horizontalBlock(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
 		simpleBlockItem(BlockInit.TASK_SCROLL_SHELF.get(), new UncheckedModelFile(modLoc("block/task_scroll_shelf")));
 		

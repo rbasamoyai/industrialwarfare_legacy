@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.items.ItemStackHandler;
+import rbasamoyai.industrialwarfare.common.blockentities.BlockResourcesBlockEntity;
 import rbasamoyai.industrialwarfare.common.blockentities.ResourceStationBlockEntity;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
@@ -34,16 +35,16 @@ import rbasamoyai.industrialwarfare.common.items.taskscroll.TaskScrollOrder;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.NPCComplaintInit;
 
-public class ResourceGatheringProfession extends NPCProfession {
+public class BlockGatheringProfession extends NPCProfession {
 	
 	private final List<SupplyRequestPredicate> requiredItems;
 	private final Set<Block> workingAreas;
 	
-	public ResourceGatheringProfession(List<SupplyRequestPredicate> requiredItems, Block workingArea) {
+	public BlockGatheringProfession(List<SupplyRequestPredicate> requiredItems, Block workingArea) {
 		this(requiredItems, ImmutableSet.of(workingArea));
 	}
 	
-	public ResourceGatheringProfession(List<SupplyRequestPredicate> requiredItems, Set<Block> workingAreas) {
+	public BlockGatheringProfession(List<SupplyRequestPredicate> requiredItems, Set<Block> workingAreas) {
 		this.requiredItems = requiredItems;
 		this.workingAreas = workingAreas;
 	}
@@ -88,11 +89,11 @@ public class ResourceGatheringProfession extends NPCProfession {
 		BlockPos jobSitePos = order.getArgHolder(WorkAtCommand.POS_ARG_INDEX).getWrapper().getPos().get();
 		BlockEntity te = level.getBlockEntity(jobSitePos);
 		
-		if (!(te instanceof ResourceStationBlockEntity)) {
+		if (!(te instanceof BlockResourcesBlockEntity)) {
 			brain.setMemoryWithExpiry(MemoryModuleTypeInit.COMPLAINT.get(), NPCComplaintInit.INVALID_WORKSTATION.get(), 200L);
 			return;
 		}
-		ResourceStationBlockEntity resourceStation = (ResourceStationBlockEntity) te;	
+		BlockResourcesBlockEntity resourceStation = (BlockResourcesBlockEntity) te;	
 		AABB jobSiteBox = new AABB(jobSitePos.offset(-1, 0, -1), jobSitePos.offset(2, 3, 2));
 		
 		if (!resourceStation.isRunning()) {
@@ -211,7 +212,7 @@ public class ResourceGatheringProfession extends NPCProfession {
 				}
 				ItemStack useStack = npc.getItemInHand(itemHand);
 				SupplyRequestPredicate predicate = interaction.item();
-				if (!interaction.item().matches(useStack) && !this.switchItem(npc, predicate, itemHand)) {
+				if (!predicate.matches(useStack) && !this.switchItem(npc, predicate, itemHand)) {
 					resourceStation.stopWorking(npc);
 					brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 10);
 					
@@ -260,17 +261,19 @@ public class ResourceGatheringProfession extends NPCProfession {
 	}
 	
 	private boolean switchItem(NPCEntity npc, SupplyRequestPredicate predicate, InteractionHand hand) {
-		if (predicate.matches(npc.getItemInHand(hand))) return true;
+		ItemStack currentItem = npc.getItemInHand(hand);
+		if (predicate.matches(currentItem)) return true;
+		
+		ItemStack stack = npc.getMatching(predicate::matches);
+		if (stack.isEmpty()) return false;
+		
+		npc.setItemInHand(InteractionHand.MAIN_HAND, stack.copy());
+		stack.shrink(stack.getCount());
 		ItemStackHandler inventory = npc.getInventoryItemHandler();
 		for (int i = 0; i < inventory.getSlots(); ++i) {
-			if (predicate.matches(inventory.getStackInSlot(i))) {
-				ItemStack switchItem = inventory.extractItem(i, inventory.getSlotLimit(i), false);
-				inventory.insertItem(i, npc.getItemInHand(hand), false);
-				npc.setItemInHand(hand, switchItem);
-				return true;
-			}
+			inventory.insertItem(i, currentItem, false);
 		}
-		return false;
+		return true;
 	}
 	
 	private boolean depositFromInventory(NPCEntity npc, ResourceStationBlockEntity resourceStation) {

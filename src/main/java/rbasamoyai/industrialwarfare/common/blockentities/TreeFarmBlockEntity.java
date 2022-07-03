@@ -30,14 +30,14 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.ModTags;
+import rbasamoyai.industrialwarfare.common.ModTags.Blocks;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
-import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 
-public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements ConfigurableBounds {
+public class TreeFarmBlockEntity extends BlockResourcesBlockEntity implements ConfigurableBounds {
 
 	private static final String TAG_STARTING_CORNER = "startingCorner";
 	private static final String TAG_ENDING_CORNER = "endingCorner";
@@ -171,17 +171,17 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		BlockPos pos = tree.pos().immutable();
 		BlockState stateBelow = this.level.getBlockState(pos.below());
 		
-		if (stateBelow.is(IWBlockTags.CAN_PLANT_SAPLING)) {
+		if (stateBelow.is(Blocks.CAN_PLANT_SAPLING)) {
 			return BlockInteraction.placeBlockAtAs(
 					GlobalPos.of(this.level.dimension(), pos),
 					SupplyRequestPredicate.forItem(ItemTags.SAPLINGS, IntBound.ANY),
 					this::placeSapling,
 					this::isSapling);
 		}
-		if (stateBelow.is(IWBlockTags.CAN_PLANT_FUNGUS)) {
+		if (stateBelow.is(Blocks.CAN_PLANT_FUNGUS)) {
 			return BlockInteraction.placeBlockAtAs(
 					GlobalPos.of(this.level.dimension(), pos),
-					SupplyRequestPredicate.forItem(IWItemTags.FUNGUS, IntBound.ANY),
+					SupplyRequestPredicate.forItem(ModTags.Items.FUNGUS, IntBound.ANY),
 					this::placeFungus,
 					this::isFungus);
 		}
@@ -194,7 +194,7 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		}
 		return BlockPos.betweenClosedStream(this.startingCorner, this.endingCorner)
 				.filter(p -> this.level.getBlockState(p).is(BlockTags.LOGS))
-				.filter(p -> this.level.getBlockState(p.below()).is(IWBlockTags.CAN_PLANT_FORESTRY))
+				.filter(p -> this.level.getBlockState(p.below()).is(Blocks.CAN_PLANT_FORESTRY))
 				.filter(p -> !this.hasTreeAt(p))
 				.findAny()
 				.map(this::addTreeInteractions)
@@ -260,13 +260,13 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 	private void placeFungus(Level level, BlockPos pos, LivingEntity entity) {
 		ItemStack stack = entity.getOffhandItem();
 		Item item = stack.getItem();
-		if (stack.is(IWItemTags.FUNGUS) && item instanceof BlockItem) {
+		if (stack.is(ModTags.Items.FUNGUS) && item instanceof BlockItem) {
 			level.setBlockAndUpdate(pos, ((BlockItem) item).getBlock().getStateDefinition().any());
 		}
 	}
 	
 	private boolean isFungus(Level level, BlockPos pos, LivingEntity entity) {
-		if (level.getBlockState(pos).is(IWBlockTags.FUNGUS)) {
+		if (level.getBlockState(pos).is(Blocks.FUNGUS)) {
 			this.treeWorkers.remove(entity);
 			return true;
 		}

@@ -31,9 +31,9 @@ import rbasamoyai.industrialwarfare.utils.ModInventoryUtils;
 
 public class ManufacturingBlock extends BaseEntityBlock {
 
-	public static final BlockBehaviour.Properties WORKSTATION_METAL	= BlockBehaviour.Properties.of(Material.METAL, MaterialColor.METAL).strength(5f, 6f)/*.harvestLevel(2)*/.sound(SoundType.METAL).requiresCorrectToolForDrops();
-	public static final BlockBehaviour.Properties WORKSTATION_STONE	= BlockBehaviour.Properties.of(Material.STONE, MaterialColor.STONE).strength(3.5f, 3.5f)/*.harvestLevel(1)*/.sound(SoundType.STONE).requiresCorrectToolForDrops();
-	public static final BlockBehaviour.Properties WORKSTATION_WOOD	= BlockBehaviour.Properties.of(Material.WOOD, MaterialColor.WOOD).strength(2.5f, 2.5f).sound(SoundType.WOOD);
+	public static final BlockBehaviour.Properties WORKSTATION_METAL = BlockBehaviour.Properties.of(Material.METAL, MaterialColor.METAL).strength(5f, 6f)/*.harvestLevel(2)*/.sound(SoundType.METAL).requiresCorrectToolForDrops();
+	public static final BlockBehaviour.Properties WORKSTATION_STONE = BlockBehaviour.Properties.of(Material.STONE, MaterialColor.STONE).strength(3.5f, 3.5f)/*.harvestLevel(1)*/.sound(SoundType.STONE).requiresCorrectToolForDrops();
+	public static final BlockBehaviour.Properties WORKSTATION_WOOD = BlockBehaviour.Properties.of(Material.WOOD, MaterialColor.WOOD).strength(2.5f, 2.5f).sound(SoundType.WOOD);
 	
 	private final Supplier<BlockEntityType<ManufacturingBlockEntity>> blockEntityType;
 	

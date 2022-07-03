@@ -31,7 +31,6 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.PacketDistributor;
-import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.CSyncExtraStock;
@@ -118,9 +117,6 @@ public abstract class ResourceStationBlockEntity extends BlockEntity {
 			this.extraStock.add(SupplyRequestPredicate.fromNBT(extraStockNBT.getCompound(i)));
 		}
 	}
-	
-	@Nullable
-	public abstract BlockInteraction getInteraction(LivingEntity entity);
 	
 	@Nullable
 	public ItemEntity getItemToPickup(LivingEntity entity) {

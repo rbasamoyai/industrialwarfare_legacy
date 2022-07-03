@@ -19,6 +19,7 @@ import rbasamoyai.industrialwarfare.common.entities.FormationLeaderEntity;
 import rbasamoyai.industrialwarfare.common.entityai.ActivityStatus;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.CombatMode;
+import rbasamoyai.industrialwarfare.common.entityai.MobInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.NPCComplaint;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.navigation.PrecisePosCodec;
@@ -46,6 +47,7 @@ public class MemoryModuleTypeInit {
 	public static final RegistryObject<MemoryModuleType<FormationLeaderEntity>> IN_FORMATION = MEMORY_MODULE_TYPES.register("in_formation", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> JUMP_TO = MEMORY_MODULE_TYPES.register("jump_to", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Integer>> ON_PATROL = MEMORY_MODULE_TYPES.register("on_patrol", () -> new MemoryModuleType<>(Optional.of(Codec.INT)));
+	public static final RegistryObject<MemoryModuleType<MobInteraction>> MOB_INTERACTION = MEMORY_MODULE_TYPES.register("mob_interaction", () -> new MemoryModuleType<>(Optional.empty()));
 	public static final RegistryObject<MemoryModuleType<Vec3>> PRECISE_POS = MEMORY_MODULE_TYPES.register("precise_pos", () -> new MemoryModuleType<>(Optional.of(PrecisePosCodec.CODEC)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> REACHED_MOVEMENT_TARGET = MEMORY_MODULE_TYPES.register("reached_movement_target", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));
 	public static final RegistryObject<MemoryModuleType<Boolean>> SHOULD_PREPARE_ATTACK = MEMORY_MODULE_TYPES.register("should_prepare_attack", () -> new MemoryModuleType<>(Optional.of(Codec.BOOL)));

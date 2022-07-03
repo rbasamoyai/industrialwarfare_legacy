@@ -23,11 +23,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction.Type;
-import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 
 public class BlockInteractionTask extends Behavior<NPCEntity> {
@@ -113,12 +111,11 @@ public class BlockInteractionTask extends Behavior<NPCEntity> {
 			return;
 		}
 		
-		InteractionHand useHand = entity.getUsedItemHand();
-		
 		BlockState levelState = level.getBlockState(pos);
 		SoundType stateSound = levelState.getSoundType();
 		
 		if (interaction.needsToBreakBlock(level, entity)) {
+			InteractionHand useHand = entity.getUsedItemHand();
 			boolean justStarted = this.breakProgress == 0.0f;
 			this.breakProgress += this.getBlockBreakTime(entity, level, pos);
 			
@@ -149,20 +146,6 @@ public class BlockInteractionTask extends Behavior<NPCEntity> {
 				level.destroyBlockProgress(entity.getId(), pos, -1);
 			}
 		} else {
-			InteractionHand opposite = useHand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-			SupplyRequestPredicate pred = interaction.item();
-			if (!pred.matches(entity.getItemInHand(opposite))) {
-				ItemStack stack = entity.getMatching(pred::matches);
-				ItemStack oldStack = entity.getItemInHand(useHand);
-				entity.setItemInHand(useHand, stack.copy());
-				stack.shrink(stack.getCount());
-				ItemStackHandler inventory = entity.getInventoryItemHandler();
-				for (int i = 0; i < inventory.getSlots(); ++i) {
-					inventory.insertItem(i, oldStack, false);
-				}
-			}
-			ItemStack useStack = entity.getItemInHand(opposite);
-			useStack.shrink(1);
 			interaction.executeBlockActionIfPossible(level, entity);
 			entity.getBrain().eraseMemory(MemoryModuleTypeInit.BLOCK_INTERACTION.get());
 			brain.setMemory(MemoryModuleTypeInit.BLOCK_INTERACTION_COOLDOWN.get(), 6);

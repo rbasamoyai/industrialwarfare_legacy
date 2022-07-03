@@ -8,6 +8,7 @@ import net.minecraftforge.registries.RegistryObject;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.containers.DiplomacyMenu;
 import rbasamoyai.industrialwarfare.common.containers.EditLabelMenu;
+import rbasamoyai.industrialwarfare.common.containers.LivestockPenMenu;
 import rbasamoyai.industrialwarfare.common.containers.TaskScrollMenu;
 import rbasamoyai.industrialwarfare.common.containers.WhistleMenu;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleMenu;
@@ -30,6 +31,9 @@ public class MenuInit {
 	
 	public static final RegistryObject<MenuType<EditLabelMenu>> EDIT_LABEL = CONTAINER_TYPES.register("edit_label",
 			() -> IForgeMenuType.create(EditLabelMenu::getClientContainer));
+	
+	public static final RegistryObject<MenuType<LivestockPenMenu>> LIVESTOCK_PEN = CONTAINER_TYPES.register("livestock_pen",
+			() -> IForgeMenuType.create(LivestockPenMenu::getClientContainer));
 	
 	public static final RegistryObject<MenuType<MatchCoilMenu>> MATCH_COIL = CONTAINER_TYPES.register("match_coil",
 			() -> IForgeMenuType.create(MatchCoilMenu::getClientContainer));

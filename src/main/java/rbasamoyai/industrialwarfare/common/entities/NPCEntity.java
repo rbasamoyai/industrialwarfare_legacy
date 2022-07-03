@@ -133,6 +133,7 @@ public class NPCEntity extends PathfinderMob implements
 			MemoryModuleTypeInit.IN_COMMAND_GROUP.get(),
 			MemoryModuleTypeInit.IN_FORMATION.get(),
 			MemoryModuleTypeInit.JUMP_TO.get(),
+			MemoryModuleTypeInit.MOB_INTERACTION.get(),
 			MemoryModuleTypeInit.ON_PATROL.get(),
 			MemoryModuleTypeInit.PRECISE_POS.get(),
 			MemoryModuleTypeInit.REACHED_MOVEMENT_TARGET.get(),

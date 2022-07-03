@@ -43,7 +43,7 @@ public class IndustrialWarfare {
 		FirearmInit.FIREARMS.register(modEventBus);
 		PartItemInit.PARTS.register(modEventBus);
 		
-		BlockEntityTypeInit.TILE_ENTITY_TYPES.register(modEventBus);
+		BlockEntityTypeInit.BLOCK_ENTITY_TYPES.register(modEventBus);
 		MenuInit.CONTAINER_TYPES.register(modEventBus);
 		EntityTypeInit.ENTITY_TYPES.register(modEventBus);
 		MemoryModuleTypeInit.MEMORY_MODULE_TYPES.register(modEventBus);

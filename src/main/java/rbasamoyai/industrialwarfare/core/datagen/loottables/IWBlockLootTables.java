@@ -22,6 +22,7 @@ public class IWBlockLootTables extends BlockLoot {
 		dropSelf(BlockInit.TREE_FARM.get());
 		dropSelf(BlockInit.WORKER_SUPPORT.get());
 		dropSelf(BlockInit.FARMING_PLOT.get());
+		dropSelf(BlockInit.LIVESTOCK_PEN.get());
 	}
 	
 	@Override

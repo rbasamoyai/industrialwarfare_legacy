@@ -38,10 +38,9 @@ import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 
-public class FarmingPlotBlockEntity extends ResourceStationBlockEntity implements ConfigurableBounds {
+public class FarmingPlotBlockEntity extends BlockResourcesBlockEntity implements ConfigurableBounds {
 	
 	private final BiMap<BlockPos, LivingEntity> currentTasks = HashBiMap.create();
 	private final Map<BlockPos, BlockInteraction> posCache = new LinkedHashMap<>();
@@ -160,9 +159,9 @@ public class FarmingPlotBlockEntity extends ResourceStationBlockEntity implement
 			BlockState groundState = this.level.getBlockState(pos);
 			BlockState aboveState = this.level.getBlockState(abovePos);
 			
-			if (groundState.is(IWBlockTags.CLEARABLES)) {
+			if (groundState.is(rbasamoyai.industrialwarfare.common.ModTags.Blocks.CLEARABLES)) {
 				this.posCache.put(pos, BlockInteraction.breakBlockAt(GlobalPos.of(this.level.dimension(), pos), 4));
-			} else if (aboveState.is(IWBlockTags.CLEARABLES)) {
+			} else if (aboveState.is(rbasamoyai.industrialwarfare.common.ModTags.Blocks.CLEARABLES)) {
 				this.posCache.put(abovePos, BlockInteraction.breakBlockAt(GlobalPos.of(this.level.dimension(), abovePos), 4));
 			}
 		}

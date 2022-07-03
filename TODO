@@ -9,6 +9,7 @@ Current TODO:
 	- Resource gathering
 		- Mob resource gathering
 			- Rancher
+				- Rancher screen
 	- Resource refining
 		- Metal smelting
 		- Sawyer
@@ -21,6 +22,10 @@ Current TODO:
 		- Commodities
 			- Clothes/uniforms
 			- Food
+			
+- Item attachments
+
+- Rendering firearm model armor better, faster
 
 - Documentation via Guidebook
 

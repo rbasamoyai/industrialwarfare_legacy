@@ -68,6 +68,7 @@ public class ItemInit {
 	public static final RegistryObject<Item> QUARRY = registerBlockItem(BlockInit.QUARRY);
 	public static final RegistryObject<Item> TREE_FARM = registerBlockItem(BlockInit.TREE_FARM);
 	public static final RegistryObject<Item> FARMING_PLOT = registerBlockItem(BlockInit.FARMING_PLOT);
+	public static final RegistryObject<Item> LIVESTOCK_PEN = registerBlockItem(BlockInit.LIVESTOCK_PEN);
 	
 	public static final RegistryObject<Item> WORKER_SUPPORT = registerBlockItem(BlockInit.WORKER_SUPPORT);
 	
@@ -115,8 +116,11 @@ public class ItemInit {
 	public static final RegistryObject<Item> SET_PROFESSION_QUARRIER = ITEMS.register("set_profession_quarrier", () -> setProfessionItem(NPCProfessionInit.QUARRIER));
 	public static final RegistryObject<Item> SET_PROFESSION_LOGGER = ITEMS.register("set_profession_logger", () -> setProfessionItem(NPCProfessionInit.LOGGER));
 	public static final RegistryObject<Item> SET_PROFESSION_FARMER = ITEMS.register("set_profession_farmer", () -> setProfessionItem(NPCProfessionInit.FARMER));
+	public static final RegistryObject<Item> SET_PROFESSION_RANCHER = ITEMS.register("set_profession_rancher", () -> setProfessionItem(NPCProfessionInit.RANCHER));
 	
 	public static final RegistryObject<Item> SURVEYORS_KIT = ITEMS.register("surveyors_kit", SurveyorsKitItem::new);
+	
+	public static final RegistryObject<Item> ANIMAL_FEED = ITEMS.register("animal_feed", () -> new Item(new Item.Properties().tab(IWItemGroups.TAB_GENERAL)));
 	
 	private static Item toolItem() {
 		return new Item(new Item.Properties().stacksTo(1).tab(IWItemGroups.TAB_GENERAL));

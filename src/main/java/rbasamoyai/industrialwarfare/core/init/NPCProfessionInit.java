@@ -8,6 +8,7 @@ import rbasamoyai.industrialwarfare.common.npcprofessions.JoblessProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.LoggerProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.NPCProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.QuarrierProfession;
+import rbasamoyai.industrialwarfare.common.npcprofessions.RancherProfession;
 import rbasamoyai.industrialwarfare.common.npcprofessions.WorkstationProfession;
 import rbasamoyai.industrialwarfare.core.IWModRegistries;
 
@@ -25,5 +26,7 @@ public class NPCProfessionInit {
 	public static final RegistryObject<NPCProfession> LOGGER = PROFESSIONS.register("logger", LoggerProfession::new);
 	
 	public static final RegistryObject<NPCProfession> FARMER = PROFESSIONS.register("farmer", FarmerProfession::new);
+	
+	public static final RegistryObject<NPCProfession> RANCHER = PROFESSIONS.register("rancher", RancherProfession::new);
 	
 }

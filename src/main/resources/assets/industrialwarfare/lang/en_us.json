@@ -34,6 +34,7 @@
 	"item.industrialwarfare.set_profession_jobless": "Set Profession to Jobless",
 	"item.industrialwarfare.set_profession_logger": "Set Profession to Logger",
 	"item.industrialwarfare.set_profession_quarrier": "Set Profession to Quarrier",
+	"item.industrialwarfare.set_profession_rancher": "Set Profession to Rancher",
 	
 	"item.industrialwarfare.set_profession_armorer": "Set Profession to Armorer",
 	"item.industrialwarfare.set_profession_bladesmith": "Set Profession to Bladesmith",
@@ -89,6 +90,7 @@
 	"block.industrialwarfare.quarry": "Quarry",
 	"block.industrialwarfare.tree_farm": "Tree Farm",
 	"block.industrialwarfare.farming_plot": "Farming Plot",
+	"block.industrialwarfare.livestock_pen": "Livestock Pen",
 	"block.industrialwarfare.worker_support": "Worker Support",
 	
 	"tile.industrialwarfare.armorer_workstation":		"Armory Table",
@@ -111,6 +113,7 @@
 	"tile.industrialwarfare.quarry": "Quarry",
     "tile.industrialwarfare.tree_farm": "Tree Farm",
     "tile.industrialwarfare.farming_plot": "Farming Plot",
+    "tile.industrialwarfare.livestock_pen": "Livestock Pen",
 	
 	"tile.industrialwarfare.task_scroll_shelf":		"Task Scroll Shelf",
 	"tile.industrialwarfare.research_library":		"Research Library",	

@@ -13,7 +13,7 @@ import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBo
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
-public class QuarrierProfession extends ResourceGatheringProfession {
+public class QuarrierProfession extends BlockGatheringProfession {
 
 	public QuarrierProfession() {
 		super(ImmutableList.of(
