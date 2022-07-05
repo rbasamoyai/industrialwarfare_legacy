@@ -1,6 +1,7 @@
 package rbasamoyai.industrialwarfare.common.blockentities;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -137,9 +138,10 @@ public class TreeFarmBlockEntity extends BlockResourcesBlockEntity implements Co
 	}
 	
 	protected void purgeEntries() {
-		for (LivingEntity worker : this.treeWorkers.keySet()) {
+		for (Iterator<LivingEntity> iter = this.treeWorkers.keySet().iterator(); iter.hasNext(); ) {
+			LivingEntity worker = iter.next();
 			if (worker.isDeadOrDying()) {
-				this.treeWorkers.remove(worker);
+				iter.remove();
 			}
 		}
 	}

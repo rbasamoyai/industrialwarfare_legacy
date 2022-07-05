@@ -122,12 +122,10 @@ public class FarmingPlotBlockEntity extends BlockResourcesBlockEntity implements
 			return null;
 		}
 		
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-			if (entry.getValue() == entity) {
-				this.posCache.remove(entry.getKey());
-				this.currentTasks.remove(entry.getKey());
-				break;
-			}
+		BlockPos workingPos = this.currentTasks.inverse().get(entity);
+		if (workingPos != null) {
+			this.posCache.remove(workingPos);
+			this.currentTasks.remove(workingPos);
 		}
 		
 		if (this.posCache.isEmpty() && this.searchCooldown <= 0) {
@@ -207,11 +205,14 @@ public class FarmingPlotBlockEntity extends BlockResourcesBlockEntity implements
 	}
 	
 	private void plantSeeds(Level level, BlockPos pos, LivingEntity entity) {
-		ItemStack stack = entity.getOffhandItem();
-		Item item = stack.getItem();
-		if (stack.is(Tags.Items.SEEDS) && item instanceof BlockItem) {
-			level.setBlockAndUpdate(pos, ((BlockItem) item).getBlock().defaultBlockState());
-			stack.shrink(1);
+		for (InteractionHand hand : InteractionHand.values()) {
+			ItemStack stack = entity.getItemInHand(hand);
+			Item item = stack.getItem();
+			if (stack.is(Tags.Items.SEEDS) && item instanceof BlockItem) {
+				level.setBlockAndUpdate(pos, ((BlockItem) item).getBlock().defaultBlockState());
+				stack.shrink(1);
+				return;
+			}
 		}
 	}
 	
@@ -289,10 +290,11 @@ public class FarmingPlotBlockEntity extends BlockResourcesBlockEntity implements
 	@Override public BlockPos startingCorner() { return this.startingCorner; }
 	@Override public BlockPos endingCorner() { return this.endingCorner; }
 
-	protected void purgeEntries() {
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
+	private void purgeEntries() {
+		for (Iterator<Map.Entry<BlockPos, LivingEntity>> iter = this.currentTasks.entrySet().iterator(); iter.hasNext(); ) {
+			Map.Entry<BlockPos, LivingEntity> entry = iter.next();
 			if (entry.getValue().isDeadOrDying()) {
-				this.currentTasks.remove(entry.getKey());
+				iter.remove();
 			}
 		}
 	}

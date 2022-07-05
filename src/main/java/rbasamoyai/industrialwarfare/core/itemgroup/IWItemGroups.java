@@ -85,7 +85,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.MATCH_CORD),
 					getItemStack(ItemInit.INFINITE_MATCH_CORD),
 					getItemStack(ItemInit.MATCH_COIL),
-					getItemStack(ItemInit.SURVEYORS_KIT)
+					getItemStack(ItemInit.SURVEYORS_KIT),
+					getItemStack(ItemInit.ANIMAL_FEED)
 					));
 		}
 		

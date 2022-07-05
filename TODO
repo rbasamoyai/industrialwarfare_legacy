@@ -1,15 +1,11 @@
 Current TODO:
 
-- IT'S PORTIN' TIME!
-	- Fix stuff
-
 - Bounds rendering for configurable blocks
 
 - Formulate an economy
 	- Resource gathering
 		- Mob resource gathering
 			- Rancher
-				- Rancher screen
 	- Resource refining
 		- Metal smelting
 		- Sawyer

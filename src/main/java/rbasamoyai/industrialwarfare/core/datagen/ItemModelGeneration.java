@@ -119,6 +119,8 @@ public class ItemModelGeneration extends ItemModelProvider {
 		
 		simpleBuilder("surveyors_kit");
 		
+		simpleBuilder("animal_feed");
+		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	

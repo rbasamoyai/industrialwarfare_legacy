@@ -31,6 +31,7 @@ import rbasamoyai.industrialwarfare.client.screen.attachmentitems.AttachmentsRif
 import rbasamoyai.industrialwarfare.client.screen.diplomacy.DiplomacyScreen;
 import rbasamoyai.industrialwarfare.client.screen.editlabel.EditLabelScreen;
 import rbasamoyai.industrialwarfare.client.screen.npc.NPCBaseScreen;
+import rbasamoyai.industrialwarfare.client.screen.resourcestation.LivestockPenScreen;
 import rbasamoyai.industrialwarfare.client.screen.resourcestation.ResourceStationScreen;
 import rbasamoyai.industrialwarfare.client.screen.schedule.EditScheduleScreen;
 import rbasamoyai.industrialwarfare.client.screen.taskscroll.TaskScrollScreen;
@@ -61,7 +62,7 @@ public class ClientEvents {
 			MenuScreens.register(MenuInit.TASK_SCROLL.get(), TaskScrollScreen::new);
 			MenuScreens.register(MenuInit.TASK_SCROLL_SHELF.get(), TaskScrollShelfScreen::new);
 			MenuScreens.register(MenuInit.WHISTLE.get(), WhistleScreen::new);
-			MenuScreens.register(MenuInit.LIVESTOCK_PEN.get(), null);
+			MenuScreens.register(MenuInit.LIVESTOCK_PEN.get(), LivestockPenScreen::new);
 			
 			ForgeRegistries.ITEMS.forEach(i -> {
 				if (i instanceof FirearmItem) {

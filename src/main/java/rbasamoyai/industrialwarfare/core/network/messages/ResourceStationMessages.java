@@ -11,6 +11,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.LivestockPenMenu;
 import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationMenu;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.network.handlers.ResourceStationCHandlers;
@@ -19,8 +20,6 @@ public class ResourceStationMessages {
 	
 	public static class SSelectTab {
 		private int selectedTab;
-		
-		public SSelectTab() {}
 		
 		public SSelectTab(int selectedTab) {
 			this.selectedTab = selectedTab;
@@ -196,6 +195,32 @@ public class ResourceStationMessages {
 			NetworkEvent.Context ctx = sup.get();
 			ctx.enqueueWork(() -> {
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ResourceStationCHandlers.handleCSyncExtraStock(msg));
+			});
+			ctx.setPacketHandled(true);
+		}
+	}
+	
+	public static class SSyncLivestockCount {
+		private final int count;
+		
+		public SSyncLivestockCount(int count) {
+			this.count = count;
+		}
+		
+		public SSyncLivestockCount(FriendlyByteBuf buf) {
+			this.count = buf.readVarInt();
+		}
+		
+		public void encode(FriendlyByteBuf buf) {
+			buf.writeVarInt(this.count);
+		}
+		
+		public void handle(Supplier<NetworkEvent.Context> sup) {
+			NetworkEvent.Context ctx = sup.get();
+			ctx.enqueueWork(() -> {
+				AbstractContainerMenu ct = ctx.getSender().containerMenu;
+				if (!(ct instanceof LivestockPenMenu)) return;
+				((LivestockPenMenu) ct).setMinimumLivestock(this.count);
 			});
 			ctx.setPacketHandled(true);
 		}

@@ -19,6 +19,7 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import rbasamoyai.industrialwarfare.common.blockentities.ResourceStationBlockEntity;
@@ -58,7 +59,7 @@ public class ResourceStationMenu extends AbstractContainerMenu {
 	private final ItemStack icon;
 	private final List<SupplyRequestPredicate> requests = new ArrayList<>();
 	private final List<SupplyRequestPredicate> extraStock = new ArrayList<>();
-	private final ContainerData data;
+	protected final ContainerData data;
 	
 	private boolean changed = false;
 	
@@ -230,5 +231,9 @@ public class ResourceStationMenu extends AbstractContainerMenu {
 	}
 	
 	public ItemStack getIcon() { return this.icon; }
+	
+	public boolean isSameBlockEntity(BlockEntity blockEntity) {
+		return this.optionalTE.map(blockEntity::equals).orElse(false);
+	}
 
 }

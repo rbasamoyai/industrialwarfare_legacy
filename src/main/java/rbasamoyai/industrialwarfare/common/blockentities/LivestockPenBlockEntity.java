@@ -2,17 +2,18 @@ package rbasamoyai.industrialwarfare.common.blockentities;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.IForgeShearable;
@@ -55,13 +57,19 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 	@Override
 	protected void saveAdditional(CompoundTag tag) {
 		super.saveAdditional(tag);
-		tag.putInt("minimumLivestock", this.minimumLivestock);
+		tag.putInt("minimumLivestock", this.getMinimumLivestock());
 	}
 	
 	@Override
 	public void load(CompoundTag nbt) {
 		super.load(nbt);
-		this.minimumLivestock = Math.max(nbt.getInt("minimumLivestock"), 2);
+		this.setMinimumLivestock(nbt.getInt("minimumLivestock"));
+	}
+	
+	@Override
+	public void setRunning(boolean running) {
+		super.setRunning(running);
+		this.mobCache.clear();
 	}
 	
 	@Override
@@ -70,12 +78,10 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 			return null;
 		}
 		
-		for (Map.Entry<Mob, LivingEntity> entry : this.currentTasks.entrySet()) {
-			if (entry.getValue() == entity) {
-				this.mobCache.remove(entry.getKey());
-				this.currentTasks.remove(entry.getKey());
-				break;
-			}
+		Mob workingMob = this.currentTasks.inverse().get(entity);
+		if (workingMob != null) {
+			this.mobCache.remove(workingMob);
+			this.currentTasks.remove(workingMob);
 		}
 		
 		if (this.mobCache.isEmpty() && this.searchCooldown <= 0) {
@@ -108,21 +114,41 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 		List<Animal> unculledAnimals = new ArrayList<>();
 		
 		for (Animal animal : animals) {
-			if (animalCount.computeIfAbsent(animal.getType(), e -> 1) >= this.minimumLivestock && canCull) {
+			int count = animalCount.compute(animal.getType(), (t, c) -> c == null ? 1 : c + 1);
+			if (animal.isBaby()) continue;
+			if (canCull && count > this.minimumLivestock) {
 				this.mobCache.put(animal, MobInteraction.killMob(animal, SupplyRequestPredicate.ANY));
 			} else {
-				animalCount.compute(animal.getType(), (e, c) -> c + 1);
 				unculledAnimals.add(animal);
 			}
 		}
 		
+		Map<EntityType<?>, Integer> breedableAnimals = new HashMap<>();
 		for (Animal animal : unculledAnimals) {
-			if (animalCount.get(animal.getType()) <= this.minimumLivestock) {
+			breedableAnimals.compute(animal.getType(), (t, c) -> {
+				int base = c == null ? 0 : c;
+				return this.canFeedAnimal(animal) ? base + 1 : base;
+			});
+		}
+		
+		Set<EntityType<?>> breedableTypes = new HashSet<>();
+		for (EntityType<?> type : animalCount.keySet()) {
+			if (animalCount.get(type) <= this.minimumLivestock && breedableAnimals.compute(type, (t, c) -> c == null ? 0 : c) >= 2) {
+				breedableTypes.add(type);
+			}
+		}
+		
+		for (Animal animal : unculledAnimals) {
+			EntityType<?> type = animal.getType();
+			if (breedableTypes.contains(type) && this.canFeedAnimal(animal)) {
 				this.mobCache.put(animal, MobInteraction.useItemOnMob(
 						animal,
 						SupplyRequestPredicate.forItem(ItemInit.ANIMAL_FEED.get(), IntBound.atLeast(1)),
 						this::feedMob,
 						this::canFeedMob));
+				if (breedableAnimals.compute(type, (t, c) -> c == null || c <= 0 ? 0 : c - 1) <= 0) {
+					breedableTypes.remove(type);
+				}
 			} else {
 				MobInteraction interaction = this.getInteractionForAnimal(animal);
 				if (interaction != null) this.mobCache.put(animal, interaction);
@@ -130,7 +156,7 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 		}
 		
 		if (canCull) {
-			this.timeToNextCull = 6000L;
+			this.timeToNextCull = 3000L;
 		}
 	}
 	
@@ -162,15 +188,12 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 	private void shearAnimal(Mob target, LivingEntity actor) {
 		ItemStack stack = actor.getMainHandItem();
 		if (stack.is(Items.SHEARS) && target instanceof IForgeShearable) {
+			actor.swing(InteractionHand.MAIN_HAND);
 			int fortune = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, stack);
 			List<ItemStack> drops = ((IForgeShearable) target).onSheared(null, stack, target.level, target.blockPosition(), fortune);
 			
-			double x = target.getX();
-			double y = target.getY();
-			double z = target.getZ();
-			
 			drops.forEach(s -> {
-				Containers.dropItemStack(target.level, x, y, z, s);
+				actor.spawnAtLocation(s, 1.0f);
 			});
 			
 			stack.hurtAndBreak(1, actor, e -> {
@@ -186,7 +209,9 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 	private void milkCow(Mob target, LivingEntity actor) {
 		ItemStack stack = actor.getMainHandItem();
 		if (target.getType() == EntityType.COW && stack.is(Items.BUCKET)) {
-			actor.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.MILK_BUCKET));
+			actor.swing(InteractionHand.MAIN_HAND);
+			stack.shrink(1);
+			actor.spawnAtLocation(new ItemStack(Items.MILK_BUCKET), 1.0f);
 		}
 	}
 	
@@ -197,7 +222,9 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 	private void milkMooshroom(Mob target, LivingEntity actor) {
 		ItemStack stack = actor.getMainHandItem();
 		if (target.getType() == EntityType.MOOSHROOM && stack.is(Items.BOWL)) {
-			actor.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.MUSHROOM_STEW));
+			actor.swing(InteractionHand.MAIN_HAND);
+			stack.shrink(1);
+			actor.spawnAtLocation(new ItemStack(Items.MILK_BUCKET), 1.0f);
 		}
 	}
 	
@@ -206,14 +233,20 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 	}
 	
 	private void feedMob(Mob target, LivingEntity actor) {
-		if (target instanceof Animal && actor.getMainHandItem().is(ItemInit.ANIMAL_FEED.get())) {
+		if (actor.getMainHandItem().is(ItemInit.ANIMAL_FEED.get())) {
+			actor.swing(InteractionHand.MAIN_HAND);
 			((Animal) target).setInLove(null);
+			target.gameEvent(GameEvent.MOB_INTERACT, target.eyeBlockPosition());
 			actor.getMainHandItem().shrink(1);
 		}
 	}
 	
 	private boolean canFeedMob(Mob target, LivingEntity actor) {
-		return target instanceof Animal && !((Animal) target).isInLove();
+		return target instanceof Animal && this.canFeedAnimal((Animal) target);
+	}
+	
+	private boolean canFeedAnimal(Animal animal) {
+		return animal.getAge() == 0 && animal.canFallInLove();
 	}
 
 	@Override
@@ -227,14 +260,33 @@ public class LivestockPenBlockEntity extends MobResourcesBlockEntity {
 		}));
 	}
 	
+	public void setMinimumLivestock(int minimumLivestock) { this.minimumLivestock = Math.max(minimumLivestock, 2); }
+	public int getMinimumLivestock() { return this.minimumLivestock; }
+	
+	private void purgeEntries() {
+		for (Iterator<Map.Entry<Mob, LivingEntity>> iter = this.currentTasks.entrySet().iterator(); iter.hasNext(); ) {
+			Map.Entry<Mob, LivingEntity> e = iter.next();
+			if (!e.getKey().isAlive() || !e.getValue().isAlive()) {
+				iter.remove();
+				this.mobCache.remove(e.getKey());
+			}
+		}
+	}
+	
 	public static void serverTicker(Level level, BlockPos pos, BlockState state, LivestockPenBlockEntity pen) {
 		++pen.clockTicks;
 		if (pen.clockTicks >= 20) {
 			pen.clockTicks = 0;
+			
+			pen.purgeEntries();
 		}
 		
 		if (pen.timeToNextCull > 0) {
 			--pen.timeToNextCull;
+		}
+		
+		if (pen.searchCooldown > 0) {
+			--pen.searchCooldown;
 		}
 	}
 

@@ -61,6 +61,7 @@
 	"item.industrialwarfare.task_scroll":	"Task Scroll",
 	"item.industrialwarfare.label":			"Label",
 	"item.industrialwarfare.schedule":		"Schedule",
+	"item.industrialwarfare.animal_feed": "Animal Feed",
 	
 	"item.industrialwarfare.job_site_pointer":	"Job Site Pointer",
 	"item.industrialwarfare.debug_owner":		"Debug Owner",
@@ -429,6 +430,8 @@
 	"gui.industrialwarfare.resource_station.extra_stock": "Extra Stock",
 	"gui.industrialwarfare.resource_station.remove_extra_stock": "Right click to remove",
 	
+	"gui.industrialwarfare.livestock_pen.minimum_livestock": "Minimum mobs: ",
+	
 	"command.industrialwarfare.move_to":	"Move to",
 	"command.industrialwarfare.take_from":	"Take from",
 	"command.industrialwarfare.deposit_at":	"Deposit at",
@@ -466,6 +469,7 @@
 	"profession.industrialwarfare.quarrier": "Quarrier",
 	"profession.industrialwarfare.logger": "Logger",
 	"profession.industrialwarfare.farmer": "Farmer",
+	"profession.industrialwarfare.rancher": "Rancher",
 	
 	"subtitle.industrialwarfare.item.rifle.fired": "Rifle fired",
 	"subtitle.industrialwarfare.item.revolver.fired": "Revolver fired"

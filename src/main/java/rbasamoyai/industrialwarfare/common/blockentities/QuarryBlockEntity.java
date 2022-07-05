@@ -76,9 +76,10 @@ public class QuarryBlockEntity extends BlockResourcesBlockEntity {
 	}
 	
 	protected void purgeEntries() {
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
+		for (Iterator<Map.Entry<BlockPos, LivingEntity>> iter = this.currentTasks.entrySet().iterator(); iter.hasNext(); ) {
+			Map.Entry<BlockPos, LivingEntity> entry = iter.next();
 			if (entry.getValue().isDeadOrDying()) {
-				this.currentTasks.remove(entry.getKey());
+				iter.remove();
 			}
 		}
 	}
@@ -96,12 +97,10 @@ public class QuarryBlockEntity extends BlockResourcesBlockEntity {
 			return null;
 		}
 		
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-			if (entry.getValue() == entity) {
-				this.posCache.remove(entry.getKey());
-				this.currentTasks.remove(entry.getKey());
-				break;
-			}
+		BlockPos workingPos = this.currentTasks.inverse().get(entity);
+		if (workingPos != null) {
+			this.posCache.remove(workingPos);
+			this.currentTasks.remove(workingPos);
 		}
 		
 		if (this.posCache.isEmpty()) {

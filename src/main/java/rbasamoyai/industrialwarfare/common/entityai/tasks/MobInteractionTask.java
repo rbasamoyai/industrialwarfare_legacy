@@ -21,7 +21,7 @@ public class MobInteractionTask extends Behavior<NPCEntity> {
 		super(ImmutableMap.of(
 				MemoryModuleType.LOOK_TARGET, MemoryStatus.REGISTERED,
 				MemoryModuleType.WALK_TARGET, MemoryStatus.REGISTERED,
-				MemoryModuleTypeInit.MOB_INTERACTION.get(), MemoryStatus.VALUE_PRESENT));
+				MemoryModuleTypeInit.MOB_INTERACTION.get(), MemoryStatus.VALUE_PRESENT), 1200);
 	}
 	
 	@Override

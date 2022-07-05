@@ -59,6 +59,7 @@ public class IWNetwork {
 		CHANNEL.registerMessage(id++, ResourceStationMessages.SSetExtraStock.class, ResourceStationMessages.SSetExtraStock::encode, ResourceStationMessages.SSetExtraStock::decode, ResourceStationMessages.SSetExtraStock::handle);
 		CHANNEL.registerMessage(id++, ResourceStationMessages.CSyncExtraStock.class, ResourceStationMessages.CSyncExtraStock::encode, ResourceStationMessages.CSyncExtraStock::decode, ResourceStationMessages.CSyncExtraStock::handle);
 		CHANNEL.registerMessage(id++, ResourceStationMessages.SRemoveExtraStock.class, ResourceStationMessages.SRemoveExtraStock::encode, ResourceStationMessages.SRemoveExtraStock::decode, ResourceStationMessages.SRemoveExtraStock::handle);
+		CHANNEL.registerMessage(id++, ResourceStationMessages.SSyncLivestockCount.class, ResourceStationMessages.SSyncLivestockCount::encode, ResourceStationMessages.SSyncLivestockCount::new, ResourceStationMessages.SSyncLivestockCount::handle);
 	}
 	
 	@SubscribeEvent

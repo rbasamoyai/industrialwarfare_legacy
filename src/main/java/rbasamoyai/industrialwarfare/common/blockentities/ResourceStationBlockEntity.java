@@ -20,8 +20,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,6 +33,7 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.PacketDistributor;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationMenu;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.CSyncExtraStock;
@@ -185,7 +188,12 @@ public abstract class ResourceStationBlockEntity extends BlockEntity {
 	}
 	
 	public void updateContainerRequests() {
-		IWNetwork.CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> this.level.getChunkAt(this.worldPosition)), new CSyncRequests(this.getRequests()));
+		if (this.level.isClientSide) return;
+		for (Player player : this.level.players()) {
+			if (!(player instanceof ServerPlayer)) continue;
+			if (!(player.containerMenu instanceof ResourceStationMenu) || !((ResourceStationMenu) player.containerMenu).isSameBlockEntity(this)) continue;
+			IWNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player),  new CSyncRequests(this.getRequests()));
+		}
 	}
 	
 	public void setOrAddExtraStock(SupplyRequestPredicate predicate, int index) {
