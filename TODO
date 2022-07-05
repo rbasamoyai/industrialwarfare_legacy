@@ -3,11 +3,8 @@ Current TODO:
 - Bounds rendering for configurable blocks
 
 - Formulate an economy
-	- Resource gathering
-		- Mob resource gathering
-			- Rancher
 	- Resource refining
-		- Metal smelting
+		- Metal refining
 		- Sawyer
 	- Resource processing
 		- Woodworking
