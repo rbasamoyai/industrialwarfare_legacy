@@ -11,7 +11,7 @@ import rbasamoyai.industrialwarfare.common.containers.resourcestation.LivestockP
 import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSyncLivestockCount;
 
-public class LivestockPenScreen extends ResourceStationScreen<LivestockPenMenu> {
+public class LivestockPenScreen extends AbstractResourceStationScreen<LivestockPenMenu> {
 
 	private static final int TOP_MENU_START_X = 7;
 	private static final int TOP_MENU_START_Y = 17;
