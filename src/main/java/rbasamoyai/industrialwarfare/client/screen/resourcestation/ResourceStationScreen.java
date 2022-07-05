@@ -29,7 +29,7 @@ import rbasamoyai.industrialwarfare.core.network.IWNetwork;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSelectTab;
 import rbasamoyai.industrialwarfare.core.network.messages.ResourceStationMessages.SSetRunning;
 
-public class ResourceStationScreen extends AbstractContainerScreen<ResourceStationMenu> {
+public class ResourceStationScreen<T extends ResourceStationMenu> extends AbstractContainerScreen<T> {
 	
 	private static final ResourceLocation RESOURCE_GATHERING_GUI = new ResourceLocation(IndustrialWarfare.MOD_ID, "textures/gui/workstations/resource_station.png");
 	private static final ResourceLocation TABS_LOCATION = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
@@ -85,7 +85,7 @@ public class ResourceStationScreen extends AbstractContainerScreen<ResourceStati
 	private Button startButton;
 	private ItemInputWidget addExtraStockWidget;
 	
-	public ResourceStationScreen(ResourceStationMenu menu, Inventory playerInv, Component title) {
+	public ResourceStationScreen(T menu, Inventory playerInv, Component title) {
 		super(menu, playerInv, title);
 		this.imageHeight = 168;
 		this.inventoryLabelY = this.imageHeight - 94;
@@ -96,8 +96,8 @@ public class ResourceStationScreen extends AbstractContainerScreen<ResourceStati
 	protected void init() {
 		super.init();
 		
-		this.stopButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, STOP_TEXT, b -> this.setRunning(b, false)));
-		this.startButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 65, this.topPos + TOP_MENU_START_Y + 1, 80, 20, START_TEXT, b -> this.setRunning(b, true)));
+		this.stopButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 72, this.topPos + TOP_MENU_START_Y + 1, 80, 20, STOP_TEXT, b -> this.setRunning(b, false)));
+		this.startButton = this.addRenderableWidget(new Button(this.leftPos + TOP_MENU_START_X + 72, this.topPos + TOP_MENU_START_Y + 1, 80, 20, START_TEXT, b -> this.setRunning(b, true)));
 		boolean running = this.menu.isRunning();
 		WidgetUtils.setActiveAndVisible(this.startButton, !running);
 		WidgetUtils.setActiveAndVisible(this.stopButton, running);
@@ -176,7 +176,7 @@ public class ResourceStationScreen extends AbstractContainerScreen<ResourceStati
 		this.itemRenderer.blitOffset = 0.0f;
 	}
 	
-	private <T> void renderScrollList(PoseStack stack, List<T> list, Function<T, ItemStack> func) {
+	private <S> void renderScrollList(PoseStack stack, List<S> list, Function<S, ItemStack> func) {
 		blit(stack, this.leftPos + TOP_MENU_START_X, this.topPos + TOP_MENU_START_Y, TOP_MENU_REQUESTS_TEX_X, TOP_MENU_REQUESTS_TEX_Y, TOP_MENU_REQUESTS_WIDTH, TOP_MENU_REQUESTS_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
 		
 		int base = this.getBaseIndex(list);
@@ -234,7 +234,7 @@ public class ResourceStationScreen extends AbstractContainerScreen<ResourceStati
 		}
 	}
 	
-	private <T> void renderListTooltip(PoseStack stack, int mouseX, int mouseY, List<T> list, Function<T, ItemStack> func) {
+	private <S> void renderListTooltip(PoseStack stack, int mouseX, int mouseY, List<S> list, Function<S, ItemStack> func) {
 		int d0 = mouseX - this.leftPos;
 		int d1 = mouseY - this.topPos;
 		

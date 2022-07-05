@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "industrialwarfare:block/livestock_pen"
+    },
+    "facing=south": {
+      "model": "industrialwarfare:block/livestock_pen",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "industrialwarfare:block/livestock_pen",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "industrialwarfare:block/livestock_pen",
+      "y": 90
+    }
+  }
+}

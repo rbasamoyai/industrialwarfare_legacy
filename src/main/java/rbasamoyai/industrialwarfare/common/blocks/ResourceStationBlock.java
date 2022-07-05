@@ -54,15 +54,14 @@ public abstract class ResourceStationBlock extends BaseEntityBlock {
 		if (!(player instanceof ServerPlayer)) return InteractionResult.SUCCESS;
 		
 		BlockEntity te = level.getBlockEntity(pos);
-		if (te == null) return InteractionResult.FAIL;
 		if (!(te instanceof ResourceStationBlockEntity)) return InteractionResult.FAIL;
 		ResourceStationBlockEntity resourceStation = (ResourceStationBlockEntity) te;
 		
 		ResourceLocation beReg = this.getRegistryName();
-		MenuConstructor containerProvider = ResourceStationMenu.getServerContainerProvider(resourceStation, pos);
+		MenuConstructor constructor = ResourceStationMenu.getServerContainerProvider(resourceStation, pos);
 		Component title = new TranslatableComponent("tile." + beReg.getNamespace() + "." + beReg.getPath());
-		MenuProvider namedContainerProvider = new SimpleMenuProvider(containerProvider, title);
-		NetworkHooks.openGui((ServerPlayer) player, namedContainerProvider, buf -> {
+		MenuProvider provider = new SimpleMenuProvider(constructor, title);
+		NetworkHooks.openGui((ServerPlayer) player, provider, buf -> {
 			buf.writeBlockPos(pos);
 			buf.writeItem(new ItemStack(this.asItem()));
 			buf.writeBoolean(resourceStation.isRunning());

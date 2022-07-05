@@ -1,19 +1,9 @@
 Current TODO:
 
-- IT'S PORTIN' TIME!
-	- Fix stuff
-	- Test
-
-- NormalWorkstation rewrite
-("Manufacturing professions")
-
-- Replacing tooltypes
-
-- Extra supplies
+- Bounds rendering for configurable blocks
 
 - Formulate an economy
 	- Resource gathering
-		- Farming
 		- Mob resource gathering
 			- Rancher
 	- Resource refining
@@ -28,6 +18,12 @@ Current TODO:
 		- Commodities
 			- Clothes/uniforms
 			- Food
+			
+- Item attachments
+
+- Rendering firearm model armor better, faster
+
+- Documentation via Guidebook
 
 - Possible restructuring
 of folder hierarchy?

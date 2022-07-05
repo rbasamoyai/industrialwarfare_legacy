@@ -16,6 +16,7 @@ public class SoundEventInit {
 	public static final RegistryObject<SoundEvent> EXTINGUISH_MATCH = register("item.firearms.extinguish_match");
 	public static final RegistryObject<SoundEvent> HAMMER_CLICK = register("item.firearms.hammer_click");
 	public static final RegistryObject<SoundEvent> HEAVY_RIFLE_FIRED = register("item.heavy_rifle.fired");
+	public static final RegistryObject<SoundEvent> SNIPER_RIFLE_FIRED = register("item.sniper_rifle.fired");
 	public static final RegistryObject<SoundEvent> INSERT_AMMO = register("item.firearms.insert_ammo");
 	public static final RegistryObject<SoundEvent> LEVER_OPEN = register("item.firearms.lever_open");
 	public static final RegistryObject<SoundEvent> LEVER_CLOSE = register("item.firearms.lever_close");

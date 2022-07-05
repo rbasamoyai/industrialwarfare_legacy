@@ -16,14 +16,16 @@ public class SelectionRenderType extends RenderType {
 	private static final LineStateShard SELECTION_LINE = new LineStateShard(OptionalDouble.of(5.0f));
 	
 	public static final RenderType TYPE =
-			create("unit_selection", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.LINES, 256, false, false,
+			create("unit_selection", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES, 256, false, false,
 					RenderType.CompositeState.builder()
 					.setLineState(SELECTION_LINE)
 					.setLayeringState(VIEW_OFFSET_Z_LAYERING)
-					.setTransparencyState(NO_TRANSPARENCY)
+					.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
 					.setCullState(NO_CULL)
 					.setLightmapState(NO_LIGHTMAP)
-					.setWriteMaskState(COLOR_WRITE)
+					.setWriteMaskState(COLOR_DEPTH_WRITE)
+					.setShaderState(RENDERTYPE_LINES_SHADER)
+					.setOutputState(ITEM_ENTITY_TARGET)
 					.createCompositeState(false));
 
 }

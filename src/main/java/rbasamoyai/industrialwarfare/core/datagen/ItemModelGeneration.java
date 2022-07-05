@@ -1,12 +1,9 @@
 package rbasamoyai.industrialwarfare.core.datagen;
 
-import java.io.IOException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.HashCache;
 import net.minecraftforge.client.model.generators.ItemModelBuilder;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
@@ -94,17 +91,39 @@ public class ItemModelGeneration extends ItemModelProvider {
 		.texture("layer0", modLoc("item/pickelhaube_high"))
 		.texture("layer1", modLoc("item/pickelhaube_high_overlay"));
 		
+		getBuilder("dragoon_helmet_gold")
+		.parent(new UncheckedModelFile("item/generated"))
+		.texture("layer0", modLoc("item/dragoon_helmet"))
+		.texture("layer1", modLoc("item/dragoon_helmet_overlay1"));
+		
+		getBuilder("dragoon_helmet_bronze")
+		.parent(new UncheckedModelFile("item/generated"))
+		.texture("layer0", modLoc("item/dragoon_helmet"))
+		.texture("layer1", modLoc("item/dragoon_helmet_overlay1"));
+		
+		getBuilder("dragoon_helmet")
+		.parent(new UncheckedModelFile(modLoc("item/dragoon_helmet_bronze")))
+		.texture("layer0", modLoc("item/dragoon_helmet"))
+		.texture("layer1", modLoc("item/dragoon_helmet_overlay"))
+		.override()
+				.predicate(mcLoc("custom_model_data"), 1.0f)
+				.model(new UncheckedModelFile(modLoc("item/dragoon_helmet_gold")))
+				.end();
+		
 		simpleBuilder("set_profession_jobless");
 		simpleBuilder("set_profession_assembler");
 		simpleBuilder("set_profession_quarrier");
 		simpleBuilder("set_profession_logger");
+		simpleBuilder("set_profession_farmer");
+		simpleBuilder("set_profession_rancher");
 		
 		simpleBuilder("surveyors_kit");
+		
+		simpleBuilder("animal_feed");
 		
 		LOGGER.debug("Finished generating item models for rbasamoyai's Industrial Warfare mod");
 	}
 	
-	// """Macro""" time
 	private ItemModelBuilder simpleBuilder(String id) {
 		return simpleBuilder(id, id);
 	}
@@ -113,11 +132,6 @@ public class ItemModelGeneration extends ItemModelProvider {
 		return getBuilder(itemId)
 				.parent(new UncheckedModelFile("item/generated"))
 				.texture("layer0", modLoc("item/" + textureId));
-	}
-	
-	@Override
-	public void run(HashCache cache) throws IOException {
-		super.run(cache);	
 	}
 	
 	@Override

@@ -88,7 +88,7 @@
     ]
   },
   "item.heavy_rifle.fired": {
-    "subtitle": "subtitle.industrialwarfare.item.heavy_rifle.fired",
+    "subtitle": "subtitle.industrialwarfare.item.rifle.fired",
     "sounds": [
       {
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
@@ -104,6 +104,28 @@
       },
       {
         "name": "industrialwarfare:firearms/heavy_rifle/fired",
+        "volume": 1.5,
+        "attenuation_distance": 80
+      }
+    ]
+  },
+  "item.sniper_rifle.fired": {
+    "subtitle": "subtitle.industrialwarfare.item.rifle.fired",
+    "sounds": [
+      {
+        "name": "industrialwarfare:firearms/sniper_rifle/fired",
+        "volume": 1.5,
+        "pitch": 0.8,
+        "attenuation_distance": 80
+      },
+      {
+        "name": "industrialwarfare:firearms/sniper_rifle/fired",
+        "volume": 1.5,
+        "pitch": 0.9,
+        "attenuation_distance": 80
+      },
+      {
+        "name": "industrialwarfare:firearms/sniper_rifle/fired",
         "volume": 1.5,
         "attenuation_distance": 80
       }

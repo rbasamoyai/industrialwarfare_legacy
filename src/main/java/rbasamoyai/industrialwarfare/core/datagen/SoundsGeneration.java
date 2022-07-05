@@ -83,7 +83,7 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.attenuationDistance(64)));
 		
 		add(loc("item.heavy_rifle.fired"), SoundDefinition.definition()
-				.subtitle("subtitle.industrialwarfare.item.heavy_rifle.fired")
+				.subtitle("subtitle.industrialwarfare.item.rifle.fired")
 				.with(Sound.sound(loc("firearms/heavy_rifle/fired"), SoundDefinition.SoundType.SOUND)
 						.volume(1.5f)
 						.pitch(0.8f)
@@ -93,6 +93,21 @@ public class SoundsGeneration extends SoundDefinitionsProvider {
 						.pitch(0.9f)
 						.attenuationDistance(80))
 				.with(Sound.sound(loc("firearms/heavy_rifle/fired"), SoundDefinition.SoundType.SOUND)
+						.volume(1.5f)
+						.pitch(1.0f)
+						.attenuationDistance(80)));
+		
+		add(loc("item.sniper_rifle.fired"), SoundDefinition.definition()
+				.subtitle("subtitle.industrialwarfare.item.rifle.fired")
+				.with(Sound.sound(loc("firearms/sniper_rifle/fired"), SoundDefinition.SoundType.SOUND)
+						.volume(1.5f)
+						.pitch(0.8f)
+						.attenuationDistance(80))
+				.with(Sound.sound(loc("firearms/sniper_rifle/fired"), SoundDefinition.SoundType.SOUND)
+						.volume(1.5f)
+						.pitch(0.9f)
+						.attenuationDistance(80))
+				.with(Sound.sound(loc("firearms/sniper_rifle/fired"), SoundDefinition.SoundType.SOUND)
 						.volume(1.5f)
 						.pitch(1.0f)
 						.attenuationDistance(80)));

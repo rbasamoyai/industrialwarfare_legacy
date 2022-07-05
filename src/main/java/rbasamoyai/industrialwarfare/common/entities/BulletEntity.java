@@ -28,7 +28,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.EntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.MemoryModuleTypeInit;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
@@ -128,7 +127,7 @@ public class BulletEntity extends ThrowableItemProjectile {
 			Entity owner = this.getOwner();
 			blockstate.onCaughtFire(this.level, pos, result.getDirection(), owner instanceof LivingEntity ? (LivingEntity) owner : null);
 			this.level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-		} else if (blockstate.is(IWBlockTags.SHATTERABLE)) {
+		} else if (blockstate.is(rbasamoyai.industrialwarfare.common.ModTags.Blocks.SHATTERABLE)) {
 			this.level.destroyBlock(pos, false);
 			shouldRemove = false;
 		} else if (blockstate.is(Blocks.MELON)) {

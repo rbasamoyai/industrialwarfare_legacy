@@ -85,7 +85,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.MATCH_CORD),
 					getItemStack(ItemInit.INFINITE_MATCH_CORD),
 					getItemStack(ItemInit.MATCH_COIL),
-					getItemStack(ItemInit.SURVEYORS_KIT)
+					getItemStack(ItemInit.SURVEYORS_KIT),
+					getItemStack(ItemInit.ANIMAL_FEED)
 					));
 		}
 		
@@ -105,7 +106,9 @@ public class IWItemGroups {
 					getItemStack(ItemInit.SET_PROFESSION_JOBLESS),
 					getItemStack(ItemInit.SET_PROFESSION_ASSEMBLER),
 					getItemStack(ItemInit.SET_PROFESSION_QUARRIER),
-					getItemStack(ItemInit.SET_PROFESSION_LOGGER)
+					getItemStack(ItemInit.SET_PROFESSION_LOGGER),
+					getItemStack(ItemInit.SET_PROFESSION_FARMER),
+					getItemStack(ItemInit.SET_PROFESSION_RANCHER)
 					));
 		}
 		
@@ -124,6 +127,8 @@ public class IWItemGroups {
 					getItemStack(ItemInit.SPOOL),
 					getItemStack(ItemInit.QUARRY),
 					getItemStack(ItemInit.TREE_FARM),
+					getItemStack(ItemInit.FARMING_PLOT),
+					getItemStack(ItemInit.LIVESTOCK_PEN),
 					getItemStack(ItemInit.WORKER_SUPPORT)
 					));
 		}
@@ -174,7 +179,8 @@ public class IWItemGroups {
 					FirearmItem.creativeStack(FirearmInit.COLT_SAA.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.FISHTAIL_MATCHLOCK.get(), 1.0f, 1, 1.0f),
 					FirearmItem.creativeStack(FirearmInit.TANEGASHIMA_MATCHLOCK.get(), 1.0f, 1, 1.0f),
-					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f)
+					FirearmItem.creativeStack(FirearmInit.LEE_METFORD.get(), 1.0f, 1, 1.0f),
+					FirearmItem.creativeStack(FirearmInit.SHARPS_CARTRIDGE.get(), 1.0f, 1, 1.0f)
 					));
 		}
 		
@@ -187,10 +193,14 @@ public class IWItemGroups {
 	public static final CreativeModeTab TAB_ARMOR = new CreativeModeTab(groupId++, "industrialwarfare.armor") {
 		@Override
 		public void fillItemList(NonNullList<ItemStack> items) {
+			ItemStack dragoonGold = getItemStack(ItemInit.DRAGOON_HELMET);
+			dragoonGold.getOrCreateTag().putInt("CustomModelData", 1);
 			items.addAll(Arrays.asList(
 					getItemStack(ItemInit.PITH_HELMET),
 					getItemStack(ItemInit.AMERICAN_KEPI),
-					getItemStack(ItemInit.PICKELHAUBE_HIGH)
+					getItemStack(ItemInit.PICKELHAUBE_HIGH),
+					getItemStack(ItemInit.DRAGOON_HELMET),
+					dragoonGold
 					));
 		}
 		

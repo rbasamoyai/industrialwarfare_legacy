@@ -45,6 +45,7 @@ import rbasamoyai.industrialwarfare.common.entityai.tasks.FinishMovementCommandT
 import rbasamoyai.industrialwarfare.common.entityai.tasks.GoToWorkTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.JoinNearbyFormationTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.LeaveWorkTask;
+import rbasamoyai.industrialwarfare.common.entityai.tasks.MobInteractionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PreciseWalkToPositionTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.PrepareForShootingTask;
 import rbasamoyai.industrialwarfare.common.entityai.tasks.ReturnToWorkIfPatrollingTask;
@@ -86,6 +87,7 @@ public class NPCTasks {
 				Pair.of(0, new RunCommandFromTaskScrollTask()),
 				Pair.of(1, new StartAttacking<>(NPCTasks::onPatrol, NPCTasks::findNearestValidAttackTarget)),
 				Pair.of(1, new BlockInteractionTask()),
+				Pair.of(1, new MobInteractionTask()),
 				Pair.of(2, new GoToWantedItem<>(NPCTasks::pickUpPredicate, 3.0f, true, 32))
 				);
 	}

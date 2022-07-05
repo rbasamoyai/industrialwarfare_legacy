@@ -12,6 +12,7 @@ import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
@@ -20,18 +21,36 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.RenderProperties;
 import rbasamoyai.industrialwarfare.client.items.models.FirearmModel;
 import rbasamoyai.industrialwarfare.common.items.firearms.FirearmItem;
 import rbasamoyai.industrialwarfare.utils.AnimUtils;
 import rbasamoyai.industrialwarfare.utils.TextureUtils;
+import software.bernie.geckolib3.core.IAnimatableModel;
+import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
 import software.bernie.geckolib3.util.RenderUtils;
 
+@SuppressWarnings("unchecked")
 public class FirearmRenderer extends GeoItemRenderer<FirearmItem> implements RendersPlayerArms {
 
+	static {
+		AnimationController.addModelFetcher(animatable -> {
+			if (animatable instanceof Item) {
+				Item item = (Item) animatable;
+				BlockEntityWithoutLevelRenderer ister = RenderProperties.get(item).getItemStackRenderer();
+				if (ister instanceof GeoItemRenderer) {
+					return (IAnimatableModel<Object>) ((GeoItemRenderer<?>) ister).getGeoModelProvider();
+				}
+			}
+			return null;
+		});
+	}
+	
 	private static final float SCALE_RECIPROCAL = 1.0f / 16.0f;
 	
 	protected boolean renderArms = false;

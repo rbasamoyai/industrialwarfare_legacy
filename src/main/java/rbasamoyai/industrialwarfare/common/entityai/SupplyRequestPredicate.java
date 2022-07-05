@@ -174,7 +174,7 @@ public class SupplyRequestPredicate {
 	
 	public static SupplyRequestPredicate fromNBT(CompoundTag nbt) {
 		TagKey<Item> tag = nbt.contains("tag") ? ForgeRegistries.ITEMS.tags().createTagKey(new ResourceLocation(nbt.getString("tag"))) : null;
-		Item item = nbt.contains("item") ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString("count"))) : null;
+		Item item = nbt.contains("item") ? ForgeRegistries.ITEMS.getValue(new ResourceLocation(nbt.getString("item"))) : null;
 		IntBound count = IntBound.readBound(nbt.getCompound("count"));
 		ToolAction action = nbt.contains("toolAction") ? ToolAction.get(nbt.getString("toolAction")) : null;
 		Tier tier = nbt.contains("toolTier") ? TierSortingRegistry.byName(new ResourceLocation(nbt.getString("toolTier"))) : null;

@@ -1,0 +1,12 @@
+{
+	"parent": "minecraft:block/cube",
+	"textures": {
+		"particle": "industrialwarfare:block/resource_station_top_livestock",
+		"north": "industrialwarfare:block/livestock_pen",
+		"east": "industrialwarfare:block/resource_station_side",
+		"south": "industrialwarfare:block/resource_station_side",
+		"west": "industrialwarfare:block/resource_station_side",
+		"up": "industrialwarfare:block/resource_station_top_livestock",
+		"down": "industrialwarfare:block/resource_station_bottom"
+	}
+}

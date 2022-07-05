@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "industrialwarfare:item/dragoon_helmet",
+    "layer1": "industrialwarfare:item/dragoon_helmet_overlay1"
+  }
+}

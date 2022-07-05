@@ -61,4 +61,9 @@ public class TextureUtils {
 		return mc.textureManager.getTexture(tex) == null ? new ResourceLocation(regName.getNamespace(), "textures/item/" + regName.getPath() + ".png") : tex;
 	}
 	
+	public static boolean doesTextureExist(ResourceLocation tex) {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.textureManager.getTexture(tex) != null;
+	}
+	
 }

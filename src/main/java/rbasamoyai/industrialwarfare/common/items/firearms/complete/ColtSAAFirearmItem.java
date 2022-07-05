@@ -22,10 +22,10 @@ import net.minecraft.world.phys.Vec3;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
 import rbasamoyai.industrialwarfare.client.entities.renderers.ThirdPersonItemAnimRenderer;
 import rbasamoyai.industrialwarfare.client.items.renderers.FirearmRenderer;
+import rbasamoyai.industrialwarfare.common.ModTags;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.IFirearmItemData;
 import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.items.firearms.RevolverFirearmItem;
-import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.SoundEventInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 import rbasamoyai.industrialwarfare.core.itemgroup.IWItemGroups;
@@ -276,7 +276,7 @@ public class ColtSAAFirearmItem extends RevolverFirearmItem {
 				return;
 			}
 			
-			if (ammo.is(IWItemTags.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
+			if (ammo.is(ModTags.Items.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
 				ammo = ammo.copy();
 			}
 			h.insertAmmo(ammo);

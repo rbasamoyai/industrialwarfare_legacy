@@ -5,10 +5,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import rbasamoyai.industrialwarfare.common.ModTags;
 import rbasamoyai.industrialwarfare.common.capabilities.itemstacks.firearmitem.SingleShotDataHandler;
 import rbasamoyai.industrialwarfare.common.entities.BulletEntity;
 import rbasamoyai.industrialwarfare.common.items.QualityItem;
-import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.items.PartItemInit;
 
 public abstract class SingleShotFirearmItem extends FirearmItem {
@@ -90,7 +90,7 @@ public abstract class SingleShotFirearmItem extends FirearmItem {
 				return;
 			}
 			
-			if (ammo.is(IWItemTags.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
+			if (ammo.is(ModTags.Items.CHEAT_AMMO) || shooter instanceof Player && ((Player) shooter).getAbilities().instabuild) {
 				ammo = ammo.copy();
 			}
 			

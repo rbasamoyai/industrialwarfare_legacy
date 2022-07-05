@@ -30,7 +30,9 @@ public class NPCRenderer<T extends NPCEntity> extends HumanoidMobRenderer<T, Pla
 	
 	public NPCRenderer(EntityRendererProvider.Context context, boolean useSlim) {
 		super(context, new PlayerModel<>(context.bakeLayer(useSlim ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER), useSlim), 0.5f);
-		this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel<>(context.bakeLayer(useSlim ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER)), new HumanoidModel<>(context.bakeLayer(useSlim ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER))));
+		this.addLayer(new HumanoidArmorLayer<>(this,
+				new HumanoidModel<>(context.bakeLayer(useSlim ? ModelLayers.PLAYER_SLIM_INNER_ARMOR : ModelLayers.PLAYER_INNER_ARMOR)),
+				new HumanoidModel<>(context.bakeLayer(useSlim ? ModelLayers.PLAYER_SLIM_OUTER_ARMOR : ModelLayers.PLAYER_OUTER_ARMOR))));
 	}
 	
 	// Taken from PlayerRenderer so that the NPC can be at player proportions

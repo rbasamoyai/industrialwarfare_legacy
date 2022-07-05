@@ -1,12 +1,14 @@
 package rbasamoyai.industrialwarfare.common.blockentities;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
@@ -29,14 +31,14 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import rbasamoyai.industrialwarfare.IndustrialWarfare;
+import rbasamoyai.industrialwarfare.common.ModTags;
+import rbasamoyai.industrialwarfare.common.ModTags.Blocks;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
-import rbasamoyai.industrialwarfare.common.tags.IWItemTags;
 import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 
-public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements ConfigurableBounds {
+public class TreeFarmBlockEntity extends BlockResourcesBlockEntity implements ConfigurableBounds {
 
 	private static final String TAG_STARTING_CORNER = "startingCorner";
 	private static final String TAG_ENDING_CORNER = "endingCorner";
@@ -44,7 +46,7 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 	private BlockPos startingCorner;
 	private BlockPos endingCorner;
 	
-	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();;
+	private final Map<LivingEntity, Tree> treeWorkers = new HashMap<>();
 	private int searchCooldown = 0;
 	
 	public TreeFarmBlockEntity(BlockPos pos, BlockState state) {
@@ -66,26 +68,31 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		AABB bounds = new AABB(pos1, pos2.offset(1, 1, 1));
 		if (bounds.getXsize() > 64 || bounds.getYsize() > 4 || bounds.getZsize() > 64) {
 			if (player != null) {
-				
+				player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".too_large", 64, 4, 64, bounds.getXsize(), bounds.getYsize(), bounds.getZsize()).withStyle(ChatFormatting.RED), true);
 			}
 			return;
 		}
-		if (!bounds.inflate(5.0d, 2.0d, 5.0d).contains(Vec3.atCenterOf(this.worldPosition))) {
+		if (!bounds.contains(Vec3.atCenterOf(this.worldPosition))) {
 			if (player != null) {
-				
+				player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".must_contain_block", this.worldPosition.toShortString()).withStyle(ChatFormatting.RED), true);
 			}
 			return;
 		}
 		this.startingCorner = new BlockPos(bounds.minX, bounds.minY, bounds.minZ);
 		this.endingCorner = new BlockPos(bounds.maxX - 1.0d, bounds.maxY - 1.0d, bounds.maxZ - 1.0d);
 		if (player != null) {
-			String posString = this.worldPosition.getX() + " " + this.worldPosition.getY() + " " + this.worldPosition.getZ();
-			String posString1 = this.startingCorner.getX() + " " + this.startingCorner.getY() + " " + this.startingCorner.getZ();
-			String posString2 = this.endingCorner.getX() + " " + this.endingCorner.getY() + " " + this.endingCorner.getZ();
-			player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".set_bounds", posString, posString1, posString2), true);
+			player.displayClientMessage(new TranslatableComponent("gui." + IndustrialWarfare.MOD_ID + ".set_bounds", this.worldPosition.toShortString(), this.startingCorner.toShortString(), this.endingCorner.toShortString()), true);
 		}
 		this.setChanged();
 	}
+	
+	@Override
+	public AABB getBoxForRenderingCurrentBounds(ItemStack stack) {
+		return this.startingCorner != null && this.endingCorner != null ? new AABB(this.startingCorner.immutable(), this.endingCorner.immutable().offset(1, 1, 1)) : null;
+	}
+	
+	@Override public BlockPos startingCorner() { return this.startingCorner; }
+	@Override public BlockPos endingCorner() { return this.endingCorner; }
 	
 	@Override
 	public boolean isFinished() {
@@ -131,9 +138,10 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 	}
 	
 	protected void purgeEntries() {
-		for (LivingEntity worker : this.treeWorkers.keySet()) {
+		for (Iterator<LivingEntity> iter = this.treeWorkers.keySet().iterator(); iter.hasNext(); ) {
+			LivingEntity worker = iter.next();
 			if (worker.isDeadOrDying()) {
-				this.treeWorkers.remove(worker);
+				iter.remove();
 			}
 		}
 	}
@@ -165,17 +173,17 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		BlockPos pos = tree.pos().immutable();
 		BlockState stateBelow = this.level.getBlockState(pos.below());
 		
-		if (stateBelow.is(IWBlockTags.CAN_PLANT_SAPLING)) {
+		if (stateBelow.is(Blocks.CAN_PLANT_SAPLING)) {
 			return BlockInteraction.placeBlockAtAs(
 					GlobalPos.of(this.level.dimension(), pos),
 					SupplyRequestPredicate.forItem(ItemTags.SAPLINGS, IntBound.ANY),
 					this::placeSapling,
 					this::isSapling);
 		}
-		if (stateBelow.is(IWBlockTags.CAN_PLANT_FUNGUS)) {
+		if (stateBelow.is(Blocks.CAN_PLANT_FUNGUS)) {
 			return BlockInteraction.placeBlockAtAs(
 					GlobalPos.of(this.level.dimension(), pos),
-					SupplyRequestPredicate.forItem(IWItemTags.FUNGUS, IntBound.ANY),
+					SupplyRequestPredicate.forItem(ModTags.Items.FUNGUS, IntBound.ANY),
 					this::placeFungus,
 					this::isFungus);
 		}
@@ -188,7 +196,7 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 		}
 		return BlockPos.betweenClosedStream(this.startingCorner, this.endingCorner)
 				.filter(p -> this.level.getBlockState(p).is(BlockTags.LOGS))
-				.filter(p -> this.level.getBlockState(p.below()).is(IWBlockTags.CAN_PLANT_FORESTRY))
+				.filter(p -> this.level.getBlockState(p.below()).is(Blocks.CAN_PLANT_FORESTRY))
 				.filter(p -> !this.hasTreeAt(p))
 				.findAny()
 				.map(this::addTreeInteractions)
@@ -254,13 +262,13 @@ public class TreeFarmBlockEntity extends ResourceStationBlockEntity implements C
 	private void placeFungus(Level level, BlockPos pos, LivingEntity entity) {
 		ItemStack stack = entity.getOffhandItem();
 		Item item = stack.getItem();
-		if (stack.is(IWItemTags.FUNGUS) && item instanceof BlockItem) {
+		if (stack.is(ModTags.Items.FUNGUS) && item instanceof BlockItem) {
 			level.setBlockAndUpdate(pos, ((BlockItem) item).getBlock().getStateDefinition().any());
 		}
 	}
 	
 	private boolean isFungus(Level level, BlockPos pos, LivingEntity entity) {
-		if (level.getBlockState(pos).is(IWBlockTags.FUNGUS)) {
+		if (level.getBlockState(pos).is(Blocks.FUNGUS)) {
 			this.treeWorkers.remove(entity);
 			return true;
 		}

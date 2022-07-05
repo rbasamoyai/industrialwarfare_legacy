@@ -41,11 +41,11 @@ public class BlockInteraction {
 		case PLACE_BLOCK:
 			BlockState blockState = level.getBlockState(this.pos.pos());
 			return !blockState.isAir() && !(blockState.getBlock() instanceof LiquidBlock) && !this.checkState(level, entity);
+		default: return false;
 		}
-		return false;
 	}
 	
-	public void executePlaceActionIfPossible(Level level, LivingEntity entity) {
+	public void executeBlockActionIfPossible(Level level, LivingEntity entity) {
 		if (this.blockAction != null && level.dimension() == this.pos.dimension()) {
 			this.blockAction.doBlockAction(level, this.pos.pos(), entity);
 		}
@@ -73,6 +73,10 @@ public class BlockInteraction {
 		return new BlockInteraction(pos, SupplyRequestPredicate.ANY, null, (level, bpos, e) -> level.getBlockState(bpos).isAir(), Type.BREAK_BLOCK, reachDistance);
 	}
 	
+	public static BlockInteraction modifyBlockAt(GlobalPos pos, SupplyRequestPredicate item, @Nonnull IBlockLevelAction action, @Nonnull ICheckBlockState checkState) {
+		return new BlockInteraction(pos, item, action, checkState, Type.MODIFY_BLOCK, 4);
+	}
+	
 	@FunctionalInterface
 	public static interface IBlockLevelAction {
 		void doBlockAction(Level level, BlockPos pos, LivingEntity entity);
@@ -85,6 +89,7 @@ public class BlockInteraction {
 	
 	public static enum Type {
 		BREAK_BLOCK,
-		PLACE_BLOCK
+		PLACE_BLOCK,
+		MODIFY_BLOCK
 	}
 }

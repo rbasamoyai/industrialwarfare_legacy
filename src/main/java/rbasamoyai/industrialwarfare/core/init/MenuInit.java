@@ -13,6 +13,7 @@ import rbasamoyai.industrialwarfare.common.containers.WhistleMenu;
 import rbasamoyai.industrialwarfare.common.containers.attachmentitems.AttachmentsRifleMenu;
 import rbasamoyai.industrialwarfare.common.containers.matchcoil.MatchCoilMenu;
 import rbasamoyai.industrialwarfare.common.containers.npcs.NPCMenu;
+import rbasamoyai.industrialwarfare.common.containers.resourcestation.LivestockPenMenu;
 import rbasamoyai.industrialwarfare.common.containers.resourcestation.ResourceStationMenu;
 import rbasamoyai.industrialwarfare.common.containers.schedule.EditScheduleMenu;
 import rbasamoyai.industrialwarfare.common.containers.taskscrollshelf.TaskScrollShelfMenu;
@@ -30,6 +31,9 @@ public class MenuInit {
 	
 	public static final RegistryObject<MenuType<EditLabelMenu>> EDIT_LABEL = CONTAINER_TYPES.register("edit_label",
 			() -> IForgeMenuType.create(EditLabelMenu::getClientContainer));
+	
+	public static final RegistryObject<MenuType<LivestockPenMenu>> LIVESTOCK_PEN = CONTAINER_TYPES.register("livestock_pen",
+			() -> IForgeMenuType.create(LivestockPenMenu::getClientContainer));
 	
 	public static final RegistryObject<MenuType<MatchCoilMenu>> MATCH_COIL = CONTAINER_TYPES.register("match_coil",
 			() -> IForgeMenuType.create(MatchCoilMenu::getClientContainer));

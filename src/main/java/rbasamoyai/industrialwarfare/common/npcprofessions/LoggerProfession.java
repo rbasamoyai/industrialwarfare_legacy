@@ -11,7 +11,7 @@ import rbasamoyai.industrialwarfare.common.entities.NPCEntity;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 
-public class LoggerProfession extends ResourceGatheringProfession {
+public class LoggerProfession extends BlockGatheringProfession {
 
 	public LoggerProfession() {
 		super(ImmutableList.of(

@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
@@ -221,8 +220,6 @@ public class MartiniHenryFirearmItem extends SingleShotFirearmItem {
 				renderer.setBoneRotation("lever_pin", h.hasAmmo() ? PIN_ROT : 0.0f, 0.0f, 0.0f);
 			}
 		});
-		float f = 1.0f / Mth.lerp(aimProgress, 1.0f, this.fovModifier);
-		matrixStack.scale(1.0f, 1.0f, f);
 	}
 
 	public static final int ANIM_PORT_ARMS = 0;

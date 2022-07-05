@@ -196,7 +196,6 @@ public class RenderEvents {
 		MultiBufferSource buf = event.getMultiBufferSource();
 		float partialTick = event.getPartialTick();
 		PoseStack poseStack = event.getPoseStack();
-		MultiBufferSource buffers = event.getMultiBufferSource();
 		int packedLight = event.getPackedLight();
 		
 		if (mc.player != null) {
@@ -229,7 +228,7 @@ public class RenderEvents {
 			ThirdPersonItemAnimRenderer animRenderer = RENDERER_CACHE.get(uuid);
 			
 			float lerpYaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
-			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, poseStack, buffers, packedLight, animRenderer);
+			stpr.onPostRender(entity, animEntity, lerpYaw, partialTick, poseStack, buf, packedLight, animRenderer);
 		}
 	}
 	

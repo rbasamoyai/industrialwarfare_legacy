@@ -23,7 +23,6 @@ public class PickelhaubeHighItem extends DyeableArmorItem {
 		super(material, type, properties);
 	}
 	
-	
 	@Override
 	public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
 		return String.format("%s:/textures/models/armor/pickelhaube_high%s.png", IndustrialWarfare.MOD_ID, type == null ? "" : String.format("_%s", type));

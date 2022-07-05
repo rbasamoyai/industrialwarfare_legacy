@@ -13,19 +13,17 @@ public class ResourceStationData implements ContainerData {
 	
 	@Override
 	public int get(int index) {
-		switch (index) {
-		case 0: return this.te.isRunning() ? 1 : 0;
-		case 1: return this.te.isFinished() ? 1 : 0;
-		default: return 0;
-		}
+		return switch (index) {
+			case 0 -> this.te.isRunning() ? 1 : 0;
+			case 1 -> this.te.isFinished() ? 1 : 0;
+			default -> 0;
+		};
 	}
 
 	@Override
 	public void set(int index, int value) {
 		switch (index) {
-		case 0:
-			this.te.setRunning(value != 0);
-			break;
+			case 0 -> this.te.setRunning(value != 0);
 		}
 	}
 

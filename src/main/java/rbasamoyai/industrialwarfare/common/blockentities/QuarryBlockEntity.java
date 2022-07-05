@@ -14,24 +14,26 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import rbasamoyai.industrialwarfare.common.ModTags.Blocks;
 import rbasamoyai.industrialwarfare.common.blocks.QuarryBlock;
 import rbasamoyai.industrialwarfare.common.entityai.BlockInteraction;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate;
 import rbasamoyai.industrialwarfare.common.entityai.SupplyRequestPredicate.IntBound;
-import rbasamoyai.industrialwarfare.common.tags.IWBlockTags;
 import rbasamoyai.industrialwarfare.core.init.BlockEntityTypeInit;
 import rbasamoyai.industrialwarfare.core.init.BlockInit;
 import rbasamoyai.industrialwarfare.core.init.items.ItemInit;
 
-public class QuarryBlockEntity extends ResourceStationBlockEntity {
+public class QuarryBlockEntity extends BlockResourcesBlockEntity {
 
 	public static final String TAG_Y_LEVEL = "yLevel";
 
@@ -74,9 +76,10 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 	}
 	
 	protected void purgeEntries() {
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
+		for (Iterator<Map.Entry<BlockPos, LivingEntity>> iter = this.currentTasks.entrySet().iterator(); iter.hasNext(); ) {
+			Map.Entry<BlockPos, LivingEntity> entry = iter.next();
 			if (entry.getValue().isDeadOrDying()) {
-				this.currentTasks.remove(entry.getKey());
+				iter.remove();
 			}
 		}
 	}
@@ -94,23 +97,16 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 			return null;
 		}
 		
-		for (Map.Entry<BlockPos, LivingEntity> entry : this.currentTasks.entrySet()) {
-			if (entry.getValue() == entity) {
-				this.posCache.remove(entry.getKey());
-				this.currentTasks.remove(entry.getKey());
-				break;
-			}
+		BlockPos workingPos = this.currentTasks.inverse().get(entity);
+		if (workingPos != null) {
+			this.posCache.remove(workingPos);
+			this.currentTasks.remove(workingPos);
 		}
 		
 		if (this.posCache.isEmpty()) {
 			this.generateCache();
 		}
 		if (this.posCache.isEmpty()) {
-			this.findItemsToPickUp();
-			if (!this.itemsToPickUp.isEmpty()) {
-				return null;
-			}
-			
 			this.setYLevel(this.currentYLevel - 1);
 			if (this.isFinished()) {
 				this.setRunning(false);
@@ -118,7 +114,6 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 			}
 			this.generateCache();
 		}
-		
 		if (this.posCache.isEmpty()) {
 			return null;
 		}
@@ -201,7 +196,7 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 				BlockPos pos = new BlockPos(startX + i * signX, this.currentYLevel, startZ + j * signZ);
 				BlockState candidate = this.level.getBlockState(pos);
 				
-				if (candidate.is(IWBlockTags.IGNORE_WHEN_MINING) || candidate.getDestroySpeed(this.level, pos) < 0.0f) {
+				if (candidate.is(Blocks.IGNORE_WHEN_MINING) || candidate.getDestroySpeed(this.level, pos) < 0.0f) {
 					continue;
 				}
 				
@@ -209,8 +204,8 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 					this.posCache.put(pos, BlockInteraction.placeBlockAtAs(
 							GlobalPos.of(this.level.dimension(), pos),
 							SupplyRequestPredicate.forItem(ItemInit.WORKER_SUPPORT.get(), IntBound.ANY),
-							QuarryBlockEntity::placeSupportAction,
-							QuarryBlockEntity::checkState));
+							this::placeSupportAction,
+							this::checkState));
 				} else if (!candidate.isAir()) {
 					this.posCache.put(pos, BlockInteraction.breakBlockAt(GlobalPos.of(this.level.dimension(), pos), 4));
 				}
@@ -270,14 +265,18 @@ public class QuarryBlockEntity extends ResourceStationBlockEntity {
 		return this.worldPosition.getY() - this.currentYLevel > 16 || this.currentYLevel <= 4 && (this.level.dimension() == Level.OVERWORLD || this.level.dimension() == Level.NETHER);
 	}
 	
-	public static void placeSupportAction(Level level, BlockPos pos, LivingEntity entity) {
-		level.setBlock(pos, BlockInit.WORKER_SUPPORT.get().defaultBlockState(), Block.UPDATE_ALL);
-		SoundType stateSound = level.getBlockState(pos).getSoundType();
-		level.playSound(null, pos, stateSound.getPlaceSound(), SoundSource.NEUTRAL, stateSound.getVolume(), stateSound.getPitch());
+	private void placeSupportAction(Level level, BlockPos pos, LivingEntity entity) {
+		ItemStack stack = entity.getItemInHand(entity.getUsedItemHand() == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND);
+		if (stack.is(ItemInit.WORKER_SUPPORT.get())) {
+			level.setBlock(pos, BlockInit.WORKER_SUPPORT.get().defaultBlockState(), Block.UPDATE_ALL);
+			stack.shrink(1);
+			SoundType stateSound = level.getBlockState(pos).getSoundType();
+			level.playSound(null, pos, stateSound.getPlaceSound(), SoundSource.NEUTRAL, stateSound.getVolume(), stateSound.getPitch());
+		}
 	}
 	
-	public static boolean checkState(Level level, BlockPos pos, LivingEntity entity) {
-		return level.getBlockState(pos).getBlock() == BlockInit.WORKER_SUPPORT.get();
+	private boolean checkState(Level level, BlockPos pos, LivingEntity entity) {
+		return level.getBlockState(pos).is(BlockInit.WORKER_SUPPORT.get());
 	}
 	
 	public static void serverTicker(Level level, BlockPos pos, BlockState state, QuarryBlockEntity quarry) {
